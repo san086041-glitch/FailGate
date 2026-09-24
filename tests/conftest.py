@@ -56,10 +56,26 @@ def make_settings(tmp_path, **overrides: Any) -> Settings:
     return Settings(_env_file=None, **values)  # type: ignore[call-arg]
 
 
+# 没配置 App 时的只读 REST 后备（读公开仓库的评论）：测试里绝不能访问真实网络
+PUBLIC_COMMENTS: dict[int, list[dict[str, Any]]] = {}
+
+
+def _public_rest(request: httpx.Request) -> httpx.Response:
+    parts = request.url.path.split("/")
+    if len(parts) >= 7 and parts[-1] == "comments":
+        return httpx.Response(200, json=PUBLIC_COMMENTS.get(int(parts[-2]), []))
+    return httpx.Response(404, json={"message": "not stubbed"})
+
+
 async def _harness(settings: Settings, github_app: Any = None) -> AsyncIterator[Harness]:
     llm = FakeLLM()
+    PUBLIC_COMMENTS.clear()
     app = create_app(
-        settings, run_worker=False, llm_transport=llm.transport, github_app=github_app
+        settings,
+        run_worker=False,
+        llm_transport=llm.transport,
+        github_app=github_app,
+        rest_transport=httpx.MockTransport(_public_rest),
     )
     warden: Warden = app.state.warden
     await warden.start(run_worker=False)

@@ -59,6 +59,19 @@ class GitHubRest:
                 break
         return numbers
 
+    async def fetch_tarball(self, full_name: str, ref: str = "HEAD") -> tuple[str, bytes]:
+        """下载某个提交的源码包，返回 (完整 commit SHA, tar.gz 字节)。
+
+        先把 ref 解析成 SHA 再下载，保证文档内容和引用链接里的 SHA 是同一个版本。
+        /tarball 会 302 跳转到 codeload.github.com，需要跟随重定向。
+        """
+        r = await self._http.get(f"/repos/{full_name}/commits/{ref}")
+        r.raise_for_status()
+        sha = r.json()["sha"]
+        r = await self._http.get(f"/repos/{full_name}/tarball/{sha}", follow_redirects=True)
+        r.raise_for_status()
+        return sha, r.content
+
     async def list_comments(self, full_name: str, number: int) -> list[dict[str, Any]]:
         params = {"per_page": 100}
         url = f"/repos/{full_name}/issues/{number}/comments"

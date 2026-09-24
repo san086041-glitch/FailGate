@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from warden import __version__
 from warden.api import router as api_router
 from warden.db import Database, Repo
+from warden.index.docs import DocIndex
 from warden.index.embed import Embedder
 from warden.index.store import IssueIndex
 from warden.ingress.webhooks import router as webhook_router
@@ -22,12 +23,23 @@ from warden.orchestrator.machine import CaseMachine
 from warden.orchestrator.pipeline import Pipeline
 from warden.orchestrator.states import CaseState
 from warden.orchestrator.worker import EventQueue, Worker
-from warden.platforms.base import DomainEvent, Platform, PlatformWriter, RepoRef
+from warden.platforms.base import (
+    CaseKind,
+    CaseRef,
+    Comment,
+    DomainEvent,
+    Platform,
+    PlatformWriter,
+    RepoRef,
+)
 from warden.platforms.github import GitHubPlatform
-from warden.platforms.github_app import GitHubApp, InstallationClient
+from warden.platforms.github_app import GitHubApp, InstallationClient, comment_from_api
+from warden.platforms.github_rest import GitHubRest
 from warden.policy.executor import EffectExecutor
 from warden.policy.gate import PolicyGate
 from warden.settings import Settings
+from warden.skills.answer import AnswerSkill
+from warden.skills.base import CommentSource
 from warden.skills.dedup import DedupSkill
 from warden.skills.intake import IntakeSkill
 from warden.skills.triage import TriageSkill
@@ -79,6 +91,7 @@ class Warden:
         llm_transport: httpx.AsyncBaseTransport | None = None,
         embed_transport: httpx.AsyncBaseTransport | None = None,
         github_app: GitHubApp | None = None,
+        rest_transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self.settings = settings
         self.github_app = github_app or build_github_app(settings)
@@ -90,6 +103,11 @@ class Warden:
         self.gate = PolicyGate()
         self.embedder = build_embedder(settings, embed_transport)
         self.index = IssueIndex(self.db, self.embedder)
+        self.docs = DocIndex(self.db)
+        # 没有 App 时的只读后备：用 GITHUB_TOKEN（或匿名）读公开仓库的评论
+        self.rest = GitHubRest(
+            settings.github_token, base_url=settings.github_api_url, transport=rest_transport
+        )
         self.machine = CaseMachine(
             self.db,
             default_mode=settings.default_repo_mode,
@@ -114,10 +132,13 @@ class Warden:
                         ),
                         settings.llm_model_small,
                     ),
+                    CaseState.ANSWERING: (AnswerSkill(), settings.llm_model_large),
                 },
                 case_budget_usd=settings.case_budget_usd,
                 index=self.index,
                 labels=self._labels if self.github_app else None,
+                docs=self.docs,
+                comments=self._comments_for,
             )
             if self.llm is not None
             else None
@@ -142,6 +163,25 @@ class Warden:
             return None
         labels = await client.list_labels(RepoRef(platform=repo.platform, full_name=repo.full_name))
         return tuple(label.name for label in labels)
+
+    def _comments_for(self, repo: Repo) -> CommentSource | None:
+        if repo.platform != "github":
+            return None
+        client = self._client(repo.platform, repo.installation_id)
+
+        async def via_app(full_name: str, number: int) -> list[Comment]:
+            assert client is not None
+            ref = CaseRef(
+                repo=RepoRef(platform="github", full_name=full_name),
+                kind=CaseKind.ISSUE,
+                number=number,
+            )
+            return await client.list_comments(ref)
+
+        async def via_rest(full_name: str, number: int) -> list[Comment]:
+            return [comment_from_api(c) for c in await self.rest.list_comments(full_name, number)]
+
+        return via_app if client is not None else via_rest
 
     async def _permission(self, event: DomainEvent) -> str | None:
         client = self._client(event.platform, event.installation_id)
@@ -172,6 +212,7 @@ class Warden:
                 await task
         if self.github_app is not None:
             await self.github_app.aclose()
+        await self.rest.aclose()
         if self.llm is not None:
             await self.llm.aclose()
         if self.embedder is not None:
@@ -186,12 +227,14 @@ def create_app(
     llm_transport: httpx.AsyncBaseTransport | None = None,
     embed_transport: httpx.AsyncBaseTransport | None = None,
     github_app: GitHubApp | None = None,
+    rest_transport: httpx.AsyncBaseTransport | None = None,
 ) -> FastAPI:
     warden = Warden(
         settings or Settings(),
         llm_transport=llm_transport,
         embed_transport=embed_transport,
         github_app=github_app,
+        rest_transport=rest_transport,
     )
 
     @asynccontextmanager

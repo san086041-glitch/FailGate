@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from importlib import resources
@@ -15,6 +16,7 @@ from pydantic import BaseModel
 
 from warden.llm import LLMClient, Usage
 from warden.llm.pricing import cost_usd
+from warden.platforms.base import Comment
 
 # GitHub 新仓库的默认标签；拿不到仓库真实标签表时使用（M1 后半段改为从平台 API 读取）
 DEFAULT_LABELS = (
@@ -50,6 +52,16 @@ class Retriever(Protocol):
     ) -> list[Any]: ...
 
 
+class DocRetriever(Protocol):
+    """文档检索接口（实现见 warden/index/docs.py 的 DocIndex），对能力模块只读。"""
+
+    async def search(self, repo_id: int, query: str, *, k: int) -> list[Any]: ...
+
+
+# 读取某个 issue 的评论：(仓库全名, issue 编号) → 评论列表。只读
+CommentSource = Callable[[str, int], Awaitable[list[Comment]]]
+
+
 @dataclass
 class SkillContext:
     issue: IssueSnapshot
@@ -59,6 +71,8 @@ class SkillContext:
     # 此前各模块的输出，按模块名索引
     prior: dict[str, dict[str, Any]] = field(default_factory=dict)
     retriever: Retriever | None = None
+    docs: DocRetriever | None = None
+    comments: CommentSource | None = None
 
 
 @dataclass

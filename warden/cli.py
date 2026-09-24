@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated
@@ -11,8 +12,10 @@ import typer
 import uvicorn
 from sqlalchemy import select
 
-from warden.db import Case, Database, Repo
+from warden.db import Case, Database, IssueDoc, Repo
 from warden.settings import Settings
+
+_CJK = re.compile(r"[\u4e00-\u9fff]")
 
 app = typer.Typer(help="RepoWarden：证据驱动的开源仓库值班 Agent", no_args_is_help=True)
 
@@ -115,6 +118,38 @@ def index_build(
         return n
 
     typer.echo(f"回填完成：{repo} 共 {asyncio.run(run())} 个 issue")
+
+
+@index_app.command("docs")
+def index_docs(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    ref: Annotated[str, typer.Option(help="分支、标签或提交；默认是默认分支最新提交")] = "HEAD",
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库连接串，默认用配置")] = None,
+) -> None:
+    """下载仓库源码包，把 README、docs/、CHANGELOG 等切块写进文档索引（整体替换）。"""
+    from warden.index.docs import DocIndex, chunk_document, extract_docs
+    from warden.platforms.github_rest import GitHubRest
+
+    settings = Settings()
+
+    async def run() -> tuple[str, int, int]:
+        db = Database(db_url or settings.warden_db_url)
+        await db.create_all()
+        repo_row = await _repo_row(db, repo, settings.default_repo_mode)
+        gh = GitHubRest(settings.github_token)
+        try:
+            sha, tarball = await gh.fetch_tarball(repo, ref)
+            files = extract_docs(tarball)
+            chunks = [c for path, text in files for c in chunk_document(path, text)]
+            async with db.session() as s, s.begin():
+                await DocIndex(db).replace(s, repo_row.id, repo, sha, chunks)
+        finally:
+            await gh.aclose()
+            await db.dispose()
+        return sha, len(files), len(chunks)
+
+    sha, n_files, n_chunks = asyncio.run(run())
+    typer.echo(f"文档索引完成：{repo}@{sha[:10]}，{n_files} 个文件，{n_chunks} 个块")
 
 
 @index_app.command("search")
@@ -322,6 +357,94 @@ def try_issue(
             await llm.aclose()
         typer.echo("\n== 汇总评论预览\n")
         typer.echo(render_summary(ctx.prior["intake"], ctx.prior["triage"], total))
+
+    asyncio.run(run())
+
+
+@app.command("answer")
+def answer_issue(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    number: Annotated[int, typer.Argument(help="issue 编号（必须已在索引里）")],
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库连接串，默认用配置")] = None,
+    show_sources: Annotated[bool, typer.Option(help="打印检索到的资料")] = False,
+) -> None:
+    """对索引里的某个 issue 试跑 Answer（只用它创建之前的 issue 和评论），打印答案、引用核对和花费。
+
+    文档用的是索引时的版本，不做时间旅行：回放历史问题时文档可能比提问时更新。
+    """
+    from warden.app import build_llm
+    from warden.index.docs import DocIndex
+    from warden.index.store import IssueIndex
+    from warden.platforms.base import Comment
+    from warden.platforms.github_app import comment_from_api
+    from warden.platforms.github_rest import GitHubRest
+    from warden.report import answer_section
+    from warden.skills.answer import AnswerSkill
+    from warden.skills.base import IssueSnapshot, SkillContext
+
+    settings = Settings()
+    llm = build_llm(settings)
+    if llm is None:
+        raise typer.BadParameter("请先在 .env 中设置 LLM_API_KEY")
+
+    async def run() -> None:
+        db = Database(db_url or settings.warden_db_url)
+        gh = GitHubRest(settings.github_token)
+        try:
+            async with db.session() as s:
+                repo_row = await s.scalar(select(Repo).where(Repo.full_name == repo))
+                if repo_row is None:
+                    raise typer.BadParameter(f"{repo} 不在数据库里，先运行 warden index build")
+                doc = await s.scalar(
+                    select(IssueDoc).where(
+                        IssueDoc.repo_id == repo_row.id, IssueDoc.number == number
+                    )
+                )
+                if doc is None:
+                    raise typer.BadParameter(f"#{number} 不在索引里")
+
+            async def comments(full_name: str, n: int) -> list[Comment]:
+                return [comment_from_api(c) for c in await gh.list_comments(full_name, n)]
+
+            lang = "zh" if _CJK.search(doc.title + doc.body) else "en"
+            ctx = SkillContext(
+                issue=IssueSnapshot(
+                    repo=repo, number=number, title=doc.title, body=doc.body,
+                    repo_id=repo_row.id, created_at=doc.created_at,
+                ),
+                llm=llm,
+                model=settings.llm_model_large,
+                prior={"intake": {"language": lang}},
+                retriever=IssueIndex(db),
+                docs=DocIndex(db),
+                comments=comments,
+            )
+            skill = AnswerSkill()
+            if show_sources:
+                for src in await skill.gather(ctx):
+                    typer.echo(f"\n--- {src.id} [{src.kind}] {src.title}\n{src.url}")
+                    typer.echo(src.text[:300])
+            result = await skill.run(ctx)
+            out = result.output.model_dump(mode="json")
+            typer.echo(
+                f"\n== answer ({result.model}) · ${result.cost_usd:.6f} · "
+                f"status={out['status']} {out['reject_reason']} · confidence={out['confidence']}"
+            )
+            for c in out["citations"]:
+                typer.echo(
+                    f"  引用 {c['id']}: 来源存在={c['known_source']} "
+                    f"原文找到={c['quote_found']} · {c['quote'][:80]!r}"
+                )
+            if out["removed_links"] or out["dropped_markers"]:
+                typer.echo(
+                    f"  删掉的链接 {out['removed_links']} 个；删掉的编号 {out['dropped_markers']}"
+                )
+            typer.echo("\n== 汇总评论里的回答部分\n")
+            typer.echo(answer_section(out, ctx.prior["intake"]["language"]))
+        finally:
+            await llm.aclose()
+            await gh.aclose()
+            await db.dispose()
 
     asyncio.run(run())
 

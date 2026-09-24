@@ -27,6 +27,8 @@ def test_intake_then_triage_then_dedup():
     [
         ({"dup_high": True, "type": "bug", "repro_enabled": True}, S.DUP_SUSPECTED),
         ({"type": "question"}, S.ANSWERING),
+        # 提问即使和已有 issue 高度重复，也先回答（查重结果仍写进汇总评论）
+        ({"type": "question", "dup_high": True}, S.ANSWERING),
         ({"type": "bug", "repro_enabled": True}, S.REPRODUCING),
         ({"type": "bug", "repro_enabled": True, "budget_ok": False}, S.TRIAGE_ONLY),
         ({"type": "bug", "repro_enabled": False}, S.TRIAGE_ONLY),

@@ -20,7 +20,15 @@ from warden.index.store import IssueIndex
 from warden.llm import LLMClient
 from warden.policy.gate import PolicyGate
 from warden.report import render_summary
-from warden.skills.base import DEFAULT_LABELS, IssueSnapshot, Skill, SkillContext, SkillResult
+from warden.skills.base import (
+    DEFAULT_LABELS,
+    CommentSource,
+    DocRetriever,
+    IssueSnapshot,
+    Skill,
+    SkillContext,
+    SkillResult,
+)
 
 from .machine import CaseMachine
 from .states import CaseState
@@ -46,6 +54,8 @@ class Pipeline:
         case_budget_usd: float,
         index: IssueIndex | None = None,
         labels: LabelSource | None = None,
+        docs: DocRetriever | None = None,
+        comments: Callable[[Repo], CommentSource | None] | None = None,
     ) -> None:
         self.db = db
         self.machine = machine
@@ -56,6 +66,9 @@ class Pipeline:
         self.case_budget_usd = case_budget_usd
         self.index = index
         self.labels = labels
+        self.docs = docs
+        # 仓库 → 读评论的函数（需要该仓库的安装令牌，所以按仓库绑定）
+        self.comments_for = comments
 
     async def advance(self, case_id: int) -> CaseState:
         while True:
@@ -94,8 +107,13 @@ class Pipeline:
                     return CaseState(case.state)
                 s.add(_run_row(case_id, skill, result, started))
                 case.spent_usd += result.cost_usd
-                await self._effects(s, repo, case, skill.name, result, ctx)
+                await self._effects(s, repo, case, skill.name, result)
                 new_state = await self.machine.apply(s, case, "skill.done", facts=result.facts)
+                if new_state is not None and new_state not in self.skills:
+                    # 流水线在这里停下（没有下一个自动阶段）：此时才生成汇总评论，
+                    # 一次性包含前面所有阶段的结果，避免同一条评论在几秒内被反复编辑
+                    outputs = {**ctx.prior, skill.name: result.output.model_dump(mode="json")}
+                    await self._summary(s, repo, case, outputs)
             if new_state is None:
                 return state
 
@@ -120,6 +138,8 @@ class Pipeline:
             model=entry[1],
             prior=prior,
             retriever=self.index,
+            docs=self.docs,
+            comments=self.comments_for(repo) if self.comments_for else None,
         )
 
     async def _repo_labels(self, repo: Repo) -> tuple[str, ...]:
@@ -141,7 +161,6 @@ class Pipeline:
         case: Case,
         skill_name: str,
         result: SkillResult,
-        ctx: SkillContext,
     ) -> None:
         output = result.output.model_dump(mode="json")
         if skill_name == "triage":
@@ -149,14 +168,22 @@ class Pipeline:
                 await self.gate.propose(
                     s, repo=repo, case=case, action="set_labels", payload={"add": output["labels"]}
                 )
-        elif skill_name == "dedup":
-            # 汇总评论在 M1 的最后一个自动阶段（查重）之后生成，一次性包含分诊和查重结果
-            body = render_summary(
-                ctx.prior.get("intake", {}), ctx.prior.get("triage", {}), case.spent_usd, output
-            )
-            await self.gate.propose(
-                s, repo=repo, case=case, action="upsert_summary", payload={"body": body}
-            )
+
+    async def _summary(
+        self, s: AsyncSession, repo: Repo, case: Case, outputs: dict[str, dict[str, Any]]
+    ) -> None:
+        if "triage" not in outputs:
+            return
+        body = render_summary(
+            outputs.get("intake", {}),
+            outputs["triage"],
+            case.spent_usd,
+            outputs.get("dedup"),
+            outputs.get("answer"),
+        )
+        await self.gate.propose(
+            s, repo=repo, case=case, action="upsert_summary", payload={"body": body}
+        )
 
     async def _record_error(
         self, case_id: int, skill: Skill, model: str, started: datetime, error: Exception

@@ -57,14 +57,16 @@ TABLE: tuple[Transition, ...] = (
     Transition(frozenset({S.NEW}), "issue.opened", S.INTAKE),
     Transition(frozenset({S.INTAKE}), "skill.done", S.TRIAGING),
     Transition(frozenset({S.TRIAGING}), "skill.done", S.DEDUPING),
-    # 查重完成后的分流：重复 > 提问 > 可复现的 bug > 其余只分诊
-    Transition(
-        frozenset({S.DEDUPING}), "skill.done", S.DUP_SUSPECTED,
-        _fact("dup_high", lambda v: v is True),
-    ),
+    # 查重完成后的分流：提问 > 重复 > 可复现的 bug > 其余只分诊。
+    # 提问排在重复前面：对提问者来说直接回答比"建议关闭为重复"有用，重复 issue 里维护者的回答
+    # 本身也会作为答疑的资料被引用，查重结果照样写进汇总评论（实测案例见 ADR 0005）
     Transition(
         frozenset({S.DEDUPING}), "skill.done", S.ANSWERING,
         _fact("type", lambda v: v == "question"),
+    ),
+    Transition(
+        frozenset({S.DEDUPING}), "skill.done", S.DUP_SUSPECTED,
+        _fact("dup_high", lambda v: v is True),
     ),
     Transition(
         frozenset({S.DEDUPING}), "skill.done", S.REPRODUCING,

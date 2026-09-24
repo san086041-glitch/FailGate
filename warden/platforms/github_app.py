@@ -25,7 +25,7 @@ from typing import Any
 import httpx
 import jwt
 
-from .base import CaseRef, Label, PlatformError, RepoRef
+from .base import CaseRef, Comment, Label, PlatformError, RepoRef, User
 
 log = logging.getLogger(__name__)
 
@@ -197,6 +197,22 @@ def _error_message(r: httpx.Response) -> str:
         return r.text[:300]
 
 
+def comment_from_api(c: dict[str, Any]) -> Comment:
+    """REST 返回的评论 → 领域模型（GitHubRest 和 InstallationClient 共用）。"""
+    user = c.get("user") or {}
+    login = user.get("login", "")
+    return Comment(
+        id=str(c["id"]),
+        author=User(
+            login=login,
+            is_bot=user.get("type") == "Bot" or login.endswith("[bot]"),
+            association=c.get("author_association") or "NONE",
+        ),
+        body=c.get("body") or "",
+        created_at=datetime.fromisoformat(c["created_at"].replace("Z", "+00:00")),
+    )
+
+
 class InstallationClient:
     """某个安装下的读写客户端，实现 PlatformReader 的子集和 PlatformWriter。"""
 
@@ -243,6 +259,20 @@ class InstallationClient:
         if role in _KNOWN_ROLES:
             return str(role)
         return str(data.get("permission") or "none")
+
+    async def list_comments(self, ref: CaseRef) -> list[Comment]:
+        comments: list[Comment] = []
+        page = 1
+        while True:
+            data = await self._call(
+                "GET",
+                f"/repos/{ref.repo.full_name}/issues/{ref.number}/comments"
+                f"?per_page=100&page={page}",
+            )
+            comments += [comment_from_api(c) for c in data]
+            if len(data) < 100:
+                return comments
+            page += 1
 
     async def find_comment(self, ref: CaseRef, marker: str) -> str | None:
         """找机器人自己之前发的、带隐藏标记的评论（用于崩溃恢复后的去重）。"""

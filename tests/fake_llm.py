@@ -22,6 +22,9 @@ DEDUP_NONE: dict[str, Any] = {
         {"id": "c1", "score": 0.1, "reason": "不同问题", "quote_new": "", "quote_candidate": ""}
     ]
 }
+ANSWER_ABSTAIN: dict[str, Any] = {
+    "abstain": True, "answer": "", "citations": [], "confidence": 0.2, "missing": "没有相关资料",
+}
 TRIAGE_OK: dict[str, Any] = {
     "type": "bug",
     "labels": ["bug", "not-a-real-label"],
@@ -44,9 +47,11 @@ def completion(content: str, model: str = "deepseek-flash") -> dict[str, Any]:
 class FakeLLM:
     def __init__(self) -> None:
         self.replies: dict[str, list[Callable[[], httpx.Response]]] = {
-            "intake": [], "triage": [], "dedup": [],
+            "intake": [], "triage": [], "dedup": [], "answer": [],
         }
-        self.defaults = {"intake": INTAKE_OK, "triage": TRIAGE_OK, "dedup": DEDUP_NONE}
+        self.defaults = {
+            "intake": INTAKE_OK, "triage": TRIAGE_OK, "dedup": DEDUP_NONE, "answer": ANSWER_ABSTAIN,
+        }
         self.requests: list[dict[str, Any]] = []
 
     def queue(self, skill: str, *responses: httpx.Response | dict[str, Any] | str) -> None:
@@ -67,6 +72,8 @@ class FakeLLM:
             skill = "intake"
         elif "Dedup（查重）模块" in system:
             skill = "dedup"
+        elif "Answer（答疑）模块" in system:
+            skill = "answer"
         else:
             skill = "triage"
         if self.replies[skill]:

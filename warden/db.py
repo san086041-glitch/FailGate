@@ -97,6 +97,23 @@ class IssueDoc(Base):
     updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
 
 
+class DocChunk(Base):
+    """文档切块（README、docs/、CHANGELOG…），供 Answer 检索引用。由 `warden index docs` 构建。"""
+
+    __tablename__ = "doc_chunks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repo_id: Mapped[int] = mapped_column(ForeignKey("repos.id"), index=True)
+    path: Mapped[str] = mapped_column(String(512))
+    # 标题路径，例如 "Usage › Configuration"
+    heading: Mapped[str] = mapped_column(Text, default="")
+    text: Mapped[str] = mapped_column(Text)
+    # 带 commit SHA 的永久链接（+ 标题锚点）
+    url: Mapped[str] = mapped_column(String(1024))
+    commit_sha: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
 class Run(Base):
     """能力模块的一次执行。输出、用量、花费都落库，供控制台展示和回放评测对比。"""
 
