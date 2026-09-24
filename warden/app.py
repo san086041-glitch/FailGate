@@ -28,6 +28,7 @@ from warden.platforms.base import (
     CaseRef,
     Comment,
     DomainEvent,
+    Label,
     Platform,
     PlatformWriter,
     RepoRef,
@@ -157,12 +158,11 @@ class Warden:
     def _writer(self, repo: Repo) -> PlatformWriter | None:
         return self._client(repo.platform, repo.installation_id)
 
-    async def _labels(self, repo: Repo) -> tuple[str, ...] | None:
+    async def _labels(self, repo: Repo) -> list[Label] | None:
         client = self._client(repo.platform, repo.installation_id)
         if client is None:
             return None
-        labels = await client.list_labels(RepoRef(platform=repo.platform, full_name=repo.full_name))
-        return tuple(label.name for label in labels)
+        return await client.list_labels(RepoRef(platform=repo.platform, full_name=repo.full_name))
 
     def _comments_for(self, repo: Repo) -> CommentSource | None:
         if repo.platform != "github":

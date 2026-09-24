@@ -68,6 +68,8 @@ class SkillContext:
     llm: LLMClient
     model: str
     labels: tuple[str, ...] = DEFAULT_LABELS
+    # 标签名 → 仓库里写的标签说明（可能为空）；分诊提示词 v2 起会展示给模型
+    label_descriptions: dict[str, str] = field(default_factory=dict)
     # 此前各模块的输出，按模块名索引
     prior: dict[str, dict[str, Any]] = field(default_factory=dict)
     retriever: Retriever | None = None

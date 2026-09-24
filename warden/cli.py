@@ -310,6 +310,85 @@ def replay_dedup(
     _write_report(asyncio.run(run()), min_precision)
 
 
+@replay_app.command("triage")
+def replay_triage(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    per_class: Annotated[int, typer.Option(help="每个类型标签最多抽多少个")] = 40,
+    seed: int = 42,
+    prompt_version: Annotated[str, typer.Option(help="分诊提示词版本")] = "1",
+    refresh_labels: Annotated[bool, typer.Option(help="重新从 GitHub 拉取标签表快照")] = False,
+    db_url: Annotated[str, typer.Option("--db", help="语料数据库")] = REPLAY_DB,
+) -> None:
+    """分诊回放评测：以维护者的类型标签为标准答案，分层抽样，报告准确率与混淆矩阵。"""
+    from warden.app import build_llm
+    from warden.platforms.github_rest import GitHubRest
+    from warden.replay.dataset import EVAL_ROOT, repo_slug
+    from warden.replay.triage import (
+        RepoLabel,
+        TriageRunConfig,
+        load_repo_labels,
+        render_triage_report,
+        run_triage_replay,
+        save_repo_labels,
+    )
+
+    settings = Settings()
+    llm = build_llm(settings)
+    if llm is None:
+        raise typer.BadParameter("需要 LLM_API_KEY")
+    cfg = TriageRunConfig(
+        repo=repo, per_class=per_class, seed=seed, prompt_version=prompt_version,
+        model=settings.llm_model_small,
+    )
+
+    async def run() -> Path:
+        labels = None if refresh_labels else load_repo_labels(repo, EVAL_ROOT)
+        if labels is None:
+            gh = GitHubRest(settings.github_token)
+            try:
+                raw = await gh.list_labels(repo)
+            finally:
+                await gh.aclose()
+            labels = [RepoLabel(name=x["name"], description=x.get("description") or "")
+                      for x in raw]
+            saved = save_repo_labels(repo, labels, EVAL_ROOT)
+            typer.echo(f"标签表快照：{len(labels)} 个 → {saved}")
+        db = Database(db_url)
+        try:
+            result = await run_triage_replay(
+                db, llm, cfg, labels, cache_root=Path("eval/cache/skills"), progress=typer.echo
+            )
+        finally:
+            await llm.aclose()
+            await db.dispose()
+        run_id = f"{repo_slug(repo)}__triage__{result.started_at:%Y%m%d-%H%M}__v{prompt_version}"
+        run_path, report_path = _run_paths(run_id)
+        run_path.parent.mkdir(parents=True, exist_ok=True)
+        run_path.write_text(result.model_dump_json(indent=1), "utf-8")
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(render_triage_report(result), "utf-8")
+        typer.echo(
+            f"完成：模型调用 {result.model_calls} 次（缓存 {result.cached_calls}），"
+            f"花费 ${result.cost_usd:.4f} → {run_path}"
+        )
+        return report_path
+
+    typer.echo(f"报告：{asyncio.run(run())}")
+
+
+@replay_app.command("triage-report")
+def replay_triage_report(
+    run_file: Annotated[Path, typer.Argument(help="eval/runs/ 下的分诊评测记录")],
+) -> None:
+    """不调用模型，按评测记录重新生成分诊报告。"""
+    from warden.replay.triage import TriageRunResult, render_triage_report
+
+    run = TriageRunResult.model_validate_json(run_file.read_text("utf-8"))
+    out = Path("eval/reports") / f"{run_file.stem}.md"
+    out.write_text(render_triage_report(run), "utf-8")
+    typer.echo(f"报告：{out}")
+
+
 @replay_app.command("sweep")
 def replay_sweep(
     run_file: Annotated[Path, typer.Argument(help="eval/runs/ 下的评测记录")],

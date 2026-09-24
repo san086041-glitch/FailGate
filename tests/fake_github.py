@@ -136,7 +136,10 @@ class FakeGitHub:
         page = int(req.url.params.get("page", "1"))
         per = int(req.url.params.get("per_page", "30"))
         chunk = self.labels[(page - 1) * per : page * per]
-        return httpx.Response(200, json=[{"name": n, "description": ""} for n in chunk])
+        desc = {"area:io": "Reading and writing files"}
+        return httpx.Response(
+            200, json=[{"name": n, "description": desc.get(n, "")} for n in chunk]
+        )
 
     def _permission(self, req: httpx.Request, body: Any, repo: str, login: str) -> httpx.Response:
         role = self.permissions.get(login)

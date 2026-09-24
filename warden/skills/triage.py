@@ -38,15 +38,30 @@ def constrain_labels(proposed: list[str], allowed: tuple[str, ...]) -> tuple[lis
     return kept, dropped
 
 
+def format_labels(ctx: SkillContext, version: str) -> str:
+    """v1 只给标签名（JSON 列表）；v2 起每行一个标签并附上仓库里写的说明。
+
+    像 psf/black 的 "T: style" 这种标签，只看名字猜不出含义（说明是
+    "What do we want Blackened code to look like?"）；基线评测里它只被选中了 20%。
+    """
+    if version == "1":
+        return json.dumps(list(ctx.labels), ensure_ascii=False)
+    lines = []
+    for name in ctx.labels:
+        desc = ctx.label_descriptions.get(name, "").strip()
+        lines.append(f"- `{name}`：{desc}" if desc else f"- `{name}`")
+    return "\n" + "\n".join(lines)
+
+
 class TriageSkill:
     name = "triage"
-    version = "1"
+    # v2：标签附上说明、禁止选"处理结论/进度"类标签；依据见 docs/adr/0006-triage-replay.md
+    version = "2"
 
     async def run(self, ctx: SkillContext) -> SkillResult:
         issue = ctx.issue
         system = render(
-            load_prompt(f"triage_v{self.version}"),
-            labels=json.dumps(list(ctx.labels), ensure_ascii=False),
+            load_prompt(f"triage_v{self.version}"), labels=format_labels(ctx, self.version)
         )
         intake = ctx.prior.get("intake")
         parts = [untrusted(f"issue#{issue.number}", "u1", f"{issue.title}\n\n{issue.body}")]

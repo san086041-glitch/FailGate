@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from warden.db import Case, Database, Repo, Run
 from warden.index.store import IssueIndex
 from warden.llm import LLMClient
+from warden.platforms.base import Label
 from warden.policy.gate import PolicyGate
 from warden.report import render_summary
 from warden.skills.base import (
@@ -39,7 +40,7 @@ log = logging.getLogger(__name__)
 LABEL_MIN_CONFIDENCE = 0.7
 
 # 读取仓库真实的标签表；返回 None 表示拿不到（没配置 App 等），退回 GitHub 默认标签
-LabelSource = Callable[[Repo], Awaitable[tuple[str, ...] | None]]
+LabelSource = Callable[[Repo], Awaitable[list[Label] | None]]
 
 
 class Pipeline:
@@ -87,7 +88,9 @@ class Pipeline:
                 assert repo is not None
                 ctx = await self._context(s, case, repo, entry)
             # 网络调用放在数据库会话之外
-            ctx.labels = await self._repo_labels(repo)
+            labels = await self._repo_labels(repo)
+            ctx.labels = tuple(lb.name for lb in labels)
+            ctx.label_descriptions = {lb.name: lb.description for lb in labels}
 
             skill, model = entry
             started = datetime.now(UTC)
@@ -142,17 +145,19 @@ class Pipeline:
             comments=self.comments_for(repo) if self.comments_for else None,
         )
 
-    async def _repo_labels(self, repo: Repo) -> tuple[str, ...]:
+    async def _repo_labels(self, repo: Repo) -> list[Label]:
+        """仓库真实的标签表（带说明）；拿不到时退回 GitHub 默认标签（没有说明）。"""
+        defaults = [Label(name=n) for n in DEFAULT_LABELS]
         if self.labels is None:
-            return DEFAULT_LABELS
+            return defaults
         try:
             labels = await self.labels(repo)
         except Exception:
             log.warning(
                 "failed to load labels for %s, using defaults", repo.full_name, exc_info=True
             )
-            return DEFAULT_LABELS
-        return DEFAULT_LABELS if labels is None else labels
+            return defaults
+        return defaults if labels is None else labels
 
     async def _effects(
         self,

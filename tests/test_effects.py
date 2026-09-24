@@ -51,6 +51,9 @@ async def test_live_mode_posts_labels_and_one_summary(live: Harness, fake_gh: Fa
     assert case["summary_comment_id"] == str(comments[0]["id"])
     # 标签表确实是从 API 读的
     assert ("GET", f"/repos/{REPO}/labels") in fake_gh.requests
+    # 标签说明也带进了分诊提示词（triage v2）
+    triage_req = next(r for r in live.llm.requests if "Triage" in r["messages"][0]["content"])
+    assert "- `area:io`：Reading and writing files" in triage_req["messages"][0]["content"]
 
 
 async def test_shadow_mode_never_writes(tmp_path, fake_gh: FakeGitHub):

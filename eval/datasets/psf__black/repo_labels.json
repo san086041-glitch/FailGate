@@ -1,0 +1,210 @@
+[
+ {
+  "name": "C: api",
+  "description": "One day Black will have an API ..."
+ },
+ {
+  "name": "C: cleanup",
+  "description": "Refactoring and removing dust :)"
+ },
+ {
+  "name": "C: configuration",
+  "description": "CLI and configuration"
+ },
+ {
+  "name": "C: crash",
+  "description": "Black is crashing"
+ },
+ {
+  "name": "C: dependencies",
+  "description": ""
+ },
+ {
+  "name": "C: file collection",
+  "description": "Related to file collection (e.g. gitignore & cache) or file discovery and all of its configuration."
+ },
+ {
+  "name": "C: integrations",
+  "description": "Editor plugins and other integrations"
+ },
+ {
+  "name": "C: invalid code",
+  "description": "Black destroyed a valid Python file"
+ },
+ {
+  "name": "C: jupyter",
+  "description": "Jupyter Notebooks, any color you like"
+ },
+ {
+  "name": "C: maintenance",
+  "description": "Related to project maintenance, e.g. CI, testing, policy changes, releases"
+ },
+ {
+  "name": "C: packaging",
+  "description": "Installation and packaging of Black"
+ },
+ {
+  "name": "C: parser",
+  "description": "How we parse code. Or fail to parse it."
+ },
+ {
+  "name": "C: performance",
+  "description": "Black is too slow. Or too fast."
+ },
+ {
+  "name": "C: preview style",
+  "description": "Issues with the preview and unstable style. Add the name of the responsible feature in the title."
+ },
+ {
+  "name": "C: target version",
+  "description": "Related to --target-version, e.g. autodetection"
+ },
+ {
+  "name": "C: unstable formatting",
+  "description": "Formatting changed on the second pass"
+ },
+ {
+  "name": "C: vim",
+  "description": "Vim plugin"
+ },
+ {
+  "name": "F: comments",
+  "description": "The syntactic kind. Not in the language grammar, always on our minds. Best bugs."
+ },
+ {
+  "name": "F: docstrings",
+  "description": "How we format docstrings"
+ },
+ {
+  "name": "F: empty lines",
+  "description": "Wasting vertical space efficiently."
+ },
+ {
+  "name": "F: fmtoff",
+  "description": "fmt: off implementation"
+ },
+ {
+  "name": "F: fmtskip",
+  "description": "fmt: skip implementation"
+ },
+ {
+  "name": "F: linebreak",
+  "description": "How should we split up lines?"
+ },
+ {
+  "name": "F: linetoolong",
+  "description": "Black makes our lines too long"
+ },
+ {
+  "name": "F: parentheses",
+  "description": "Too many parentheses, not enough parentheses, and so on."
+ },
+ {
+  "name": "F: strings",
+  "description": "Related to our handling of strings"
+ },
+ {
+  "name": "F: symmetry",
+  "description": "Fixing this would require Black to understand symmetry."
+ },
+ {
+  "name": "F: trailing comma",
+  "description": "Full of magic"
+ },
+ {
+  "name": "R: duplicate",
+  "description": "This issue or pull request already exists"
+ },
+ {
+  "name": "R: invalid",
+  "description": "This issue / pull request doesn't seem right"
+ },
+ {
+  "name": "R: not a bug",
+  "description": "This is deliberate behavior of Black."
+ },
+ {
+  "name": "R: outdated",
+  "description": "Resolved or not relevant anymore."
+ },
+ {
+  "name": "R: rejected",
+  "description": "This will not be worked on"
+ },
+ {
+  "name": "S: accepted",
+  "description": "The changes in this design / enhancement issue have been accepted and can be implemented"
+ },
+ {
+  "name": "S: awaiting response",
+  "description": "Waiting for futher information from OP"
+ },
+ {
+  "name": "S: blocked",
+  "description": "A decision or another issue needs to be made/resolved before this can be worked on (more)."
+ },
+ {
+  "name": "S: needs discussion",
+  "description": "Needs further hashing out before ready for implementation (on desirability, feasibility, etc.)"
+ },
+ {
+  "name": "S: needs repro",
+  "description": "Needs a functional reproduction"
+ },
+ {
+  "name": "S: up for grabs",
+  "description": "(PR only) Available for anyone to work on as the PR author is busy or unreachable."
+ },
+ {
+  "name": "T: bug",
+  "description": "Something isn't working"
+ },
+ {
+  "name": "T: documentation",
+  "description": "Improvements to the docs (e.g. new topic, correction, etc)"
+ },
+ {
+  "name": "T: enhancement",
+  "description": "New feature or request"
+ },
+ {
+  "name": "T: style",
+  "description": "What do we want Blackened code to look like?"
+ },
+ {
+  "name": "T: user support",
+  "description": "OP looking for assistance or answers to a question"
+ },
+ {
+  "name": "ci: build all wheels",
+  "description": ""
+ },
+ {
+  "name": "ci: fuzz error",
+  "description": ""
+ },
+ {
+  "name": "ci: skip news",
+  "description": "Pull requests that don't need a changelog entry."
+ },
+ {
+  "name": "good first issue",
+  "description": "Good for newcomers"
+ },
+ {
+  "name": "good second issue",
+  "description": ""
+ },
+ {
+  "name": "hacktoberfest-accepted",
+  "description": ""
+ },
+ {
+  "name": "help wanted",
+  "description": "Extra attention is needed"
+ },
+ {
+  "name": "spam / ai",
+  "description": ""
+ }
+]

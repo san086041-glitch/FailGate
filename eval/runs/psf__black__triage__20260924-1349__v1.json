@@ -1,0 +1,3604 @@
+{
+ "config": {
+  "repo": "psf/black",
+  "per_class": 40,
+  "seed": 42,
+  "prompt_version": "1",
+  "model": "deepseek-flash",
+  "concurrency": 6
+ },
+ "started_at": "2026-09-24T13:49:35.717126Z",
+ "finished_at": "2026-09-24T13:53:50.936940Z",
+ "corpus_size": 2822,
+ "population": {
+  "T: bug": 1186,
+  "T: documentation": 114,
+  "T: enhancement": 352,
+  "T: style": 390,
+  "T: user support": 36
+ },
+ "labels_fingerprint": "6dae5c1255b6",
+ "records": [
+  {
+   "issue": 46,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Extra space in kwarg unpacking",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.001133,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 49,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Space before method brackets for built-in functions",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: parser",
+    "T: bug"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.0008190000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 400,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Formatting error",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: unstable formatting",
+    "T: bug"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000335,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 970,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Parse error found with Hypothesmith",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: parser",
+    "T: bug"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.000589,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1308,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "black is too lenient on Python syntax",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: invalid code",
+    "T: bug"
+   ],
+   "confidence": 0.78,
+   "slop_score": 0.0,
+   "cost_usd": 0.000789,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1343,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black breaks flake8's E203 by adding space in slicing expression",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: linebreak"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.001177,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1355,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black moves comments to wrong place",
+   "pred_type": "bug",
+   "pred_labels": [
+    "F: comments",
+    "T: bug"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.001018,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1491,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black produces a different output on the second pass on VS Code",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: unstable formatting",
+    "C: integrations",
+    "T: bug"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000373,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1589,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Failure to format documentation with trailing space",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: docstrings",
+    "C: crash"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.001509,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1596,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Crash on concatenated string + comment",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: crash",
+    "F: strings",
+    "T: bug"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.0020280000000000003,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1767,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Vim plugin fails to create virtualenv on NixOS",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: vim",
+    "T: bug"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.001255,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1822,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "\"Format All\" appears to not respect disabled string normalization",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: integrations",
+    "C: configuration",
+    "T: bug"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.001144,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1911,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "INTERNAL ERROR: Black produced different code on the second pass of the formatter",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: unstable formatting",
+    "T: bug"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.001287,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2177,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "SQL String Causing Invalid Syntax Error",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: invalid code",
+    "T: bug",
+    "F: strings"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.004739,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2381,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Internal Error when formatting bracketed return annotations",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: unstable formatting",
+    "F: parentheses"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.0015010000000000002,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2540,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Crash on fmt:skip with comment inside argument list",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: crash",
+    "F: fmtskip",
+    "C: unstable formatting"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.001388,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2658,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Misleading line number in `match` parse error",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: parser",
+    "T: bug"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.000861,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2729,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Code is formatted in a way that exceeds line limit",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: linetoolong"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.000688,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2730,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "python format with black: remove \\ from origin code",
+   "pred_type": "bug",
+   "pred_labels": [
+    "R: not a bug",
+    "F: strings",
+    "T: style"
+   ],
+   "confidence": 0.6,
+   "slop_score": 0.0,
+   "cost_usd": 0.002846,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2843,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "pylint inline comments wrapped to wrong line",
+   "pred_type": "bug",
+   "pred_labels": [
+    "F: comments",
+    "T: style"
+   ],
+   "confidence": 0.75,
+   "slop_score": 0.05,
+   "cost_usd": 0.001043,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2893,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Line too long: Keyword argument",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: linetoolong"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000798,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2952,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Removing multiple unnecessary parenthesizes for for assignment targes is unstable",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: unstable formatting",
+    "C: preview style",
+    "T: bug"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.001464,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3018,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black collapses lists in return type annotations onto one line, regardless of the \"magic\" trailing c",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: trailing comma"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.0008780000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3115,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": " INTERNAL ERROR: Black produced code that is not equivalent to the source",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: unstable formatting",
+    "S: needs repro"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.001637,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3321,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "unreachable code in `parsing.py`",
+   "pred_type": "other",
+   "pred_labels": [
+    "C: cleanup",
+    "C: maintenance"
+   ],
+   "confidence": 0.6,
+   "slop_score": 0.0,
+   "cost_usd": 0.000718,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3622,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black is not respecting max line length with string that use format function",
+   "pred_type": "bug",
+   "pred_labels": [
+    "F: strings"
+   ],
+   "confidence": 0.72,
+   "slop_score": 0.0,
+   "cost_usd": 0.001299,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3677,
+   "year": 2023,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "with statement with type comment",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: parser",
+    "T: bug"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.004211,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3693,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black Formatter Adds Whitespace Before Colon in String Access, Triggering Flake8 Error (E203)",
+   "pred_type": "bug",
+   "pred_labels": [
+    "R: not a bug",
+    "C: integrations"
+   ],
+   "confidence": 0.65,
+   "slop_score": 0.0,
+   "cost_usd": 0.001266,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3706,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black produced different code on the second pass, moving a comment",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: unstable formatting",
+    "T: bug",
+    "F: comments"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.001373,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3924,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Preview style unnecessarily moves comment",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: preview style",
+    "F: comments"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.001336,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4002,
+   "year": 2023,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Internal error: AST change with bytes docstring",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: crash",
+    "T: bug",
+    "F: docstrings"
+   ],
+   "confidence": 0.97,
+   "slop_score": 0.0,
+   "cost_usd": 0.001585,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4088,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black 23.11 cannot parse 3.12 enhanced f-strings",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: parser",
+    "T: bug"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000471,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4151,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "INTERNAL ERROR: Black produced invalid code: f-string: expecting '}'",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: parser"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.05,
+   "cost_usd": 0.0009919999999999998,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4384,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black produced different code on the second pass of the formatter.",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: unstable formatting",
+    "T: bug"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000367,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4399,
+   "year": 2024,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Black fails with `ASTSafetyError` on comment line in return type annotation",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: parser",
+    "F: comments"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.001072,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4405,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "black could more efficiently skip directories listed in .gitignore",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: file collection",
+    "C: performance",
+    "T: enhancement"
+   ],
+   "confidence": 0.78,
+   "slop_score": 0.0,
+   "cost_usd": 0.0010999999999999998,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4629,
+   "year": 2025,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "failed to format a file with a with-statement and a named-expression",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: parser",
+    "T: bug"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.0014039999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4632,
+   "year": 2025,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Parsing the with statement with tuple argument failed",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: parser",
+    "C: crash"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.1,
+   "cost_usd": 0.002582,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4647,
+   "year": 2025,
+   "split": "dev",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "Internal error in the formatting of the if expression within a type annotation",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: crash",
+    "F: trailing comma"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.05,
+   "cost_usd": 0.001377,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4723,
+   "year": 2025,
+   "split": "holdout",
+   "gold_label": "T: bug",
+   "gold_type": "bug",
+   "title": "strange wrapping with long PEP 695 type and long signature",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: linebreak"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.002415,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 39,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Document missing trailing comma on function calls with unpacking on non-3.6 files",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: trailing comma"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.0020670000000000003,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 57,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Document standard input/output handling",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "C: integrations"
+   ],
+   "confidence": 0.62,
+   "slop_score": 0.0,
+   "cost_usd": 0.000576,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 70,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "create Sphinx docs and ReadTheDocs hosting",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.7,
+   "slop_score": 0.0,
+   "cost_usd": 0.00048800000000000004,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 108,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "--safe incompatibility with print statements is poorly explained",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: target version",
+    "S: needs discussion"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.0,
+   "cost_usd": 0.001099,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 392,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Explain why black avoids using `\\` for code organization",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000387,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 652,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Document mapping between command-line options and settings in pyproject.toml",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: configuration"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.00042500000000000003,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 793,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "File watcher empties newly created file when Blackifying in IDEA",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: integrations",
+    "T: bug",
+    "S: needs repro"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.0,
+   "cost_usd": 0.000705,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 851,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "isort config suggested in readme does not seem to be correct",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: integrations"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000939,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1122,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Broken hyperlinks in home page",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: packaging"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.0,
+   "cost_usd": 0.001261,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1272,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "README Ambiguous: \"strict subset of PEP 8\"",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.97,
+   "slop_score": 0.0,
+   "cost_usd": 0.000626,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1624,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Update editor integration docs at readthedocs",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: vim"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000621,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1685,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Documentation for \"Trailing Commas\" no longer matches behavior",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "F: trailing comma"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.00048,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1884,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Tweak docstring of format_str() method",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000594,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1956,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Projects using black",
+   "pred_type": "other",
+   "pred_labels": [],
+   "confidence": 0.85,
+   "slop_score": 0.05,
+   "cost_usd": 0.000539,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2066,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Numeric literal formatting is inconsistent with Black code style document",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "S: needs discussion"
+   ],
+   "confidence": 0.55,
+   "slop_score": 0.0,
+   "cost_usd": 0.001029,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2111,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Convert Docs from recommonmark to MyST-Parser",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: documentation",
+    "C: dependencies",
+    "C: maintenance"
+   ],
+   "confidence": 0.72,
+   "slop_score": 0.05,
+   "cost_usd": 0.000437,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2492,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Document PyInstaller binaries",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: packaging"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.00048499999999999997,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2609,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Docs: auto-hyphens show as tofu in Chromium-based browsers",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.72,
+   "slop_score": 0.0,
+   "cost_usd": 0.00168,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2731,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Mention WingIDE integration with Black.",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: integrations"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.05,
+   "cost_usd": 0.000504,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2840,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Make all documentation files .md",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: documentation",
+    "C: maintenance"
+   ],
+   "confidence": 0.62,
+   "slop_score": 0.0,
+   "cost_usd": 0.00048499999999999997,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2914,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "pylint checks seem to no longer exist?",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000651,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2927,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "legecy install failure",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "S: needs repro"
+   ],
+   "confidence": 0.75,
+   "slop_score": 0.1,
+   "cost_usd": 0.000602,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3015,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Document using pre-commit and how --force-exclude can help ",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: integrations"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000448,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3022,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Black Docker Hub URL as HTML link",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "good first issue"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000341,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3024,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Add documentation for full list of config values for black",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: configuration"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000528,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3131,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Add documentation for format_cell() function. ",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: api"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.00047000000000000004,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3271,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "PyCharm File Watcher documentation missing",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: integrations"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000516,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3517,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Documentary",
+   "pred_type": "other",
+   "pred_labels": [
+    "S: awaiting response"
+   ],
+   "confidence": 0.5,
+   "slop_score": 0.85,
+   "cost_usd": 0.00044,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3565,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Outdated documentation for isort compatibility",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: integrations"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000585,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3736,
+   "year": 2023,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Wrong link in documentation: contributing/index.html",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000617,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3786,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Documentation of current code-style formatting of comment omits mention of hashbangs",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000565,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3812,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "How to separate multiple values",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: configuration"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.05,
+   "cost_usd": 0.000681,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3897,
+   "year": 2023,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Add Python 3.11 as part of the `-t` configuration",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: target version"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.05,
+   "cost_usd": 0.000414,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3960,
+   "year": 2023,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Guide for neovim? I Found one for vim but not sure how to apply it to neovim.",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: vim"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.1,
+   "cost_usd": 0.00067,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4370,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Technical doc for smoother contribution",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "S: needs discussion"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000521,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4374,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "no info about setting by default",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation",
+    "C: configuration"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.05,
+   "cost_usd": 0.00047,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4508,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "E",
+   "pred_type": "other",
+   "pred_labels": [
+    "S: awaiting response"
+   ],
+   "confidence": 0.55,
+   "slop_score": 0.7,
+   "cost_usd": 0.000534,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4788,
+   "year": 2025,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Unreadable code block styles in dark mode documentation",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.000815,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 5043,
+   "year": 2026,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Remove references to the Black playground",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000398,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 5209,
+   "year": 2026,
+   "split": "holdout",
+   "gold_label": "T: documentation",
+   "gold_type": "docs",
+   "title": "Fix broken/incorrect ReadTheDocs link in CONTRIBUTING.md",
+   "pred_type": "docs",
+   "pred_labels": [
+    "T: documentation"
+   ],
+   "confidence": 0.96,
+   "slop_score": 0.0,
+   "cost_usd": 0.000678,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 129,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Plugin installation via Vim plugin managers (Vundle, etc.)",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: vim",
+    "T: enhancement"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.00033,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 359,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Cython grammar support",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.000504,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 445,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "no opinion on tuple assignment parentheses?",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: parentheses",
+    "T: enhancement"
+   ],
+   "confidence": 0.8,
+   "slop_score": 0.0,
+   "cost_usd": 0.0008730000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 683,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Offer option other than pyproject.toml for config",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: configuration",
+    "T: enhancement"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000797,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 772,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "black and isort incompatible with comments in import",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: integrations",
+    "F: comments",
+    "F: empty lines"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.0028339999999999997,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 773,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Do not insert spaces into `#region` comments",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: comments"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000928,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 790,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Should `# fmt: off` be allowed as an inline comment?",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: fmtoff",
+    "T: enhancement",
+    "S: needs discussion"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.001179,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1105,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Move CHANGES out of README.md",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: maintenance",
+    "T: documentation"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000575,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1179,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "vim plugin should support scoped configuration vars",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: vim",
+    "T: enhancement"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.00075,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1274,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "black should remove trailing spaces in comments",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: docstrings"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000602,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1285,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "stdout is not utilized properly (output going to stderr)",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "S: needs discussion"
+   ],
+   "confidence": 0.75,
+   "slop_score": 0.0,
+   "cost_usd": 0.0024460000000000003,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1295,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Add @cooperlees to maintainers",
+   "pred_type": "other",
+   "pred_labels": [
+    "C: maintenance"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000379,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1311,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Output successful executions to stdout and errors messages to stderr",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000536,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1476,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Preserve multiline aspect of a code chunk.",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: linebreak"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.001407,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1538,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Add a BLACKED badge to repos that use black formatter",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.05,
+   "cost_usd": 0.000459,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1544,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "import black, black.check(string)",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: api"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.000667,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1576,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "please add bash-completion (working version included)",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: integrations",
+    "T: enhancement"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.0009,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1603,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Add command :BlackAsync to VIM",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: vim",
+    "T: enhancement"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.05,
+   "cost_usd": 0.000568,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1604,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Provide more helpful error message with python3 -m py_compile ...",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: parser"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.05,
+   "cost_usd": 0.0010530000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1606,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Fix indentation",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: invalid code",
+    "R: not a bug"
+   ],
+   "confidence": 0.6,
+   "slop_score": 0.05,
+   "cost_usd": 0.001045,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1630,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "use `from __future__ import annotations` to imply `--target-version=py37`",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: target version",
+    "F: trailing comma",
+    "T: enhancement"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.0007459999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1817,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Unhelpful error message if you forget `# fmt: on` after a `# fmt: off`",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: crash",
+    "F: fmtoff"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.001156,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2115,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "There is no normal release in PyPI, only pre-releases.",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: packaging",
+    "T: enhancement"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.0008259999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2172,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Support Configuration via tox.ini",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: configuration",
+    "T: enhancement"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.000651,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2601,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Format `type: ignore` comments",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: comments"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000961,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2711,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "coloring to improve visibility",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000481,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2913,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "FEAT: Add `-> None` to any typed `__init__()`",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "S: needs discussion"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000802,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2929,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Add support for user git ignore configuration file.",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: file collection",
+    "T: enhancement",
+    "S: needs discussion"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.0007390000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3027,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Add custom configuration file with precedence over pyproject.toml",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: configuration",
+    "T: enhancement",
+    "S: needs discussion"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000772,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3090,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Have an opinion about spaces around f-string arguments",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: strings",
+    "C: preview style"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.00081,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3144,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Warn (or error) if targeting a higher version of Python than the one Black is running on ",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: target version",
+    "T: enhancement"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.001921,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3373,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Support interactive mode to select changes",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "S: needs discussion"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.001305,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3417,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "FR: Option for outputting the diff + applying the changes.",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000681,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3429,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Additional sanity checks",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: comments",
+    "S: needs discussion"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000545,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4112,
+   "year": 2023,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Request: removing extra spaces in f-string",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: strings",
+    "T: enhancement"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.0006349999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4160,
+   "year": 2024,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Can we add a json schema to complete pyproject.toml's `[tool.black]`?",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: configuration",
+    "T: enhancement"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000526,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4178,
+   "year": 2024,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Deprecate unusual ways to set things in pyproject.toml",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: configuration",
+    "T: enhancement",
+    "S: needs discussion"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000533,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4285,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "GitHub Action: Option to parse version from pyproject.toml",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: integrations"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000428,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4487,
+   "year": 2024,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Support .editorconfig",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: configuration"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.00043000000000000004,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4556,
+   "year": 2025,
+   "split": "dev",
+   "gold_label": "T: enhancement",
+   "gold_type": "feature",
+   "title": "Black support for Databricks notebook formatting - Ignore lines starting with ! or %",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: jupyter"
+   ],
+   "confidence": 0.78,
+   "slop_score": 0.0,
+   "cost_usd": 0.0013830000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 182,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "feature_request(formatting): wrap long strings",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: strings",
+    "F: linetoolong"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000768,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 195,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "flake8 #noqa comments get moved a place where they're ignored",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: comments",
+    "C: parser"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.001362,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 317,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Regular formatting of multiline expressions",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: style",
+    "T: enhancement",
+    "F: parentheses"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.001036,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 792,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Black should chop down long call chains which are not in an assignment",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: unstable formatting"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000742,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 799,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Formatting command line arg lists",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000601,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 902,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Black should enforce zero empty leading lines in function body ",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: empty lines",
+    "T: enhancement",
+    "T: style",
+    "S: needs discussion"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.0,
+   "cost_usd": 0.001764,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 908,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Line breaks for boolean expressions makes code less readable",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: style",
+    "C: preview style",
+    "F: linebreak",
+    "F: parentheses",
+    "S: needs discussion"
+   ],
+   "confidence": 0.78,
+   "slop_score": 0.0,
+   "cost_usd": 0.00093,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 982,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Docstrings should be forced to use triple quotes",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: docstrings",
+    "T: enhancement"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.000593,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1050,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "line-break on conditional assignment",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: linebreak",
+    "F: parentheses"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.0,
+   "cost_usd": 0.000443,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1216,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Style issue with triple quotes",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: style",
+    "F: strings",
+    "C: preview style"
+   ],
+   "confidence": 0.62,
+   "slop_score": 0.0,
+   "cost_usd": 0.001193,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1337,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Adding a comment on its own line in a list comprehension introduces line breaks in the code.",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: comments",
+    "F: linebreak"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000793,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1484,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Matrices(list of lists) should have each row in a new line",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: preview style"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000733,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1494,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Bad URL String rewrite with many line breaks",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: strings",
+    "C: preview style"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.05,
+   "cost_usd": 0.00084,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1563,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Inconsistent slicing formatting",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "T: style",
+    "S: needs discussion"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.0008049999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1709,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Wrapping `[]` braces",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: parentheses",
+    "C: preview style",
+    "T: enhancement"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.05,
+   "cost_usd": 0.001023,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1758,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Black removes indentation in multi-line dict with multi-line value",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: strings"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.001326,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1865,
+   "year": 2020,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Compact multi-line function call",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: parentheses",
+    "F: linebreak",
+    "S: needs discussion"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.0005909999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2189,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Remove empty lines between a function's doc string and body",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: preview style",
+    "F: empty lines",
+    "T: style"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000967,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2355,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "No trailing comma for one argument function definitions",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: trailing comma",
+    "C: preview style"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.001829,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2448,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "@overload definitions in .py files should be formatted as in .pyi files",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: empty lines"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000882,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2482,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Extra parentheses around Enum",
+   "pred_type": "bug",
+   "pred_labels": [
+    "F: parentheses",
+    "T: style"
+   ],
+   "confidence": 0.8,
+   "slop_score": 0.0,
+   "cost_usd": 0.000923,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2687,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Insert parenthesis to get better formatting",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: parentheses",
+    "C: preview style"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.0,
+   "cost_usd": 0.000724,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2737,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Redundant quotes after joining strings",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: strings",
+    "T: enhancement",
+    "C: preview style"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.000767,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2943,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Remove redundant parentheses from generator expression inside function call",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: style",
+    "T: enhancement",
+    "F: parentheses",
+    "C: preview style"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.00074,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2947,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Strange placement of one-digit index in boolean expression",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: parentheses"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.05,
+   "cost_usd": 0.001532,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3089,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Don't insert extra blank lines at the start of an indent",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: style",
+    "F: empty lines",
+    "C: preview style"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000515,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3241,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Convert lists to tuples when safe",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "S: needs discussion"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000559,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3260,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Consider keeping the parens of implicitly concatenated strings when it's a argument of a function ca",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: parentheses",
+    "C: preview style",
+    "T: style",
+    "S: needs discussion"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000587,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3301,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Unnecessary linebreak on 3.10-style Union types.",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: style",
+    "T: bug",
+    "F: linebreak"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.0008799999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3406,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Add newline before indentation decrease, except for continuation of logical blocks",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: preview style",
+    "F: empty lines",
+    "S: needs discussion"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.001033,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3471,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Inheritance list trailing comma",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "F: trailing comma"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.000494,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3494,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Enforce parentheses around star unpacking containers modified with operators",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "T: style",
+    "C: preview style",
+    "F: parentheses"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000816,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3557,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Support Quarto-style comment blocks",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: comments",
+    "C: jupyter",
+    "T: enhancement"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.000572,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3621,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Less whitespace when a function call contains a single list/dict/tuple/string",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "C: preview style",
+    "S: needs discussion"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.0,
+   "cost_usd": 0.000606,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3720,
+   "year": 2023,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Comma at end of assignment changes output with 23.3.0",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "F: trailing comma",
+    "C: unstable formatting"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.001755,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4011,
+   "year": 2023,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Preview: handle more huggable immediately nested parens/brackets",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: enhancement",
+    "T: style",
+    "C: preview style",
+    "F: parentheses",
+    "S: needs discussion"
+   ],
+   "confidence": 0.96,
+   "slop_score": 0.0,
+   "cost_usd": 0.001233,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4249,
+   "year": 2024,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Bug hazard - multiple strings given same indentation",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: strings",
+    "C: preview style",
+    "T: enhancement"
+   ],
+   "confidence": 0.82,
+   "slop_score": 0.0,
+   "cost_usd": 0.000626,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4267,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Imports inside functions should not have an empty line after them",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: empty lines",
+    "T: style",
+    "S: needs discussion",
+    "C: preview style"
+   ],
+   "confidence": 0.78,
+   "slop_score": 0.0,
+   "cost_usd": 0.0004,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4353,
+   "year": 2024,
+   "split": "holdout",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "Long lines that concatenate list comprehensions",
+   "pred_type": "feature",
+   "pred_labels": [
+    "T: style",
+    "C: preview style",
+    "F: linebreak",
+    "F: parentheses"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.00069,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 4523,
+   "year": 2024,
+   "split": "dev",
+   "gold_label": "T: style",
+   "gold_type": null,
+   "title": "`hex_codes_in_unicode_sequences`: restrictions around f-strings are too strict",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: preview style",
+    "F: strings",
+    "T: enhancement"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.00141,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 276,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "I cannot get stdin formatting to work",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: file collection"
+   ],
+   "confidence": 0.62,
+   "slop_score": 0.0,
+   "cost_usd": 0.000677,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 277,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Struggling to run within pycharm",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "C: configuration"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.001038,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 375,
+   "year": 2018,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "The check doesn't accept max lenght of row.",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "S: needs repro",
+    "C: configuration"
+   ],
+   "confidence": 0.75,
+   "slop_score": 0.1,
+   "cost_usd": 0.0014680000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 635,
+   "year": 2018,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Collapsing new lines before on elif/else/except blocks?",
+   "pred_type": "feature",
+   "pred_labels": [
+    "F: empty lines",
+    "T: enhancement",
+    "C: preview style"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.0006249999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 709,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "black conflicts with flake8-docstrings aka pydocstyle",
+   "pred_type": "question",
+   "pred_labels": [
+    "C: integrations",
+    "T: user support"
+   ],
+   "confidence": 0.75,
+   "slop_score": 0.0,
+   "cost_usd": 0.0005729999999999999,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 810,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Include in pyproject.toml work to only use top level directories",
+   "pred_type": "question",
+   "pred_labels": [
+    "C: configuration",
+    "T: user support"
+   ],
+   "confidence": 0.7,
+   "slop_score": 0.0,
+   "cost_usd": 0.000898,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1022,
+   "year": 2019,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "How to not place arguments on their own line?",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.000729,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1196,
+   "year": 2019,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Documentation: Comparison between Black and WPS",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "C: configuration"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.05,
+   "cost_usd": 0.000469,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1242,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "The path python3.7 (from --python=python3.7) does not exist",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.001174,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1282,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "black.vim error when open file under directory site-packages.",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: vim",
+    "T: bug"
+   ],
+   "confidence": 0.85,
+   "slop_score": 0.0,
+   "cost_usd": 0.001317,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 1813,
+   "year": 2020,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "INTERNAL ERROR: Black produced different code on the second pass of the formatter.",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: crash",
+    "C: unstable formatting",
+    "T: bug",
+    "S: needs repro"
+   ],
+   "confidence": 0.92,
+   "slop_score": 0.1,
+   "cost_usd": 0.00074,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2010,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Ignore formatting a nested folder",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "C: configuration"
+   ],
+   "confidence": 0.6,
+   "slop_score": 0.0,
+   "cost_usd": 0.002007,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2059,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Pre-commit fails when setting up the black environment",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: packaging",
+    "T: bug"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.0021780000000000002,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2220,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Add options to toml config file",
+   "pred_type": "question",
+   "pred_labels": [
+    "C: configuration",
+    "T: user support"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.05,
+   "cost_usd": 0.000324,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2240,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "21.5b1: test suite is failing",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: packaging"
+   ],
+   "confidence": 0.75,
+   "slop_score": 0.0,
+   "cost_usd": 0.003265,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2351,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "\"IndexError: list index out of range\" on all files in folder",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: crash",
+    "C: file collection",
+    "T: bug"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.003693,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2352,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Black doesn't format scrapy file on vscode",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "C: integrations"
+   ],
+   "confidence": 0.65,
+   "slop_score": 0.0,
+   "cost_usd": 0.001425,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2353,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Inconsistent dict formatting with optional comma",
+   "pred_type": "question",
+   "pred_labels": [
+    "F: trailing comma"
+   ],
+   "confidence": 0.65,
+   "slop_score": 0.0,
+   "cost_usd": 0.000313,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2383,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Question: Does the code format differ between versions of python 3 (3.7, 3.8, 3.9) ?",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "C: target version"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000578,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2402,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Nested Tuples are not well formatted",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug"
+   ],
+   "confidence": 0.55,
+   "slop_score": 0.0,
+   "cost_usd": 0.0009390000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2438,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "When I use the action of github, there will be incomprehensible problems when installing black",
+   "pred_type": "question",
+   "pred_labels": [
+    "C: target version",
+    "T: user support"
+   ],
+   "confidence": 0.72,
+   "slop_score": 0.1,
+   "cost_usd": 0.00098,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2456,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Why there is that blank line?",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "F: empty lines"
+   ],
+   "confidence": 0.6,
+   "slop_score": 0.2,
+   "cost_usd": 0.000668,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2606,
+   "year": 2021,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "`skip_magic_trailing_comma = true` config file support",
+   "pred_type": "feature",
+   "pred_labels": [
+    "C: configuration",
+    "T: enhancement"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.00059,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2629,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "`target-version = ['py310']` does not work in pyproject.toml",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: configuration",
+    "R: invalid"
+   ],
+   "confidence": 0.6,
+   "slop_score": 0.0,
+   "cost_usd": 0.0014429999999999998,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2732,
+   "year": 2021,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "pre-commit hook fails to format code with the Structural Pattern Matching",
+   "pred_type": "bug",
+   "pred_labels": [
+    "T: bug",
+    "C: parser",
+    "C: target version"
+   ],
+   "confidence": 0.9,
+   "slop_score": 0.0,
+   "cost_usd": 0.001801,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2911,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Black and pip issues",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support"
+   ],
+   "confidence": 0.86,
+   "slop_score": 0.05,
+   "cost_usd": 0.002195,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 2994,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "610faff656c4cfcbb4a3__mypyc",
+   "pred_type": "question",
+   "pred_labels": [
+    "C: packaging",
+    "T: user support"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000493,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3101,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "where can users get latest version of blib2to3?",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "C: dependencies"
+   ],
+   "confidence": 0.93,
+   "slop_score": 0.0,
+   "cost_usd": 0.000428,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3103,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "help to adapte code from 2020 to new Black",
+   "pred_type": "question",
+   "pred_labels": [
+    "T: user support",
+    "C: target version"
+   ],
+   "confidence": 0.75,
+   "slop_score": 0.0,
+   "cost_usd": 0.001167,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3104,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "is library 'attr' still needed?",
+   "pred_type": "question",
+   "pred_labels": [
+    "C: dependencies"
+   ],
+   "confidence": 0.72,
+   "slop_score": 0.3,
+   "cost_usd": 0.000503,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3172,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Support named expression assignement",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: parser",
+    "T: bug"
+   ],
+   "confidence": 0.75,
+   "slop_score": 0.0,
+   "cost_usd": 0.001073,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3318,
+   "year": 2022,
+   "split": "holdout",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Vim plugin formatter fails with error",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: vim",
+    "C: integrations",
+    "T: bug"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.000864,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3335,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "No matching distribution found for hatchling>=1.8.0",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: packaging",
+    "C: target version",
+    "T: bug"
+   ],
+   "confidence": 0.78,
+   "slop_score": 0.0,
+   "cost_usd": 0.002751,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3431,
+   "year": 2022,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Formatting is slow using VS Code",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: performance",
+    "C: integrations",
+    "S: needs repro"
+   ],
+   "confidence": 0.72,
+   "slop_score": 0.0,
+   "cost_usd": 0.0009400000000000001,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3544,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "Does not install on alpine",
+   "pred_type": "bug",
+   "pred_labels": [
+    "C: packaging",
+    "T: bug"
+   ],
+   "confidence": 0.88,
+   "slop_score": 0.0,
+   "cost_usd": 0.000766,
+   "cached": false,
+   "error": null
+  },
+  {
+   "issue": 3814,
+   "year": 2023,
+   "split": "dev",
+   "gold_label": "T: user support",
+   "gold_type": "question",
+   "title": "How can I set skip-string-normalization via config files?",
+   "pred_type": "question",
+   "pred_labels": [
+    "C: configuration",
+    "T: user support"
+   ],
+   "confidence": 0.95,
+   "slop_score": 0.0,
+   "cost_usd": 0.00038199999999999996,
+   "cached": false,
+   "error": null
+  }
+ ],
+ "cost_usd": 0.194,
+ "model_calls": 382,
+ "cached_calls": 10
+}

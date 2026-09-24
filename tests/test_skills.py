@@ -88,7 +88,7 @@ async def test_triage_filters_labels_and_exposes_type_fact(ctx):
     assert result.output.dropped_labels == ["not-a-real-label"]
     assert result.facts["type"] == "bug"
     system = ctx.fake.requests[0]["messages"][0]["content"]
-    assert '"good first issue"' in system  # 标签表被渲染进提示词
+    assert "- `good first issue`" in system  # 标签表被渲染进提示词（v2：每行一个）
     user_msg = ctx.fake.requests[0]["messages"][1]["content"]
     assert "has_traceback" in user_msg
     assert "Write `rationale` in English." in user_msg  # intake 未标明中文时用英文
@@ -98,3 +98,14 @@ async def test_skill_error_propagates(ctx):
     ctx.fake.queue("intake", *[httpx.Response(400, text="bad") for _ in range(1)])
     with pytest.raises(Exception, match="HTTP 400"):
         await IntakeSkill().run(ctx)
+
+
+def test_label_formats_by_prompt_version(ctx):
+    from warden.skills.triage import format_labels
+
+    ctx.labels = ("T: style", "bug")
+    ctx.label_descriptions = {"T: style": "What do we want Blackened code to look like?"}
+    assert format_labels(ctx, "1") == '["T: style", "bug"]'
+    v2 = format_labels(ctx, "2")
+    assert "- `T: style`：What do we want Blackened code to look like?" in v2
+    assert "- `bug`" in v2  # 没有说明的标签只列名字

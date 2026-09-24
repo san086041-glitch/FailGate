@@ -72,6 +72,9 @@ class GitHubRest:
         r.raise_for_status()
         return sha, r.content
 
+    async def list_labels(self, full_name: str) -> list[dict[str, Any]]:
+        return [x async for x in self._paginate(f"/repos/{full_name}/labels", {"per_page": 100})]
+
     async def list_comments(self, full_name: str, number: int) -> list[dict[str, Any]]:
         params = {"per_page": 100}
         url = f"/repos/{full_name}/issues/{number}/comments"
