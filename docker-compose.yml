@@ -1,0 +1,14 @@
+# M0：只有 api（worker 在同一进程内）+ SQLite 卷。
+# M1 起加入 worker、scheduler、postgres(pgvector)、redis；M2 起加入 egress 代理和镜像缓存（见技术方案第 20 节）。
+services:
+  api:
+    build: .
+    ports: ["8080:8080"]
+    env_file: .env
+    environment:
+      WARDEN_DB_URL: sqlite+aiosqlite:////data/warden.db
+    volumes:
+      - warden-data:/data
+
+volumes:
+  warden-data:
