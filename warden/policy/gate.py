@@ -1,7 +1,9 @@
 """PolicyGate：写操作先落成 Effect 记录，再由执行器按模式执行。
 
 M0 只负责记录：影子模式 → shadowed；正常模式 → pending。
-M1 增加 EffectExecutor，取出 pending 记录调用 PlatformWriter 执行，并接入预算与审批。
+EffectExecutor 取出 pending 记录调用 PlatformWriter 执行。
+打标签还要过一道标签策略（labels.py）：结论 / 进度类标签和不在仓库白名单里的标签不会自动打上，
+被拦下的写进 payload 留档；全部被拦时这条 Effect 标为 blocked，永远不会执行。
 """
 
 from __future__ import annotations
@@ -13,6 +15,8 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from warden.db import Case, Effect, Repo
+
+from .labels import filter_auto_labels
 
 _STATUS_BY_MODE = {"shadow": "shadowed", "live": "pending"}
 
@@ -36,6 +40,11 @@ class PolicyGate:
         action: str,
         payload: dict[str, Any],
     ) -> Effect:
+        status = _STATUS_BY_MODE.get(repo.mode, "skipped")
+        if action == "set_labels":
+            payload, all_blocked = _label_policy(repo, payload)
+            if all_blocked:
+                status = "blocked"
         key = effect_key(case.id, action, payload)
         existing = await session.get(Effect, key)
         if existing is not None:
@@ -46,7 +55,17 @@ class PolicyGate:
             action=action,
             payload=payload,
             mode=repo.mode,
-            status=_STATUS_BY_MODE.get(repo.mode, "skipped"),
+            status=status,
         )
         session.add(effect)
         return effect
+
+
+def _label_policy(repo: Repo, payload: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    """按标签策略过滤要自动打的标签；被拦下的写进 payload 留档。返回 (新 payload, 是否全部被拦)。"""
+    wanted = list(payload.get("add", []))
+    kept, blocked = filter_auto_labels(wanted, repo.auto_labels)
+    out = {**payload, "add": kept}
+    if blocked:
+        out["blocked"] = blocked
+    return out, bool(wanted) and not kept

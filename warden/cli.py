@@ -591,6 +591,51 @@ def repo_mode(
     typer.echo(f"{repo}: {old} → {mode}")
 
 
+@repo_app.command("labels")
+def repo_labels(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    allow: Annotated[
+        list[str] | None, typer.Option("--allow", help="白名单模式（可多次），如 'T: *'")
+    ] = None,
+    clear: Annotated[bool, typer.Option(help="清空白名单（只拦结论 / 进度类标签）")] = False,
+) -> None:
+    """查看或设置自动打标签的白名单，并列出仓库每个标签能不能被自动打上。"""
+    from warden.platforms.github_rest import GitHubRest
+    from warden.policy.labels import filter_auto_labels
+
+    settings = Settings()
+
+    async def run() -> tuple[list[str] | None, list[str]]:
+        db = Database(settings.warden_db_url)
+        await db.create_all()
+        async with db.session() as s, s.begin():
+            r = await s.scalar(
+                select(Repo).where(Repo.platform == "github", Repo.full_name == repo)
+            )
+            if r is None:
+                r = Repo(platform="github", full_name=repo, mode=settings.default_repo_mode)
+                s.add(r)
+            if clear:
+                r.auto_labels = None
+            elif allow:
+                r.auto_labels = list(allow)
+            patterns = r.auto_labels
+        await db.dispose()
+        gh = GitHubRest(settings.github_token)
+        try:
+            names = [x["name"] for x in await gh.list_labels(repo)]
+        finally:
+            await gh.aclose()
+        return patterns, names
+
+    patterns, names = asyncio.run(run())
+    typer.echo(f"白名单：{patterns if patterns else '未设置（只拦结论 / 进度类标签）'}")
+    kept, blocked = filter_auto_labels(names, patterns)
+    typer.echo(f"可以自动打（{len(kept)}）：{', '.join(kept)}")
+    for name, why in blocked.items():
+        typer.echo(f"  不会自动打：{name}  ← {why}")
+
+
 github_app_cli = typer.Typer(help="GitHub App：检查配置和安装情况", no_args_is_help=True)
 app.add_typer(github_app_cli, name="github")
 

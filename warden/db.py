@@ -30,6 +30,8 @@ class Repo(Base):
     mode: Mapped[str] = mapped_column(String(16), default="shadow")
     # GitHub App 的安装 ID：用它换安装令牌。从 webhook 里带过来，随事件更新
     installation_id: Mapped[int | None] = mapped_column(BigInteger, default=None)
+    # 自动打标签的白名单（通配符模式，如 ["T: *", "C: *"]）；None = 不限制，只拦结论 / 进度类标签
+    auto_labels: Mapped[list[str] | None] = mapped_column(JSON, default=None)
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 
