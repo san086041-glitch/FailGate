@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from warden.db import Database, IssueDoc, Repo
+from warden.index.embed import Embedder
 from warden.index.store import IssueIndex
 from warden.index.trace import signature
 from warden.llm import LLMClient
@@ -47,6 +48,8 @@ class RunConfig(BaseModel):
     high: float = 0.85
     low: float = 0.5
     judge: bool = True
+    # 是否启用向量召回通道（需要配置 EMBED_*）；会改变候选列表，所以也写进判断的缓存键
+    semantic: bool = False
     # 对照样本至少要有这么多更早的 issue 可比较，否则"没找到重复"没有意义
     min_history: int = 50
     concurrency: int = 6
@@ -109,6 +112,7 @@ async def run_dedup_replay(
     *,
     cache_root: Path,
     progress: Callable[[str], None] = print,
+    embedder: Embedder | None = None,
 ) -> RunResult:
     async with db.session() as s:
         repo = await s.scalar(select(Repo).where(Repo.full_name == cfg.repo))
@@ -117,7 +121,9 @@ async def run_dedup_replay(
         docs = list((await s.scalars(select(IssueDoc).where(IssueDoc.repo_id == repo.id))).all())
     by_num = {d.number: d for d in docs}
     clusters = gold.clusters()
-    index = IssueIndex(db)
+    if cfg.semantic and embedder is None:
+        raise RuntimeError("semantic=True 需要传入 embedder（配置 EMBED_*）")
+    index = IssueIndex(db, embedder if cfg.semantic else None)
     fingerprint = corpus_fingerprint(docs)
     result = RunResult(
         config=cfg,
@@ -222,8 +228,14 @@ async def run_dedup_replay(
                     mode="json"
                 )
                 ctx.prior["triage"] = {"type": "bug"}
-                dkey = ("dedup", dedup_skill.version, cfg.model, str(d.number),
-                        _content_hash(d), fingerprint, str(cfg.recall_k))
+                dkey: tuple[str, ...] = (
+                    "dedup", dedup_skill.version, cfg.model, str(d.number),
+                    _content_hash(d), fingerprint, str(cfg.recall_k),
+                )
+                if cfg.semantic:
+                    # 候选列表变了，不能复用只用词法召回时的判断；只在开启时追加，
+                    # 保证已有的词法评测缓存仍然有效
+                    dkey += (f"sem:{embedder.model if embedder else ''}",)
                 hit = cache.get(*dkey)
                 if hit is None:
                     r = await dedup_skill.run(ctx)

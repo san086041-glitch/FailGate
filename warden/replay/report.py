@@ -55,6 +55,8 @@ def render_report(
         f"| 端到端召回率（含召回阶段的遗漏） | {_pct(current.recall)} | {_ci(current.recall_ci)} |",
         f"| 召回命中时的判断召回率 | {_pct(current.recall_given_recalled)} | |",
         f"| 正确 issue 出现在评论里的比例 | {_pct(current.surfaced_rate)} | |",
+        f"| 模型重新打分后排进前 5（方案里的\"查重 recall@5\"，目标 ≥ 70%） "
+        f"| {_pct(current.rerank_top5_rate)} | {_ci(current.rerank_top5_ci)} |",
         "",
         f"正样本 {current.n_pos}：判对 {current.tp}（另有 {current.tp_alt} 个指向了标准答案之外、"
         f"经复核确认的同一根因 issue），指错目标 {current.wrong_target}"

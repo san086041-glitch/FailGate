@@ -261,3 +261,52 @@ async def test_bug_summary_still_posted_once(harness: Harness):
     assert "回答" not in next(
         e for e in case["effects"] if e["action"] == "upsert_summary"
     )["payload"]["body"]
+
+
+async def test_doc_index_semantic_channel_bridges_vocabulary_gap(tmp_path):
+    import json as _json
+
+    import httpx
+
+    from warden.db import Database
+    from warden.index.embed import Embedder
+
+    def vec(text: str) -> list[float]:
+        # 玩具 embedding："comma" 相关的文本指向同一个方向
+        return [1.0, 0.0] if "comma" in text.lower() else [0.0, 1.0]
+
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        inputs = _json.loads(request.content)["input"]
+        calls.append(len(inputs))
+        return httpx.Response(
+            200, json={"data": [{"index": i, "embedding": vec(t)} for i, t in enumerate(inputs)]}
+        )
+
+    db = Database(f"sqlite+aiosqlite:///{(tmp_path / 'd.db').as_posix()}")
+    await db.create_all()
+    async with db.session() as s, s.begin():
+        repo = Repo(platform="github", full_name="o/r", mode="shadow")
+        s.add(repo)
+        await s.flush()
+        await DocIndex(db).replace(s, repo.id, "o/r", "sha", [
+            Chunk("docs/style.md", "Style › Trailing commas", "trailing-commas",
+                  "A magic trailing comma makes Black explode the collection."),
+            Chunk("docs/usage.md", "Usage › Line length", "line-length",
+                  "Use the --line-length option to change the maximum line length."),
+        ])
+        repo_id = repo.id
+    query = "Why does an optional ',' at the end change the dict formatting?"
+    lexical = await DocIndex(db).search(repo_id, query, k=1)
+    assert not lexical or lexical[0].path != "docs/style.md"  # 字面上对不上
+
+    emb = Embedder("http://e.test", "k", "m", transport=httpx.MockTransport(handler))
+    semantic_index = DocIndex(db, emb)
+    hits = await semantic_index.search(repo_id, query + " comma", k=1)
+    assert hits[0].path == "docs/style.md"
+    first = len(calls)
+    await semantic_index.search(repo_id, "comma again", k=1)
+    assert calls[first:] == [1]  # 文档向量已经落库，之后只算查询向量
+    await emb.aclose()
+    await db.dispose()

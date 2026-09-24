@@ -166,8 +166,12 @@ async def test_semantic_channel_and_graceful_failure(index_env):
     assert results[0].number == 1 and "semantic" in results[0].ranks
     await embedder.aclose()
 
+    async def no_sleep(_: float) -> None:
+        return None
+
     broken = Embedder(
-        "http://e.test", "k", "m", transport=httpx.MockTransport(lambda r: httpx.Response(500))
+        "http://e.test", "k", "m", transport=httpx.MockTransport(lambda r: httpx.Response(500)),
+        sleep=no_sleep,
     )
     fallback = await IssueIndex(db, broken).search(
         repo_id, title="数据加载失败", body="", trace=None, exclude_number=99, before=None, k=5,
@@ -246,3 +250,24 @@ async def test_template_line_filter_is_opt_in(index_env):
     await opt_in.search(repo_id, **kw)
     assert next(iter(default._lexical_cache.values())).boilerplate == frozenset()
     assert "**describe the bug**" in next(iter(opt_in._lexical_cache.values())).boilerplate
+
+
+async def test_embedder_retries_rate_limit_then_succeeds():
+    calls: list[int] = []
+    waits: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) == 1:
+            return httpx.Response(429, headers={"retry-after": "3"})
+        if len(calls) == 2:
+            return httpx.Response(503)
+        return httpx.Response(200, json={"data": [{"index": 0, "embedding": [1.0, 0.0]}]})
+
+    async def sleep(s: float) -> None:
+        waits.append(s)
+
+    e = Embedder("http://e.test", "k", "m", transport=httpx.MockTransport(handler), sleep=sleep)
+    assert await e.embed(["x"]) == [[1.0, 0.0]]
+    assert waits == [3.0, 4.0]  # 先按 retry-after，再指数退避
+    await e.aclose()

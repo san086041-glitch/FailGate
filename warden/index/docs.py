@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import re
 import tarfile
 from collections.abc import Sequence
@@ -22,7 +23,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from warden.db import Database, DocChunk
 
 from .bm25 import BM25
+from .embed import Embedder, cosine
+from .store import CHANNEL_WEIGHTS, DEFAULT_RRF_K, rrf
 from .text import tokenize
+
+log = logging.getLogger(__name__)
 
 MAX_CHUNK_CHARS = 1500
 MIN_CHUNK_CHARS = 40
@@ -160,8 +165,15 @@ class DocHit:
 
 
 class DocIndex:
-    def __init__(self, db: Database) -> None:
+    """文档块检索：BM25（词法）+ 可选的向量通道（语义），用 RRF 融合，和查重的召回同一套做法。
+
+    向量通道解决"用词不同"：用户写 "optional comma"，文档叫 "magic trailing comma"。
+    向量第一次检索时按需计算并存进 doc_chunks.embedding，之后复用。
+    """
+
+    def __init__(self, db: Database, embedder: Embedder | None = None) -> None:
         self.db = db
+        self.embedder = embedder
         # 仓库 → (语料版本, 文档块, BM25)。重建索引后版本号变化，自动失效
         self._cache: dict[int, tuple[tuple[int, int], list[DocChunk], BM25]] = {}
 
@@ -201,13 +213,49 @@ class DocIndex:
             cached = (version, rows, BM25([_chunk_tokens(r) for r in rows]))
             self._cache[repo_id] = cached
         _, rows, bm25 = cached
-        scores = bm25.scores(tokenize(query))
-        top = sorted(range(len(rows)), key=lambda i: -scores[i])[:k]
+
+        lexical = bm25.scores(tokenize(query))
+        rankings = {"lexical": _ranked(lexical)}
+        if self.embedder is not None:
+            try:
+                vectors = await self._vectors(rows)
+                (qv,) = await self.embedder.embed([query[:MAX_EMBED_CHARS]])
+                rankings["semantic"] = _ranked([cosine(qv, v) for v in vectors])
+            except Exception:
+                # 向量通道是增强项，失败时退回纯词法
+                log.exception("doc semantic channel failed; falling back to BM25")
+        fused = rrf(rankings, DEFAULT_RRF_K, CHANNEL_WEIGHTS)
+        top = sorted(fused, key=lambda i: fused[i], reverse=True)[:k]
         return [
-            DocHit(rows[i].id, rows[i].path, rows[i].heading, rows[i].text, rows[i].url, scores[i])
+            DocHit(rows[i].id, rows[i].path, rows[i].heading, rows[i].text, rows[i].url, fused[i])
             for i in top
-            if scores[i] > 0
         ]
+
+    async def _vectors(self, rows: list[DocChunk]) -> list[list[float]]:
+        assert self.embedder is not None
+        missing = [r for r in rows if not r.embedding]
+        for start in range(0, len(missing), 64):
+            batch = missing[start : start + 64]
+            vecs = await self.embedder.embed([_embed_text(r) for r in batch])
+            async with self.db.session() as s, s.begin():
+                for r, v in zip(batch, vecs, strict=True):
+                    r.embedding = v
+                    await s.merge(r)
+        return [r.embedding or [] for r in rows]
+
+
+MAX_EMBED_CHARS = 4000
+CHANNEL_DEPTH = 50
+
+
+def _ranked(values: list[float]) -> list[int]:
+    return sorted((i for i, v in enumerate(values) if v > 0), key=lambda i: -values[i])[
+        :CHANNEL_DEPTH
+    ]
+
+
+def _embed_text(row: DocChunk) -> str:
+    return f"{row.path} {row.heading}\n{row.text}"[:MAX_EMBED_CHARS]
 
 
 def _chunk_tokens(row: DocChunk) -> list[str]:

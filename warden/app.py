@@ -104,7 +104,7 @@ class Warden:
         self.gate = PolicyGate()
         self.embedder = build_embedder(settings, embed_transport)
         self.index = IssueIndex(self.db, self.embedder)
-        self.docs = DocIndex(self.db)
+        self.docs = DocIndex(self.db, self.embedder)
         # 没有 App 时的只读后备：用 GITHUB_TOKEN（或匿名）读公开仓库的评论
         self.rest = GitHubRest(
             settings.github_token, base_url=settings.github_api_url, transport=rest_transport

@@ -111,6 +111,8 @@ class DocChunk(Base):
     # 带 commit SHA 的永久链接（+ 标题锚点）
     url: Mapped[str] = mapped_column(String(1024))
     commit_sha: Mapped[str] = mapped_column(String(64))
+    # 向量（可选）：第一次语义检索时按需计算
+    embedding: Mapped[list[float] | None] = mapped_column(JSON, default=None)
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 

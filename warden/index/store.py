@@ -5,7 +5,8 @@
 - trace    报错堆栈签名相似度（只有双方都有堆栈时才参与）
 - semantic 向量余弦相似度（配置了 embedding 接口才启用）
 
-融合用 RRF（Reciprocal Rank Fusion）：score(d) = Σ_c 1 / (k + rank_c(d))，k = 60。
+融合用 RRF（Reciprocal Rank Fusion）：score(d) = Σ_c w_c / (k + rank_c(d))，
+权重和 k 见 CHANNEL_WEIGHTS。
 不同通道的原始分数量纲完全不同（BM25 无上界、相似度在 0–1），直接加权求和需要先归一化，
 而且权重很难调；RRF 只用名次，天然免归一化，对某一路的异常高分也不敏感。
 """
@@ -17,8 +18,9 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import defer
 
 from warden.db import Database, IssueDoc
 from warden.skills.intake import extract_traceback
@@ -60,13 +62,25 @@ def doc_tokens(title: str, body: str, boilerplate: frozenset[str] = frozenset())
     return t + t + tokenize(strip_boilerplate(body, boilerplate)[:MAX_BODY_CHARS])
 
 
-def rrf(rankings: Mapping[str, Sequence[int]], k: int = 60) -> dict[int, float]:
-    """rankings：通道名 → 按相关性排好序的文档下标列表。"""
+def rrf(
+    rankings: Mapping[str, Sequence[int]],
+    k: int = 60,
+    weights: Mapping[str, float] | None = None,
+) -> dict[int, float]:
+    """rankings：通道名 → 按相关性排好序的文档下标列表；weights：通道权重，默认都是 1。"""
     fused: dict[int, float] = {}
-    for ranked in rankings.values():
+    for name, ranked in rankings.items():
+        w = (weights or {}).get(name, 1.0)
         for rank, idx in enumerate(ranked, start=1):
-            fused[idx] = fused.get(idx, 0.0) + 1.0 / (k + rank)
+            fused[idx] = fused.get(idx, 0.0) + w / (k + rank)
     return fused
+
+
+# 融合参数：在 psf/black 221 对真实重复的开发集（117 对）上选出，留出集（104 对）上
+# recall@5 35% → 59%、@20 56% → 84%（词法+堆栈 → 加上语义）。语义通道明显最强，
+# 等权融合反而会被词法拖累；k 取 10 让靠前的名次更有分量。见 docs/adr/0007
+CHANNEL_WEIGHTS = {"lexical": 1.0, "trace": 1.0, "semantic": 2.0}
+DEFAULT_RRF_K = 10
 
 
 @dataclass
@@ -80,7 +94,7 @@ class IssueIndex:
         self,
         db: Database,
         embedder: Embedder | None = None,
-        rrf_k: int = 60,
+        rrf_k: int = DEFAULT_RRF_K,
         *,
         strip_template_lines: bool = False,
     ) -> None:
@@ -95,6 +109,8 @@ class IssueIndex:
         # 语料版本 → 已建好的词法索引。分词（及可选的模板行学习）占一次查询的大头
         # （2800 个 issue 约 440ms），语料不变时直接复用；有 issue 新增或修改时版本号变化，自动重建
         self._lexical_cache: dict[tuple[int, ...], _LexicalIndex] = {}
+        # 仓库 → (语料版本, 每个 issue 的向量)
+        self._vector_cache: dict[int, tuple[tuple[int, ...], list[list[float] | None]]] = {}
 
     async def upsert(
         self,
@@ -138,7 +154,13 @@ class IssueIndex:
         k: int,
     ) -> list[Recalled]:
         async with self.db.session() as s:
-            q = select(IssueDoc).where(IssueDoc.repo_id == repo_id).order_by(IssueDoc.id)
+            # 向量列很大（每个 issue 1024 个浮点数的 JSON），主查询不加载，走 _embeddings 的内存缓存
+            q = (
+                select(IssueDoc)
+                .options(defer(IssueDoc.embedding))
+                .where(IssueDoc.repo_id == repo_id)
+                .order_by(IssueDoc.id)
+            )
             docs = list((await s.scalars(q)).all())
         # 候选可见性：排除自己；只和"当时已经存在"的 issue 比较（回放评测时防止用到未来的 issue）。
         # 索引本身建在全量语料上并缓存，过滤只作用在候选上
@@ -169,7 +191,7 @@ class IssueIndex:
 
         if self.embedder is not None:
             try:
-                vectors = await self._embeddings(docs)
+                vectors = await self._embeddings(repo_id, docs)
                 (qv,) = await self.embedder.embed([f"{title}\n{body[:MAX_BODY_CHARS]}"])
                 cos = [cosine(qv, v) if v else 0.0 for v in vectors]
                 self._add_channel("semantic", masked(cos), rankings, scores, min_score=1e-9)
@@ -177,7 +199,7 @@ class IssueIndex:
                 # 向量通道是增强项，失败时降级为其余通道，不影响查重
                 log.exception("semantic channel failed; falling back to lexical/trace")
 
-        fused = rrf(rankings, self.rrf_k)
+        fused = rrf(rankings, self.rrf_k, CHANNEL_WEIGHTS)
         top = sorted(fused, key=lambda i: fused[i], reverse=True)[:k]
         return [
             Recalled(
@@ -196,11 +218,9 @@ class IssueIndex:
         ]
 
     def _lexical(self, repo_id: int, docs: list[IssueDoc]) -> _LexicalIndex:
-        # 语料版本：文档数 + id 之和 + 最后更新时间；有 issue 新增或修改就会变。
         # 取舍：IDF 等统计量来自全量语料，回放时会包含"未来 issue"的词频统计
         # （候选本身仍严格按时间过滤）。这点泄漏只影响词的权重，换来的是整轮回放只需建一次索引
-        newest = max(d.updated_at for d in docs).timestamp()
-        key = (repo_id, len(docs), sum(d.id for d in docs), int(newest * 1e6))
+        key = _corpus_version(repo_id, docs)
         cached = self._lexical_cache.get(key)
         if cached is None:
             bp = (
@@ -230,9 +250,24 @@ class IssueIndex:
             rankings[name] = ranked
             scores[name] = {i: values[i] for i in ranked}
 
-    async def _embeddings(self, docs: list[IssueDoc]) -> list[list[float] | None]:
+    async def _embeddings(self, repo_id: int, docs: list[IssueDoc]) -> list[list[float] | None]:
+        """语料版本不变时直接用内存里的向量；否则从库里读一次，缺的再调用接口补齐。
+
+        以前每次检索都把全部向量从 SQLite 读出来再解析 JSON，psf/black 221 次检索要 6 分钟。
+        """
         assert self.embedder is not None
-        missing = [d for d in docs if not d.embedding]
+        version = _corpus_version(repo_id, docs)
+        hit = self._vector_cache.get(repo_id)
+        if hit is not None and hit[0] == version:
+            return hit[1]
+        async with self.db.session() as s:
+            rows = (
+                await s.execute(
+                    select(IssueDoc.id, IssueDoc.embedding).where(IssueDoc.repo_id == repo_id)
+                )
+            ).all()
+        by_id: dict[int, list[float] | None] = {i: e for i, e in rows}
+        missing = [d for d in docs if not by_id.get(d.id)]
         for start in range(0, len(missing), 64):
             batch = missing[start : start + 64]
             vecs = await self.embedder.embed(
@@ -240,7 +275,20 @@ class IssueIndex:
             )
             async with self.db.session() as s, s.begin():
                 for d, v in zip(batch, vecs, strict=True):
-                    d.embedding = v
-                    await s.merge(d)
-        return [d.embedding for d in docs]
+                    # 显式写回原来的 updated_at：算向量不算"内容变化"，不应让语料版本和缓存失效
+                    await s.execute(
+                        update(IssueDoc)
+                        .where(IssueDoc.id == d.id)
+                        .values(embedding=v, updated_at=d.updated_at)
+                    )
+                    by_id[d.id] = v
+        vectors = [by_id.get(d.id) for d in docs]
+        self._vector_cache[repo_id] = (version, vectors)
+        return vectors
+
+
+def _corpus_version(repo_id: int, docs: list[IssueDoc]) -> tuple[int, ...]:
+    """语料版本：文档数 + id 之和 + 最后更新时间；有 issue 新增或修改就会变。"""
+    newest = max(d.updated_at for d in docs).timestamp()
+    return (repo_id, len(docs), sum(d.id for d in docs), int(newest * 1e6))
 

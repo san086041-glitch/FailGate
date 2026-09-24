@@ -1,21 +1,120 @@
 {
-  "pairs": {
-    "3255->3218": {"label": "duplicate", "note": "都是 blackd 不保留 Windows 换行符（2026-09-24 复核）"},
-    "2757->2662": {"label": "duplicate", "note": "标题几乎相同：默认启用 pattern matching"},
-    "4759->4757": {"label": "duplicate", "note": "同一个 decode_bytes() 报错；GitHub 上已标成 duplicate"},
-    "4414->4306": {"label": "ambiguous", "note": "都是 'not equivalent' 报错；维护者说旧版本已修复，无法确认同一根因"},
-    "2783->2706": {"label": "not_duplicate", "note": "stub 文件里两条不同的空行规则"},
-    "3695->3658": {"label": "not_duplicate", "note": "pgen 里的 EncodingWarning vs 在 CI 里启用 EncodingWarning"},
-
-    "1942->1189": {"label": "duplicate", "note": "#1942 在时间线上交叉引用了 #1189；同一个无括号的带注解元组赋值崩溃"},
-    "4651->682": {"label": "duplicate", "note": "#4651 被 triager 标记为重复，评论提到 2018 年被拒的同类提案"},
-    "1933->1847": {"label": "duplicate", "note": "#1933 交叉引用 #1847；维护者确认两者都来自同一次损坏的 setuptools 发布"},
-    "478->439": {"label": "duplicate", "note": "同一原因：Black 只支持 Python 3.6+，在 2.7 上 pip 找不到版本（维护者回复）"},
-    "1935->1638": {"label": "duplicate", "note": "同一触发条件（docstring 里的 tab）与同一 INTERNAL ERROR；维护者说由 #1810 一并修复"},
-    "3409->2294": {"label": "ambiguous", "note": "都是 string processing 超长；但 #2294 已关闭为修复而 #3409 仍开着，未必同一根因"},
-    "1149->1068": {"label": "ambiguous", "note": "都与 vim 插件版本检测有关，没有找到互相引用的证据"},
-
-    "1701->1323": {"label": "duplicate", "note": "正样本另选目标：#1323 时间线上交叉引用了 #1701；同一个切片冒号前加空格的问题"},
-    "945->789": {"label": "duplicate", "note": "正样本另选目标：#789 时间线上交叉引用了 #945；多行字符串之后的参数被展开"}
+ "pairs": {
+  "3255->3218": {
+   "label": "duplicate",
+   "note": "都是 blackd 不保留 Windows 换行符（2026-09-24 复核）"
+  },
+  "2757->2662": {
+   "label": "duplicate",
+   "note": "标题几乎相同：默认启用 pattern matching"
+  },
+  "4759->4757": {
+   "label": "duplicate",
+   "note": "同一个 decode_bytes() 报错；GitHub 上已标成 duplicate"
+  },
+  "4414->4306": {
+   "label": "ambiguous",
+   "note": "都是 'not equivalent' 报错；维护者说旧版本已修复，无法确认同一根因"
+  },
+  "2783->2706": {
+   "label": "not_duplicate",
+   "note": "stub 文件里两条不同的空行规则"
+  },
+  "3695->3658": {
+   "label": "not_duplicate",
+   "note": "pgen 里的 EncodingWarning vs 在 CI 里启用 EncodingWarning"
+  },
+  "1942->1189": {
+   "label": "duplicate",
+   "note": "#1942 在时间线上交叉引用了 #1189；同一个无括号的带注解元组赋值崩溃"
+  },
+  "4651->682": {
+   "label": "duplicate",
+   "note": "#4651 被 triager 标记为重复，评论提到 2018 年被拒的同类提案"
+  },
+  "1933->1847": {
+   "label": "duplicate",
+   "note": "#1933 交叉引用 #1847；维护者确认两者都来自同一次损坏的 setuptools 发布"
+  },
+  "478->439": {
+   "label": "duplicate",
+   "note": "同一原因：Black 只支持 Python 3.6+，在 2.7 上 pip 找不到版本（维护者回复）"
+  },
+  "1935->1638": {
+   "label": "duplicate",
+   "note": "同一触发条件（docstring 里的 tab）与同一 INTERNAL ERROR；维护者说由 #1810 一并修复"
+  },
+  "3409->2294": {
+   "label": "ambiguous",
+   "note": "都是 string processing 超长；但 #2294 已关闭为修复而 #3409 仍开着，未必同一根因"
+  },
+  "1149->1068": {
+   "label": "ambiguous",
+   "note": "都与 vim 插件版本检测有关，没有找到互相引用的证据"
+  },
+  "1701->1323": {
+   "label": "duplicate",
+   "note": "正样本另选目标：#1323 时间线上交叉引用了 #1701；同一个切片冒号前加空格的问题"
+  },
+  "945->789": {
+   "label": "duplicate",
+   "note": "正样本另选目标：#789 时间线上交叉引用了 #945；多行字符串之后的参数被展开"
+  },
+  "1805->1019": {
+   "label": "duplicate",
+   "note": "正样本另选目标：维护者 zsol 在 #1019 说\"the same case as #569\"（#569 是标准答案）；都是 fmt: off 超出作用域（2026-09-25 复核）"
+  },
+  "3089->1249": {
+   "label": "duplicate",
+   "note": "正样本另选目标：维护者 ichard26 在 #1249 说\"falls under issue #450\"（标准答案）；if 块开头的 def 前多出空行（2026-09-25 复核）"
+  },
+  "1248->438": {
+   "label": "duplicate",
+   "note": "正样本另选目标：维护者 zsol 在标准答案 #949 下说\"move the discussion over to #438\"；命令行显式传入的文件不遵守 exclude（2026-09-25 复核）"
+  },
+  "3874->3301": {
+   "label": "duplicate",
+   "note": "正样本另选目标：#3301 时间线交叉引用标准答案 #2316，评论称与 #2316 的重复相似；同一个 `| None` 换行问题（2026-09-25 复核）"
+  },
+  "1445->552": {
+   "label": "duplicate",
+   "note": "正样本另选目标：#552 作者自称 Duplicate of #517（标准答案），时间线有交叉引用；都要求正式版而非预发布版（2026-09-25 复核）"
+  },
+  "4260->573": {
+   "label": "duplicate",
+   "note": "正样本另选目标：#573 评论\"See #333\"（标准答案），时间线有交叉引用；都是让 Black 自己排序 import（2026-09-25 复核）"
+  },
+  "1935->1766": {
+   "label": "duplicate",
+   "note": "对照样本：维护者 ichard26 把 #1638 和 #1766 都标为 #1601 的重复，已复核 #1935 与 #1638 是同一问题；docstring 里的 tab（2026-09-25 复核）"
+  },
+  "947->413": {
+   "label": "ambiguous",
+   "note": "都是字典长 key/value 超出行宽；#413 与标准答案 #847 之间没有找到互相引用（2026-09-25 复核）"
+  },
+  "2910->847": {
+   "label": "ambiguous",
+   "note": "同上：#847 与标准答案 #413 内容相同但没有互相引用的证据（2026-09-25 复核）"
+  },
+  "1336->1133": {
+   "label": "ambiguous",
+   "note": "都是 Black 与 pylint 的缩进分歧；没有找到与标准答案 #48 的关联证据（2026-09-25 复核）"
+  },
+  "1721->1588": {
+   "label": "ambiguous",
+   "note": "都是海象运算符相关的二次格式化不稳定；#1588 与标准答案 #1194 没有互相引用（2026-09-25 复核）"
+  },
+  "1976->1174": {
+   "label": "ambiguous",
+   "note": "都是海象运算符后多加空格；#1174 与标准答案 #1588 没有互相引用（2026-09-25 复核）"
+  },
+  "2561->1625": {
+   "label": "ambiguous",
+   "note": "都是函数参数里三元表达式的换行缩进；没有与标准答案 #2248 的关联证据（2026-09-25 复核）"
+  },
+  "2353->1643": {
+   "label": "ambiguous",
+   "note": "对照样本：都在问 magic trailing comma 的行为（有意设计）；没有互相引用的证据（2026-09-25 复核）"
   }
+ }
 }

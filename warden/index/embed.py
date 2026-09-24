@@ -7,8 +7,9 @@ DeepSeek 没有提供 embedding 接口，所以默认不启用；配置 EMBED_* 
 
 from __future__ import annotations
 
+import asyncio
 import math
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 
 import httpx
 
@@ -21,8 +22,12 @@ class Embedder:
         model: str,
         *,
         transport: httpx.AsyncBaseTransport | None = None,
+        retries: int = 4,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
         self.model = model
+        self.retries = retries
+        self._sleep = sleep
         self._http = httpx.AsyncClient(
             base_url=base_url.rstrip("/"),
             headers={"Authorization": f"Bearer {api_key}"},
@@ -31,10 +36,19 @@ class Embedder:
         )
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
-        r = await self._http.post("/embeddings", json={"model": self.model, "input": list(texts)})
-        r.raise_for_status()
-        data = sorted(r.json()["data"], key=lambda d: d["index"])
-        return [d["embedding"] for d in data]
+        # 批量建索引时容易碰到服务方的每分钟请求数 / token 数上限：429 和 5xx 退避重试
+        for attempt in range(self.retries + 1):
+            r = await self._http.post(
+                "/embeddings", json={"model": self.model, "input": list(texts)}
+            )
+            if r.status_code in {429, 500, 502, 503, 504} and attempt < self.retries:
+                wait = float(r.headers.get("retry-after", 2 ** (attempt + 1)))
+                await self._sleep(min(wait, 60.0))
+                continue
+            r.raise_for_status()
+            data = sorted(r.json()["data"], key=lambda d: d["index"])
+            return [d["embedding"] for d in data]
+        raise AssertionError("unreachable")
 
     async def aclose(self) -> None:
         await self._http.aclose()

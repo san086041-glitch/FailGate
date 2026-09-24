@@ -265,11 +265,13 @@ def replay_dedup(
     seed: int = 42,
     prompt_version: Annotated[str, typer.Option(help="查重提示词版本")] = "2",
     judge: Annotated[bool, typer.Option(help="关闭则只做召回评测（不花钱）")] = True,
+    semantic: Annotated[bool, typer.Option(help="启用向量召回通道（需要 EMBED_*）")] = False,
+    recall_k: Annotated[int | None, typer.Option(help="交给模型判断的候选数，默认用配置")] = None,
     min_precision: Annotated[float, typer.Option(help="推荐阈值时的精确率目标")] = 0.9,
     db_url: Annotated[str, typer.Option("--db", help="语料数据库")] = REPLAY_DB,
 ) -> None:
     """查重回放评测：召回（全部配对）+ 判断（抽样，调用模型）+ 阈值扫描，输出报告。"""
-    from warden.app import build_llm
+    from warden.app import build_embedder, build_llm
     from warden.replay.dataset import load_gold, repo_slug
     from warden.replay.dedup import RunConfig, run_dedup_replay
 
@@ -280,23 +282,31 @@ def replay_dedup(
     cfg = RunConfig(
         repo=repo, positives=positives, negatives=negatives, seed=seed,
         prompt_version=prompt_version, model=settings.llm_model_small, judge=judge,
-        high=settings.dedup_high, low=settings.dedup_low, recall_k=settings.dedup_recall_k,
+        semantic=semantic,
+        high=settings.dedup_high, low=settings.dedup_low,
+        recall_k=recall_k or settings.dedup_recall_k,
     )
+
+    embedder = build_embedder(settings) if semantic else None
+    if semantic and embedder is None:
+        raise typer.BadParameter("--semantic 需要在 .env 中配置 EMBED_BASE_URL / EMBED_MODEL")
 
     async def run() -> Path:
         db = Database(db_url)
         try:
             result = await run_dedup_replay(
                 db, llm, load_gold(repo), cfg, cache_root=Path("eval/cache/skills"),
-                progress=typer.echo,
+                progress=typer.echo, embedder=embedder,
             )
         finally:
             if llm is not None:
                 await llm.aclose()
+            if embedder is not None:
+                await embedder.aclose()
             await db.dispose()
         run_id = (
             f"{repo_slug(repo)}__dedup__{result.started_at:%Y%m%d-%H%M}"
-            f"__v{prompt_version}{'' if judge else '__recall'}"
+            f"__v{prompt_version}{'__sem' if semantic else ''}{'' if judge else '__recall'}"
         )
         run_path, _ = _run_paths(run_id)
         run_path.parent.mkdir(parents=True, exist_ok=True)
@@ -451,7 +461,7 @@ def answer_issue(
 
     文档用的是索引时的版本，不做时间旅行：回放历史问题时文档可能比提问时更新。
     """
-    from warden.app import build_llm
+    from warden.app import build_embedder, build_llm
     from warden.index.docs import DocIndex
     from warden.index.store import IssueIndex
     from warden.platforms.base import Comment
@@ -465,6 +475,8 @@ def answer_issue(
     llm = build_llm(settings)
     if llm is None:
         raise typer.BadParameter("请先在 .env 中设置 LLM_API_KEY")
+
+    embedder = build_embedder(settings)
 
     async def run() -> None:
         db = Database(db_url or settings.warden_db_url)
@@ -494,8 +506,8 @@ def answer_issue(
                 llm=llm,
                 model=settings.llm_model_large,
                 prior={"intake": {"language": lang}},
-                retriever=IssueIndex(db),
-                docs=DocIndex(db),
+                retriever=IssueIndex(db, embedder),
+                docs=DocIndex(db, embedder),
                 comments=comments,
             )
             skill = AnswerSkill()
@@ -523,6 +535,8 @@ def answer_issue(
         finally:
             await llm.aclose()
             await gh.aclose()
+            if embedder is not None:
+                await embedder.aclose()
             await db.dispose()
 
     asyncio.run(run())

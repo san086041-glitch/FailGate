@@ -101,6 +101,11 @@ class Metrics:
     recall_ci: tuple[float, float]
     recall_given_recalled: float
     surfaced_rate: float
+    # 技术方案里的"查重 recall@5"：模型重新打分之后，正确的 issue 排在前 5 名以内的比例
+    # （不看阈值，只看排序；分母是全部正样本，没被召回的也算没排进去）
+    rerank_top5: int = 0
+    rerank_top5_rate: float = 0.0
+    rerank_top5_ci: tuple[float, float] = (0.0, 0.0)
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -127,10 +132,11 @@ def evaluate(
     labels = labels or Labels()
     pos = [r for r in records if r.kind == "pos" and r.judged]
     neg = [r for r in records if r.kind == "neg" and r.judged]
-    tp = tp_alt = wrong = wrong_unreviewed = missed = surfaced = 0
+    tp = tp_alt = wrong = wrong_unreviewed = missed = surfaced = top5 = 0
     for r in pos:
         verdict, cands = decide(r, high, low, gate)
         gold = set(r.gold)
+        top5 += bool(gold & {c.number for c in cands[:5]})
         if verdict == "duplicate":
             if cands[0].number in gold:
                 tp += 1
@@ -192,6 +198,9 @@ def evaluate(
         recall_ci=wilson(hits, len(pos)),
         recall_given_recalled=tp_recalled / n_recalled if n_recalled else 0.0,
         surfaced_rate=surfaced / len(pos) if pos else 0.0,
+        rerank_top5=top5,
+        rerank_top5_rate=top5 / len(pos) if pos else 0.0,
+        rerank_top5_ci=wilson(top5, len(pos)),
     )
 
 

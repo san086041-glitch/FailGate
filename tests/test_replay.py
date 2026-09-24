@@ -118,6 +118,10 @@ def test_evaluate_counts_and_labels():
     assert m.recall == pytest.approx(1 / 4)
     assert m.recall_given_recalled == pytest.approx(1 / 3)
     assert m.surfaced == 3  # 10、11（相关里出现）、13（0.8 为相关）
+    # 重新打分后排进前 5：10、11（第 2 名）、13；12 没有被召回
+    assert m.rerank_top5 == 3 and m.rerank_top5_rate == pytest.approx(3 / 4)
+    # 和阈值无关：只看排序
+    assert evaluate(synthetic_records(), high=0.99, low=0.5).rerank_top5 == 3
 
 
 def test_sweep_and_recommend_prefer_recall_under_precision_target():
