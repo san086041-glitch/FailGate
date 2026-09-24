@@ -14,6 +14,16 @@ from typing import Protocol
 from pydantic import BaseModel
 
 WRITE_ASSOCIATIONS = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
+WRITE_PERMISSIONS = frozenset({"admin", "maintain", "write"})
+
+
+class PlatformError(Exception):
+    """平台 API 出错。执行器只看 status 和 retryable，不关心具体是哪个平台。"""
+
+    def __init__(self, status: int, message: str, *, retryable: bool = False) -> None:
+        super().__init__(message)
+        self.status = status
+        self.retryable = retryable
 
 
 class CaseKind(StrEnum):
@@ -37,10 +47,15 @@ class User(BaseModel, frozen=True):
     is_bot: bool = False
     # OWNER / MEMBER / COLLABORATOR / CONTRIBUTOR / NONE …
     association: str = "NONE"
+    # 实时查询到的仓库权限（admin / maintain / write / triage / read / none）；None = 没查过
+    permission: str | None = None
 
     @property
     def can_write(self) -> bool:
-        # M0 用 webhook 里的 author_association 近似；M1 改为实时查询仓库权限 API
+        # 优先用实时权限。webhook 里的 author_association 只是近似：
+        # 只读协作者也是 COLLABORATOR，组织成员（MEMBER）也不一定能写这个仓库
+        if self.permission is not None:
+            return self.permission in WRITE_PERMISSIONS
         return self.association in WRITE_ASSOCIATIONS
 
 
@@ -89,11 +104,13 @@ class PlatformReader(Protocol):
 
 
 class PlatformWriter(Protocol):
-    async def comment(self, ref: CaseRef, body: str) -> None: ...
+    """对外写操作。只有 EffectExecutor 持有；开 PR、推分支等接口在 M3 加入。"""
+
+    async def create_comment(self, ref: CaseRef, body: str) -> str: ...
+    async def update_comment(self, ref: CaseRef, comment_id: str, body: str) -> None: ...
+    # 找机器人自己发过的、带隐藏标记的评论；严格说是读操作，放在这里是因为只有执行器需要它
+    async def find_comment(self, ref: CaseRef, marker: str) -> str | None: ...
     async def set_labels(self, ref: CaseRef, add: list[str], remove: list[str]) -> None: ...
-    async def open_pull(
-        self, repo: RepoRef, branch: str, title: str, body: str, draft: bool = True
-    ) -> str: ...
 
 
 class Platform(Protocol):

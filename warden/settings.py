@@ -12,8 +12,12 @@ class Settings(BaseSettings):
 
     warden_db_url: str = "sqlite+aiosqlite:///./warden.db"
     github_webhook_secret: str = ""
+    # GitHub App：两项都配置了才会真正调用写接口；否则 pending 的动作只会积压
     github_app_id: str | None = None
     github_app_private_key_path: str | None = None
+    github_api_url: str = "https://api.github.com"
+    # 定时补偿：每隔多少秒重试一次 pending 的写操作
+    effect_retry_interval_seconds: float = 60.0
     # 新接入的仓库默认进入影子模式：所有对外写操作只记录，不执行
     default_repo_mode: RepoMode = "shadow"
 

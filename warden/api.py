@@ -67,6 +67,7 @@ async def get_case(request: Request, case_id: int) -> dict[str, Any]:
         "state": case.state,
         "state_version": case.state_version,
         "spent_usd": round(case.spent_usd, 6),
+        "summary_comment_id": case.summary_comment_id,
         "runs": [
             {
                 "skill": r.skill,
@@ -85,7 +86,14 @@ async def get_case(request: Request, case_id: int) -> dict[str, Any]:
             for t in transitions
         ],
         "effects": [
-            {"action": e.action, "payload": e.payload, "mode": e.mode, "status": e.status}
+            {
+                "action": e.action,
+                "payload": e.payload,
+                "mode": e.mode,
+                "status": e.status,
+                "attempts": e.attempts,
+                "error": e.error,
+            }
             for e in effects
         ],
     }

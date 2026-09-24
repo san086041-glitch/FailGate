@@ -326,5 +326,122 @@ def try_issue(
     asyncio.run(run())
 
 
+repo_app = typer.Typer(help="仓库管理：查看、切换模式", no_args_is_help=True)
+app.add_typer(repo_app, name="repo")
+
+
+@repo_app.command("list")
+def repo_list() -> None:
+    """列出已登记的仓库、模式和 GitHub App 安装 ID。"""
+
+    async def run() -> list[Repo]:
+        db = Database(Settings().warden_db_url)
+        await db.create_all()
+        async with db.session() as s:
+            rows = (await s.scalars(select(Repo).order_by(Repo.id))).all()
+        await db.dispose()
+        return list(rows)
+
+    for r in asyncio.run(run()):
+        typer.echo(f"{r.platform}:{r.full_name:<40} {r.mode:<7} installation={r.installation_id}")
+
+
+@repo_app.command("mode")
+def repo_mode(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    mode: Annotated[str, typer.Argument(help="shadow | live | paused")],
+) -> None:
+    """切换仓库模式。live 之后新提出的写操作会真正发到 GitHub；已记录的影子动作不会补发。"""
+    if mode not in {"shadow", "live", "paused"}:
+        raise typer.BadParameter("mode 只能是 shadow / live / paused")
+
+    async def run() -> str:
+        db = Database(Settings().warden_db_url)
+        await db.create_all()
+        async with db.session() as s, s.begin():
+            r = await s.scalar(
+                select(Repo).where(Repo.platform == "github", Repo.full_name == repo)
+            )
+            if r is None:
+                # 还没收到过这个仓库的事件：先登记，安装 ID 等第一个 webhook 带过来
+                s.add(Repo(platform="github", full_name=repo, mode=mode))
+                old = "（新登记）"
+            else:
+                old, r.mode = r.mode, mode
+        await db.dispose()
+        return old
+
+    old = asyncio.run(run())
+    typer.echo(f"{repo}: {old} → {mode}")
+
+
+github_app_cli = typer.Typer(help="GitHub App：检查配置和安装情况", no_args_is_help=True)
+app.add_typer(github_app_cli, name="github")
+
+
+@github_app_cli.command("check")
+def github_check() -> None:
+    """用 .env 里的 App ID 和私钥签 JWT，确认 App 身份，并列出安装到了哪些账号。"""
+    from warden.app import build_github_app
+
+    settings = Settings()
+    gh = build_github_app(settings)
+    if gh is None:
+        raise typer.BadParameter("请先在 .env 中设置 GITHUB_APP_ID 和 GITHUB_APP_PRIVATE_KEY_PATH")
+
+    async def run() -> None:
+        try:
+            info = await gh.get_app()
+            typer.echo(f"App: {info['name']} (slug={info['slug']}, id={info['id']})")
+            perms = ", ".join(f"{k}:{v}" for k, v in sorted(info.get("permissions", {}).items()))
+            typer.echo(f"权限: {perms}")
+            typer.echo(f"订阅事件: {', '.join(info.get('events', []))}")
+            installs = await gh.list_installations()
+            if not installs:
+                typer.echo("还没有安装到任何账号或仓库")
+            for inst in installs:
+                token = await gh.installation_token(inst["id"])
+                typer.echo(
+                    f"安装 {inst['id']}: {inst['account']['login']} "
+                    f"(仓库范围={inst.get('repository_selection')}, 令牌获取成功={bool(token)})"
+                )
+        finally:
+            await gh.aclose()
+
+    asyncio.run(run())
+
+
+effects_app = typer.Typer(help="对外写操作：查看、补发", no_args_is_help=True)
+app.add_typer(effects_app, name="effects")
+
+
+@effects_app.command("flush")
+def effects_flush() -> None:
+    """立即执行所有 pending 的写操作（服务运行时每分钟也会自动补偿一次）。"""
+    from warden.app import build_github_app
+    from warden.platforms.base import PlatformWriter
+    from warden.policy.executor import EffectExecutor
+
+    settings = Settings()
+    gh = build_github_app(settings)
+
+    def writer_for(repo: Repo) -> PlatformWriter | None:
+        if gh is None or repo.platform != "github" or not repo.installation_id:
+            return None
+        return gh.installation(repo.installation_id)
+
+    async def run() -> dict[str, int]:
+        db = Database(settings.warden_db_url)
+        await db.create_all()
+        try:
+            return await EffectExecutor(db, writer_for).flush_all()
+        finally:
+            await db.dispose()
+            if gh is not None:
+                await gh.aclose()
+
+    typer.echo(json.dumps(asyncio.run(run()), ensure_ascii=False))
+
+
 if __name__ == "__main__":
     app()

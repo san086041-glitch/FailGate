@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -19,7 +20,7 @@ from warden.index.store import IssueIndex
 from warden.llm import LLMClient
 from warden.policy.gate import PolicyGate
 from warden.report import render_summary
-from warden.skills.base import IssueSnapshot, Skill, SkillContext, SkillResult
+from warden.skills.base import DEFAULT_LABELS, IssueSnapshot, Skill, SkillContext, SkillResult
 
 from .machine import CaseMachine
 from .states import CaseState
@@ -28,6 +29,9 @@ log = logging.getLogger(__name__)
 
 # 自动打标签的最低置信度（技术方案第 11 节策略矩阵）
 LABEL_MIN_CONFIDENCE = 0.7
+
+# 读取仓库真实的标签表；返回 None 表示拿不到（没配置 App 等），退回 GitHub 默认标签
+LabelSource = Callable[[Repo], Awaitable[tuple[str, ...] | None]]
 
 
 class Pipeline:
@@ -41,6 +45,7 @@ class Pipeline:
         *,
         case_budget_usd: float,
         index: IssueIndex | None = None,
+        labels: LabelSource | None = None,
     ) -> None:
         self.db = db
         self.machine = machine
@@ -50,6 +55,7 @@ class Pipeline:
         self.skills = skills
         self.case_budget_usd = case_budget_usd
         self.index = index
+        self.labels = labels
 
     async def advance(self, case_id: int) -> CaseState:
         while True:
@@ -67,6 +73,8 @@ class Pipeline:
                 repo = await s.get(Repo, case.repo_id)
                 assert repo is not None
                 ctx = await self._context(s, case, repo, entry)
+            # 网络调用放在数据库会话之外
+            ctx.labels = await self._repo_labels(repo)
 
             skill, model = entry
             started = datetime.now(UTC)
@@ -113,6 +121,18 @@ class Pipeline:
             prior=prior,
             retriever=self.index,
         )
+
+    async def _repo_labels(self, repo: Repo) -> tuple[str, ...]:
+        if self.labels is None:
+            return DEFAULT_LABELS
+        try:
+            labels = await self.labels(repo)
+        except Exception:
+            log.warning(
+                "failed to load labels for %s, using defaults", repo.full_name, exc_info=True
+            )
+            return DEFAULT_LABELS
+        return DEFAULT_LABELS if labels is None else labels
 
     async def _effects(
         self,

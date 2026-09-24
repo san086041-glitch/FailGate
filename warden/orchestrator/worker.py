@@ -10,6 +10,7 @@ import asyncio
 import logging
 
 from warden.platforms.base import DomainEvent
+from warden.policy.executor import EffectExecutor
 
 from .machine import CaseMachine
 from .pipeline import Pipeline
@@ -21,11 +22,16 @@ EventQueue = asyncio.Queue[DomainEvent]
 
 class Worker:
     def __init__(
-        self, queue: EventQueue, machine: CaseMachine, pipeline: Pipeline | None = None
+        self,
+        queue: EventQueue,
+        machine: CaseMachine,
+        pipeline: Pipeline | None = None,
+        executor: EffectExecutor | None = None,
     ) -> None:
         self.queue = queue
         self.machine = machine
         self.pipeline = pipeline
+        self.executor = executor
 
     async def run_forever(self) -> None:
         while True:
@@ -43,8 +49,13 @@ class Worker:
     async def _process(self, event: DomainEvent) -> None:
         try:
             outcome = await self.machine.handle(event)
-            if outcome is not None and self.pipeline is not None:
+            if outcome is None:
+                return
+            if self.pipeline is not None:
                 await self.pipeline.advance(outcome.case_id)
+            # 本轮各阶段提出的写操作（打标签、汇总评论）在这里统一发出
+            if self.executor is not None:
+                await self.executor.flush(outcome.case_id)
         except Exception:
             log.exception("failed to handle event %s (%s)", event.delivery_id, event.name)
         finally:

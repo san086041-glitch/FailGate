@@ -56,9 +56,11 @@ def make_settings(tmp_path, **overrides: Any) -> Settings:
     return Settings(_env_file=None, **values)  # type: ignore[call-arg]
 
 
-async def _harness(settings: Settings) -> AsyncIterator[Harness]:
+async def _harness(settings: Settings, github_app: Any = None) -> AsyncIterator[Harness]:
     llm = FakeLLM()
-    app = create_app(settings, run_worker=False, llm_transport=llm.transport)
+    app = create_app(
+        settings, run_worker=False, llm_transport=llm.transport, github_app=github_app
+    )
     warden: Warden = app.state.warden
     await warden.start(run_worker=False)
     transport = httpx.ASGITransport(app=app)
