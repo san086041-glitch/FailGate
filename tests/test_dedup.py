@@ -65,12 +65,12 @@ async def test_duplicate_with_verified_quotes():
         recalled(7, "CSV slow", "to_csv slow"),
     ])
     fake.queue("dedup", {"judgements": [
-        judge("c1", 0.92, qn="KeyError: 'a'", qc="KeyError: 'a' since 2.4.1"),
+        judge("c1", 0.97, qn="KeyError: 'a'", qc="KeyError: 'a' since 2.4.1"),
         judge("c2", 0.05),
     ]})
     result = await DedupSkill().run(ctx)
     out = result.output
-    assert out.verdict == "duplicate" and out.best == 3 and out.best_score == 0.92
+    assert out.verdict == "duplicate" and out.best == 3 and out.best_score == 0.97
     assert out.candidates[0].quotes_verified and out.candidates[0].level == "duplicate"
     assert out.candidates[1].level == "none"
     assert result.facts == {"type": "bug", "repro_enabled": False, "dup_high": True}
@@ -119,7 +119,7 @@ async def test_end_to_end_second_issue_finds_first(harness):
     second["issue"]["title"] = "分区 parquet 读取报 KeyError"
     second["issue"]["body"] = "2.4.1 读取分区的 parquet 目录时抛出 KeyError"
     harness.llm.queue("dedup", {"judgements": [
-        judge("c1", 0.9, qn="读取分区的 parquet 目录时抛出 KeyError",
+        judge("c1", 0.97, qn="读取分区的 parquet 目录时抛出 KeyError",
               qc="读取分区目录报 KeyError: 'a'"),
     ]})
     await harness.send("issues", second, "d-2")
@@ -148,9 +148,9 @@ async def test_duplicate_level_outranks_higher_scored_related():
         recalled(3, "a", "KeyError: 'a' here"),
         recalled(4, "b", "KeyError: 'a' there"),
     ])
-    capped = judge("c1", 0.97, qn="KeyError: 'a'", qc="KeyError: 'a' here")
+    capped = judge("c1", 0.99, qn="KeyError: 'a'", qc="KeyError: 'a' here")
     capped["same_root_cause"] = False
-    real = judge("c2", 0.9, qn="KeyError: 'a'", qc="KeyError: 'a' there")
+    real = judge("c2", 0.96, qn="KeyError: 'a'", qc="KeyError: 'a' there")
     real["same_root_cause"] = True
     fake.queue("dedup", {"judgements": [capped, real]})
     out = (await DedupSkill().run(ctx)).output

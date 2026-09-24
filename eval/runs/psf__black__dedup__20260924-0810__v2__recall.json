@@ -1,0 +1,3222 @@
+{
+ "config": {
+  "repo": "psf/black",
+  "positives": 100,
+  "negatives": 50,
+  "seed": 42,
+  "prompt_version": "2",
+  "model": "deepseek-flash",
+  "recall_k": 8,
+  "high": 0.85,
+  "low": 0.5,
+  "judge": false,
+  "min_history": 50,
+  "concurrency": 6
+ },
+ "started_at": "2026-09-24T08:10:05.524123Z",
+ "finished_at": "2026-09-24T08:10:15.686241Z",
+ "corpus_size": 2822,
+ "corpus_fingerprint": "10c2fb59c1f8",
+ "gold_pairs": 229,
+ "recall": {
+  "usable_pairs": 221,
+  "hits": {
+   "1": 32,
+   "3": 59,
+   "5": 74,
+   "8": 94,
+   "20": 125,
+   "50": 163
+  },
+  "with_traceback": 5
+ },
+ "records": [
+  {
+   "kind": "pos",
+   "issue": 3204,
+   "title": "Black -C doesn't remove trailing commas in indices",
+   "gold": [
+    2296
+   ],
+   "recall_rank": 15,
+   "recalled": [
+    3143,
+    1433,
+    2250,
+    2952,
+    2878,
+    2417,
+    1699,
+    1463
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 784,
+   "title": "unpack to varialbes more than line-length chars can be flake8 uncompatible",
+   "gold": [
+    656
+   ],
+   "recall_rank": null,
+   "recalled": [
+    743,
+    772,
+    676,
+    515,
+    174,
+    407,
+    342,
+    39
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 121,
+   "title": "Black considers `from x import (y,)` well-formatted",
+   "gold": [
+    4,
+    44,
+    69
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    44,
+    60,
+    93,
+    27,
+    74,
+    84,
+    69,
+    111
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4088,
+   "title": "Black 23.11 cannot parse 3.12 enhanced f-strings",
+   "gold": [
+    3746,
+    4046,
+    4056,
+    4074
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    4056,
+    4071,
+    4046,
+    3117,
+    3746,
+    1546,
+    3685,
+    3790
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1438,
+   "title": "Black produced different code on the second pass of the formatter.",
+   "gold": [
+    1387
+   ],
+   "recall_rank": 9,
+   "recalled": [
+    1297,
+    1221,
+    884,
+    1212,
+    1181,
+    1044,
+    1425,
+    1175
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1362,
+   "title": "Black does not capture cases of strings separated by a space",
+   "gold": [
+    26,
+    61,
+    261,
+    743
+   ],
+   "recall_rank": 14,
+   "recalled": [
+    1119,
+    1355,
+    1177,
+    506,
+    1183,
+    1344,
+    1184,
+    1285
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1311,
+   "title": "Output successful executions to stdout and errors messages to stderr",
+   "gold": [
+    1285
+   ],
+   "recall_rank": 8,
+   "recalled": [
+    299,
+    977,
+    1162,
+    768,
+    549,
+    1163,
+    1230,
+    1285
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 947,
+   "title": "Line Length rule ",
+   "gold": [
+    847
+   ],
+   "recall_rank": 40,
+   "recalled": [
+    261,
+    886,
+    881,
+    888,
+    915,
+    787,
+    786,
+    827
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4083,
+   "title": "Unsuccessful splitting into multiple lines when using generics.",
+   "gold": [
+    3929,
+    4071
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    4071,
+    2498,
+    3834,
+    3929,
+    3432,
+    2183,
+    2156,
+    2900
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 743,
+   "title": "multipart string left multipart",
+   "gold": [
+    26,
+    61,
+    261
+   ],
+   "recall_rank": null,
+   "recalled": [
+    676,
+    515,
+    174,
+    407,
+    342,
+    39,
+    201,
+    394
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3596,
+   "title": "\"type:\" in comment breaks formatting",
+   "gold": [
+    3593
+   ],
+   "recall_rank": 3,
+   "recalled": [
+    3143,
+    3441,
+    3593,
+    1158,
+    1263,
+    1922,
+    583,
+    2992
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4534,
+   "title": "New lines for generics in functions",
+   "gold": [
+    4254,
+    4355
+   ],
+   "recall_rank": null,
+   "recalled": [
+    3009,
+    1636,
+    2597,
+    2422,
+    2958,
+    1797,
+    1197,
+    3078
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2599,
+   "title": "Multi line if clauses",
+   "gold": [
+    587,
+    1050,
+    1094,
+    2156,
+    2566
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1811,
+    1521,
+    510,
+    2067,
+    1965,
+    622,
+    450,
+    1115
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 600,
+   "title": "Function empty line spacing with preceding comment",
+   "gold": [
+    246
+   ],
+   "recall_rank": 5,
+   "recalled": [
+    154,
+    545,
+    74,
+    450,
+    246,
+    557,
+    251,
+    196
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2936,
+   "title": "\"# fmt: skip\" does not work defined function",
+   "gold": [
+    2646
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    2917,
+    2646,
+    2842,
+    2138,
+    2680,
+    1954,
+    1995,
+    2878
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1806,
+   "title": "Cannot parse type annotated tuple packing",
+   "gold": [
+    1189,
+    1264,
+    1368,
+    1374,
+    1546
+   ],
+   "recall_rank": 26,
+   "recalled": [
+    1631,
+    776,
+    1036,
+    151,
+    338,
+    1458,
+    173,
+    421
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 243,
+   "title": "Opinion: Extra whitespace for function inside a function",
+   "gold": [
+    196
+   ],
+   "recall_rank": 9,
+   "recalled": [
+    154,
+    56,
+    233,
+    207,
+    90,
+    227,
+    80,
+    40
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 241,
+   "title": "Invalid code produced",
+   "gold": [
+    224
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    224,
+    116,
+    37,
+    185,
+    122,
+    130,
+    221,
+    220
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 657,
+   "title": "long dotted identifiers that are correct length are flattened out into too-long lines",
+   "gold": [
+    510
+   ],
+   "recall_rank": 7,
+   "recalled": [
+    628,
+    656,
+    232,
+    282,
+    649,
+    524,
+    510,
+    586
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1264,
+   "title": "Black fails to parse valid code",
+   "gold": [
+    1189
+   ],
+   "recall_rank": 9,
+   "recalled": [
+    1263,
+    1262,
+    1175,
+    1194,
+    1155,
+    1186,
+    1201,
+    1084
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1336,
+   "title": "Formatting of methods exceeding max. line lenght is inconsistent with pylint",
+   "gold": [
+    48
+   ],
+   "recall_rank": 29,
+   "recalled": [
+    676,
+    917,
+    926,
+    743,
+    785,
+    890,
+    1074,
+    515
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2329,
+   "title": "`# fmt: off` fails to stop formatting on a comment block",
+   "gold": [
+    1245,
+    1578,
+    1611
+   ],
+   "recall_rank": 38,
+   "recalled": [
+    2110,
+    1938,
+    1901,
+    1878,
+    1817,
+    1920,
+    1844,
+    1801
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3010,
+   "title": "Trailing comma is not deleted in a one-line dict literal",
+   "gold": [
+    2052
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    2339,
+    2052,
+    2784,
+    1433,
+    1355,
+    2267,
+    1742,
+    1841
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4570,
+   "title": "Strings should remain on separate lines if they end with “\\n”",
+   "gold": [
+    1467,
+    1540
+   ],
+   "recall_rank": 11,
+   "recalled": [
+    2543,
+    3033,
+    4268,
+    2830,
+    3494,
+    2113,
+    2827,
+    3918
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2745,
+   "title": "Multiline inconsistent indented (inconsistent scope) `# fmt: on` / `# fmt: off` fails: Black produce",
+   "gold": [
+    569,
+    924,
+    1341,
+    1369,
+    1805,
+    2029,
+    2030,
+    2497
+   ],
+   "recall_rank": 7,
+   "recalled": [
+    2478,
+    2480,
+    2138,
+    2232,
+    2680,
+    2124,
+    1341,
+    2322
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1211,
+   "title": "Internal error caused by comment inside dict comprehension",
+   "gold": [
+    563
+   ],
+   "recall_rank": 8,
+   "recalled": [
+    1020,
+    901,
+    1119,
+    1016,
+    953,
+    863,
+    1171,
+    563
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3874,
+   "title": "Don't wrap `| None` on a new line",
+   "gold": [
+    2038,
+    2316,
+    2767,
+    3296,
+    3816
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    3301,
+    3296,
+    3324,
+    2038,
+    3752,
+    1521,
+    3872,
+    2785
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3279,
+   "title": "A dictionary with a key-value combination that exceeds the line length is not wrapped",
+   "gold": [
+    413,
+    578,
+    1314,
+    2729,
+    2910,
+    3011
+   ],
+   "recall_rank": null,
+   "recalled": [
+    2294,
+    3261,
+    3021,
+    3113,
+    1463,
+    358,
+    808,
+    1560
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3788,
+   "title": "black not working with required_version in pre-commit",
+   "gold": [
+    2493
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    2493,
+    3576,
+    3718,
+    3156,
+    2732,
+    1584,
+    738,
+    1073
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4281,
+   "title": "Style suggestiong: allow aligned dict values",
+   "gold": [
+    502
+   ],
+   "recall_rank": null,
+   "recalled": [
+    3918,
+    1811,
+    3654,
+    1480,
+    2918,
+    3886,
+    1250,
+    2672
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1805,
+   "title": "Internal Error when using #fmt: off",
+   "gold": [
+    569,
+    924,
+    1341,
+    1369
+   ],
+   "recall_rank": 34,
+   "recalled": [
+    877,
+    1381,
+    1561,
+    1170,
+    1212,
+    1766,
+    1429,
+    1462
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1276,
+   "title": "Black takes no decision about inline trailing comma?",
+   "gold": [
+    1169
+   ],
+   "recall_rank": 3,
+   "recalled": [
+    1184,
+    925,
+    1169,
+    1136,
+    1110,
+    1100,
+    342,
+    1174
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1965,
+   "title": "long subscript expressions",
+   "gold": [
+    1280,
+    1709
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1811,
+    1484,
+    1353,
+    1298,
+    1249,
+    1521,
+    1378,
+    1150
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2910,
+   "title": "Dictionaries with long keys / values not formatted by Black",
+   "gold": [
+    413,
+    578,
+    1314,
+    2729
+   ],
+   "recall_rank": 7,
+   "recalled": [
+    1811,
+    2841,
+    620,
+    1965,
+    2737,
+    2052,
+    2729,
+    2544
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1445,
+   "title": "PEP-440: No final releases",
+   "gold": [
+    517
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1246,
+    1290,
+    1223,
+    1407,
+    1360,
+    994,
+    1136,
+    1385
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 58,
+   "title": "Black puts a space before exec() (E211)",
+   "gold": [
+    49
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    49,
+    40,
+    46,
+    54,
+    48,
+    52,
+    55,
+    39
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1044,
+   "title": "Regression with master",
+   "gold": [
+    1042
+   ],
+   "recall_rank": 6,
+   "recalled": [
+    18,
+    892,
+    1020,
+    63,
+    224,
+    1042,
+    950,
+    400
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3705,
+   "title": "IndentationError on valid Python triggered by fmt: off",
+   "gold": [
+    3505,
+    3702
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    2342,
+    3702,
+    1960,
+    2340,
+    3505,
+    1666,
+    2625,
+    1884
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4267,
+   "title": "Imports inside functions should not have an empty line after them",
+   "gold": [
+    2543
+   ],
+   "recall_rank": 4,
+   "recalled": [
+    2564,
+    4260,
+    2887,
+    2543,
+    1936,
+    3324,
+    3900,
+    3029
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1633,
+   "title": "Unstable formatting internal error for docstring with tabs",
+   "gold": [
+    1601
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    1170,
+    1601,
+    1585,
+    1462,
+    1589,
+    1607,
+    1415,
+    100
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4073,
+   "title": "Move imports to top of scope",
+   "gold": [
+    333,
+    2088,
+    2391
+   ],
+   "recall_rank": null,
+   "recalled": [
+    2619,
+    2543,
+    1492,
+    1656,
+    2033,
+    1521,
+    1640,
+    3033
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 991,
+   "title": "Dict format make value indent at key level when there is if expr in values",
+   "gold": [
+    620
+   ],
+   "recall_rank": null,
+   "recalled": [
+    903,
+    787,
+    805,
+    856,
+    786,
+    228,
+    890,
+    782
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4216,
+   "title": "black formatter may change the content of string in nested f-strings",
+   "gold": [
+    3746,
+    4046,
+    4056,
+    4074,
+    4088,
+    4110,
+    4126,
+    4138,
+    4151,
+    4166,
+    4200
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    4166,
+    4110,
+    4200,
+    4056,
+    4199,
+    4088,
+    3827,
+    4151
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1611,
+   "title": "Reformat on comment ignore # fmt: off & # fmt: on",
+   "gold": [
+    1245,
+    1578
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1513,
+    1542,
+    1336,
+    676,
+    926,
+    890,
+    743,
+    1074
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4315,
+   "title": "f-string internal formatting to be consistent with non-f-string formatting",
+   "gold": [
+    567,
+    1135,
+    1201,
+    2827,
+    3090,
+    3213
+   ],
+   "recall_rank": 7,
+   "recalled": [
+    3886,
+    3009,
+    3373,
+    1197,
+    1756,
+    2830,
+    2827,
+    1829
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4219,
+   "title": "Recognize Python slices as lists.",
+   "gold": [
+    789
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1744,
+    3088,
+    4200,
+    2108,
+    4122,
+    4209,
+    4177,
+    2401
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1721,
+   "title": "INTERNAL ERROR: Black produced different code on the second pass of the formatter. with walrus",
+   "gold": [
+    1194
+   ],
+   "recall_rank": 40,
+   "recalled": [
+    1658,
+    1702,
+    1710,
+    1064,
+    1561,
+    1595,
+    1259,
+    853
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 687,
+   "title": "Odd (lacking) indent for conditional expression in argument list.",
+   "gold": [
+    617
+   ],
+   "recall_rank": 5,
+   "recalled": [
+    576,
+    678,
+    428,
+    647,
+    617,
+    567,
+    639,
+    459
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1684,
+   "title": "Chaining methods and comments",
+   "gold": [
+    458
+   ],
+   "recall_rank": null,
+   "recalled": [
+    317,
+    737,
+    93,
+    508,
+    597,
+    1037,
+    932,
+    584
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1638,
+   "title": "INTERNAL ERROR when formatting docstrings containing literal tab characters",
+   "gold": [
+    1601,
+    1633
+   ],
+   "recall_rank": 4,
+   "recalled": [
+    1462,
+    1589,
+    1212,
+    1601,
+    1415,
+    1585,
+    1170,
+    1452
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4174,
+   "title": "eCryptfs incompatibility introduced in 24.1.0",
+   "gold": [
+    4172
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    3793,
+    4172,
+    3535,
+    2479,
+    2506,
+    4088,
+    2813,
+    1223
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1406,
+   "title": "Priority of breaking subscripts vs breaking previous elements",
+   "gold": [
+    814,
+    1101
+   ],
+   "recall_rank": 8,
+   "recalled": [
+    1254,
+    997,
+    1115,
+    374,
+    1353,
+    511,
+    1386,
+    814
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 330,
+   "title": "Should assignments manage optional parentheses automatically?",
+   "gold": [
+    236
+   ],
+   "recall_rank": 20,
+   "recalled": [
+    140,
+    154,
+    275,
+    232,
+    273,
+    173,
+    28,
+    196
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1989,
+   "title": "This project perpetuates racism",
+   "gold": [
+    1830
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    1636,
+    1830,
+    298,
+    830,
+    1796,
+    1512,
+    1290,
+    1554
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2566,
+   "title": "how to comprehension black split []?",
+   "gold": [
+    587,
+    1050,
+    1094,
+    2156
+   ],
+   "recall_rank": 37,
+   "recalled": [
+    1353,
+    1803,
+    1541,
+    1250,
+    1521,
+    2038,
+    2183,
+    1298
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 913,
+   "title": "#fmt: off #fmt: on breaks formatting when applied only to decorators",
+   "gold": [
+    560,
+    718
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    560,
+    665,
+    334,
+    591,
+    492,
+    648,
+    827,
+    791
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1716,
+   "title": "When doc string contains tab, black formatting fails.",
+   "gold": [
+    1601,
+    1633,
+    1638,
+    1651
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    1638,
+    1212,
+    1672,
+    1589,
+    1469,
+    1462,
+    1601,
+    1651
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 578,
+   "title": "Extraneous whitespace during simple line wrapping?",
+   "gold": [
+    413
+   ],
+   "recall_rank": null,
+   "recalled": [
+    515,
+    510,
+    127,
+    379,
+    482,
+    567,
+    435,
+    384
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2672,
+   "title": "Trailing comma in a dict in function call split all parameters",
+   "gold": [
+    1811
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    2042,
+    1811,
+    2355,
+    1636,
+    1540,
+    2071,
+    1038,
+    2052
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1499,
+   "title": "Comments in list comprehensions cause breakages",
+   "gold": [
+    563,
+    1211
+   ],
+   "recall_rank": 14,
+   "recalled": [
+    863,
+    921,
+    1452,
+    1109,
+    1111,
+    1007,
+    1468,
+    1286
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3089,
+   "title": "Don't insert extra blank lines at the start of an indent",
+   "gold": [
+    450
+   ],
+   "recall_rank": 6,
+   "recalled": [
+    2887,
+    1797,
+    3033,
+    2943,
+    619,
+    450,
+    2543,
+    668
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3061,
+   "title": "fmt: on and other comments before fmt: skip removed",
+   "gold": [
+    2339,
+    2946
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    2339,
+    2539,
+    2213,
+    2232,
+    2349,
+    2254,
+    2567,
+    2110
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1701,
+   "title": "Incorrectly adding space in slice",
+   "gold": [
+    1541
+   ],
+   "recall_rank": 17,
+   "recalled": [
+    1323,
+    280,
+    940,
+    544,
+    1332,
+    1448,
+    1676,
+    854
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2838,
+   "title": "Trailing comma incorrectly added in 3.5",
+   "gold": [
+    1356
+   ],
+   "recall_rank": 6,
+   "recalled": [
+    759,
+    160,
+    419,
+    1463,
+    37,
+    1356,
+    716,
+    2680
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1201,
+   "title": "black does not format expressions inside f-string",
+   "gold": [
+    567,
+    1135
+   ],
+   "recall_rank": 3,
+   "recalled": [
+    1194,
+    1174,
+    567,
+    1198,
+    1189,
+    1184,
+    1084,
+    1175
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 400,
+   "title": "Formatting error",
+   "gold": [
+    267
+   ],
+   "recall_rank": 5,
+   "recalled": [
+    95,
+    358,
+    63,
+    224,
+    267,
+    100,
+    18,
+    99
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3330,
+   "title": "Behavior of `# fmt: skip` in the presence of other comments/pragmas",
+   "gold": [
+    2213
+   ],
+   "recall_rank": 36,
+   "recalled": [
+    1833,
+    2042,
+    1372,
+    2539,
+    1205,
+    480,
+    1476,
+    576
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1314,
+   "title": "Black and flake8 can't agree on line length limit",
+   "gold": [
+    413,
+    578
+   ],
+   "recall_rank": null,
+   "recalled": [
+    737,
+    498,
+    746,
+    167,
+    1246,
+    386,
+    208,
+    1263
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1491,
+   "title": "Black produces a different output on the second pass on VS Code",
+   "gold": [
+    1006
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1281,
+    1360,
+    1289,
+    1290,
+    1369,
+    1310,
+    1463,
+    1293
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4979,
+   "title": "INTERNAL ERROR code that is not equivalent to the source (non-UTF8, iso-8859-1)",
+   "gold": [
+    4963
+   ],
+   "recall_rank": null,
+   "recalled": [
+    3028,
+    4873,
+    3425,
+    1638,
+    4446,
+    3428,
+    4018,
+    3608
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4200,
+   "title": "black having trouble parsing if statements within fstring",
+   "gold": [
+    3746,
+    4046,
+    4056,
+    4074,
+    4088,
+    4110,
+    4126,
+    4138,
+    4151,
+    4166
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    4088,
+    4166,
+    2878,
+    4151,
+    4044,
+    2688,
+    3760,
+    2746
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 718,
+   "title": "Unable to format ignored decorator in class",
+   "gold": [
+    560
+   ],
+   "recall_rank": 15,
+   "recalled": [
+    400,
+    671,
+    100,
+    224,
+    95,
+    459,
+    334,
+    702
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3633,
+   "title": "Line not wrapped",
+   "gold": [
+    413,
+    578,
+    1314,
+    2729,
+    2910,
+    3011,
+    3279
+   ],
+   "recall_rank": null,
+   "recalled": [
+    3145,
+    3464,
+    3127,
+    3437,
+    2946,
+    3134,
+    3553,
+    2540
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 3816,
+   "title": "Black breaks lines in type hints that use '|' operator.",
+   "gold": [
+    2038,
+    2316,
+    2767,
+    3296
+   ],
+   "recall_rank": 18,
+   "recalled": [
+    3621,
+    3663,
+    2553,
+    3292,
+    3260,
+    3159,
+    2289,
+    3597
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1976,
+   "title": "Introduction of whitespace after while and assignment operator",
+   "gold": [
+    1588
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1285,
+    1859,
+    1901,
+    1649,
+    1669,
+    1820,
+    1948,
+    1954
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1703,
+   "title": "black on windows failed to write to Cache",
+   "gold": [
+    1143,
+    1464
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    1143,
+    1223,
+    1464,
+    192,
+    411,
+    673,
+    1631,
+    1666
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1050,
+   "title": "line-break on conditional assignment",
+   "gold": [
+    587
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1049,
+    884,
+    900,
+    795,
+    806,
+    849,
+    945,
+    955
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1706,
+   "title": "Selection formatting mode (VS Code v1.49 feature support)",
+   "gold": [
+    830
+   ],
+   "recall_rank": 9,
+   "recalled": [
+    1644,
+    1076,
+    1163,
+    1265,
+    1603,
+    1114,
+    1515,
+    1352
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1651,
+   "title": "Black removes tabs from within docstrings and thus not equivalent to the source",
+   "gold": [
+    1601,
+    1633,
+    1638
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    1601,
+    1638,
+    1462,
+    1589,
+    1170,
+    1585,
+    1212,
+    1310
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1248,
+   "title": "Always exclude files specified in config, even when call directly excluded file",
+   "gold": [
+    949
+   ],
+   "recall_rank": null,
+   "recalled": [
+    688,
+    1071,
+    568,
+    400,
+    1246,
+    1244,
+    751,
+    992
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1413,
+   "title": "Colon inside a range gets a colon added to it",
+   "gold": [
+    889
+   ],
+   "recall_rank": 14,
+   "recalled": [
+    1276,
+    1174,
+    1110,
+    1149,
+    1354,
+    1131,
+    1297,
+    441
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 500,
+   "title": "Consider not breaking line on outermost parenthesis",
+   "gold": [
+    256
+   ],
+   "recall_rank": 41,
+   "recalled": [
+    169,
+    47,
+    19,
+    27,
+    404,
+    412,
+    450,
+    378
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1094,
+   "title": "Line splitting on conditional operators should take precendence over splitting on function parameter",
+   "gold": [
+    587,
+    1050
+   ],
+   "recall_rank": 30,
+   "recalled": [
+    601,
+    597,
+    346,
+    378,
+    747,
+    571,
+    584,
+    26
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2561,
+   "title": "if-expression line breaks in function arguments",
+   "gold": [
+    2248
+   ],
+   "recall_rank": 25,
+   "recalled": [
+    1386,
+    1811,
+    2316,
+    2006,
+    1521,
+    1492,
+    584,
+    2434
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4396,
+   "title": "INTERNAL ERROR while formatting (log included)",
+   "gold": [
+    3608
+   ],
+   "recall_rank": null,
+   "recalled": [
+    4384,
+    1716,
+    1212,
+    1844,
+    4288,
+    4354,
+    2232,
+    1768
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2767,
+   "title": "Black inconsistent about arguments with many alternative types",
+   "gold": [
+    2038,
+    2316
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    2038,
+    2316,
+    1723,
+    1250,
+    2039,
+    2385,
+    1492,
+    1811
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2028,
+   "title": "Indentation of method call after multiline string",
+   "gold": [
+    256,
+    500,
+    590,
+    828,
+    945,
+    1876
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1513,
+    1705,
+    1640,
+    1669,
+    1982,
+    1676,
+    1890,
+    1880
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2876,
+   "title": "Black in Vim on Ubuntu 22.04 does not work",
+   "gold": [
+    672,
+    2392,
+    2547
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    2547,
+    1379,
+    1827,
+    655,
+    1928,
+    2392,
+    862,
+    1282
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1433,
+   "title": "Issue with the \"Magic Trailing Comma\" in collections in function calls",
+   "gold": [
+    1169,
+    1276
+   ],
+   "recall_rank": 2,
+   "recalled": [
+    1356,
+    1169,
+    1398,
+    274,
+    1360,
+    1136,
+    1374,
+    1108
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4284,
+   "title": "INTERNAL ERROR: Black produced invalid code: f-string: expecting '}'",
+   "gold": [
+    3746,
+    4046,
+    4056,
+    4074,
+    4088,
+    4110,
+    4126,
+    4138,
+    4151,
+    4166,
+    4200,
+    4216,
+    4246,
+    4271
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    4151,
+    4074,
+    2664,
+    4216,
+    2232,
+    4282,
+    2055,
+    4126
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1586,
+   "title": "Can't use with GitHub actions",
+   "gold": [
+    1520,
+    1573
+   ],
+   "recall_rank": 1,
+   "recalled": [
+    1520,
+    1573,
+    1473,
+    1379,
+    1396,
+    672,
+    1265,
+    867
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 348,
+   "title": "Assert statement condition broken up in unfortunate way",
+   "gold": [
+    260
+   ],
+   "recall_rank": 13,
+   "recalled": [
+    329,
+    318,
+    344,
+    305,
+    326,
+    322,
+    172,
+    332
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2972,
+   "title": "Issue with click library upgrade",
+   "gold": [
+    2964
+   ],
+   "recall_rank": 7,
+   "recalled": [
+    1396,
+    1021,
+    802,
+    864,
+    2216,
+    2609,
+    2964,
+    1582
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4260,
+   "title": "Sort `import` statements in lexicographical order",
+   "gold": [
+    333,
+    2088,
+    2391,
+    4073
+   ],
+   "recall_rank": null,
+   "recalled": [
+    3029,
+    549,
+    1936,
+    2543,
+    1162,
+    1797,
+    4043,
+    2160
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1766,
+   "title": "Tab in docstring gives non equivalent result",
+   "gold": [
+    1601,
+    1633,
+    1638,
+    1651,
+    1716
+   ],
+   "recall_rank": 4,
+   "recalled": [
+    1589,
+    1462,
+    1762,
+    1716,
+    1638,
+    1672,
+    1429,
+    1601
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 4046,
+   "title": "Cannot parse f-string.  ",
+   "gold": [
+    3746
+   ],
+   "recall_rank": null,
+   "recalled": [
+    3790,
+    3079,
+    2878,
+    3524,
+    3685,
+    3758,
+    3028,
+    2746
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 1235,
+   "title": "whitespace before ':'  -- `if (ct := await cts.filter(tag=t).first()) :`",
+   "gold": [
+    1174
+   ],
+   "recall_rank": 33,
+   "recalled": [
+    414,
+    568,
+    1228,
+    400,
+    957,
+    751,
+    782,
+    594
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 945,
+   "title": "Exploding short arguments after multi-line string",
+   "gold": [
+    256,
+    500,
+    590,
+    828
+   ],
+   "recall_rank": 9,
+   "recalled": [
+    789,
+    759,
+    813,
+    576,
+    772,
+    827,
+    795,
+    743
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 2295,
+   "title": "Black confusion when \\ is used in f-string expression part.",
+   "gold": [
+    423
+   ],
+   "recall_rank": null,
+   "recalled": [
+    1901,
+    1858,
+    2075,
+    1634,
+    1859,
+    1851,
+    1942,
+    1662
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "pos",
+   "issue": 749,
+   "title": "Unnecessary split in left hand side of assignment due to multiline string",
+   "gold": [
+    236,
+    330
+   ],
+   "recall_rank": null,
+   "recalled": [
+    610,
+    545,
+    261,
+    697,
+    717,
+    743,
+    471,
+    570
+   ],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 4724,
+   "title": "Implement function block format",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 2353,
+   "title": "Inconsistent dict formatting with optional comma",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1562,
+   "title": "Failing to Format with an Ignored Matrix Matrix",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3981,
+   "title": "Black 23.10.0 and 23.10.1 wheels don't work on macOS Ventura on Apple Silicon",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3073,
+   "title": "Black pre-commit and black command line disagree",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3592,
+   "title": "Ability to directly specify project root directory from CLI",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1035,
+   "title": "vim plugin: After formatting editor jumps to first line",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1942,
+   "title": "Fails to format when typehinted tuple is assigned without parentheses ",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1016,
+   "title": "INTERNAL ERROR: Black produced invalid code: invalid syntax",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1828,
+   "title": "Can't format a yield expression with a type annotation and without parentheses",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 4651,
+   "title": "Preserve alignment of inline comments",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 4400,
+   "title": "`MemoryError` when formatting Jupyter notebook",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1933,
+   "title": "Pip install has different version in metadata: '20.8'",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 5174,
+   "title": "Allow cache dir configuration via command-line argument",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3359,
+   "title": "A solution to the obnoxious emojis problem.",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 5137,
+   "title": "black 26.5.0 downloaded from GitHub releases shows version 0.1",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3099,
+   "title": "ImportError: cannot import name 'NL' from 'blib2to3.pytree'",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 2746,
+   "title": "Failed to format match-case with nested AS pattern",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1619,
+   "title": "Black always explodes the rightmost bracket pair when a trailing comma is present",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1005,
+   "title": "Adjacent # fmt: on+off treated as # fmt: on",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 4100,
+   "title": "Formatting notebook cells leads to random blank lines",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3922,
+   "title": "Support inline flags in test cases",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 677,
+   "title": "Specify line length on the README.md examples",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 377,
+   "title": "minor: unnecessary newline inserted after `else` before function",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 793,
+   "title": "File watcher empties newly created file when Blackifying in IDEA",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1110,
+   "title": "Pip doesn't list black version 19.3b0 as outdated",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1163,
+   "title": "Automatically read configuration file, similar to prettier",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3312,
+   "title": "Wrong architecture for 22.10.0 macosx wheel",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 478,
+   "title": "Cannot pip install black: No matching distribution found for black",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 2963,
+   "title": "black fails due to _unicodefun",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 2933,
+   "title": "G",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3668,
+   "title": "Exceptions to comment spacing",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 4300,
+   "title": "line-length is not working as intended",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1855,
+   "title": "INTERNAL ERROR: Black produced different code on the second pass of the formatter.",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 4544,
+   "title": "SystemError: extension module 'black' is already cached",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 141,
+   "title": "Black does not follow line length rule with ternary expression",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 817,
+   "title": "Use plus sign to concatenate strings",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 4384,
+   "title": "Black produced different code on the second pass of the formatter.",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1954,
+   "title": "INTERNAL ERROR: Black produced different code on the second pass of the formatter.",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 2548,
+   "title": "Black doesn't wrap long line but wraps shorter line",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 800,
+   "title": "failure to reformat multiline dict with inline comments in a reasonable manner",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 2140,
+   "title": "fmt: off/on on different indentation levels leads to INTERNAL ERROR: Black produced invalid code on ",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3409,
+   "title": "string_processing: reformats to exceed line length and is also ugly",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1149,
+   "title": "Neovim version error.",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3560,
+   "title": "Ability to view which files black will actually run on",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 85,
+   "title": "How long will Black keep formatting Python 2 files?",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1935,
+   "title": "Tab sign in function's docstring leads to error",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 3998,
+   "title": "Inconsistent formatting of method call chain with comment",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 1298,
+   "title": "Black doesn't delete trailing comma in function args list when it could to save newlines",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  },
+  {
+   "kind": "neg",
+   "issue": 4081,
+   "title": "Black fails to format long string literals not containing any whitespace characters",
+   "gold": [],
+   "recall_rank": null,
+   "recalled": [],
+   "judged": false,
+   "candidates": [],
+   "error": null,
+   "cost_usd": 0.0,
+   "cached": false
+  }
+ ],
+ "cost_usd": 0.0,
+ "model_calls": 0,
+ "cached_calls": 0
+}

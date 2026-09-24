@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
@@ -25,6 +26,25 @@ _RETRY_STATUS = frozenset({408, 409, 429, 500, 502, 503, 504})
 
 class LLMError(RuntimeError):
     pass
+
+
+_FENCE = re.compile(r"^```(?:json)?\s*|\s*```$")
+
+
+def parse_json_object(text: str) -> Any:
+    """解析模型输出的 JSON：容忍 ```json 代码围栏，以及 JSON 之后多余的文字。
+
+    回放评测里遇到过模型在一个完整的 JSON 之后又输出了内容（json.loads 报 "Extra data"），
+    连续修复两次仍然如此。取第一个完整的 JSON 对象，比整体判为失败更合理。
+    """
+    cleaned = _FENCE.sub("", text.strip())
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        if "Extra data" not in str(e):
+            raise
+        obj, _ = json.JSONDecoder().raw_decode(cleaned)
+        return obj
 
 
 @dataclass
@@ -140,7 +160,7 @@ class LLMClient:
             resp = await self.chat(msgs, model=model, json_mode=True, **kwargs)
             total = total + resp.usage
             try:
-                return schema.model_validate(json.loads(resp.text)), total, resp
+                return schema.model_validate(parse_json_object(resp.text)), total, resp
             except (json.JSONDecodeError, ValidationError) as e:
                 if attempt == repair_attempts:
                     raise LLMError(f"模型输出不符合 {schema.__name__}：{e}") from e

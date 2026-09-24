@@ -84,7 +84,7 @@ def render_summary(
             dup = t["dup"].format(ref=f"#{top['number']}", score=top["score"], reason=top["reason"])
             lines += ["", f"**{dup}**", t["dup_hint"]]
             cands = cands[1:]
-        related = [c for c in cands if c.get("level") in {"duplicate", "related"}]
+        related = [c for c in cands if c.get("level") in {"duplicate", "related"}][:3]
         if related:
             fmt = "#{n}（{s:.2f}）" if lang == "zh" else "#{n} ({s:.2f})"
             refs = " · ".join(fmt.format(n=c["number"], s=c["score"]) for c in related)

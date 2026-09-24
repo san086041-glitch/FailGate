@@ -93,3 +93,13 @@ def test_cost_counts_cache_and_off_peak_discount():
     assert cost_usd("deepseek-flash", usage, peak) == pytest.approx(1.353)
     assert cost_usd("deepseek-flash", usage, off) == pytest.approx(1.353 / 2)
     assert cost_usd("unknown-model", usage, peak) == 0.0
+
+
+def test_parse_json_object_tolerates_fences_and_trailing_text():
+    from warden.llm.client import parse_json_object
+
+    assert parse_json_object('```json\n{"n": 1}\n```') == {"n": 1}
+    # 回放评测中真实遇到的情况：完整 JSON 之后还有内容
+    assert parse_json_object('{"n": 1}\n{"n": 2}') == {"n": 1}
+    with pytest.raises(json.JSONDecodeError):
+        parse_json_object("not json at all")

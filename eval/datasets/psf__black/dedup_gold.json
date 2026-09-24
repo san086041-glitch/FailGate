@@ -1,0 +1,1382 @@
+{
+ "repo": "psf/black",
+ "source": "maintainer comments: 'Duplicate of #N'",
+ "mined_at": "2026-09-24T08:09:30.666048Z",
+ "search_hits": 378,
+ "pairs": [
+  {
+   "duplicate": 44,
+   "original": 4,
+   "evidence_url": "https://github.com/psf/black/issues/44#issuecomment-374738685",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 58,
+   "original": 49,
+   "evidence_url": "https://github.com/psf/black/issues/58#issuecomment-375171266",
+   "association": "MEMBER"
+  },
+  {
+   "duplicate": 61,
+   "original": 26,
+   "evidence_url": "https://github.com/psf/black/issues/61#issuecomment-375352874",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 62,
+   "original": 22,
+   "evidence_url": "https://github.com/psf/black/issues/62#issuecomment-375713053",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 66,
+   "original": 22,
+   "evidence_url": "https://github.com/psf/black/issues/66#issuecomment-375714491",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 69,
+   "original": 4,
+   "evidence_url": "https://github.com/psf/black/issues/69#issuecomment-375710097",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 121,
+   "original": 4,
+   "evidence_url": "https://github.com/psf/black/issues/121#issuecomment-380373896",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 241,
+   "original": 224,
+   "evidence_url": "https://github.com/psf/black/issues/241#issuecomment-390718812",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 243,
+   "original": 196,
+   "evidence_url": "https://github.com/psf/black/issues/243#issuecomment-390820119",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 261,
+   "original": 26,
+   "evidence_url": "https://github.com/psf/black/issues/261#issuecomment-392257593",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 306,
+   "original": 147,
+   "evidence_url": "https://github.com/psf/black/issues/306#issuecomment-396014264",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 330,
+   "original": 236,
+   "evidence_url": "https://github.com/psf/black/issues/330#issuecomment-862399962",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 342,
+   "original": 182,
+   "evidence_url": "https://github.com/psf/black/issues/342#issuecomment-398843858",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 345,
+   "original": 147,
+   "evidence_url": "https://github.com/psf/black/issues/345#issuecomment-398847940",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 348,
+   "original": 260,
+   "evidence_url": "https://github.com/psf/black/issues/348#issuecomment-413833491",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 381,
+   "original": 274,
+   "evidence_url": "https://github.com/psf/black/issues/381#issuecomment-413835755",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 383,
+   "original": 282,
+   "evidence_url": "https://github.com/psf/black/issues/383#issuecomment-401078527",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 400,
+   "original": 267,
+   "evidence_url": "https://github.com/psf/black/issues/400#issuecomment-413836429",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 500,
+   "original": 256,
+   "evidence_url": "https://github.com/psf/black/issues/500#issuecomment-424788496",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 512,
+   "original": 262,
+   "evidence_url": "https://github.com/psf/black/issues/512#issuecomment-424840307",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 578,
+   "original": 413,
+   "evidence_url": "https://github.com/psf/black/issues/578#issuecomment-1024936491",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 587,
+   "original": 2156,
+   "evidence_url": "https://github.com/psf/black/issues/587#issuecomment-1027143331",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 590,
+   "original": 256,
+   "evidence_url": "https://github.com/psf/black/issues/590#issuecomment-459452271",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 600,
+   "original": 246,
+   "evidence_url": "https://github.com/psf/black/issues/600#issuecomment-850937067",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 657,
+   "original": 510,
+   "evidence_url": "https://github.com/psf/black/issues/657#issuecomment-1024936619",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 672,
+   "original": 2547,
+   "evidence_url": "https://github.com/psf/black/issues/672#issuecomment-1621001220",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 687,
+   "original": 617,
+   "evidence_url": "https://github.com/psf/black/issues/687#issuecomment-463780739",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 718,
+   "original": 560,
+   "evidence_url": "https://github.com/psf/black/issues/718#issuecomment-506897029",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 743,
+   "original": 26,
+   "evidence_url": "https://github.com/psf/black/issues/743#issuecomment-472957902",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 749,
+   "original": 236,
+   "evidence_url": "https://github.com/psf/black/issues/749#issuecomment-1357059529",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 784,
+   "original": 656,
+   "evidence_url": "https://github.com/psf/black/issues/784#issuecomment-489725188",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 828,
+   "original": 256,
+   "evidence_url": "https://github.com/psf/black/issues/828#issuecomment-699570891",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 873,
+   "original": 195,
+   "evidence_url": "https://github.com/psf/black/issues/873#issuecomment-496818261",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 913,
+   "original": 560,
+   "evidence_url": "https://github.com/psf/black/issues/913#issuecomment-506897084",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 919,
+   "original": 434,
+   "evidence_url": "https://github.com/psf/black/issues/919#issuecomment-508659153",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 924,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/924#issuecomment-695119148",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 945,
+   "original": 256,
+   "evidence_url": "https://github.com/psf/black/issues/945#issuecomment-516563568",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 947,
+   "original": 847,
+   "evidence_url": "https://github.com/psf/black/issues/947#issuecomment-515554761",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 950,
+   "original": 560,
+   "evidence_url": "https://github.com/psf/black/issues/950#issuecomment-516562976",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 955,
+   "original": 182,
+   "evidence_url": "https://github.com/psf/black/issues/955#issuecomment-517806214",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 976,
+   "original": 560,
+   "evidence_url": "https://github.com/psf/black/issues/976#issuecomment-521923281",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 991,
+   "original": 620,
+   "evidence_url": "https://github.com/psf/black/issues/991#issuecomment-523323249",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1044,
+   "original": 1042,
+   "evidence_url": "https://github.com/psf/black/issues/1044#issuecomment-544265376",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1050,
+   "original": 2156,
+   "evidence_url": "https://github.com/psf/black/issues/1050#issuecomment-1027148285",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1076,
+   "original": 987,
+   "evidence_url": "https://github.com/psf/black/issues/1076#issuecomment-699574038",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1094,
+   "original": 2156,
+   "evidence_url": "https://github.com/psf/black/issues/1094#issuecomment-1027153163",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1101,
+   "original": 814,
+   "evidence_url": "https://github.com/psf/black/issues/1101#issuecomment-733974603",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1133,
+   "original": 1127,
+   "evidence_url": "https://github.com/psf/black/issues/1133#issuecomment-549107060",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1135,
+   "original": 567,
+   "evidence_url": "https://github.com/psf/black/issues/1135#issuecomment-549409806",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1151,
+   "original": 1123,
+   "evidence_url": "https://github.com/psf/black/issues/1151#issuecomment-850933125",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1170,
+   "original": 952,
+   "evidence_url": "https://github.com/psf/black/issues/1170#issuecomment-850934069",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1201,
+   "original": 567,
+   "evidence_url": "https://github.com/psf/black/issues/1201#issuecomment-564856691",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1211,
+   "original": 563,
+   "evidence_url": "https://github.com/psf/black/issues/1211#issuecomment-645055142",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1235,
+   "original": 1174,
+   "evidence_url": "https://github.com/psf/black/issues/1235#issuecomment-580997577",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1237,
+   "original": 510,
+   "evidence_url": "https://github.com/psf/black/issues/1237#issuecomment-1024937261",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1248,
+   "original": 949,
+   "evidence_url": "https://github.com/psf/black/issues/1248#issuecomment-578724555",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1250,
+   "original": 1202,
+   "evidence_url": "https://github.com/psf/black/issues/1250#issuecomment-583124249",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1264,
+   "original": 1189,
+   "evidence_url": "https://github.com/psf/black/issues/1264#issuecomment-667747400",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1276,
+   "original": 1169,
+   "evidence_url": "https://github.com/psf/black/issues/1276#issuecomment-587438396",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1311,
+   "original": 1285,
+   "evidence_url": "https://github.com/psf/black/issues/1311#issuecomment-601736248",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1314,
+   "original": 413,
+   "evidence_url": "https://github.com/psf/black/issues/1314#issuecomment-1024937421",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1336,
+   "original": 48,
+   "evidence_url": "https://github.com/psf/black/issues/1336#issuecomment-611213198",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1341,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/1341#issuecomment-668308865",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1358,
+   "original": 1287,
+   "evidence_url": "https://github.com/psf/black/issues/1358#issuecomment-703937240",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1362,
+   "original": 26,
+   "evidence_url": "https://github.com/psf/black/issues/1362#issuecomment-621620134",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1368,
+   "original": 1264,
+   "evidence_url": "https://github.com/psf/black/issues/1368#issuecomment-667747288",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1369,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/1369#issuecomment-699574915",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1374,
+   "original": 1368,
+   "evidence_url": "https://github.com/psf/black/issues/1374#issuecomment-622993272",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1386,
+   "original": 1765,
+   "evidence_url": "https://github.com/psf/black/issues/1386#issuecomment-1024943101",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1398,
+   "original": 952,
+   "evidence_url": "https://github.com/psf/black/issues/1398#issuecomment-667755126",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1406,
+   "original": 814,
+   "evidence_url": "https://github.com/psf/black/issues/1406#issuecomment-733974985",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1413,
+   "original": 889,
+   "evidence_url": "https://github.com/psf/black/issues/1413#issuecomment-629166028",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1433,
+   "original": 1169,
+   "evidence_url": "https://github.com/psf/black/issues/1433#issuecomment-645050951",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1438,
+   "original": 1387,
+   "evidence_url": "https://github.com/psf/black/issues/1438#issuecomment-631832939",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1445,
+   "original": 517,
+   "evidence_url": "https://github.com/psf/black/issues/1445#issuecomment-632367957",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1449,
+   "original": 779,
+   "evidence_url": "https://github.com/psf/black/issues/1449#issuecomment-645050703",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1464,
+   "original": 1143,
+   "evidence_url": "https://github.com/psf/black/issues/1464#issuecomment-693718182",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1491,
+   "original": 1006,
+   "evidence_url": "https://github.com/psf/black/issues/1491#issuecomment-660727775",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1499,
+   "original": 563,
+   "evidence_url": "https://github.com/psf/black/issues/1499#issuecomment-644312759",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1522,
+   "original": 1174,
+   "evidence_url": "https://github.com/psf/black/issues/1522#issuecomment-683355130",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1526,
+   "original": 236,
+   "evidence_url": "https://github.com/psf/black/issues/1526#issuecomment-1024941228",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1540,
+   "original": 1467,
+   "evidence_url": "https://github.com/psf/black/issues/1540#issuecomment-660730986",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1546,
+   "original": 1368,
+   "evidence_url": "https://github.com/psf/black/issues/1546#issuecomment-660723874",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1554,
+   "original": 1363,
+   "evidence_url": "https://github.com/psf/black/issues/1554#issuecomment-659950200",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1573,
+   "original": 1520,
+   "evidence_url": "https://github.com/psf/black/issues/1573#issuecomment-670565179",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1578,
+   "original": 1245,
+   "evidence_url": "https://github.com/psf/black/issues/1578#issuecomment-671430613",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1582,
+   "original": 620,
+   "evidence_url": "https://github.com/psf/black/issues/1582#issuecomment-850761476",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1586,
+   "original": 1520,
+   "evidence_url": "https://github.com/psf/black/issues/1586#issuecomment-672127186",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1602,
+   "original": 1520,
+   "evidence_url": "https://github.com/psf/black/issues/1602#issuecomment-674096912",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1605,
+   "original": 1597,
+   "evidence_url": "https://github.com/psf/black/issues/1605#issuecomment-674233515",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1611,
+   "original": 1245,
+   "evidence_url": "https://github.com/psf/black/issues/1611#issuecomment-850934372",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1633,
+   "original": 1601,
+   "evidence_url": "https://github.com/psf/black/issues/1633#issuecomment-681055615",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1638,
+   "original": 1601,
+   "evidence_url": "https://github.com/psf/black/issues/1638#issuecomment-681302181",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1639,
+   "original": 1634,
+   "evidence_url": "https://github.com/psf/black/issues/1639#issuecomment-681964103",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1651,
+   "original": 1601,
+   "evidence_url": "https://github.com/psf/black/issues/1651#issuecomment-682976774",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1684,
+   "original": 458,
+   "evidence_url": "https://github.com/psf/black/issues/1684#issuecomment-691719092",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1701,
+   "original": 1541,
+   "evidence_url": "https://github.com/psf/black/issues/1701#issuecomment-691701614",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1703,
+   "original": 1143,
+   "evidence_url": "https://github.com/psf/black/issues/1703#issuecomment-693717943",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1706,
+   "original": 830,
+   "evidence_url": "https://github.com/psf/black/issues/1706#issuecomment-693661207",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1709,
+   "original": 1280,
+   "evidence_url": "https://github.com/psf/black/issues/1709#issuecomment-850934650",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1716,
+   "original": 1601,
+   "evidence_url": "https://github.com/psf/black/issues/1716#issuecomment-695091105",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1721,
+   "original": 1194,
+   "evidence_url": "https://github.com/psf/black/issues/1721#issuecomment-752235244",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1722,
+   "original": 1663,
+   "evidence_url": "https://github.com/psf/black/issues/1722#issuecomment-716867580",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1725,
+   "original": 1191,
+   "evidence_url": "https://github.com/psf/black/issues/1725#issuecomment-698468443",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1737,
+   "original": 1286,
+   "evidence_url": "https://github.com/psf/black/issues/1737#issuecomment-702928917",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1739,
+   "original": 1666,
+   "evidence_url": "https://github.com/psf/black/issues/1739#issuecomment-702957433",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1758,
+   "original": 620,
+   "evidence_url": "https://github.com/psf/black/issues/1758#issuecomment-1024941429",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1766,
+   "original": 1601,
+   "evidence_url": "https://github.com/psf/black/issues/1766#issuecomment-710634071",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1771,
+   "original": 1663,
+   "evidence_url": "https://github.com/psf/black/issues/1771#issuecomment-716854902",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1772,
+   "original": 1601,
+   "evidence_url": "https://github.com/psf/black/issues/1772#issuecomment-733968578",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1781,
+   "original": 1254,
+   "evidence_url": "https://github.com/psf/black/issues/1781#issuecomment-1024942809",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1805,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/1805#issuecomment-722011448",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1806,
+   "original": 1189,
+   "evidence_url": "https://github.com/psf/black/issues/1806#issuecomment-722602408",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1808,
+   "original": 671,
+   "evidence_url": "https://github.com/psf/black/issues/1808#issuecomment-723364105",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1859,
+   "original": 1841,
+   "evidence_url": "https://github.com/psf/black/issues/1859#issuecomment-739061362",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1863,
+   "original": 236,
+   "evidence_url": "https://github.com/psf/black/issues/1863#issuecomment-1024944231",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1876,
+   "original": 256,
+   "evidence_url": "https://github.com/psf/black/issues/1876#issuecomment-749638622",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1960,
+   "original": 1012,
+   "evidence_url": "https://github.com/psf/black/issues/1960#issuecomment-772907291",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1965,
+   "original": 1280,
+   "evidence_url": "https://github.com/psf/black/issues/1965#issuecomment-850934592",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1974,
+   "original": 236,
+   "evidence_url": "https://github.com/psf/black/issues/1974#issuecomment-1024943474",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1976,
+   "original": 1588,
+   "evidence_url": "https://github.com/psf/black/issues/1976#issuecomment-774747444",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 1989,
+   "original": 1830,
+   "evidence_url": "https://github.com/psf/black/issues/1989#issuecomment-779333017",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2028,
+   "original": 256,
+   "evidence_url": "https://github.com/psf/black/issues/2028#issuecomment-812714278",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2029,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/2029#issuecomment-793296078",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2030,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/2030#issuecomment-850929940",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2032,
+   "original": 1588,
+   "evidence_url": "https://github.com/psf/black/issues/2032#issuecomment-812233806",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2038,
+   "original": 2316,
+   "evidence_url": "https://github.com/psf/black/issues/2038#issuecomment-1024945439",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2063,
+   "original": 620,
+   "evidence_url": "https://github.com/psf/black/issues/2063#issuecomment-1024943324",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2088,
+   "original": 333,
+   "evidence_url": "https://github.com/psf/black/issues/2088#issuecomment-814152651",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2089,
+   "original": 2079,
+   "evidence_url": "https://github.com/psf/black/issues/2089#issuecomment-814236270",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2239,
+   "original": 664,
+   "evidence_url": "https://github.com/psf/black/issues/2239#issuecomment-842338638",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2250,
+   "original": 1239,
+   "evidence_url": "https://github.com/psf/black/issues/2250#issuecomment-850765917",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2295,
+   "original": 423,
+   "evidence_url": "https://github.com/psf/black/issues/2295#issuecomment-851730127",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2307,
+   "original": 1123,
+   "evidence_url": "https://github.com/psf/black/issues/2307#issuecomment-855248401",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2329,
+   "original": 1245,
+   "evidence_url": "https://github.com/psf/black/issues/2329#issuecomment-859951048",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2349,
+   "original": 1245,
+   "evidence_url": "https://github.com/psf/black/issues/2349#issuecomment-1528467495",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2372,
+   "original": 1948,
+   "evidence_url": "https://github.com/psf/black/issues/2372#issuecomment-880716803",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2391,
+   "original": 333,
+   "evidence_url": "https://github.com/psf/black/issues/2391#issuecomment-885037245",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2392,
+   "original": 2547,
+   "evidence_url": "https://github.com/psf/black/issues/2392#issuecomment-1621000920",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2497,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/2497#issuecomment-922505353",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2531,
+   "original": 2242,
+   "evidence_url": "https://github.com/psf/black/issues/2531#issuecomment-938182569",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2561,
+   "original": 2248,
+   "evidence_url": "https://github.com/psf/black/issues/2561#issuecomment-949819206",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2566,
+   "original": 2156,
+   "evidence_url": "https://github.com/psf/black/issues/2566#issuecomment-1621007063",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2591,
+   "original": 620,
+   "evidence_url": "https://github.com/psf/black/issues/2591#issuecomment-961911783",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2599,
+   "original": 2156,
+   "evidence_url": "https://github.com/psf/black/issues/2599#issuecomment-965554456",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2633,
+   "original": 2242,
+   "evidence_url": "https://github.com/psf/black/issues/2633#issuecomment-974811954",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2672,
+   "original": 1811,
+   "evidence_url": "https://github.com/psf/black/issues/2672#issuecomment-1631378361",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2729,
+   "original": 413,
+   "evidence_url": "https://github.com/psf/black/issues/2729#issuecomment-1024938197",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2745,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/2745#issuecomment-1007581087",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2767,
+   "original": 2316,
+   "evidence_url": "https://github.com/psf/black/issues/2767#issuecomment-1011387513",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2808,
+   "original": 510,
+   "evidence_url": "https://github.com/psf/black/issues/2808#issuecomment-1026254449",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2827,
+   "original": 567,
+   "evidence_url": "https://github.com/psf/black/issues/2827#issuecomment-1024991333",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2838,
+   "original": 1356,
+   "evidence_url": "https://github.com/psf/black/issues/2838#issuecomment-1025225901",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2876,
+   "original": 2547,
+   "evidence_url": "https://github.com/psf/black/issues/2876#issuecomment-1621000869",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2882,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/2882#issuecomment-1039693278",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2910,
+   "original": 413,
+   "evidence_url": "https://github.com/psf/black/issues/2910#issuecomment-1060470688",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2936,
+   "original": 2646,
+   "evidence_url": "https://github.com/psf/black/issues/2936#issuecomment-1070961126",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2946,
+   "original": 2339,
+   "evidence_url": "https://github.com/psf/black/issues/2946#issuecomment-1075443700",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 2972,
+   "original": 2964,
+   "evidence_url": "https://github.com/psf/black/issues/2972#issuecomment-1082038819",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3010,
+   "original": 2052,
+   "evidence_url": "https://github.com/psf/black/issues/3010#issuecomment-1097001538",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3011,
+   "original": 413,
+   "evidence_url": "https://github.com/psf/black/issues/3011#issuecomment-1099255956",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3028,
+   "original": 569,
+   "evidence_url": "https://github.com/psf/black/issues/3028#issuecomment-1106898197",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3033,
+   "original": 902,
+   "evidence_url": "https://github.com/psf/black/issues/3033#issuecomment-1107923854",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3061,
+   "original": 2339,
+   "evidence_url": "https://github.com/psf/black/issues/3061#issuecomment-1121093164",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3079,
+   "original": 3263,
+   "evidence_url": "https://github.com/psf/black/issues/3079#issuecomment-1242969955",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3081,
+   "original": 1156,
+   "evidence_url": "https://github.com/psf/black/issues/3081#issuecomment-1140153121",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3089,
+   "original": 450,
+   "evidence_url": "https://github.com/psf/black/issues/3089#issuecomment-1528391309",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3090,
+   "original": 567,
+   "evidence_url": "https://github.com/psf/black/issues/3090#issuecomment-1140153191",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3154,
+   "original": 2646,
+   "evidence_url": "https://github.com/psf/black/issues/3154#issuecomment-1173913752",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3204,
+   "original": 2296,
+   "evidence_url": "https://github.com/psf/black/issues/3204#issuecomment-1205998836",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3213,
+   "original": 567,
+   "evidence_url": "https://github.com/psf/black/issues/3213#issuecomment-1207608045",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3239,
+   "original": 2498,
+   "evidence_url": "https://github.com/psf/black/issues/3239#issuecomment-1234989899",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3279,
+   "original": 413,
+   "evidence_url": "https://github.com/psf/black/issues/3279#issuecomment-1255707971",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3296,
+   "original": 2316,
+   "evidence_url": "https://github.com/psf/black/issues/3296#issuecomment-1261480876",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3330,
+   "original": 2213,
+   "evidence_url": "https://github.com/psf/black/issues/3330#issuecomment-1775506373",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3371,
+   "original": 510,
+   "evidence_url": "https://github.com/psf/black/issues/3371#issuecomment-1301098726",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3460,
+   "original": 3330,
+   "evidence_url": "https://github.com/psf/black/issues/3460#issuecomment-1629233326",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3529,
+   "original": 3498,
+   "evidence_url": "https://github.com/psf/black/issues/3529#issuecomment-3105188555",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3540,
+   "original": 3306,
+   "evidence_url": "https://github.com/psf/black/issues/3540#issuecomment-1412669019",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3596,
+   "original": 3593,
+   "evidence_url": "https://github.com/psf/black/issues/3596#issuecomment-1456332468",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3598,
+   "original": 4026,
+   "evidence_url": "https://github.com/psf/black/issues/3598#issuecomment-1848673561",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3633,
+   "original": 413,
+   "evidence_url": "https://github.com/psf/black/issues/3633#issuecomment-1492243495",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3646,
+   "original": 861,
+   "evidence_url": "https://github.com/psf/black/issues/3646#issuecomment-1510474632",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3672,
+   "original": 2547,
+   "evidence_url": "https://github.com/psf/black/issues/3672#issuecomment-1621000823",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3702,
+   "original": 3505,
+   "evidence_url": "https://github.com/psf/black/issues/3702#issuecomment-1563822709",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3705,
+   "original": 3505,
+   "evidence_url": "https://github.com/psf/black/issues/3705#issuecomment-1563822971",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3788,
+   "original": 2493,
+   "evidence_url": "https://github.com/psf/black/issues/3788#issuecomment-1633215705",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3816,
+   "original": 2316,
+   "evidence_url": "https://github.com/psf/black/issues/3816#issuecomment-1653226279",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3832,
+   "original": 1764,
+   "evidence_url": "https://github.com/psf/black/issues/3832#issuecomment-1668928802",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3845,
+   "original": 3324,
+   "evidence_url": "https://github.com/psf/black/issues/3845#issuecomment-1684828395",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3874,
+   "original": 2316,
+   "evidence_url": "https://github.com/psf/black/issues/3874#issuecomment-1712946848",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 3929,
+   "original": 4071,
+   "evidence_url": "https://github.com/psf/black/issues/3929#issuecomment-2550214681",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4046,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4046#issuecomment-1810209684",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4056,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4056#issuecomment-1817968123",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4073,
+   "original": 333,
+   "evidence_url": "https://github.com/psf/black/issues/4073#issuecomment-1828652975",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4074,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4074#issuecomment-1829292087",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4083,
+   "original": 4071,
+   "evidence_url": "https://github.com/psf/black/issues/4083#issuecomment-1837516754",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4088,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4088#issuecomment-1843243369",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4110,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4110#issuecomment-1856330862",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4126,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4126#issuecomment-1868365656",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4138,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4138#issuecomment-1873042612",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4147,
+   "original": 779,
+   "evidence_url": "https://github.com/psf/black/issues/4147#issuecomment-1884028074",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4150,
+   "original": 3497,
+   "evidence_url": "https://github.com/psf/black/issues/4150#issuecomment-1888444353",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4151,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4151#issuecomment-1888710500",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4166,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4166#issuecomment-1909107862",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4171,
+   "original": 2877,
+   "evidence_url": "https://github.com/psf/black/issues/4171#issuecomment-1912234807",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4174,
+   "original": 4172,
+   "evidence_url": "https://github.com/psf/black/issues/4174#issuecomment-1912126128",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4199,
+   "original": 3815,
+   "evidence_url": "https://github.com/psf/black/issues/4199#issuecomment-1918775069",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4200,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4200#issuecomment-1919778143",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4216,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4216#issuecomment-1932703314",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4219,
+   "original": 789,
+   "evidence_url": "https://github.com/psf/black/issues/4219#issuecomment-1935430626",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4246,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4246#issuecomment-1958489185",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4260,
+   "original": 333,
+   "evidence_url": "https://github.com/psf/black/issues/4260#issuecomment-1970104577",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4267,
+   "original": 2543,
+   "evidence_url": "https://github.com/psf/black/issues/4267#issuecomment-1981807800",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4271,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4271#issuecomment-1987353804",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4276,
+   "original": 2150,
+   "evidence_url": "https://github.com/psf/black/issues/4276#issuecomment-1999889175",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4281,
+   "original": 502,
+   "evidence_url": "https://github.com/psf/black/issues/4281#issuecomment-2004596630",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4284,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4284#issuecomment-2004590133",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4309,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4309#issuecomment-2053768042",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4315,
+   "original": 567,
+   "evidence_url": "https://github.com/psf/black/issues/4315#issuecomment-2065590587",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4316,
+   "original": 3746,
+   "evidence_url": "https://github.com/psf/black/issues/4316#issuecomment-2067776773",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4320,
+   "original": 4230,
+   "evidence_url": "https://github.com/psf/black/issues/4320#issuecomment-2068411642",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4355,
+   "original": 4254,
+   "evidence_url": "https://github.com/psf/black/issues/4355#issuecomment-2102544415",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4396,
+   "original": 3608,
+   "evidence_url": "https://github.com/psf/black/issues/4396#issuecomment-2211504162",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4481,
+   "original": 3608,
+   "evidence_url": "https://github.com/psf/black/issues/4481#issuecomment-2409706767",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4534,
+   "original": 4254,
+   "evidence_url": "https://github.com/psf/black/issues/4534#issuecomment-2549859778",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4570,
+   "original": 1540,
+   "evidence_url": "https://github.com/psf/black/issues/4570#issuecomment-2628037728",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4590,
+   "original": 3498,
+   "evidence_url": "https://github.com/psf/black/issues/4590#issuecomment-2687013916",
+   "association": "COLLABORATOR"
+  },
+  {
+   "duplicate": 4979,
+   "original": 4963,
+   "evidence_url": "https://github.com/psf/black/issues/4979#issuecomment-3836584650",
+   "association": "COLLABORATOR"
+  }
+ ]
+}

@@ -19,12 +19,11 @@ from warden.llm import Usage
 from .base import SkillContext, SkillResult, load_prompt, priced, render, untrusted
 
 DEFAULT_RECALL_K = 8
-DEFAULT_HIGH = 0.85
+DEFAULT_HIGH = 0.95  # 依据见 docs/adr/0003-dedup-threshold.md
 DEFAULT_LOW = 0.5
 MAX_CANDIDATE_BODY = 800
 # 引文在原文中找不到时的惩罚系数：模型可能在"编理由"
 UNVERIFIED_QUOTE_PENALTY = 0.7
-MAX_OUTPUT_CANDIDATES = 5
 
 
 class Judgement(BaseModel):
@@ -48,11 +47,15 @@ class DedupCandidate(BaseModel):
     state: str
     state_reason: str | None = None
     url: str | None = None
-    score: float
+    # raw_score / has_quotes / quotes_found / same_root_cause 是模型判断的原始事实；
+    # score / level / quotes_verified 由 finalize() 按阈值推导，回放评测时可以换阈值重算
     raw_score: float
-    level: Literal["duplicate", "related", "none"]
-    quotes_verified: bool
+    has_quotes: bool = True
+    quotes_found: bool = True
     same_root_cause: bool | None = None
+    score: float = 0.0
+    level: Literal["duplicate", "related", "none"] = "none"
+    quotes_verified: bool = False
     differences: str = ""
     reason: str
     recall: dict[str, Any]
@@ -82,6 +85,39 @@ def classify(score: float, high: float, low: float) -> Literal["duplicate", "rel
     if score >= low:
         return "related"
     return "none"
+
+
+Level = Literal["duplicate", "related", "none"]
+_LEVEL_RANK = {"duplicate": 2, "related": 1, "none": 0}
+
+
+def finalize(
+    candidates: list[DedupCandidate],
+    *,
+    high: float,
+    low: float,
+    gate: bool = True,
+    penalty: float = UNVERIFIED_QUOTE_PENALTY,
+) -> tuple[list[DedupCandidate], Level]:
+    """由模型判断的原始事实推导出分数、等级和最终结论。
+
+    线上的 DedupSkill 和离线的阈值扫描（warden/replay）都调用这个函数，
+    保证"扫描出来的最优阈值"在线上的行为完全一致。
+    """
+    out: list[DedupCandidate] = []
+    for c in candidates:
+        # 分数达到"相关"及以上时必须给出两段引文；引文还必须能在原文里找到
+        verified = c.quotes_found and (c.has_quotes or c.raw_score < low)
+        score = c.raw_score if verified else c.raw_score * penalty
+        level = classify(score, high, low)
+        if gate and level == "duplicate" and c.same_root_cause is False:
+            # 模型自己说"不是同一根因"时，分数再高也最多算"相关"
+            level = "related"
+        update = {"score": round(score, 3), "level": level, "quotes_verified": verified}
+        out.append(c.model_copy(update=update))
+    out.sort(key=lambda c: (_LEVEL_RANK[c.level], c.score), reverse=True)
+    verdict: Level = out[0].level if out else "none"
+    return out, verdict
 
 
 class DedupSkill:
@@ -152,18 +188,6 @@ class DedupSkill:
             r = by_id.get(j.id)
             if r is None:  # 模型编造了不存在的候选 id
                 continue
-            # 分数达到"相关"及以上时必须给出两段引文；引文还必须能在原文里找到
-            has_quotes = bool(j.quote_new.strip() and j.quote_candidate.strip())
-            verified = (
-                (has_quotes or j.score < self.low)
-                and quote_found(j.quote_new, new_text)
-                and quote_found(j.quote_candidate, f"{r.title}\n{r.body}")
-            )
-            score = j.score if verified else j.score * UNVERIFIED_QUOTE_PENALTY
-            level = classify(score, self.high, self.low)
-            if level == "duplicate" and j.same_root_cause is False:
-                # 模型自己说"不是同一根因"时，分数再高也最多算"相关"
-                level = "related"
             candidates.append(
                 DedupCandidate(
                     number=r.number,
@@ -171,21 +195,19 @@ class DedupSkill:
                     state=r.state,
                     state_reason=r.state_reason,
                     url=r.url,
-                    score=round(score, 3),
                     raw_score=j.score,
-                    level=level,
-                    quotes_verified=verified,
+                    has_quotes=bool(j.quote_new.strip() and j.quote_candidate.strip()),
+                    quotes_found=quote_found(j.quote_new, new_text)
+                    and quote_found(j.quote_candidate, f"{r.title}\n{r.body}"),
                     same_root_cause=j.same_root_cause,
                     differences=j.differences,
                     reason=j.reason,
                     recall={"rrf": r.rrf, "ranks": r.ranks, "scores": r.channel_scores},
                 )
             )
-        rank = {"duplicate": 2, "related": 1, "none": 0}
-        candidates.sort(key=lambda c: (rank[c.level], c.score), reverse=True)
-        candidates = candidates[:MAX_OUTPUT_CANDIDATES]
+        # 保留全部被判断过的候选（最多 recall_k 个），回放评测需要它们来重算阈值
+        candidates, verdict = finalize(candidates, high=self.high, low=self.low)
         best = candidates[0] if candidates else None
-        verdict = best.level if best else "none"
         out = DedupOutput(
             verdict=verdict,
             best=best.number if best and verdict != "none" else None,

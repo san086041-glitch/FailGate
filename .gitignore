@@ -12,3 +12,4 @@ build/
 *.db
 *.pem
 *.log
+eval/cache/

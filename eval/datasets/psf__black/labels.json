@@ -1,0 +1,21 @@
+{
+  "pairs": {
+    "3255->3218": {"label": "duplicate", "note": "都是 blackd 不保留 Windows 换行符（2026-09-24 复核）"},
+    "2757->2662": {"label": "duplicate", "note": "标题几乎相同：默认启用 pattern matching"},
+    "4759->4757": {"label": "duplicate", "note": "同一个 decode_bytes() 报错；GitHub 上已标成 duplicate"},
+    "4414->4306": {"label": "ambiguous", "note": "都是 'not equivalent' 报错；维护者说旧版本已修复，无法确认同一根因"},
+    "2783->2706": {"label": "not_duplicate", "note": "stub 文件里两条不同的空行规则"},
+    "3695->3658": {"label": "not_duplicate", "note": "pgen 里的 EncodingWarning vs 在 CI 里启用 EncodingWarning"},
+
+    "1942->1189": {"label": "duplicate", "note": "#1942 在时间线上交叉引用了 #1189；同一个无括号的带注解元组赋值崩溃"},
+    "4651->682": {"label": "duplicate", "note": "#4651 被 triager 标记为重复，评论提到 2018 年被拒的同类提案"},
+    "1933->1847": {"label": "duplicate", "note": "#1933 交叉引用 #1847；维护者确认两者都来自同一次损坏的 setuptools 发布"},
+    "478->439": {"label": "duplicate", "note": "同一原因：Black 只支持 Python 3.6+，在 2.7 上 pip 找不到版本（维护者回复）"},
+    "1935->1638": {"label": "duplicate", "note": "同一触发条件（docstring 里的 tab）与同一 INTERNAL ERROR；维护者说由 #1810 一并修复"},
+    "3409->2294": {"label": "ambiguous", "note": "都是 string processing 超长；但 #2294 已关闭为修复而 #3409 仍开着，未必同一根因"},
+    "1149->1068": {"label": "ambiguous", "note": "都与 vim 插件版本检测有关，没有找到互相引用的证据"},
+
+    "1701->1323": {"label": "duplicate", "note": "正样本另选目标：#1323 时间线上交叉引用了 #1701；同一个切片冒号前加空格的问题"},
+    "945->789": {"label": "duplicate", "note": "正样本另选目标：#789 时间线上交叉引用了 #945；多行字符串之后的参数被展开"}
+  }
+}

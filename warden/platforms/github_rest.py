@@ -35,6 +35,35 @@ class GitHubRest:
     async def aclose(self) -> None:
         await self._http.aclose()
 
+    async def _paginate(
+        self, url: str, params: dict[str, Any] | None, *, items_key: str | None = None
+    ) -> AsyncIterator[dict[str, Any]]:
+        next_url: str | None = url
+        while next_url:
+            r = await self._http.get(next_url, params=params)
+            r.raise_for_status()
+            data = r.json()
+            for item in data[items_key] if items_key else data:
+                yield item
+            m = _NEXT.search(r.headers.get("link", ""))
+            # next 链接自带完整查询参数，必须传 None（见 iter_issues 的注释）
+            next_url, params = (m.group(1), None) if m else (None, None)
+
+    async def search_issue_numbers(self, query: str, *, limit: int = 1000) -> list[int]:
+        """GitHub 搜索 API。注意：单个查询最多返回 1000 条结果，且限额是每分钟 30 次。"""
+        numbers: list[int] = []
+        params = {"q": query, "per_page": 100}
+        async for item in self._paginate("/search/issues", params, items_key="items"):
+            numbers.append(item["number"])
+            if len(numbers) >= limit:
+                break
+        return numbers
+
+    async def list_comments(self, full_name: str, number: int) -> list[dict[str, Any]]:
+        params = {"per_page": 100}
+        url = f"/repos/{full_name}/issues/{number}/comments"
+        return [c async for c in self._paginate(url, params)]
+
     async def iter_issues(
         self, full_name: str, *, limit: int = 1000, since: datetime | None = None
     ) -> AsyncIterator[dict[str, Any]]:
