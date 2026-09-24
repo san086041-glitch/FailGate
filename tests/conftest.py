@@ -9,6 +9,7 @@ from typing import Any
 
 import httpx
 import pytest
+from fake_llm import FakeLLM
 
 from warden.app import Warden, create_app
 from warden.settings import Settings
@@ -21,6 +22,7 @@ REPO = "acme/widgets"
 class Harness:
     warden: Warden
     client: httpx.AsyncClient
+    llm: FakeLLM
 
     async def send(
         self, event: str, payload: dict[str, Any], delivery: str, *, secret: str = SECRET
@@ -39,20 +41,42 @@ class Harness:
         )
 
 
-@pytest.fixture
-async def harness(tmp_path) -> AsyncIterator[Harness]:
-    settings = Settings(
-        warden_db_url=f"sqlite+aiosqlite:///{(tmp_path / 'warden.db').as_posix()}",
-        github_webhook_secret=SECRET,
-        default_repo_mode="shadow",
-    )
-    app = create_app(settings, run_worker=False)
+def make_settings(tmp_path, **overrides: Any) -> Settings:
+    values: dict[str, Any] = {
+        "warden_db_url": f"sqlite+aiosqlite:///{(tmp_path / 'warden.db').as_posix()}",
+        "github_webhook_secret": SECRET,
+        "default_repo_mode": "shadow",
+        "llm_api_key": "test-key",
+        "llm_base_url": "http://llm.test",
+        "llm_model_small": "deepseek-flash",
+        "case_budget_usd": 0.5,
+    }
+    values.update(overrides)
+    # _env_file=None：测试不读取开发者本地的 .env
+    return Settings(_env_file=None, **values)  # type: ignore[call-arg]
+
+
+async def _harness(settings: Settings) -> AsyncIterator[Harness]:
+    llm = FakeLLM()
+    app = create_app(settings, run_worker=False, llm_transport=llm.transport)
     warden: Warden = app.state.warden
     await warden.start(run_worker=False)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        yield Harness(warden, client)
+        yield Harness(warden, client, llm)
     await warden.stop()
+
+
+@pytest.fixture
+async def harness(tmp_path) -> AsyncIterator[Harness]:
+    async for h in _harness(make_settings(tmp_path)):
+        yield h
+
+
+@pytest.fixture
+async def harness_no_llm(tmp_path) -> AsyncIterator[Harness]:
+    async for h in _harness(make_settings(tmp_path, llm_api_key="")):
+        yield h
 
 
 def user(login: str, *, bot: bool = False) -> dict[str, Any]:

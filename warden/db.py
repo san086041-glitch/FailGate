@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, ForeignKey, String, UniqueConstraint
+from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -49,6 +49,9 @@ class Case(Base):
     state: Mapped[str] = mapped_column(String(32))
     state_version: Mapped[int] = mapped_column(default=0)
     author_login: Mapped[str | None] = mapped_column(String(255), default=None)
+    title: Mapped[str] = mapped_column(Text, default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    spent_usd: Mapped[float] = mapped_column(default=0.0)
     created_at: Mapped[datetime] = mapped_column(default=_now)
     updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
 
@@ -62,6 +65,29 @@ class TransitionLog(Base):
     to_state: Mapped[str] = mapped_column(String(32))
     event: Mapped[str] = mapped_column(String(64))
     at: Mapped[datetime] = mapped_column(default=_now)
+
+
+class Run(Base):
+    """能力模块的一次执行。输出、用量、花费都落库，供控制台展示和回放评测对比。"""
+
+    __tablename__ = "runs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"))
+    skill: Mapped[str] = mapped_column(String(32))
+    skill_version: Mapped[str] = mapped_column(String(16))
+    model: Mapped[str | None] = mapped_column(String(64), default=None)
+    # ok | error
+    status: Mapped[str] = mapped_column(String(16))
+    output: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=None)
+    error: Mapped[str | None] = mapped_column(Text, default=None)
+    confidence: Mapped[float | None] = mapped_column(default=None)
+    tokens_in: Mapped[int] = mapped_column(default=0)
+    tokens_out: Mapped[int] = mapped_column(default=0)
+    tokens_cached: Mapped[int] = mapped_column(default=0)
+    usd: Mapped[float] = mapped_column(default=0.0)
+    started_at: Mapped[datetime] = mapped_column(default=_now)
+    ended_at: Mapped[datetime] = mapped_column(default=_now)
 
 
 class Effect(Base):

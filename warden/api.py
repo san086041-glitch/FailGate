@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import APIRouter, HTTPException, Request
 from sqlalchemy import select
 
-from warden.db import Case, Effect, Repo, TransitionLog
+from warden.db import Case, Effect, Repo, Run, TransitionLog
 
 if TYPE_CHECKING:
     from warden.app import Warden
@@ -58,12 +58,28 @@ async def get_case(request: Request, case_id: int) -> dict[str, Any]:
                 select(Effect).where(Effect.case_id == case_id).order_by(Effect.created_at)
             )
         ).all()
+        runs = (await s.scalars(select(Run).where(Run.case_id == case_id).order_by(Run.id))).all()
     return {
         "id": case.id,
         "kind": case.kind,
         "number": case.number,
+        "title": case.title,
         "state": case.state,
         "state_version": case.state_version,
+        "spent_usd": round(case.spent_usd, 6),
+        "runs": [
+            {
+                "skill": r.skill,
+                "version": r.skill_version,
+                "model": r.model,
+                "status": r.status,
+                "output": r.output,
+                "error": r.error,
+                "tokens": {"in": r.tokens_in, "out": r.tokens_out, "cached": r.tokens_cached},
+                "usd": r.usd,
+            }
+            for r in runs
+        ],
         "transitions": [
             {"from": t.from_state, "to": t.to_state, "event": t.event, "at": t.at.isoformat()}
             for t in transitions

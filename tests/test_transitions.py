@@ -15,6 +15,13 @@ def test_new_issue_goes_to_intake():
     assert t is not None and t.to is S.INTAKE
 
 
+def test_intake_then_triage_then_dedup():
+    t1 = resolve(S.INTAKE, "skill.done", GuardContext())
+    t2 = resolve(S.TRIAGING, "skill.done", GuardContext())
+    assert t1 is not None and t1.to is S.TRIAGING
+    assert t2 is not None and t2.to is S.DEDUPING
+
+
 @pytest.mark.parametrize(
     ("facts", "expected"),
     [
@@ -27,7 +34,7 @@ def test_new_issue_goes_to_intake():
     ],
 )
 def test_route_after_dedup(facts, expected):
-    t = resolve(S.DEDUPED, "route", GuardContext(facts=facts))
+    t = resolve(S.DEDUPING, "skill.done", GuardContext(facts=facts))
     assert t is not None and t.to is expected
 
 

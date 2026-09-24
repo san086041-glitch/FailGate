@@ -1,7 +1,7 @@
 """状态转换表（技术方案第 5 节）。
 
 表是纯数据 + 纯函数守卫，便于单测和评审；同一 (状态, 事件) 有多行时按顺序取第一个守卫通过的，
-所以兜底行必须放在最后。skill.done / route 相关的行在 M1 起由能力模块驱动。
+所以兜底行必须放在最后。skill.done 由能力模块完成时发出（见 orchestrator/pipeline.py）。
 """
 
 from __future__ import annotations
@@ -55,26 +55,26 @@ _budget_ok = _fact("budget_ok", lambda v: v is not False)
 
 TABLE: tuple[Transition, ...] = (
     Transition(frozenset({S.NEW}), "issue.opened", S.INTAKE),
-    Transition(frozenset({S.INTAKE}), "skill.done", S.TRIAGED),
-    Transition(frozenset({S.TRIAGED}), "skill.done", S.DEDUPED),
-    # DEDUPED 之后的分流：重复 > 提问 > 可复现的 bug > 其余只分诊
+    Transition(frozenset({S.INTAKE}), "skill.done", S.TRIAGING),
+    Transition(frozenset({S.TRIAGING}), "skill.done", S.DEDUPING),
+    # 查重完成后的分流：重复 > 提问 > 可复现的 bug > 其余只分诊
     Transition(
-        frozenset({S.DEDUPED}), "route", S.DUP_SUSPECTED,
+        frozenset({S.DEDUPING}), "skill.done", S.DUP_SUSPECTED,
         _fact("dup_high", lambda v: v is True),
     ),
     Transition(
-        frozenset({S.DEDUPED}), "route", S.ANSWERING,
+        frozenset({S.DEDUPING}), "skill.done", S.ANSWERING,
         _fact("type", lambda v: v == "question"),
     ),
     Transition(
-        frozenset({S.DEDUPED}), "route", S.REPRODUCING,
+        frozenset({S.DEDUPING}), "skill.done", S.REPRODUCING,
         _all(
             _fact("type", lambda v: v == "bug"),
             _fact("repro_enabled", lambda v: v is True),
             _budget_ok,
         ),
     ),
-    Transition(frozenset({S.DEDUPED}), "route", S.TRIAGE_ONLY),
+    Transition(frozenset({S.DEDUPING}), "skill.done", S.TRIAGE_ONLY),
     Transition(frozenset({S.ANSWERING}), "skill.done", S.ANSWERED),
     Transition(
         frozenset({S.REPRODUCING}), "skill.done", S.REPRODUCED,

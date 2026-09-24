@@ -1,18 +1,20 @@
-"""CaseMachine：把一个 DomainEvent 应用到对应 Case 上。
+"""CaseMachine：把事件应用到对应 Case 上。
 
-每次调用在一个事务里完成：定位或创建 Repo/Case → 查转换表 → 写转换日志 → 执行进入新状态的动作。
+外部事件（webhook）走 handle()：定位或创建 Repo/Case → 查转换表 → 写转换日志。
+内部事件（能力模块完成、预算耗尽）由 pipeline 在自己的事务里调用 apply()。
 """
 
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from warden.db import Case, Database, Repo, TransitionLog
-from warden.platforms.base import DomainEvent
-from warden.policy.gate import PolicyGate
+from warden.platforms.base import DomainEvent, User
 
 from .commands import parse_command
 from .states import CaseState
@@ -20,8 +22,11 @@ from .transitions import GuardContext, resolve
 
 log = logging.getLogger(__name__)
 
-# M0 占位回复：证明"事件 → 状态机 → 策略层"这条链路打通；M1 由 Intake/Triage 的汇总评论取代
-ACK_BODY = "RepoWarden 已收到这个 issue，正在整理信息。"
+
+@dataclass(frozen=True)
+class Outcome:
+    case_id: int
+    state: CaseState
 
 
 def event_name(event: DomainEvent) -> str:
@@ -33,13 +38,12 @@ def event_name(event: DomainEvent) -> str:
 
 
 class CaseMachine:
-    def __init__(self, db: Database, gate: PolicyGate, default_mode: str = "shadow") -> None:
+    def __init__(self, db: Database, default_mode: str = "shadow") -> None:
         self.db = db
-        self.gate = gate
         self.default_mode = default_mode
 
-    async def handle(self, event: DomainEvent) -> CaseState | None:
-        """返回转换后的新状态；事件被忽略时返回 None。"""
+    async def handle(self, event: DomainEvent) -> Outcome | None:
+        """应用一个外部事件；发生状态转换时返回新状态，否则返回 None。"""
         # 过滤机器人（包括自己）触发的事件，避免自己触发自己
         if event.actor.is_bot or event.case is None:
             return None
@@ -48,19 +52,29 @@ class CaseMachine:
             if repo.mode == "paused":
                 return None
             case = await self._case(s, repo, event)
-            name = event_name(event)
-            ctx = GuardContext(actor=event.actor, facts={"author": case.author_login})
-            current = CaseState(case.state)
-            t = resolve(current, name, ctx)
-            if t is None:
-                log.debug("no transition: case=%s state=%s event=%s", case.id, current, name)
-                return None
-            s.add(TransitionLog(case_id=case.id, from_state=current, to_state=t.to, event=name))
-            case.state = t.to
-            case.state_version += 1
-            await self._on_enter(s, repo, case, t.to)
-            log.info("case %s: %s --%s--> %s", case.id, current, name, t.to)
-            return t.to
+            state = await self.apply(s, case, event_name(event), actor=event.actor)
+            return Outcome(case.id, state) if state is not None else None
+
+    async def apply(
+        self,
+        s: AsyncSession,
+        case: Case,
+        name: str,
+        *,
+        actor: User | None = None,
+        facts: dict[str, Any] | None = None,
+    ) -> CaseState | None:
+        ctx = GuardContext(actor=actor, facts={"author": case.author_login, **(facts or {})})
+        current = CaseState(case.state)
+        t = resolve(current, name, ctx)
+        if t is None:
+            log.debug("no transition: case=%s state=%s event=%s", case.id, current, name)
+            return None
+        s.add(TransitionLog(case_id=case.id, from_state=current, to_state=t.to, event=name))
+        case.state = t.to
+        case.state_version += 1
+        log.info("case %s: %s --%s--> %s", case.id, current, name, t.to)
+        return t.to
 
     async def _repo(self, s: AsyncSession, event: DomainEvent) -> Repo:
         repo = await s.scalar(
@@ -87,6 +101,7 @@ class CaseMachine:
                 Case.number == event.case.number,
             )
         )
+        opened = event.name.endswith(".opened")
         if case is None:
             case = Case(
                 repo_id=repo.id,
@@ -94,14 +109,13 @@ class CaseMachine:
                 number=event.case.number,
                 state=CaseState.NEW,
                 state_version=0,
-                author_login=event.actor.login if event.name.endswith(".opened") else None,
+                author_login=event.actor.login if opened else None,
+                title=event.title,
+                body=event.body,
+                spent_usd=0.0,
             )
             s.add(case)
             await s.flush()
+        elif event.name in {"issue.edited", "pull.edited"} or (opened and not case.title):
+            case.title, case.body = event.title, event.body
         return case
-
-    async def _on_enter(self, s: AsyncSession, repo: Repo, case: Case, state: CaseState) -> None:
-        if state is CaseState.INTAKE:
-            await self.gate.propose(
-                s, repo=repo, case=case, action="comment", payload={"body": ACK_BODY}
-            )

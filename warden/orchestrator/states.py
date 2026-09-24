@@ -2,10 +2,12 @@ from enum import StrEnum
 
 
 class CaseState(StrEnum):
+    """状态名表示 Case 当前所处的阶段：INTAKE / TRIAGING / DEDUPING 期间对应的能力模块正在运行。"""
+
     NEW = "NEW"
     INTAKE = "INTAKE"
-    TRIAGED = "TRIAGED"
-    DEDUPED = "DEDUPED"
+    TRIAGING = "TRIAGING"
+    DEDUPING = "DEDUPING"
     DUP_SUSPECTED = "DUP_SUSPECTED"
     ANSWERING = "ANSWERING"
     ANSWERED = "ANSWERED"

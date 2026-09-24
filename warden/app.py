@@ -8,24 +8,45 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 
 from warden import __version__
 from warden.api import router as api_router
 from warden.db import Database
 from warden.ingress.webhooks import router as webhook_router
+from warden.llm import LLMClient
 from warden.orchestrator.machine import CaseMachine
+from warden.orchestrator.pipeline import Pipeline
+from warden.orchestrator.states import CaseState
 from warden.orchestrator.worker import EventQueue, Worker
 from warden.platforms.base import Platform
 from warden.platforms.github import GitHubPlatform
 from warden.policy.gate import PolicyGate
 from warden.settings import Settings
+from warden.skills.intake import IntakeSkill
+from warden.skills.triage import TriageSkill
 
 log = logging.getLogger(__name__)
 
 
+def build_llm(
+    settings: Settings, transport: httpx.AsyncBaseTransport | None = None
+) -> LLMClient | None:
+    if not settings.llm_api_key:
+        return None
+    return LLMClient(
+        settings.llm_base_url,
+        settings.llm_api_key,
+        timeout=settings.llm_timeout_seconds,
+        transport=transport,
+    )
+
+
 class Warden:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self, settings: Settings, *, llm_transport: httpx.AsyncBaseTransport | None = None
+    ) -> None:
         self.settings = settings
         self.db = Database(settings.warden_db_url)
         self.platforms: dict[str, Platform] = {
@@ -33,14 +54,32 @@ class Warden:
         }
         self.queue: EventQueue = asyncio.Queue()
         self.gate = PolicyGate()
-        self.machine = CaseMachine(self.db, self.gate, default_mode=settings.default_repo_mode)
-        self.worker = Worker(self.queue, self.machine)
+        self.machine = CaseMachine(self.db, default_mode=settings.default_repo_mode)
+        self.llm = build_llm(settings, llm_transport)
+        self.pipeline = (
+            Pipeline(
+                self.db,
+                self.machine,
+                self.gate,
+                self.llm,
+                {
+                    CaseState.INTAKE: (IntakeSkill(), settings.llm_model_small),
+                    CaseState.TRIAGING: (TriageSkill(), settings.llm_model_small),
+                },
+                case_budget_usd=settings.case_budget_usd,
+            )
+            if self.llm is not None
+            else None
+        )
+        self.worker = Worker(self.queue, self.machine, self.pipeline)
         self._worker_task: asyncio.Task[None] | None = None
 
     async def start(self, *, run_worker: bool = True) -> None:
         await self.db.create_all()
         if not self.settings.github_webhook_secret:
             log.warning("GITHUB_WEBHOOK_SECRET 未设置：所有 GitHub webhook 都会被拒绝")
+        if self.llm is None:
+            log.warning("LLM_API_KEY 未设置：能力模块不会运行，新 issue 会停在 INTAKE")
         if run_worker:
             self._worker_task = asyncio.create_task(self.worker.run_forever())
 
@@ -49,11 +88,18 @@ class Warden:
             self._worker_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._worker_task
+        if self.llm is not None:
+            await self.llm.aclose()
         await self.db.dispose()
 
 
-def create_app(settings: Settings | None = None, *, run_worker: bool = True) -> FastAPI:
-    warden = Warden(settings or Settings())
+def create_app(
+    settings: Settings | None = None,
+    *,
+    run_worker: bool = True,
+    llm_transport: httpx.AsyncBaseTransport | None = None,
+) -> FastAPI:
+    warden = Warden(settings or Settings(), llm_transport=llm_transport)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
