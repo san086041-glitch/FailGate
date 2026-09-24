@@ -30,6 +30,24 @@ class IssueSnapshot:
     title: str
     body: str
     author: str | None = None
+    repo_id: int | None = None
+    created_at: datetime | None = None
+
+
+class Retriever(Protocol):
+    """查重召回接口（实现见 warden/index/store.py 的 IssueIndex），对能力模块只读。"""
+
+    async def search(
+        self,
+        repo_id: int,
+        *,
+        title: str,
+        body: str,
+        trace: Any,
+        exclude_number: int,
+        before: datetime | None,
+        k: int,
+    ) -> list[Any]: ...
 
 
 @dataclass
@@ -40,6 +58,7 @@ class SkillContext:
     labels: tuple[str, ...] = DEFAULT_LABELS
     # 此前各模块的输出，按模块名索引
     prior: dict[str, dict[str, Any]] = field(default_factory=dict)
+    retriever: Retriever | None = None
 
 
 @dataclass

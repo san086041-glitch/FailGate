@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from warden.db import Case, Database, Repo, Run
+from warden.index.store import IssueIndex
 from warden.llm import LLMClient
 from warden.policy.gate import PolicyGate
 from warden.report import render_summary
@@ -39,6 +40,7 @@ class Pipeline:
         skills: dict[CaseState, tuple[Skill, str]],
         *,
         case_budget_usd: float,
+        index: IssueIndex | None = None,
     ) -> None:
         self.db = db
         self.machine = machine
@@ -47,6 +49,7 @@ class Pipeline:
         # 阶段 → (能力模块, 模型名)
         self.skills = skills
         self.case_budget_usd = case_budget_usd
+        self.index = index
 
     async def advance(self, case_id: int) -> CaseState:
         while True:
@@ -102,10 +105,13 @@ class Pipeline:
                 title=case.title,
                 body=case.body,
                 author=case.author_login,
+                repo_id=repo.id,
+                created_at=case.created_at,
             ),
             llm=self.llm,
             model=entry[1],
             prior=prior,
+            retriever=self.index,
         )
 
     async def _effects(
@@ -117,17 +123,20 @@ class Pipeline:
         result: SkillResult,
         ctx: SkillContext,
     ) -> None:
-        if skill_name != "triage":
-            return
-        triage = result.output.model_dump()
-        if triage["labels"] and result.confidence >= LABEL_MIN_CONFIDENCE:
-            await self.gate.propose(
-                s, repo=repo, case=case, action="set_labels", payload={"add": triage["labels"]}
+        output = result.output.model_dump(mode="json")
+        if skill_name == "triage":
+            if output["labels"] and result.confidence >= LABEL_MIN_CONFIDENCE:
+                await self.gate.propose(
+                    s, repo=repo, case=case, action="set_labels", payload={"add": output["labels"]}
+                )
+        elif skill_name == "dedup":
+            # 汇总评论在 M1 的最后一个自动阶段（查重）之后生成，一次性包含分诊和查重结果
+            body = render_summary(
+                ctx.prior.get("intake", {}), ctx.prior.get("triage", {}), case.spent_usd, output
             )
-        body = render_summary(ctx.prior.get("intake", {}), triage, case.spent_usd)
-        await self.gate.propose(
-            s, repo=repo, case=case, action="upsert_summary", payload={"body": body}
-        )
+            await self.gate.propose(
+                s, repo=repo, case=case, action="upsert_summary", payload={"body": body}
+            )
 
     async def _record_error(
         self, case_id: int, skill: Skill, model: str, started: datetime, error: Exception

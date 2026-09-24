@@ -17,6 +17,11 @@ INTAKE_OK: dict[str, Any] = {
     "missing": ["environment"],
     "language": "zh",
 }
+DEDUP_NONE: dict[str, Any] = {
+    "judgements": [
+        {"id": "c1", "score": 0.1, "reason": "不同问题", "quote_new": "", "quote_candidate": ""}
+    ]
+}
 TRIAGE_OK: dict[str, Any] = {
     "type": "bug",
     "labels": ["bug", "not-a-real-label"],
@@ -38,8 +43,10 @@ def completion(content: str, model: str = "deepseek-flash") -> dict[str, Any]:
 
 class FakeLLM:
     def __init__(self) -> None:
-        self.replies: dict[str, list[Callable[[], httpx.Response]]] = {"intake": [], "triage": []}
-        self.defaults = {"intake": INTAKE_OK, "triage": TRIAGE_OK}
+        self.replies: dict[str, list[Callable[[], httpx.Response]]] = {
+            "intake": [], "triage": [], "dedup": [],
+        }
+        self.defaults = {"intake": INTAKE_OK, "triage": TRIAGE_OK, "dedup": DEDUP_NONE}
         self.requests: list[dict[str, Any]] = []
 
     def queue(self, skill: str, *responses: httpx.Response | dict[str, Any] | str) -> None:
@@ -56,7 +63,12 @@ class FakeLLM:
         body = json.loads(request.content)
         self.requests.append(body)
         system = body["messages"][0]["content"]
-        skill = "intake" if "Intake 模块" in system else "triage"
+        if "Intake 模块" in system:
+            skill = "intake"
+        elif "Dedup（查重）模块" in system:
+            skill = "dedup"
+        else:
+            skill = "triage"
         if self.replies[skill]:
             return self.replies[skill].pop(0)()
         content = json.dumps(self.defaults[skill], ensure_ascii=False)

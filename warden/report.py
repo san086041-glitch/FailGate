@@ -36,6 +36,9 @@ _TEXT = {
         "cost": "花费",
         "footer": "这条回复有帮助吗？请用 👍 / 👎 反馈。",
         "none": "无",
+        "dup": "可能与 {ref} 重复（相似度 {score:.2f}）：{reason}",
+        "dup_hint": "如确认重复，维护者可以直接关闭本 issue；RepoWarden 不会自动关闭。",
+        "related": "相关 issue：",
     },
     "en": {
         "title": "🛡️ **RepoWarden triage report**",
@@ -49,11 +52,21 @@ _TEXT = {
         "cost": "cost",
         "footer": "Was this helpful? React with 👍 / 👎.",
         "none": "none",
+        "dup": "Possible duplicate of {ref} (similarity {score:.2f}): {reason}",
+        "dup_hint": (
+            "If confirmed, a maintainer can close this issue. RepoWarden never closes issues."
+        ),
+        "related": "Related issues:",
     },
 }
 
 
-def render_summary(intake: dict[str, Any], triage: dict[str, Any], cost_usd: float) -> str:
+def render_summary(
+    intake: dict[str, Any],
+    triage: dict[str, Any],
+    cost_usd: float,
+    dedup: dict[str, Any] | None = None,
+) -> str:
     lang = "zh" if intake.get("language") == "zh" else "en"
     t = _TEXT[lang]
     labels = ", ".join(f"`{x}`" for x in triage.get("labels") or []) or t["none"]
@@ -64,6 +77,18 @@ def render_summary(intake: dict[str, Any], triage: dict[str, Any], cost_usd: flo
         f"{t['priority']}: {triage['priority']} · {t['confidence']}: {triage['confidence']:.2f}",
         f"{t['why']}{'：' if lang == 'zh' else ': '}{triage['rationale']}",
     ]
+    if dedup and dedup.get("verdict") in {"duplicate", "related"}:
+        cands = dedup.get("candidates") or []
+        if dedup["verdict"] == "duplicate":
+            top = cands[0]
+            dup = t["dup"].format(ref=f"#{top['number']}", score=top["score"], reason=top["reason"])
+            lines += ["", f"**{dup}**", t["dup_hint"]]
+            cands = cands[1:]
+        related = [c for c in cands if c.get("level") in {"duplicate", "related"}]
+        if related:
+            fmt = "#{n}（{s:.2f}）" if lang == "zh" else "#{n} ({s:.2f})"
+            refs = " · ".join(fmt.format(n=c["number"], s=c["score"]) for c in related)
+            lines += ["", f"{t['related']} {refs}"]
     missing = intake.get("missing") or []
     if triage["type"] == "bug" and missing:
         lines += ["", t["need"]]

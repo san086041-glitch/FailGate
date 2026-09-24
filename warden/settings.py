@@ -26,3 +26,15 @@ class Settings(BaseSettings):
 
     # 单个 Case 的模型花费上限（美元），超过后进入 FAILED
     case_budget_usd: float = 0.5
+
+    # 查重：召回候选数；LLM 分数 ≥ high 建议关闭为重复，≥ low 列为相关 issue
+    dedup_recall_k: int = 8
+    dedup_high: float = 0.85
+    dedup_low: float = 0.5
+    # 可选的向量通道（任意 OpenAI 兼容 /embeddings 接口），不配置则只用词法和堆栈通道
+    embed_base_url: str = ""
+    embed_api_key: str = ""
+    embed_model: str = ""
+
+    # GitHub REST 只读 token（回填历史 issue 用），公开仓库可以留空
+    github_token: str = ""

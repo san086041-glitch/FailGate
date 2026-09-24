@@ -18,16 +18,20 @@ async def test_healthz(harness: Harness):
     assert r.status_code == 200 and r.json()["status"] == "ok"
 
 
-async def test_issue_opened_runs_intake_and_triage(harness: Harness):
+async def test_issue_opened_runs_intake_triage_dedup(harness: Harness):
     r = await harness.send("issues", issue_event("opened"), "d-1")
     assert r.status_code == 202 and r.json() == {"status": "queued"}
     assert await harness.warden.worker.drain() == 1
 
     case = await _case(harness)
-    # 查重模块尚未实现，流程停在 DEDUPING
-    assert case["state"] == "DEDUPING"
-    assert [t["to"] for t in case["transitions"]] == ["INTAKE", "TRIAGING", "DEDUPING"]
-    assert [r["skill"] for r in case["runs"]] == ["intake", "triage"]
+    # 复现在 M2 才启用，bug 走完查重后进入 TRIAGE_ONLY
+    assert case["state"] == "TRIAGE_ONLY"
+    assert [t["to"] for t in case["transitions"]] == [
+        "INTAKE", "TRIAGING", "DEDUPING", "TRIAGE_ONLY",
+    ]
+    assert [r["skill"] for r in case["runs"]] == ["intake", "triage", "dedup"]
+    # 仓库里只有这一个 issue：没有候选，查重不调用模型
+    assert case["runs"][2]["output"]["verdict"] == "none" and case["runs"][2]["usd"] == 0
     assert case["spent_usd"] > 0
     actions = {e["action"]: e for e in case["effects"]}
     assert set(actions) == {"set_labels", "upsert_summary"}
@@ -70,7 +74,7 @@ async def test_close_and_reopen(harness: Harness):
     await harness.warden.worker.drain()
     case = await _case(harness)
     assert [t["to"] for t in case["transitions"]] == [
-        "INTAKE", "TRIAGING", "DEDUPING", "CLOSED", "NEW",
+        "INTAKE", "TRIAGING", "DEDUPING", "TRIAGE_ONLY", "CLOSED", "NEW",
     ]
 
 
@@ -84,7 +88,7 @@ async def test_ignore_command_needs_write_permission(harness: Harness):
     await harness.send("issues", issue_event("opened"), "d-1")
     await harness.send("issue_comment", comment_event("/warden ignore", login="eve"), "d-2")
     await harness.warden.worker.drain()
-    assert (await _case(harness))["state"] == "DEDUPING"
+    assert (await _case(harness))["state"] == "TRIAGE_ONLY"
 
     await harness.send(
         "issue_comment",

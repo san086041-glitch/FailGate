@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +19,9 @@ from warden.platforms.base import DomainEvent, User
 from .commands import parse_command
 from .states import CaseState
 from .transitions import GuardContext, resolve
+
+if TYPE_CHECKING:
+    from warden.index.store import IssueIndex
 
 log = logging.getLogger(__name__)
 
@@ -38,9 +41,13 @@ def event_name(event: DomainEvent) -> str:
 
 
 class CaseMachine:
-    def __init__(self, db: Database, default_mode: str = "shadow") -> None:
+    def __init__(
+        self, db: Database, default_mode: str = "shadow", index: IssueIndex | None = None
+    ) -> None:
         self.db = db
         self.default_mode = default_mode
+        # 查重语料：每个经过的 issue 都写进索引，供之后的新 issue 比较
+        self.index = index
 
     async def handle(self, event: DomainEvent) -> Outcome | None:
         """应用一个外部事件；发生状态转换时返回新状态，否则返回 None。"""
@@ -52,6 +59,17 @@ class CaseMachine:
             if repo.mode == "paused":
                 return None
             case = await self._case(s, repo, event)
+            if self.index is not None and case.kind == "issue" and event.name.startswith("issue."):
+                await self.index.upsert(
+                    s,
+                    repo.id,
+                    number=case.number,
+                    title=case.title,
+                    body=case.body,
+                    state="closed" if event.name == "issue.closed" else "open",
+                    url=f"https://github.com/{repo.full_name}/issues/{case.number}",
+                    created_at=case.created_at,
+                )
             state = await self.apply(s, case, event_name(event), actor=event.actor)
             return Outcome(case.id, state) if state is not None else None
 

@@ -67,6 +67,28 @@ class TransitionLog(Base):
     at: Mapped[datetime] = mapped_column(default=_now)
 
 
+class IssueDoc(Base):
+    """查重用的历史 issue 语料：来自 webhook（新 issue）和 `warden index build`（回填）。"""
+
+    __tablename__ = "issue_docs"
+    __table_args__ = (UniqueConstraint("repo_id", "number"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    repo_id: Mapped[int] = mapped_column(ForeignKey("repos.id"), index=True)
+    number: Mapped[int]
+    title: Mapped[str] = mapped_column(Text, default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    state: Mapped[str] = mapped_column(String(16), default="open")
+    # GitHub 的关闭原因：completed / not_planned / duplicate / reopened
+    state_reason: Mapped[str | None] = mapped_column(String(32), default=None)
+    labels: Mapped[list[str]] = mapped_column(JSON, default=list)
+    url: Mapped[str | None] = mapped_column(String(512), default=None)
+    trace_sig: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=None)
+    embedding: Mapped[list[float] | None] = mapped_column(JSON, default=None)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
+
+
 class Run(Base):
     """能力模块的一次执行。输出、用量、花费都落库，供控制台展示和回放评测对比。"""
 

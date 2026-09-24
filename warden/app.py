@@ -14,6 +14,8 @@ from fastapi import FastAPI
 from warden import __version__
 from warden.api import router as api_router
 from warden.db import Database
+from warden.index.embed import Embedder
+from warden.index.store import IssueIndex
 from warden.ingress.webhooks import router as webhook_router
 from warden.llm import LLMClient
 from warden.orchestrator.machine import CaseMachine
@@ -24,6 +26,7 @@ from warden.platforms.base import Platform
 from warden.platforms.github import GitHubPlatform
 from warden.policy.gate import PolicyGate
 from warden.settings import Settings
+from warden.skills.dedup import DedupSkill
 from warden.skills.intake import IntakeSkill
 from warden.skills.triage import TriageSkill
 
@@ -43,9 +46,23 @@ def build_llm(
     )
 
 
+def build_embedder(
+    settings: Settings, transport: httpx.AsyncBaseTransport | None = None
+) -> Embedder | None:
+    if not (settings.embed_base_url and settings.embed_model):
+        return None
+    return Embedder(
+        settings.embed_base_url, settings.embed_api_key, settings.embed_model, transport=transport
+    )
+
+
 class Warden:
     def __init__(
-        self, settings: Settings, *, llm_transport: httpx.AsyncBaseTransport | None = None
+        self,
+        settings: Settings,
+        *,
+        llm_transport: httpx.AsyncBaseTransport | None = None,
+        embed_transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self.settings = settings
         self.db = Database(settings.warden_db_url)
@@ -54,7 +71,11 @@ class Warden:
         }
         self.queue: EventQueue = asyncio.Queue()
         self.gate = PolicyGate()
-        self.machine = CaseMachine(self.db, default_mode=settings.default_repo_mode)
+        self.embedder = build_embedder(settings, embed_transport)
+        self.index = IssueIndex(self.db, self.embedder)
+        self.machine = CaseMachine(
+            self.db, default_mode=settings.default_repo_mode, index=self.index
+        )
         self.llm = build_llm(settings, llm_transport)
         self.pipeline = (
             Pipeline(
@@ -65,8 +86,17 @@ class Warden:
                 {
                     CaseState.INTAKE: (IntakeSkill(), settings.llm_model_small),
                     CaseState.TRIAGING: (TriageSkill(), settings.llm_model_small),
+                    CaseState.DEDUPING: (
+                        DedupSkill(
+                            recall_k=settings.dedup_recall_k,
+                            high=settings.dedup_high,
+                            low=settings.dedup_low,
+                        ),
+                        settings.llm_model_small,
+                    ),
                 },
                 case_budget_usd=settings.case_budget_usd,
+                index=self.index,
             )
             if self.llm is not None
             else None
@@ -90,6 +120,8 @@ class Warden:
                 await self._worker_task
         if self.llm is not None:
             await self.llm.aclose()
+        if self.embedder is not None:
+            await self.embedder.aclose()
         await self.db.dispose()
 
 
@@ -98,8 +130,11 @@ def create_app(
     *,
     run_worker: bool = True,
     llm_transport: httpx.AsyncBaseTransport | None = None,
+    embed_transport: httpx.AsyncBaseTransport | None = None,
 ) -> FastAPI:
-    warden = Warden(settings or Settings(), llm_transport=llm_transport)
+    warden = Warden(
+        settings or Settings(), llm_transport=llm_transport, embed_transport=embed_transport
+    )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
