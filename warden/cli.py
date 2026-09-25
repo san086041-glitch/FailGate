@@ -13,6 +13,7 @@ import uvicorn
 from sqlalchemy import select
 
 from warden.db import Case, Database, IssueDoc, Repo
+from warden.repro.sandbox import DockerSandbox, SandboxLimits
 from warden.settings import Settings
 
 _CJK = re.compile(r"[\u4e00-\u9fff]")
@@ -702,6 +703,45 @@ def effects_flush() -> None:
                 await gh.aclose()
 
     typer.echo(json.dumps(asyncio.run(run()), ensure_ascii=False))
+
+
+sandbox_app = typer.Typer(help="复现沙箱：自检、清理", no_args_is_help=True)
+app.add_typer(sandbox_app, name="sandbox")
+
+
+def build_sandbox(settings: Settings) -> DockerSandbox:
+    return DockerSandbox(
+        settings.docker_bin,
+        limits=SandboxLimits(memory=settings.sandbox_memory, cpus=settings.sandbox_cpus),
+        install_network=settings.sandbox_install_network,
+        artifacts_dir=Path(settings.sandbox_artifacts_dir),
+    )
+
+
+@sandbox_app.command("check")
+def sandbox_check(
+    image: Annotated[str | None, typer.Option(help="沙箱镜像，默认用配置")] = None,
+) -> None:
+    """真的起几个容器，逐项确认隔离参数生效：非 root、无 capabilities、断网、只读、资源上限。"""
+    from warden.repro.selfcheck import self_check
+
+    settings = Settings()
+    sandbox = build_sandbox(settings)
+    typer.echo(f"docker: {sandbox.docker}")
+    items = asyncio.run(self_check(sandbox, image or settings.sandbox_image))
+    for it in items:
+        typer.echo(f"{'✅' if it.ok else '❌'} {it.name:<12} {it.detail}")
+    if not all(it.ok for it in items):
+        raise typer.Exit(1)
+
+
+@sandbox_app.command("prune")
+def sandbox_prune(
+    hours: Annotated[float, typer.Option(help="删除创建超过多少小时的工作区卷")] = 24.0,
+) -> None:
+    """按 TTL 清理残留的工作区卷（正常情况下 Case 结束时就会删除）。"""
+    removed = asyncio.run(build_sandbox(Settings()).prune_workspaces(hours * 3600))
+    typer.echo(f"删除了 {len(removed)} 个工作区卷")
 
 
 if __name__ == "__main__":

@@ -38,6 +38,7 @@ packages = ["warden"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
+markers = ["docker: 真的起容器的沙箱集成测试（没有 Docker 时自动跳过）"]
 
 [tool.ruff]
 line-length = 100

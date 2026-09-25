@@ -42,3 +42,13 @@ class Settings(BaseSettings):
 
     # GitHub REST 只读 token（回填历史 issue 用），公开仓库可以留空
     github_token: str = ""
+
+    # 复现沙箱（技术方案 8.4 节）。docker_bin 留空时自动查找（含 Windows 按用户安装的路径）
+    docker_bin: str = ""
+    sandbox_image: str = "python:3.12-slim"
+    sandbox_memory: str = "4g"
+    sandbox_cpus: float = 2.0
+    sandbox_run_timeout_seconds: int = 120
+    # install 阶段的网络。生产环境应换成只放行包源的 egress 代理网络（warden-egress）
+    sandbox_install_network: str = "bridge"
+    sandbox_artifacts_dir: str = "./artifacts"

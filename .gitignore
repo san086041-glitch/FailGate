@@ -13,3 +13,4 @@ build/
 *.pem
 *.log
 eval/cache/
+artifacts/
