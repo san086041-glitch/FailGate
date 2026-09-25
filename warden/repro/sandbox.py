@@ -46,6 +46,11 @@ DEFAULT_RUN_PREFIXES: tuple[tuple[str, ...], ...] = (
     ("python3",),
     ("pytest",),
 )
+# install 阶段只允许装包
+DEFAULT_INSTALL_PREFIXES: tuple[tuple[str, ...], ...] = (
+    ("pip", "install"),
+    ("python", "-m", "pip", "install"),
+)
 
 
 class SandboxError(RuntimeError):
@@ -69,6 +74,7 @@ class ExecResult(BaseModel):
     exit_code: int
     timed_out: bool = False
     oom_killed: bool = False
+    oom_source: Literal["docker", "inferred"] | None = None  # 见 classify_exit
     duration_s: float = 0.0
     stdout: str = ""
     stderr: str = ""
@@ -113,6 +119,7 @@ def build_run_args(
     timeout_s: int,
     limits: SandboxLimits,
     install_network: str,
+    env: Sequence[str] = (),
 ) -> list[str]:
     """拼出 docker run 的参数（不含 docker 本身）。单独成函数，方便测试逐项核对隔离参数。"""
     args = [
@@ -132,8 +139,15 @@ def build_run_args(
         "--env", "PIP_DISABLE_PIP_VERSION_CHECK=1",
         "--volume", f"{volume}:{WORKDIR}",
     ]
+    for kv in env:
+        args += ["--env", kv]
     if phase == "install":
-        args += ["--network", install_network, "--pids-limit", str(limits.pids_install)]
+        args += [
+            "--network", install_network,
+            "--pids-limit", str(limits.pids_install),
+            # 不写 pip 缓存：install 容器会被 commit 成环境镜像，缓存会白白撑大镜像
+            "--env", "PIP_NO_CACHE_DIR=1",
+        ]
     else:
         args += [
             "--network", "none",
@@ -144,6 +158,36 @@ def build_run_args(
     # 容器内的 timeout：到点先 TERM，5 秒后 KILL；退出码 124 表示超时
     args += [image, "timeout", "-k", "5", str(timeout_s), *argv]
     return args
+
+
+def classify_exit(
+    exit_code: int,
+    *,
+    oom_reported: bool,
+    duration_s: float,
+    timeout_s: int,
+    host_timeout: bool,
+) -> tuple[bool, Literal["docker", "inferred"] | None]:
+    """返回 (是否超时, OOM 的判断依据)。
+
+    State.OOMKilled 不总是可靠：我们用 --init，被内核 OOM 杀掉的是 tini 下面的孙进程，
+    Docker 读取 cgroup 的 OOM 事件有竞争，CI 上实测出现过 exit=137 但 OOMKilled=False。
+    所以再加一条推断：容器内的 timeout 只会在 timeout_s 之后才发 KILL，宿主机兜底另有
+    host_timeout 标记；如果在这之前就被 SIGKILL（137），沙箱里又没有别人会发这个信号，
+    那就是 OOM killer。（被测代码自己 kill -9 自己也会落到这里，但判定器对 OOM 给的是
+    INCONCLUSIVE，误判的方向是保守的。）
+    """
+    if host_timeout:
+        return True, None
+    if oom_reported:
+        return False, "docker"
+    if exit_code == 124:
+        return True, None
+    if exit_code == 137:
+        if duration_s >= timeout_s:
+            return True, None  # -k 之后被 KILL
+        return False, "inferred"
+    return False, None
 
 
 class _Capture:
@@ -224,17 +268,20 @@ class DockerSandbox:
         self.install_network = install_network
         self.artifacts_dir = artifacts_dir
 
-    async def _docker(self, *args: str, limit_s: float = 120.0) -> tuple[int, str, str]:
+    async def _docker(
+        self, *args: str, limit_s: float = 120.0, stdin: bytes | None = None
+    ) -> tuple[int, str, str]:
         """执行一条管理类 docker 命令（输出很小，不需要截断）。"""
         try:
             proc = await asyncio.create_subprocess_exec(
                 self.docker, *args,
+                stdin=asyncio.subprocess.PIPE if stdin is not None else None,
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
             )
         except FileNotFoundError as e:
             raise SandboxError(f"找不到 docker：{self.docker}") from e
         try:
-            out, err = await asyncio.wait_for(proc.communicate(), limit_s)
+            out, err = await asyncio.wait_for(proc.communicate(stdin), limit_s)
         except TimeoutError as e:
             proc.kill()
             raise SandboxError(f"docker {args[0]} 超时") from e
@@ -256,6 +303,30 @@ class DockerSandbox:
             code, _, err = await self._docker("pull", "-q", image, limit_s=600)
             if code != 0:
                 raise SandboxError(f"拉取镜像失败：{image}：{err.strip()[:300]}")
+
+    # ---- 镜像
+
+    async def image_info(self, ref: str) -> tuple[str, int] | None:
+        """(镜像 ID, 字节数)；镜像不存在返回 None。"""
+        code, out, _ = await self._docker(
+            "image", "inspect", "--format", "{{.Id}} {{.Size}}", ref, limit_s=30
+        )
+        if code != 0 or not out.strip():
+            return None
+        image_id, size = out.split()
+        return image_id, int(size)
+
+    async def build_image(self, tag: str, dockerfile: str, *, limit_s: float = 900) -> None:
+        """用我们自己写的（可信的）Dockerfile 构建镜像，从 stdin 传入，不需要构建上下文。"""
+        code, _, err = await self._docker(
+            "build", "--quiet", "--label", f"{LABEL}=base", "-t", tag, "-",
+            limit_s=limit_s, stdin=dockerfile.encode(),
+        )
+        if code != 0:
+            raise SandboxError(f"构建镜像失败：{tag}：{err.strip()[-500:]}")
+
+    async def remove_image(self, ref: str) -> None:
+        await self._docker("image", "rm", "-f", ref, limit_s=120)
 
     # ---- 工作区卷
 
@@ -294,7 +365,8 @@ class DockerSandbox:
         finally:
             await self._docker("rm", "-f", helper)
         code, _, err = await self._docker(
-            "run", "--rm", "--label", f"{LABEL}=helper", "--network", "none",
+            # 显式 root：环境镜像的默认用户是 1000，不指定的话 chown 会失败
+            "run", "--rm", "--label", f"{LABEL}=helper", "--network", "none", "--user", "0:0",
             "--cap-drop", "ALL", "--cap-add", "CHOWN", "--security-opt", "no-new-privileges",
             "--volume", f"{volume}:{WORKDIR}", image, "chown", "-R", SANDBOX_USER, WORKDIR,
         )
@@ -327,10 +399,24 @@ class DockerSandbox:
     # ---- 执行
 
     async def install(
-        self, image: str, volume: str, argv: Sequence[str], *, timeout_s: int = 600
+        self,
+        image: str,
+        volume: str,
+        argv: Sequence[str],
+        *,
+        timeout_s: int = 600,
+        allowed: Sequence[Sequence[str]] = DEFAULT_INSTALL_PREFIXES,
+        env: Sequence[str] = (),
+        commit_to: str | None = None,
     ) -> ExecResult:
-        """装依赖。可以出网，根文件系统可写，但仍是非 root、无 capabilities。"""
-        return await self._exec("install", image, volume, argv, timeout_s)
+        """装依赖。可以出网，根文件系统可写，但仍是非 root、无 capabilities。
+
+        commit_to：安装成功后把容器 commit 成这个镜像（环境缓存用）。
+        """
+        check_command(argv, allowed)
+        return await self._exec(
+            "install", image, volume, argv, timeout_s, env=env, commit_to=commit_to
+        )
 
     async def run(
         self,
@@ -346,12 +432,21 @@ class DockerSandbox:
         return await self._exec("run", image, volume, argv, timeout_s)
 
     async def _exec(
-        self, phase: Phase, image: str, volume: str, argv: Sequence[str], timeout_s: int
+        self,
+        phase: Phase,
+        image: str,
+        volume: str,
+        argv: Sequence[str],
+        timeout_s: int,
+        *,
+        env: Sequence[str] = (),
+        commit_to: str | None = None,
     ) -> ExecResult:
         name = f"warden-{phase}-{uuid.uuid4().hex[:10]}"
         args = build_run_args(
             name=name, image=image, volume=volume, argv=argv, phase=phase,
             timeout_s=timeout_s, limits=self.limits, install_network=self.install_network,
+            env=env,
         )
         log_dir, out_f, err_f = _open_logs(self.artifacts_dir, name)
         out_cap, err_cap = _Capture(out_f), _Capture(err_f)
@@ -380,6 +475,14 @@ class DockerSandbox:
             duration = time.monotonic() - start
             exit_code = proc.returncode if proc.returncode is not None else -1
             oom = await self._oom_killed(name)
+            if commit_to and exit_code == 0 and oom is False and not host_timeout:
+                # 卷不会进镜像；默认命令改成 python，免得镜像里留着这次的安装命令
+                code, _, err = await self._docker(
+                    "commit", "--change", 'CMD ["python"]',
+                    "--change", f"LABEL {LABEL}=env", name, commit_to, limit_s=300,
+                )
+                if code != 0:
+                    raise SandboxError(f"commit 环境镜像失败：{err.strip()[:300]}")
         finally:
             for f in (out_f, err_f):
                 if f is not None:
@@ -389,16 +492,16 @@ class DockerSandbox:
         if exit_code == 125 and oom is None:
             # docker run 自己失败了（镜像不存在、参数错误），容器根本没启动
             raise SandboxError(f"docker run 失败：{err_cap.text().strip()[:500]}")
-        oom_killed = bool(oom)
-        # 124：timeout 发 TERM 后进程退出；137 且不是 OOM 且用满了时间：-k 之后被 KILL
-        timed_out = host_timeout or exit_code == 124 or (
-            exit_code == 137 and not oom_killed and duration >= timeout_s
+        timed_out, oom_source = classify_exit(
+            exit_code, oom_reported=bool(oom), duration_s=duration, timeout_s=timeout_s,
+            host_timeout=host_timeout,
         )
+        oom_killed = oom_source is not None
         if log_dir is not None:
             (log_dir / "meta.json").write_text(
                 json.dumps(
                     {"phase": phase, "argv": list(argv), "image": image, "exit_code": exit_code,
-                     "timed_out": timed_out, "oom_killed": oom_killed,
+                     "timed_out": timed_out, "oom_killed": oom_killed, "oom_source": oom_source,
                      "duration_s": round(duration, 3)},
                     ensure_ascii=False, indent=2,
                 ),
@@ -410,6 +513,7 @@ class DockerSandbox:
             exit_code=exit_code,
             timed_out=timed_out,
             oom_killed=oom_killed,
+            oom_source=oom_source,
             duration_s=round(duration, 3),
             stdout=out_cap.text(),
             stderr=err_cap.text(),

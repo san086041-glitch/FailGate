@@ -16,6 +16,7 @@ from warden.repro.sandbox import (
     _Capture,
     build_run_args,
     check_command,
+    classify_exit,
     find_docker,
 )
 from warden.repro.selfcheck import self_check
@@ -85,6 +86,27 @@ def test_capture_small_output_untouched():
     for part in (b"hello ", b"world"):
         cap.feed(part)
     assert cap.text() == "hello world" and not cap.truncated
+
+
+@pytest.mark.parametrize(
+    ("exit_code", "oom_reported", "duration", "host", "want"),
+    [
+        (0, False, 1.0, False, (False, None)),
+        (1, False, 1.0, False, (False, None)),
+        (124, False, 120.2, False, (True, None)),  # 容器内 timeout 发 TERM
+        (137, False, 125.1, False, (True, None)),  # TERM 不理，-k 5 之后被 KILL
+        (137, True, 3.0, False, (False, "docker")),  # Docker 报告了 OOMKilled
+        # CI 上实测：OOM 杀的是 tini 下面的孙进程，OOMKilled 没被标上
+        (137, False, 3.0, False, (False, "inferred")),
+        (-1, False, 150.0, True, (True, None)),  # 宿主机兜底 docker kill
+    ],
+)
+def test_classify_exit(exit_code, oom_reported, duration, host, want):
+    got = classify_exit(
+        exit_code, oom_reported=oom_reported, duration_s=duration, timeout_s=120,
+        host_timeout=host,
+    )
+    assert got == want
 
 
 def test_find_docker_configured_missing():

@@ -52,3 +52,8 @@ class Settings(BaseSettings):
     # install 阶段的网络。生产环境应换成只放行包源的 egress 代理网络（warden-egress）
     sandbox_install_network: str = "bridge"
     sandbox_artifacts_dir: str = "./artifacts"
+    # 环境缓存（package 模式装好的环境 commit 成镜像）的总大小上限，超过按 LRU 删除
+    sandbox_env_cache_gb: float = 20.0
+    # PyPI JSON API（查版本）和 pip 镜像源（装包，留空用 pip 默认）
+    pypi_url: str = "https://pypi.org"
+    pip_index_url: str = ""

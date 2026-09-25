@@ -117,7 +117,7 @@ async def self_check(sandbox: DockerSandbox, image: str) -> list[CheckItem]:
         )
         items.append(CheckItem(
             "内存超限识别", res.oom_killed and not res.timed_out,
-            f"exit={res.exit_code} OOMKilled={res.oom_killed}",
+            f"exit={res.exit_code} OOM={res.oom_killed}（依据：{res.oom_source}）",
         ))
     finally:
         await sandbox.remove_workspace(volume)

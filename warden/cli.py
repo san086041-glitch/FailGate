@@ -744,5 +744,67 @@ def sandbox_prune(
     typer.echo(f"删除了 {len(removed)} 个工作区卷")
 
 
+repro_app = typer.Typer(help="复现：在沙箱里跑复现脚本并判定", no_args_is_help=True)
+app.add_typer(repro_app, name="repro")
+
+
+@repro_app.command("package")
+def repro_package(
+    name: Annotated[str, typer.Argument(help="PyPI 包名")],
+    version: Annotated[str, typer.Argument(help="报告的版本（原文即可，如 'black 23.11.0'）")],
+    script: Annotated[Path, typer.Option(help="复现脚本（在沙箱里以 python repro.py 运行）")],
+    traceback_file: Annotated[
+        Path | None, typer.Option(help="issue 里报告的堆栈，用于判定")
+    ] = None,
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    python: Annotated[str | None, typer.Option(help="用户报告的 Python 版本")] = None,
+    latest: Annotated[bool, typer.Option(help="复现后是否在最新正式版上复查")] = True,
+) -> None:
+    """package 模式：装报告的版本 → 跑脚本 → 判定；复现了再到最新版上看是否已修复。"""
+    from warden.repro.config import PackageConfig
+    from warden.repro.envcache import EnvCache
+    from warden.repro.package import PackageReproducer
+    from warden.repro.pypi import PyPIClient
+
+    settings = Settings()
+    sandbox = build_sandbox(settings)
+    cache = EnvCache(
+        sandbox,
+        Path(settings.sandbox_artifacts_dir) / "envcache.json",
+        max_bytes=int(settings.sandbox_env_cache_gb * 1024**3),
+        index_url=settings.pip_index_url,
+    )
+    cfg = PackageConfig(name=name, import_name=import_name)
+    tb = traceback_file.read_text(encoding="utf-8") if traceback_file else None
+
+    async def run() -> None:
+        pypi = PyPIClient(settings.pypi_url)
+        try:
+            result = await PackageReproducer(
+                sandbox, cache, pypi, run_timeout_s=settings.sandbox_run_timeout_seconds
+            ).reproduce(
+                cfg,
+                reported_version=version,
+                script=script.read_text(encoding="utf-8"),
+                reported_traceback=tb,
+                env_python=python,
+                check_latest=latest,
+            )
+        finally:
+            await pypi.aclose()
+        typer.echo(f"证据等级：{result.level}")
+        typer.echo(result.summary())
+        for label, vr in (("报告版本", result.reported), ("最新版本", result.latest)):
+            if vr is not None:
+                v = vr.verdict
+                hit = "命中" if vr.cache_hit else "新建"
+                typer.echo(
+                    f"  {label} {vr.version} / py{vr.python} / 环境{hit} {vr.env_key[:12]}："
+                    f"{v.kind} 一致度={v.match} 运行 {v.runs} 次 日志={vr.log_dir}"
+                )
+
+    asyncio.run(run())
+
+
 if __name__ == "__main__":
     app()
