@@ -6,7 +6,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 import uvicorn
@@ -15,6 +15,12 @@ from sqlalchemy import select
 from warden.db import Case, Database, IssueDoc, Repo
 from warden.repro.sandbox import DockerSandbox, SandboxLimits
 from warden.settings import Settings
+
+if TYPE_CHECKING:
+    from warden.repro.config import PackageConfig
+    from warden.repro.envcache import EnvCache
+    from warden.repro.issue import IssueReproReport
+    from warden.repro.package import PackageRepro
 
 _CJK = re.compile(r"[\u4e00-\u9fff]")
 
@@ -762,18 +768,11 @@ def repro_package(
 ) -> None:
     """package 模式：装报告的版本 → 跑脚本 → 判定；复现了再到最新版上看是否已修复。"""
     from warden.repro.config import PackageConfig
-    from warden.repro.envcache import EnvCache
     from warden.repro.package import PackageReproducer
     from warden.repro.pypi import PyPIClient
 
     settings = Settings()
     sandbox = build_sandbox(settings)
-    cache = EnvCache(
-        sandbox,
-        Path(settings.sandbox_artifacts_dir) / "envcache.json",
-        max_bytes=int(settings.sandbox_env_cache_gb * 1024**3),
-        index_url=settings.pip_index_url,
-    )
     cfg = PackageConfig(name=name, import_name=import_name)
     tb = traceback_file.read_text(encoding="utf-8") if traceback_file else None
 
@@ -781,7 +780,8 @@ def repro_package(
         pypi = PyPIClient(settings.pypi_url)
         try:
             result = await PackageReproducer(
-                sandbox, cache, pypi, run_timeout_s=settings.sandbox_run_timeout_seconds
+                sandbox, _env_cache(settings, sandbox), pypi,
+                run_timeout_s=settings.sandbox_run_timeout_seconds,
             ).reproduce(
                 cfg,
                 reported_version=version,
@@ -792,16 +792,230 @@ def repro_package(
             )
         finally:
             await pypi.aclose()
-        typer.echo(f"证据等级：{result.level}")
-        typer.echo(result.summary())
-        for label, vr in (("报告版本", result.reported), ("最新版本", result.latest)):
-            if vr is not None:
-                v = vr.verdict
-                hit = "命中" if vr.cache_hit else "新建"
+        _echo_repro(result)
+
+    asyncio.run(run())
+
+
+def _env_cache(settings: Settings, sandbox: DockerSandbox) -> EnvCache:
+    from warden.repro.envcache import EnvCache
+
+    return EnvCache(
+        sandbox,
+        Path(settings.sandbox_artifacts_dir) / "envcache.json",
+        max_bytes=int(settings.sandbox_env_cache_gb * 1024**3),
+        index_url=settings.pip_index_url,
+    )
+
+
+def _echo_repro(result: PackageRepro) -> None:
+    typer.echo(f"证据等级：{result.level}")
+    typer.echo(result.summary())
+    for label, vr in (("报告版本", result.reported), ("最新版本", result.latest)):
+        if vr is not None:
+            v = vr.verdict
+            hit = "命中" if vr.cache_hit else "新建"
+            typer.echo(
+                f"  {label} {vr.version} / py{vr.python} / 环境{hit} {vr.env_key[:12]}："
+                f"{v.kind} 一致度={v.match}（{v.match_method}） 运行 {v.runs} 次"
+            )
+            typer.echo(f"    日志={vr.log_dir}")
+
+
+async def _load_issue_docs(db_url: str, repo: str, numbers: list[int]) -> list[IssueDoc]:
+    db = Database(db_url)
+    await db.create_all()  # 老的回放库可能缺新加的列
+    try:
+        async with db.session() as s:
+            repo_row = await s.scalar(select(Repo).where(Repo.full_name == repo))
+            if repo_row is None:
+                return []
+            rows = (await s.scalars(select(IssueDoc).where(
+                IssueDoc.repo_id == repo_row.id, IssueDoc.number.in_(numbers)
+            ))).all()
+    finally:
+        await db.dispose()
+    by_number = {d.number: d for d in rows}
+    return [by_number[n] for n in numbers if n in by_number]
+
+
+class _ReproRuntime:
+    """复现需要的一组长生命周期对象：LLM、沙箱、环境缓存、PyPI 客户端。"""
+
+    def __init__(self, settings: Settings) -> None:
+        from warden.app import build_llm
+        from warden.repro.package import PackageReproducer
+        from warden.repro.pypi import PyPIClient
+
+        llm = build_llm(settings)
+        if llm is None:
+            raise typer.BadParameter("请先在 .env 中设置 LLM_API_KEY")
+        self.settings = settings
+        self.llm = llm
+        sandbox = build_sandbox(settings)
+        self.pypi = PyPIClient(settings.pypi_url)
+        self.reproducer = PackageReproducer(
+            sandbox, _env_cache(settings, sandbox), self.pypi,
+            run_timeout_s=settings.sandbox_run_timeout_seconds,
+        )
+
+    async def run(
+        self, repo: str, doc: IssueDoc, cfg: PackageConfig, *, check_latest: bool = True,
+        max_steps: int | None = None,
+    ) -> IssueReproReport:
+        from warden.repro.issue import reproduce_issue
+
+        s = self.settings
+        return await reproduce_issue(
+            repo=repo, number=doc.number, title=doc.title, body=doc.body,
+            created_at=doc.created_at, cfg=cfg,
+            llm=self.llm, small_model=s.llm_model_small, large_model=s.llm_model_large,
+            reproducer=self.reproducer, max_steps=max_steps or s.repro_max_steps,
+            max_attempts=s.repro_max_attempts, budget_usd=s.repro_budget_usd,
+            artifacts_dir=Path(s.sandbox_artifacts_dir), check_latest=check_latest,
+        )
+
+    async def __aenter__(self) -> _ReproRuntime:
+        return self
+
+    async def __aexit__(self, *exc: object) -> None:
+        await self.pypi.aclose()
+        await self.llm.aclose()
+
+
+def _repro_runtime(settings: Settings) -> _ReproRuntime:
+    return _ReproRuntime(settings)
+
+
+def _echo_issue_report(report: IssueReproReport) -> None:
+    typer.echo(
+        f"#{report.number} {report.title[:70]}\n"
+        f"Intake：版本={report.intake_version!r} Python={report.intake_python!r} "
+        f"堆栈={'有' if report.has_traceback else '无'}"
+    )
+    ar = report.agent
+    if ar is not None:
+        typer.echo(
+            f"Agent：{ar.status} · {ar.steps} 步 {dict(ar.tool_counts)} · "
+            f"提交 {len(ar.attempts)} 次 · {ar.duration_s}s"
+        )
+        for at in ar.attempts:
+            typer.echo(f"  提交 {at.n} {at.name}：{at.kind} 一致度={at.match}")
+            typer.echo(f"    声明：{at.claim[:100]}")
+        if ar.give_up_reason:
+            typer.echo(f"  放弃原因：{ar.give_up_reason}（可疑位置：{ar.suspect}）")
+        if ar.error:
+            typer.echo(f"  出错：{ar.error}")
+        if ar.final_script:
+            typer.echo("最终脚本：\n" + ar.final_script)
+        typer.echo(f"对话记录：{ar.transcript_path}")
+    typer.echo(
+        f"花费：${report.total_cost_usd:.4f}（Intake ${report.intake_cost_usd:.4f}，"
+        f"Agent ${ar.cost_usd if ar else 0:.4f}，评委 ${report.judge_cost_usd:.4f}）"
+    )
+    _echo_repro(report.repro)
+
+
+@repro_app.command("issue")
+def repro_issue(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    number: Annotated[int, typer.Argument(help="issue 编号（必须已在索引里）")],
+    package: Annotated[str, typer.Option(help="PyPI 包名")],
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库连接串，默认用配置")] = None,
+    latest: Annotated[bool, typer.Option(help="复现后是否在最新正式版上复查")] = True,
+    max_steps: Annotated[int | None, typer.Option(help="工具调用步数上限")] = None,
+) -> None:
+    """复现 Agent：Intake 抽版本 → 装报告的版本 → Agent 读源码、写脚本、提交判定 → 查最新版。"""
+    from warden.repro.config import PackageConfig
+
+    settings = Settings()
+    cfg = PackageConfig(name=package, import_name=import_name)
+
+    async def run() -> None:
+        docs = await _load_issue_docs(db_url or settings.warden_db_url, repo, [number])
+        if not docs:
+            raise typer.BadParameter(f"{repo}#{number} 不在索引里，先运行 warden index build")
+        async with _repro_runtime(settings) as rt:
+            report = await rt.run(repo, docs[0], cfg, check_latest=latest, max_steps=max_steps)
+        _echo_issue_report(report)
+
+    asyncio.run(run())
+
+
+@replay_app.command("repro")
+def replay_repro(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    package: Annotated[str, typer.Option(help="PyPI 包名")],
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    limit: Annotated[int, typer.Option(help="按选样规则取最新的多少个 issue")] = 12,
+    offset: Annotated[
+        int, typer.Option(help="跳过最新的多少个（开发时用过的样本），用来取留出集")
+    ] = 0,
+    since: Annotated[str, typer.Option(help="只取这个日期之后创建的 issue")] = "2022-01-01",
+    numbers: Annotated[
+        str | None, typer.Option(help="逗号分隔的编号，指定时不按规则选样（调试用）")
+    ] = None,
+    db_url: Annotated[str, typer.Option("--db", help="回放语料库")] = REPLAY_DB,
+) -> None:
+    """复现回放：在已修复的历史 bug 上跑复现 Agent，报告 L1 复现率和 FB/PA（代理）。会花钱。"""
+    from warden.replay.repro import dump, render, select_issues
+    from warden.repro.agent import PROMPT_VERSION
+    from warden.repro.config import PackageConfig
+
+    settings = Settings()
+    cfg = PackageConfig(name=package, import_name=import_name)
+    started = datetime.now()
+    run_id = f"{repo.replace('/', '__')}__repro__{started:%Y%m%d-%H%M}"
+    run_path, report_path = _run_paths(run_id)
+    selection = (
+        f"指定编号 {numbers}" if numbers else
+        f"{since} 之后创建、以完成状态关闭的 T: bug，类别为 crash / invalid code / "
+        f"unstable formatting / parser，排除 duplicate / not a bug / invalid / outdated，"
+        f"按编号从新到旧跳过 {offset} 个、取 {limit} 个"
+    )
+    meta = {
+        "started": started.isoformat(timespec="seconds"), "model": settings.llm_model_large,
+        "prompt": PROMPT_VERSION, "selection": selection, "max_steps": settings.repro_max_steps,
+        "max_attempts": settings.repro_max_attempts, "budget_usd": settings.repro_budget_usd,
+    }
+
+    async def run() -> None:
+        if numbers:
+            wanted = [int(x) for x in numbers.split(",") if x.strip()]
+        else:
+            db = Database(db_url)
+            await db.create_all()
+            async with db.session() as s:
+                repo_row = await s.scalar(select(Repo).where(Repo.full_name == repo))
+                if repo_row is None:
+                    raise typer.BadParameter(f"{repo} 不在回放库里")
+                all_docs = (await s.scalars(
+                    select(IssueDoc).where(IssueDoc.repo_id == repo_row.id)
+                )).all()
+            await db.dispose()
+            wanted = [d.number for d in select_issues(
+                all_docs, since=datetime.fromisoformat(since), limit=limit, offset=offset
+            )]
+        docs = await _load_issue_docs(db_url, repo, wanted)
+        typer.echo(f"选中 {len(docs)} 个：{[d.number for d in docs]}")
+        reports: list[IssueReproReport] = []
+        run_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        async with _repro_runtime(settings) as rt:
+            for i, doc in enumerate(docs, 1):
+                typer.echo(f"\n===== [{i}/{len(docs)}] #{doc.number} {doc.title[:70]}")
+                report = await rt.run(repo, doc, cfg)
+                reports.append(report)
+                a = report.agent
                 typer.echo(
-                    f"  {label} {vr.version} / py{vr.python} / 环境{hit} {vr.env_key[:12]}："
-                    f"{v.kind} 一致度={v.match} 运行 {v.runs} 次 日志={vr.log_dir}"
+                    f"  → {report.repro.level} · {a.status if a else report.repro.error} · "
+                    f"{report.repro.summary()[:160]} · ${report.total_cost_usd:.4f}"
                 )
+                # 每跑完一个就落盘，中途出错不丢已有结果
+                run_path.write_text(dump(reports, meta), encoding="utf-8")
+                report_path.write_text(render(repo, reports, meta), encoding="utf-8")
+        typer.echo(f"\n报告：{report_path}")
 
     asyncio.run(run())
 

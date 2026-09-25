@@ -69,6 +69,13 @@ def test_consistent_failure_is_reproduced():
     ]
 
 
+def test_sparse_signature_still_matches_itself():
+    # 只有栈帧、没有可解析的异常行：自己和自己打分只有 0.3，但必须算"同一个失败"
+    sparse = 'Traceback (most recent call last):\n  File "/w/src/mylib/core.py", line 1, in f\n'
+    v = j([run(stderr=sparse)] * 4, reported_traceback=None, llm_match=0.9)
+    assert v.kind == VerdictKind.REPRODUCED and v.fail_rate == 1.0
+
+
 def test_rerun_with_a_different_failure_counts_as_not_failing():
     v = j([run(), run(), run(stderr=DIFFERENT), run()])
     assert v.kind == VerdictKind.FLAKY and v.fail_rate == 0.75

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 import httpx
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
@@ -82,6 +82,9 @@ class ResolvedVersion:
     version: Version
     release: Release
     latest: Version  # 最新的正式版（不含预发布、不含撤回的）
+    # 报告的版本装不到（main@sha、.devN、没写版本）时，改用 issue 创建前最新的正式版；
+    # 这里记下报告原文，结果里必须如实说明"不是在报告的版本上复现的"
+    substituted_for: str | None = None
 
 
 class PyPIError(RuntimeError):
@@ -127,17 +130,33 @@ class PyPIClient:
         self._cache[key] = out
         return out
 
-    async def resolve(self, name: str, raw_version: str | None) -> ResolvedVersion:
+    async def resolve(
+        self, name: str, raw_version: str | None, *, fallback_before: datetime | None = None
+    ) -> ResolvedVersion:
+        """fallback_before：报告的版本装不到时，改用这个时间点之前最新的正式版（不传则报错）。"""
         if not valid_package_name(name):
             raise PyPIError(f"包名不合法：{name!r}")
         v = normalize_version(raw_version, name)
-        if v is None:
-            raise PyPIError(f"无法从 {raw_version!r} 解析出可安装的发布版本")
         rel = await self.releases(name)
         stable = [r for r in rel.values() if not r.version.is_prerelease and not r.yanked]
         if not stable:
             raise PyPIError(f"{name} 没有正式发布的版本")
         latest = max(r.version for r in stable)
+        if v is None:
+            if fallback_before is None:
+                raise PyPIError(f"无法从 {raw_version!r} 解析出可安装的发布版本")
+            if fallback_before.tzinfo is None:  # SQLite 取出的时间不带时区，按 UTC
+                fallback_before = fallback_before.replace(tzinfo=UTC)
+            before = [r for r in stable if r.uploaded and r.uploaded < fallback_before]
+            if not before:
+                raise PyPIError(
+                    f"{raw_version!r} 装不到，{fallback_before:%Y-%m-%d} 前也没有正式版"
+                )
+            sub = max(before, key=lambda r: r.version)
+            return ResolvedVersion(
+                name=canonicalize_name(name), version=sub.version, release=sub, latest=latest,
+                substituted_for=raw_version or "（未报告版本）",
+            )
         # Version 比较按 PEP 440：23.1 == 23.1.0
         match = next((r for r in rel.values() if r.version == v), None)
         if match is None:

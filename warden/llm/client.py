@@ -74,6 +74,20 @@ class Usage:
 
 
 @dataclass
+class ToolCall:
+    id: str
+    name: str
+    arguments: str  # 模型给出的原始 JSON 字符串，由调用方解析和校验
+
+    def as_message(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "type": "function",
+            "function": {"name": self.name, "arguments": self.arguments},
+        }
+
+
+@dataclass
 class LLMResponse:
     text: str
     model: str
@@ -81,6 +95,7 @@ class LLMResponse:
     latency_s: float
     attempts: int = 1
     raw: dict[str, Any] = field(default_factory=dict, repr=False)
+    tool_calls: list[ToolCall] = field(default_factory=list)
 
 
 class LLMClient:
@@ -106,18 +121,22 @@ class LLMClient:
 
     async def chat(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         *,
         model: str,
         temperature: float = 0.0,
         json_mode: bool = False,
         max_tokens: int | None = None,
+        tools: list[dict[str, Any]] | None = None,
     ) -> LLMResponse:
+        """tools：OpenAI 格式的函数定义。模型要调用工具时，结果在 LLMResponse.tool_calls。"""
         body: dict[str, Any] = {"model": model, "messages": messages, "temperature": temperature}
         if json_mode:
             body["response_format"] = {"type": "json_object"}
         if max_tokens:
             body["max_tokens"] = max_tokens
+        if tools:
+            body["tools"] = tools
 
         started = time.monotonic()
         last_error = ""
@@ -129,13 +148,23 @@ class LLMClient:
             else:
                 if r.status_code == 200:
                     data = r.json()
+                    message = data["choices"][0]["message"]
                     return LLMResponse(
-                        text=data["choices"][0]["message"].get("content") or "",
+                        text=message.get("content") or "",
                         model=data.get("model", model),
                         usage=Usage.from_api(data.get("usage")),
                         latency_s=time.monotonic() - started,
                         attempts=attempt,
                         raw=data,
+                        tool_calls=[
+                            ToolCall(
+                                id=tc.get("id") or f"call_{i}",
+                                name=tc["function"]["name"],
+                                arguments=tc["function"].get("arguments") or "{}",
+                            )
+                            for i, tc in enumerate(message.get("tool_calls") or [])
+                            if tc.get("function", {}).get("name")
+                        ],
                     )
                 last_error = f"HTTP {r.status_code}: {r.text[:300]}"
                 if r.status_code not in _RETRY_STATUS:
@@ -146,7 +175,7 @@ class LLMClient:
 
     async def complete_json(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         schema: type[T],
         *,
         model: str,

@@ -1,0 +1,1428 @@
+{
+  "meta": {
+    "started": "2026-09-25T14:52:34",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "2022-01-01 之后创建、以完成状态关闭的 T: bug，类别为 crash / invalid code / unstable formatting / parser，排除 duplicate / not a bug / invalid / outdated，按编号从新到旧取 12 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.5
+  },
+  "summary": {
+    "n": 12,
+    "outcomes": {
+      "still_fails_latest": 1,
+      "not_reproduced": 3,
+      "fb_pa": 5,
+      "l1_latest_unknown": 3
+    },
+    "l1": 9,
+    "l1_rate": 0.75,
+    "l1_ci": [
+      0.46768966087934005,
+      0.9110599603710386
+    ],
+    "fb_pa": 5,
+    "fb_pa_rate": 0.4166666666666667,
+    "fb_pa_ci": [
+      0.19325746190524656,
+      0.6804926643446272
+    ],
+    "total_cost_usd": 0.1933,
+    "mean_cost_usd": 0.0161,
+    "mean_steps": 21.6,
+    "mean_submits": 0.75,
+    "mean_duration_s": 94.3,
+    "with_traceback": 0,
+    "substituted": 5,
+    "l1_substituted": 4,
+    "l1_with_traceback": 0
+  },
+  "reports": [
+    {
+      "repo": "psf/black",
+      "number": 5099,
+      "title": "Bug runnig at Python 3.13 - INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.13.12 produced invalid code: multiple exception types must be parenthesized",
+      "intake_version": "26.1a1",
+      "intake_python": "3.13.12",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "26.1a1",
+        "substituted_for": null,
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "26.1a1",
+          "python": "3.13",
+          "env_key": "33143790fc074ac2c04ff9a441a886054cf9d24f9cc1eeb8d425db908c022c23",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "Expected black --target-version py<N> to format `except (ValueError, TypeError):` and exit with code <N>, but it exited with code <N> and reported: error: cannot format example.py: INTERNAL ERROR: Bla",
+              "frames": []
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 target-version py314 在 Python 3.13 上运行 black，被测包实际输出了 issue 中完全相同的 INTERNAL ERROR（multiple exception types must be parenthesized，exit code 123），且断言检查的正是 issue 期望的『black 正常格式化并返回 0』，与实际表现直接对应。",
+            "quote": "error: cannot format example.py: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.13.15 produced invalid code: multiple exception types must be parenthesized (<unknown>, line 4).",
+            "quote_found": true,
+            "cost_usd": 0.000377
+          },
+          "log_dir": "artifacts\\warden-run-ab03cb3843",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 42, in <module>\n    assert proc.returncode == 0, (\n           ^^^^^^^^^^^^^^^^^^^^\nAssertionError: Expected black --target-version py314 to format `except (ValueError, TypeError):` and exit with code 0, but it exited with code 123 and reported: error: cannot format example.py: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.13.15 produced invalid code: multiple exception types must be parenthesized (<unknown>, line 4). Please report a bug on https://github.com/psf/black/issues.  This invalid output might be helpful: /tmp/blk_ya66zq9j.log\n\nOh no! 💥 💔 💥\n1 file failed to reformat."
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.13",
+          "env_key": "7eac8b6c82e55b4fb7b2dd29c9bdcb292c20eab419685b2cf9c91ca93c0dd42c",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.8,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "Expected black --target-version py<N> to format `except (ValueError, TypeError):` and exit with code <N>, but it exited with code <N> and reported: Warning: Python <N>.<N> cannot parse code formatted ",
+              "frames": []
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.8,
+            "reason": "脚本用 `--target-version py314` 在 Python 3.13 上运行 black 处理含 `except (ValueError, TypeError)` 的代码，被测包实际以 exit code 123 失败并拒绝格式化，这正是 issue 中 pre-commit 里 black hook 报错的根因（目标版本为 py314 而运行解释器为 3.13）；断言检查的也正是 issue 期望的「格式化成功、退出码 0」行为。区别只在于错误文案：issue 里是 'produced invalid code: multiple exception types must be parenthesized'，沙箱版本换成了更明确的 'cannot parse code formatted for Python 3.14' 安全校验提示，核心失败行为一致。",
+            "quote": "error: cannot format example.py: failed to verify equivalence of the formatted output: Python 3.13 cannot parse code formatted for Python 3.14.",
+            "quote_found": true,
+            "cost_usd": 0.00067
+          },
+          "log_dir": "artifacts\\warden-run-251d4392bf",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 42, in <module>\n    assert proc.returncode == 0, (\n           ^^^^^^^^^^^^^^^^^^^^\nAssertionError: Expected black --target-version py314 to format `except (ValueError, TypeError):` and exit with code 0, but it exited with code 123 and reported: Warning: Python 3.13 cannot parse code formatted for Python 3.14. To fix this: run Black with Python 3.14, set --target-version to py313, or use --fast to skip the safety check. Black's safety check verifies equivalence by parsing the AST, which fails when the running Python is older than the target version.\nerror: cannot format example.py: failed to verify equivalence of the formatted output: Python 3.13 cannot parse code formatted for Python 3.14. To fix this: run Black with Python 3.14, set --target-version to py313, or use --fast to skip the safety check.\n\nOh no! 💥 💔 💥\n1 file failed to reformat."
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "Running `python -m black --target-version py314` on `except (ValueError, TypeError):` makes Black (26.1a1 on Python 3.13) strip the parens needed by pre-3.14 syntax and then fail its own AST-safety check, exiting 123 with \"INTERNAL ERROR: ... produced invalid code: multiple exception types must be parenthesized\"; the script asserts the formatting should succeed.",
+            "script": "\"\"\"Repro for psf/black#5099.\n\nWith ``target-version = ['py314']`` (as in the issue's pyproject.toml) Black\nremoves the parentheses around multiple exception types (PEP 758), which is\nonly valid syntax on Python 3.14.  Running Black on Python 3.13 then fails its\nown AST-safety check and reports:\n\n    INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.13.x produced invalid\n    code: multiple exception types must be parenthesized\n\nThe expected behaviour is that Black formats the file and exits successfully\n(this is what the pre-commit hook in the issue expects).\n\"\"\"\n\nimport subprocess\nimport sys\n\nSOURCE = \"\"\"\\\ndef f():\n    try:\n        pass\n    except (ValueError, TypeError):\n        pass\n\"\"\"\n\nproc = subprocess.run(\n    [\n        sys.executable,\n        \"-m\",\n        \"black\",\n        \"--target-version\",\n        \"py314\",\n        \"--stdin-filename\",\n        \"example.py\",\n        \"-\",\n    ],\n    input=SOURCE,\n    capture_output=True,\n    text=True,\n)\n\nassert proc.returncode == 0, (\n    \"Expected black --target-version py314 to format `except (ValueError, \"\n    \"TypeError):` and exit with code 0, but it exited with code \"\n    f\"{proc.returncode} and reported: {proc.stderr.strip()}\"\n)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Repro for psf/black#5099.\n\nWith ``target-version = ['py314']`` (as in the issue's pyproject.toml) Black\nremoves the parentheses around multiple exception types (PEP 758), which is\nonly valid syntax on Python 3.14.  Running Black on Python 3.13 then fails its\nown AST-safety check and reports:\n\n    INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.13.x produced invalid\n    code: multiple exception types must be parenthesized\n\nThe expected behaviour is that Black formats the file and exits successfully\n(this is what the pre-commit hook in the issue expects).\n\"\"\"\n\nimport subprocess\nimport sys\n\nSOURCE = \"\"\"\\\ndef f():\n    try:\n        pass\n    except (ValueError, TypeError):\n        pass\n\"\"\"\n\nproc = subprocess.run(\n    [\n        sys.executable,\n        \"-m\",\n        \"black\",\n        \"--target-version\",\n        \"py314\",\n        \"--stdin-filename\",\n        \"example.py\",\n        \"-\",\n    ],\n    input=SOURCE,\n    capture_output=True,\n    text=True,\n)\n\nassert proc.returncode == 0, (\n    \"Expected black --target-version py314 to format `except (ValueError, \"\n    \"TypeError):` and exit with code 0, but it exited with code \"\n    f\"{proc.returncode} and reported: {proc.stderr.strip()}\"\n)\n",
+        "final_run": {
+          "version": "26.1a1",
+          "python": "3.13",
+          "env_key": "33143790fc074ac2c04ff9a441a886054cf9d24f9cc1eeb8d425db908c022c23",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "Expected black --target-version py<N> to format `except (ValueError, TypeError):` and exit with code <N>, but it exited with code <N> and reported: error: cannot format example.py: INTERNAL ERROR: Bla",
+              "frames": []
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 target-version py314 在 Python 3.13 上运行 black，被测包实际输出了 issue 中完全相同的 INTERNAL ERROR（multiple exception types must be parenthesized，exit code 123），且断言检查的正是 issue 期望的『black 正常格式化并返回 0』，与实际表现直接对应。",
+            "quote": "error: cannot format example.py: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.13.15 produced invalid code: multiple exception types must be parenthesized (<unknown>, line 4).",
+            "quote_found": true,
+            "cost_usd": 0.000377
+          },
+          "log_dir": "artifacts\\warden-run-ab03cb3843",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 42, in <module>\n    assert proc.returncode == 0, (\n           ^^^^^^^^^^^^^^^^^^^^\nAssertionError: Expected black --target-version py314 to format `except (ValueError, TypeError):` and exit with code 0, but it exited with code 123 and reported: error: cannot format example.py: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.13.15 produced invalid code: multiple exception types must be parenthesized (<unknown>, line 4). Please report a bug on https://github.com/psf/black/issues.  This invalid output might be helpful: /tmp/blk_ya66zq9j.log\n\nOh no! 💥 💔 💥\n1 file failed to reformat."
+        },
+        "steps": 19,
+        "tool_counts": {
+          "search_code": 4,
+          "read_file": 7,
+          "write_scratch": 3,
+          "run": 4,
+          "submit": 1
+        },
+        "cost_usd": 0.00726,
+        "prompt_tokens": 152830,
+        "completion_tokens": 9548,
+        "cached_tokens": 145536,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-5099-1790315637.json",
+        "duration_s": 75.2
+      },
+      "intake_cost_usd": 0.000767,
+      "judge_cost_usd": 0.001047
+    },
+    {
+      "repo": "psf/black",
+      "number": 5083,
+      "title": "Black silently fails with exit code 1 when passed in too many files in the Python 3.14.2 on Linux",
+      "intake_version": "main@e079b7e100d1e181d4ee860ee4512bf3326f32c3",
+      "intake_python": "3.14.3",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "26.3.1",
+        "substituted_for": "main@e079b7e100d1e181d4ee860ee4512bf3326f32c3",
+        "latest_version": "26.5.1",
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "Agent 没有提交脚本（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 1,
+          "search_code": 9,
+          "read_file": 11,
+          "run": 13,
+          "write_scratch": 6
+        },
+        "cost_usd": 0.019435,
+        "prompt_tokens": 623885,
+        "completion_tokens": 25066,
+        "cached_tokens": 606720,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-5083-1790315971.json",
+        "duration_s": 290.6
+      },
+      "intake_cost_usd": 0.000446,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4963,
+      "title": "pygettext.py: Black 26.1.0 on Python (CPython) 3.14 produced different code on the second pass of the formatter",
+      "intake_version": "26.1.0",
+      "intake_python": "3.14",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "26.1.0",
+        "substituted_for": null,
+        "latest_version": "26.5.1",
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "Agent 没有提交脚本（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 2,
+          "run": 12,
+          "search_code": 11,
+          "read_file": 13,
+          "write_scratch": 2
+        },
+        "cost_usd": 0.041761,
+        "prompt_tokens": 616244,
+        "completion_tokens": 25999,
+        "cached_tokens": 592896,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4963-1790316226.json",
+        "duration_s": 242.4
+      },
+      "intake_cost_usd": 0.000423,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4945,
+      "title": "Cannot parse multi-line code split using backslash",
+      "intake_version": "25.12.0",
+      "intake_python": "3.14.2",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "25.12.0",
+        "substituted_for": null,
+        "latest_version": "26.5.1",
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "Agent 没有提交脚本（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "run": 11,
+          "search_code": 11,
+          "list_files": 2,
+          "read_file": 9,
+          "write_scratch": 7
+        },
+        "cost_usd": 0.03405,
+        "prompt_tokens": 620115,
+        "completion_tokens": 19735,
+        "cached_tokens": 597504,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4945-1790316388.json",
+        "duration_s": 149.3
+      },
+      "intake_cost_usd": 0.000513,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4912,
+      "title": "string_processing: error with unassigned long string literal with trailing comma",
+      "intake_version": "26.1a1",
+      "intake_python": "3.10.4, 3.12.11",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "26.1a1",
+        "substituted_for": null,
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "26.1a1",
+          "python": "3.10",
+          "env_key": "027fb51c6936b848a92c00817281a76f14ce90434dd59d87935444fc8c223706",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ASTSafetyError",
+              "message": "INTERNAL ERROR: Black <N>.<N>a<N> on Python (CPython) <N>.<N>.<N> produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中给出的完全相同的命令（stdin + --preview --enable-unstable-feature=string_processing）运行 black，输出里直接出现 issue 所述的 INTERNAL ERROR：\"produced code that is not equivalent to the source\"，CLI 以 123 退出；随后 API 调用也抛出 ASTSafetyError。脚本断言的正是 issue 的预期行为（应能正常拆分字符串、返回码为 0），失败源于被测包自身的等价性检查，而非脚本自身错误。",
+            "quote": "error: cannot format -: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.",
+            "quote_found": true,
+            "cost_usd": 0.000928
+          },
+          "log_dir": "artifacts\\warden-run-c5e4a41a39",
+          "output_tail": "CLI exit code: 123\nCLI stdout: \"A long string literal that is not assigned to a variable, exceeds line length when string-processing is enabled, and has a trailing comma (to make it a one-item tuple)\",\n\nCLI stderr: error: cannot format -: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_rxezcc4x.log\n\nOh no! 💥 💔 💥\n1 file failed to reformat.\n\n\nTraceback (most recent call last):\n  File \"/workspace/repro.py\", line 44, in <module>\n    formatted = black.format_file_contents(SOURCE, fast=False, mode=mode)\n  File \"src/black/__init__.py\", line 1084, in format_file_contents\n  File \"src/black/__init__.py\", line 1058, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1582, in assert_equivalent\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_2unxp6tw.log"
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.10",
+          "env_key": "d05210f7d2d80fe294470b2880a04902b616714766d709180b1d1887ec199105",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "NOT_REPRODUCED",
+            "reason": "脚本正常退出，没有出现报告的失败",
+            "match": null,
+            "match_method": null,
+            "fail_rate": null,
+            "runs": 1,
+            "observed": null,
+            "reported": null
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\warden-run-c6e2118b9b",
+          "output_tail": "CLI exit code: 0\nCLI stdout: (\n    \"A long string literal that is not assigned to a variable, exceeds line length when\"\n    \" string-processing is enabled, and has a trailing comma (to make it a one-item\"\n    \" tuple)\"\n),\n\nCLI stderr: reformatted -\n\nAll done! ✨ 🍰 ✨\n1 file reformatted.\n\nformatted: '(\\n    \"A long string literal that is not assigned to a variable, exceeds line length when\"\\n    \" string-processing is enabled, and has a trailing comma (to make it a one-item\"\\n    \" tuple)\"\\n),\\n'"
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "With string_processing enabled, black on an unassigned long string literal with a trailing comma (one-item tuple) fails with \"INTERNAL ERROR: ... produced code that is not equivalent to the source\": the reported CLI command exits 123 with that error, and black.format_file_contents (safe/fast=False, same mode) raises black.parsing.ASTSafetyError from black/__init__.py:1582 instead of splitting the string.",
+            "script": "\"\"\"Repro for psf/black#4912.\n\nWith `string_processing` enabled, an unassigned long string literal followed by a\ntrailing comma (one-item tuple) makes black's own safety check fail with\n\"INTERNAL ERROR: ... produced code that is not equivalent to the source\",\ninstead of just splitting the string.\n\"\"\"\n\nimport subprocess\nimport sys\n\nimport black\n\nSOURCE = (\n    '\"A long string literal that is not assigned to a variable, exceeds line length '\n    'when string-processing is enabled, and has a trailing comma (to make it a '\n    'one-item tuple)\",\\n'\n)\n\n# 1) The exact command from the report (black reads the source from stdin).\nproc = subprocess.run(\n    [\n        sys.executable,\n        \"-m\",\n        \"black\",\n        \"--preview\",\n        \"--enable-unstable-feature=string_processing\",\n        \"-\",\n    ],\n    input=SOURCE,\n    capture_output=True,\n    text=True,\n)\nprint(\"CLI exit code:\", proc.returncode)\nprint(\"CLI stdout:\", proc.stdout)\nprint(\"CLI stderr:\", proc.stderr)\n\n# 2) The CLI error above is black's own equivalence check; call the same public API\n#    (with `fast=False`, which is what the CLI uses) so black raises it itself.\nmode = black.Mode(\n    preview=True,\n    enabled_features={black.mode.Preview.string_processing},\n)\nformatted = black.format_file_contents(SOURCE, fast=False, mode=mode)\nprint(\"formatted:\", repr(formatted))\n\n# Per the report, the string should just be split up, without any error.\nassert proc.returncode == 0, (\n    \"expected black to format the one-item tuple without error, but the CLI \"\n    f\"exited with {proc.returncode}: {proc.stderr}\"\n)\nassert formatted != SOURCE, \"expected the long string literal to be split up\"\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Repro for psf/black#4912.\n\nWith `string_processing` enabled, an unassigned long string literal followed by a\ntrailing comma (one-item tuple) makes black's own safety check fail with\n\"INTERNAL ERROR: ... produced code that is not equivalent to the source\",\ninstead of just splitting the string.\n\"\"\"\n\nimport subprocess\nimport sys\n\nimport black\n\nSOURCE = (\n    '\"A long string literal that is not assigned to a variable, exceeds line length '\n    'when string-processing is enabled, and has a trailing comma (to make it a '\n    'one-item tuple)\",\\n'\n)\n\n# 1) The exact command from the report (black reads the source from stdin).\nproc = subprocess.run(\n    [\n        sys.executable,\n        \"-m\",\n        \"black\",\n        \"--preview\",\n        \"--enable-unstable-feature=string_processing\",\n        \"-\",\n    ],\n    input=SOURCE,\n    capture_output=True,\n    text=True,\n)\nprint(\"CLI exit code:\", proc.returncode)\nprint(\"CLI stdout:\", proc.stdout)\nprint(\"CLI stderr:\", proc.stderr)\n\n# 2) The CLI error above is black's own equivalence check; call the same public API\n#    (with `fast=False`, which is what the CLI uses) so black raises it itself.\nmode = black.Mode(\n    preview=True,\n    enabled_features={black.mode.Preview.string_processing},\n)\nformatted = black.format_file_contents(SOURCE, fast=False, mode=mode)\nprint(\"formatted:\", repr(formatted))\n\n# Per the report, the string should just be split up, without any error.\nassert proc.returncode == 0, (\n    \"expected black to format the one-item tuple without error, but the CLI \"\n    f\"exited with {proc.returncode}: {proc.stderr}\"\n)\nassert formatted != SOURCE, \"expected the long string literal to be split up\"\n",
+        "final_run": {
+          "version": "26.1a1",
+          "python": "3.10",
+          "env_key": "027fb51c6936b848a92c00817281a76f14ce90434dd59d87935444fc8c223706",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ASTSafetyError",
+              "message": "INTERNAL ERROR: Black <N>.<N>a<N> on Python (CPython) <N>.<N>.<N> produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中给出的完全相同的命令（stdin + --preview --enable-unstable-feature=string_processing）运行 black，输出里直接出现 issue 所述的 INTERNAL ERROR：\"produced code that is not equivalent to the source\"，CLI 以 123 退出；随后 API 调用也抛出 ASTSafetyError。脚本断言的正是 issue 的预期行为（应能正常拆分字符串、返回码为 0），失败源于被测包自身的等价性检查，而非脚本自身错误。",
+            "quote": "error: cannot format -: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.",
+            "quote_found": true,
+            "cost_usd": 0.000928
+          },
+          "log_dir": "artifacts\\warden-run-c5e4a41a39",
+          "output_tail": "CLI exit code: 123\nCLI stdout: \"A long string literal that is not assigned to a variable, exceeds line length when string-processing is enabled, and has a trailing comma (to make it a one-item tuple)\",\n\nCLI stderr: error: cannot format -: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_rxezcc4x.log\n\nOh no! 💥 💔 💥\n1 file failed to reformat.\n\n\nTraceback (most recent call last):\n  File \"/workspace/repro.py\", line 44, in <module>\n    formatted = black.format_file_contents(SOURCE, fast=False, mode=mode)\n  File \"src/black/__init__.py\", line 1084, in format_file_contents\n  File \"src/black/__init__.py\", line 1058, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1582, in assert_equivalent\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_2unxp6tw.log"
+        },
+        "steps": 16,
+        "tool_counts": {
+          "run": 7,
+          "search_code": 3,
+          "read_file": 2,
+          "write_scratch": 3,
+          "submit": 1
+        },
+        "cost_usd": 0.009919,
+        "prompt_tokens": 79397,
+        "completion_tokens": 6480,
+        "cached_tokens": 73728,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4912-1790316472.json",
+        "duration_s": 56.7
+      },
+      "intake_cost_usd": 0.001275,
+      "judge_cost_usd": 0.000928
+    },
+    {
+      "repo": "psf/black",
+      "number": 4880,
+      "title": "Failure upon two ignores for type checkers",
+      "intake_version": "25.1.1.dev28+g314f8cf",
+      "intake_python": "3.12.11",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "25.11.0",
+        "substituted_for": "25.1.1.dev28+g314f8cf",
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "25.11.0",
+          "python": "3.12",
+          "env_key": "66bbcbcdd60ca2cbd2ea8bc94fadaeb0960dcab6b2c2d5d2cdeca66899a5a4f4",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ASTSafetyError",
+              "message": "INTERNAL ERROR: Black <N>.<N>.<N> on Python (CPython) <N>.<N>.<N> produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "运行脚本用 safe mode (fast=False) 调用 black.format_file_contents 喂入 issue 中的原始片段，被测包直接抛出与 issue 完全一致的 ASTSafetyError「INTERNAL ERROR ... produced code that is not equivalent to the source」，即 Black 因类型忽略注释导致格式化结果 AST 不等价。失败来自被测包行为而非脚本自身（脚本没有 assert/raise），断言检查的正是 issue 描述的预期行为（black 应能正常处理）。唯一未覆盖的是输出中未显示 TypeIgnore 被删除的 diff 细节。",
+            "quote": "black.parsing.ASTSafetyError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.12.14 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000811
+          },
+          "log_dir": "artifacts\\warden-run-5dc58d0813",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 29, in <module>\n    black.format_file_contents(src, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1091, in format_file_contents\n  File \"src/black/__init__.py\", line 1065, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1608, in assert_equivalent\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.12.14 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kxdopr4q.log"
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.12",
+          "env_key": "c73c82b2b7055345ad835bd1ba2ad61ccb3fe8059291e4ff72f98110e976408a",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "NOT_REPRODUCED",
+            "reason": "脚本正常退出，没有出现报告的失败",
+            "match": null,
+            "match_method": null,
+            "fail_rate": null,
+            "runs": 1,
+            "observed": null,
+            "reported": null
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\warden-run-30d2363532",
+          "output_tail": ""
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "Calling black.format_file_contents with the issue's snippet (two type-ignore comments) in safe mode raises black.parsing.ASTSafetyError \"INTERNAL ERROR: ... produced code that is not equivalent to the source\" from black/__init__.py assert_equivalent, with the diff showing a TypeIgnore removed — exactly the failure in the issue.",
+            "script": "\"\"\"Reproduction for psf/black#4880: \"Failure upon two ignores for type checkers\".\n\nRunning Black (safe mode, i.e. with the AST equivalence check, as the online\nplayground / CLI do) on the snippet from the issue raises an internal\nASTSafetyError because Black drops one of the type-ignore comments, so the\nformatted code's AST is not equivalent to the source.\n\"\"\"\n\nimport black\n\nsrc = '''import pandas as pd\n\n\ninterval_td = pd.Interval(\n    pd.Timedelta(\"1 days\"), pd.Timedelta(\"2 days\"), closed=\"neither\"\n)\n\n\n_td = (  # pyright: ignore[reportOperatorIssue,reportUnknownVariableType]\n    interval_td\n    - pd.Interval(  # type: ignore[operator]\n        pd.Timedelta(1, \"ns\"), pd.Timedelta(2, \"ns\")\n    )\n)\n'''\n\n# fast=False is what the playground/CLI use by default: it verifies that the\n# reformatted code is equivalent to the input and raises ASTSafetyError if not.\nblack.format_file_contents(src, fast=False, mode=black.Mode())\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Reproduction for psf/black#4880: \"Failure upon two ignores for type checkers\".\n\nRunning Black (safe mode, i.e. with the AST equivalence check, as the online\nplayground / CLI do) on the snippet from the issue raises an internal\nASTSafetyError because Black drops one of the type-ignore comments, so the\nformatted code's AST is not equivalent to the source.\n\"\"\"\n\nimport black\n\nsrc = '''import pandas as pd\n\n\ninterval_td = pd.Interval(\n    pd.Timedelta(\"1 days\"), pd.Timedelta(\"2 days\"), closed=\"neither\"\n)\n\n\n_td = (  # pyright: ignore[reportOperatorIssue,reportUnknownVariableType]\n    interval_td\n    - pd.Interval(  # type: ignore[operator]\n        pd.Timedelta(1, \"ns\"), pd.Timedelta(2, \"ns\")\n    )\n)\n'''\n\n# fast=False is what the playground/CLI use by default: it verifies that the\n# reformatted code is equivalent to the input and raises ASTSafetyError if not.\nblack.format_file_contents(src, fast=False, mode=black.Mode())\n",
+        "final_run": {
+          "version": "25.11.0",
+          "python": "3.12",
+          "env_key": "66bbcbcdd60ca2cbd2ea8bc94fadaeb0960dcab6b2c2d5d2cdeca66899a5a4f4",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ASTSafetyError",
+              "message": "INTERNAL ERROR: Black <N>.<N>.<N> on Python (CPython) <N>.<N>.<N> produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "运行脚本用 safe mode (fast=False) 调用 black.format_file_contents 喂入 issue 中的原始片段，被测包直接抛出与 issue 完全一致的 ASTSafetyError「INTERNAL ERROR ... produced code that is not equivalent to the source」，即 Black 因类型忽略注释导致格式化结果 AST 不等价。失败来自被测包行为而非脚本自身（脚本没有 assert/raise），断言检查的正是 issue 描述的预期行为（black 应能正常处理）。唯一未覆盖的是输出中未显示 TypeIgnore 被删除的 diff 细节。",
+            "quote": "black.parsing.ASTSafetyError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.12.14 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000811
+          },
+          "log_dir": "artifacts\\warden-run-5dc58d0813",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 29, in <module>\n    black.format_file_contents(src, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1091, in format_file_contents\n  File \"src/black/__init__.py\", line 1065, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1608, in assert_equivalent\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.12.14 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kxdopr4q.log"
+        },
+        "steps": 18,
+        "tool_counts": {
+          "write_scratch": 4,
+          "list_files": 1,
+          "run": 5,
+          "search_code": 3,
+          "read_file": 4,
+          "submit": 1
+        },
+        "cost_usd": 0.006496,
+        "prompt_tokens": 84036,
+        "completion_tokens": 3471,
+        "cached_tokens": 77824,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4880-1790316568.json",
+        "duration_s": 46.5
+      },
+      "intake_cost_usd": 0.006398,
+      "judge_cost_usd": 0.000811
+    },
+    {
+      "repo": "psf/black",
+      "number": 4873,
+      "title": "`black` told me to report a bug for lines with `# fmt: skip` on them, I think",
+      "intake_version": "25.11.0",
+      "intake_python": "3.14.0",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "25.11.0",
+        "substituted_for": null,
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "25.11.0",
+          "python": "3.14",
+          "env_key": "4f4ebf178464b4c6207cac932a7104a531a877332fdffd4bc1bfbc9c90843189",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ASTSafetyError",
+              "message": "INTERNAL ERROR: Black <N>.<N>.<N> on Python (CPython) <N>.<N>.<N> produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "脚本走的是 CLI 同一条代码路径（format_file_contents，fast=False），未做任何人工 raise/assert，失败由 black 自身的 assert_equivalent 抛出 'produced code that is not equivalent to the source'，与 issue 报告中 black 报的 INTERNAL ERROR 完全一致，且最小化样例同样围绕相邻两行带 `# fmt: skip` 的注释触发该问题。区别只在于复现用的是精简后的列表样例而非原始文件，故未给满分。",
+            "quote": "black.parsing.ASTSafetyError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.14.7 produced code that is not equivalent to the source.",
+            "quote_found": true,
+            "cost_usd": 0.001219
+          },
+          "log_dir": "artifacts\\warden-run-55edcbb372",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 23, in <module>\n    black.format_file_contents(SRC, fast=False, mode=black.Mode())\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"src/black/__init__.py\", line 1091, in format_file_contents\n  File \"src/black/__init__.py\", line 1065, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1608, in assert_equivalent\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.14.7 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_cgl3q_6_.log"
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.14",
+          "env_key": "9ebb458cda620e9cc868c53c0cca92a9fae58c42673013cda103e8fb63686a54",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "UNRELATED_FAILURE",
+            "reason": "失败了，但和报告不一致（一致度 0.10 < 0.6）",
+            "match": 0.1,
+            "match_method": "llm",
+            "fail_rate": null,
+            "runs": 1,
+            "observed": {
+              "exc_type": null,
+              "message": "",
+              "frames": [
+                "black/__init__.py:format_file_contents"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.1,
+            "reason": "脚本失败于 black.report.NothingChanged——这只是 black 表示「格式化后内容无变化」的正常控制流异常，说明该最小输入根本没有触发 issue 所述的「产出的代码与原代码不等价」的内部错误。运行输出里看不到任何 INTERNAL ERROR 或非等价重排，失败原因来自脚本选取的输入本身，而非 issue 描述的被测包行为。",
+            "quote": "black.report.NothingChanged",
+            "quote_found": true,
+            "cost_usd": 0.000657
+          },
+          "log_dir": "artifacts\\warden-run-4d947312a8",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 23, in <module>\n    black.format_file_contents(SRC, fast=False, mode=black.Mode())\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"src/black/__init__.py\", line 1120, in format_file_contents\nblack.report.NothingChanged"
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "Formatting a list whose consecutive elements each end with \"# fmt: skip\" through black.format_file_contents(fast=False) (the CLI's code path) makes black raise ASTSafetyError: \"INTERNAL ERROR: Black 25.11.0 ... produced code that is not equivalent to the source\", because the two lines get merged into one, matching the issue's reported internal error.",
+            "script": "\"\"\"Repro for psf/black#4873.\n\nTwo adjacent lines carrying a trailing `# fmt: skip` comment inside a simple\ncollection get merged onto a single line by the formatter, so the output is no\nlonger equivalent to the input.  Formatting the file the way the CLI does\n(`format_file_contents(fast=False)`) therefore fails black's own equivalence\ncheck and aborts with the reported INTERNAL ERROR.\n\nSource reduced from the file in the issue report.\n\"\"\"\n\nimport black\n\nSRC = \"\"\"\\\nl = [\n    1,  # fmt: skip\n    2,  # fmt: skip\n]\n\"\"\"\n\n# Same code path the `black` CLI uses (see black/__init__.py:format_file_contents);\n# it reformats and then runs assert_equivalent/assert_stable on the result.\nblack.format_file_contents(SRC, fast=False, mode=black.Mode())\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85
+          }
+        ],
+        "final_script": "\"\"\"Repro for psf/black#4873.\n\nTwo adjacent lines carrying a trailing `# fmt: skip` comment inside a simple\ncollection get merged onto a single line by the formatter, so the output is no\nlonger equivalent to the input.  Formatting the file the way the CLI does\n(`format_file_contents(fast=False)`) therefore fails black's own equivalence\ncheck and aborts with the reported INTERNAL ERROR.\n\nSource reduced from the file in the issue report.\n\"\"\"\n\nimport black\n\nSRC = \"\"\"\\\nl = [\n    1,  # fmt: skip\n    2,  # fmt: skip\n]\n\"\"\"\n\n# Same code path the `black` CLI uses (see black/__init__.py:format_file_contents);\n# it reformats and then runs assert_equivalent/assert_stable on the result.\nblack.format_file_contents(SRC, fast=False, mode=black.Mode())\n",
+        "final_run": {
+          "version": "25.11.0",
+          "python": "3.14",
+          "env_key": "4f4ebf178464b4c6207cac932a7104a531a877332fdffd4bc1bfbc9c90843189",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ASTSafetyError",
+              "message": "INTERNAL ERROR: Black <N>.<N>.<N> on Python (CPython) <N>.<N>.<N> produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "脚本走的是 CLI 同一条代码路径（format_file_contents，fast=False），未做任何人工 raise/assert，失败由 black 自身的 assert_equivalent 抛出 'produced code that is not equivalent to the source'，与 issue 报告中 black 报的 INTERNAL ERROR 完全一致，且最小化样例同样围绕相邻两行带 `# fmt: skip` 的注释触发该问题。区别只在于复现用的是精简后的列表样例而非原始文件，故未给满分。",
+            "quote": "black.parsing.ASTSafetyError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.14.7 produced code that is not equivalent to the source.",
+            "quote_found": true,
+            "cost_usd": 0.001219
+          },
+          "log_dir": "artifacts\\warden-run-55edcbb372",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 23, in <module>\n    black.format_file_contents(SRC, fast=False, mode=black.Mode())\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"src/black/__init__.py\", line 1091, in format_file_contents\n  File \"src/black/__init__.py\", line 1065, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1608, in assert_equivalent\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.14.7 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_cgl3q_6_.log"
+        },
+        "steps": 15,
+        "tool_counts": {
+          "run": 5,
+          "search_code": 3,
+          "read_file": 2,
+          "write_scratch": 4,
+          "submit": 1
+        },
+        "cost_usd": 0.009406,
+        "prompt_tokens": 116153,
+        "completion_tokens": 5550,
+        "cached_tokens": 109184,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4873-1790316636.json",
+        "duration_s": 53.1
+      },
+      "intake_cost_usd": 0.000693,
+      "judge_cost_usd": 0.001876
+    },
+    {
+      "repo": "psf/black",
+      "number": 4841,
+      "title": "Unexpected error with Black 25.11.0 when fmt: off and fmt: on are used within block of comments",
+      "intake_version": "25.11.0",
+      "intake_python": "3.11.13",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "25.11.0",
+        "substituted_for": null,
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "25.11.0",
+          "python": "3.11",
+          "env_key": "fdbfe935e6ee9e374e79afb5fc5cbc4733c313619c0bc497b14ff76da088c03d",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black <N>.<N>.<N> on Python (CPython) <N>.<N>.<N> produced different code on the second pass of the formatter.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_stable"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中逐字给出的示例代码调用 black.format_file_contents(fast=False)，Black 自身在 assert_stable 中抛出与 issue 报告完全一致的 INTERNAL ERROR（第二次格式化遍次产出不同代码），失败源于被测包行为而非脚本断言或环境错误。",
+            "quote": "AssertionError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.11.16 produced different code on the second pass of the formatter.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_usj80goo.log",
+            "quote_found": true,
+            "cost_usd": 0.000687
+          },
+          "log_dir": "artifacts\\warden-run-3bb60a6e8a",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 29, in <module>\n    black.format_file_contents(source, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1091, in format_file_contents\n  File \"src/black/__init__.py\", line 1066, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1636, in assert_stable\nAssertionError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.11.16 produced different code on the second pass of the formatter.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_usj80goo.log"
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.11",
+          "env_key": "2bce43300069ce0cc5d587ffe36c608bffd7666f330acf9c50abbb5428d3a292",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "UNRELATED_FAILURE",
+            "reason": "失败了，但和报告不一致（一致度 0.10 < 0.6）",
+            "match": 0.1,
+            "match_method": "llm",
+            "fail_rate": null,
+            "runs": 1,
+            "observed": {
+              "exc_type": null,
+              "message": "",
+              "frames": [
+                "black/__init__.py:format_file_contents"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.1,
+            "reason": "脚本运行的输出只有 black.report.NothingChanged，说明 Black 在安全模式下完成格式化且第二遍结果稳定，并未出现 issue 所述的 INTERNAL ERROR「produced different code on the second pass」。失败原因是脚本未处理 NothingChanged 这一正常异常，而不是被测包表现出 issue 描述的错误行为，因此这次运行恰恰表明该 bug 未复现。",
+            "quote": "black.report.NothingChanged",
+            "quote_found": true,
+            "cost_usd": 0.00059
+          },
+          "log_dir": "artifacts\\warden-run-36448d9c2c",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 29, in <module>\n    black.format_file_contents(source, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1120, in format_file_contents\nblack.report.NothingChanged"
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "用 issue 中的代码调用 black.format_file_contents(safe 模式) 时，Black 25.11.0 自身在 black/__init__.py::assert_stable 抛出 AssertionError：'INTERNAL ERROR: ... produced different code on the second pass of the formatter'，与 `black file.py` 报告的错误一致。",
+            "script": "\"\"\"Repro for psf/black issue #4841.\n\n``# fmt: off`` / ``# fmt: on`` appearing inside a block of comments makes Black\n25.11.0 unstable: ``format_file_contents`` (what ``black file.py`` calls in safe\nmode) detects that a second formatting pass produces different code and raises\n``AssertionError: INTERNAL ERROR: ... produced different code on the second pass\nof the formatter``.\n\nThe exception is raised by Black itself (black/__init__.py::assert_stable), so it\nis intentionally not caught here.\n\"\"\"\n\nimport black\n\n# Example taken verbatim from the issue report.\nsource = '''\\\n[\n    (1, 2),\n    # # fmt: off\n    # (3,\n    #    4),\n    # # fmt: on\n    (5, 6),\n]\n'''\n\n# safe mode (fast=False) mirrors `black file.py`; on the buggy version this\n# raises the INTERNAL ERROR instead of returning the formatted file.\nblack.format_file_contents(source, fast=False, mode=black.Mode())\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Repro for psf/black issue #4841.\n\n``# fmt: off`` / ``# fmt: on`` appearing inside a block of comments makes Black\n25.11.0 unstable: ``format_file_contents`` (what ``black file.py`` calls in safe\nmode) detects that a second formatting pass produces different code and raises\n``AssertionError: INTERNAL ERROR: ... produced different code on the second pass\nof the formatter``.\n\nThe exception is raised by Black itself (black/__init__.py::assert_stable), so it\nis intentionally not caught here.\n\"\"\"\n\nimport black\n\n# Example taken verbatim from the issue report.\nsource = '''\\\n[\n    (1, 2),\n    # # fmt: off\n    # (3,\n    #    4),\n    # # fmt: on\n    (5, 6),\n]\n'''\n\n# safe mode (fast=False) mirrors `black file.py`; on the buggy version this\n# raises the INTERNAL ERROR instead of returning the formatted file.\nblack.format_file_contents(source, fast=False, mode=black.Mode())\n",
+        "final_run": {
+          "version": "25.11.0",
+          "python": "3.11",
+          "env_key": "fdbfe935e6ee9e374e79afb5fc5cbc4733c313619c0bc497b14ff76da088c03d",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black <N>.<N>.<N> on Python (CPython) <N>.<N>.<N> produced different code on the second pass of the formatter.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_stable"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中逐字给出的示例代码调用 black.format_file_contents(fast=False)，Black 自身在 assert_stable 中抛出与 issue 报告完全一致的 INTERNAL ERROR（第二次格式化遍次产出不同代码），失败源于被测包行为而非脚本断言或环境错误。",
+            "quote": "AssertionError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.11.16 produced different code on the second pass of the formatter.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_usj80goo.log",
+            "quote_found": true,
+            "cost_usd": 0.000687
+          },
+          "log_dir": "artifacts\\warden-run-3bb60a6e8a",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 29, in <module>\n    black.format_file_contents(source, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1091, in format_file_contents\n  File \"src/black/__init__.py\", line 1066, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1636, in assert_stable\nAssertionError: INTERNAL ERROR: Black 25.11.0 on Python (CPython) 3.11.16 produced different code on the second pass of the formatter.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_usj80goo.log"
+        },
+        "steps": 13,
+        "tool_counts": {
+          "write_scratch": 4,
+          "run": 4,
+          "search_code": 2,
+          "read_file": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.007642,
+        "prompt_tokens": 75360,
+        "completion_tokens": 4431,
+        "cached_tokens": 68992,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4841-1790316713.json",
+        "duration_s": 44.8
+      },
+      "intake_cost_usd": 0.000461,
+      "judge_cost_usd": 0.001277
+    },
+    {
+      "repo": "psf/black",
+      "number": 4677,
+      "title": "string_processing: Substitutions are never put at the end of wrapped f-strings",
+      "intake_version": "314f8cf",
+      "intake_python": null,
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "25.1.0",
+        "substituted_for": "314f8cf",
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "25.1.0",
+          "python": "3.13",
+          "env_key": "88103238f328047beb387666739846a46dcc12344d361fada49062fb8af54ef7",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "When wrapping a long f-string, Black should be allowed to break right after the substitution, i.e. the first line should end with the \" {<N>}\" expression and the remainder should be a separate string.",
+              "frames": []
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 Black 的 unstable 模式格式化 issue 中的输入，输出的实际结果（\"short\" 单独一行，f\" {1} ...\" 在下一行）与 issue 报告的'替换字段永远不被放在折行后第一行末尾'的错误行为完全一致，断言检查的也正是 issue 的预期行为（f\"short {1}\" 后接第二个字符串）。",
+            "quote": "    \"short\"\n    f\" {1} loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\"",
+            "quote_found": true,
+            "cost_usd": 0.001052
+          },
+          "log_dir": "artifacts\\warden-run-c909642dcf",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 17, in <module>\n    assert out == expected, (\n           ^^^^^^^^^^^^^^^\nAssertionError: When wrapping a long f-string, Black should be allowed to break right after the substitution, i.e. the first line should end with the \" {1}\" expression and the remainder should be a separate string.\nexpected:\nprint(\n    f\"short {1}\"\n    \" loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\"\n)\nactual:\nprint(\n    \"short\"\n    f\" {1} loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\"\n)"
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.13",
+          "env_key": "7eac8b6c82e55b4fb7b2dd29c9bdcb292c20eab419685b2cf9c91ca93c0dd42c",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "NOT_REPRODUCED",
+            "reason": "脚本正常退出，没有出现报告的失败",
+            "match": null,
+            "match_method": null,
+            "fail_rate": null,
+            "runs": 1,
+            "observed": null,
+            "reported": null
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\warden-run-889c2abce1",
+          "output_tail": ""
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "With --unstable, Black wraps the long f-string in issue #4677 as `\"short\"` / `f\" {1} looo...ong\"` instead of putting the substitution at the end of the first line (`f\"short {1}\"` / `\" looo...ong\"`); the assertion comparing the formatted output to the expected wrapping fails.",
+            "script": "\"\"\"Repro for psf/black#4677.\n\nSubstitutions are never put at the end of a wrapped f-string: when Black\nsplits a long f-string it refuses to break right after an f-expression\n(e.g. after ``{1}``), so the substitution always ends up on a later line.\n\"\"\"\n\nimport black\n\nlong_word = \"loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\"\n\nsrc = 'print(\\n    f\"short {1} ' + long_word + '\"\\n)\\n'\nexpected = 'print(\\n    f\"short {1}\"\\n    \" ' + long_word + '\"\\n)\\n'\n\nout = black.format_str(src, mode=black.Mode(unstable=True))\n\nassert out == expected, (\n    \"When wrapping a long f-string, Black should be allowed to break right \"\n    'after the substitution, i.e. the first line should end with the \" {1}\" '\n    \"expression and the remainder should be a separate string.\\n\"\n    \"expected:\\n\"\n    f\"{expected}\"\n    \"actual:\\n\"\n    f\"{out}\"\n)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Repro for psf/black#4677.\n\nSubstitutions are never put at the end of a wrapped f-string: when Black\nsplits a long f-string it refuses to break right after an f-expression\n(e.g. after ``{1}``), so the substitution always ends up on a later line.\n\"\"\"\n\nimport black\n\nlong_word = \"loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\"\n\nsrc = 'print(\\n    f\"short {1} ' + long_word + '\"\\n)\\n'\nexpected = 'print(\\n    f\"short {1}\"\\n    \" ' + long_word + '\"\\n)\\n'\n\nout = black.format_str(src, mode=black.Mode(unstable=True))\n\nassert out == expected, (\n    \"When wrapping a long f-string, Black should be allowed to break right \"\n    'after the substitution, i.e. the first line should end with the \" {1}\" '\n    \"expression and the remainder should be a separate string.\\n\"\n    \"expected:\\n\"\n    f\"{expected}\"\n    \"actual:\\n\"\n    f\"{out}\"\n)\n",
+        "final_run": {
+          "version": "25.1.0",
+          "python": "3.13",
+          "env_key": "88103238f328047beb387666739846a46dcc12344d361fada49062fb8af54ef7",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "When wrapping a long f-string, Black should be allowed to break right after the substitution, i.e. the first line should end with the \" {<N>}\" expression and the remainder should be a separate string.",
+              "frames": []
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 Black 的 unstable 模式格式化 issue 中的输入，输出的实际结果（\"short\" 单独一行，f\" {1} ...\" 在下一行）与 issue 报告的'替换字段永远不被放在折行后第一行末尾'的错误行为完全一致，断言检查的也正是 issue 的预期行为（f\"short {1}\" 后接第二个字符串）。",
+            "quote": "    \"short\"\n    f\" {1} loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\"",
+            "quote_found": true,
+            "cost_usd": 0.001052
+          },
+          "log_dir": "artifacts\\warden-run-c909642dcf",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 17, in <module>\n    assert out == expected, (\n           ^^^^^^^^^^^^^^^\nAssertionError: When wrapping a long f-string, Black should be allowed to break right after the substitution, i.e. the first line should end with the \" {1}\" expression and the remainder should be a separate string.\nexpected:\nprint(\n    f\"short {1}\"\n    \" loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\"\n)\nactual:\nprint(\n    \"short\"\n    f\" {1} loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong\"\n)"
+        },
+        "steps": 27,
+        "tool_counts": {
+          "list_files": 1,
+          "run": 7,
+          "search_code": 6,
+          "read_file": 6,
+          "write_scratch": 6,
+          "submit": 1
+        },
+        "cost_usd": 0.015041,
+        "prompt_tokens": 314133,
+        "completion_tokens": 7258,
+        "cached_tokens": 299008,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4677-1790316821.json",
+        "duration_s": 80.1
+      },
+      "intake_cost_usd": 0.000551,
+      "judge_cost_usd": 0.001052
+    },
+    {
+      "repo": "psf/black",
+      "number": 4640,
+      "title": "Standalone comment within parentheses in lambda default arguments crashes black",
+      "intake_version": "25.1.1.dev24+g2c135ed",
+      "intake_python": "3.12, 3.13",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "25.1.0",
+        "substituted_for": "25.1.1.dev24+g2c135ed",
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "25.1.0",
+          "python": "3.12",
+          "env_key": "bb13ceca262a454a77f30cf42179c73e13cbbb7633603cee1350e98b00152023",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "LookupError",
+              "message": "Opening paren not found in `leaves`",
+              "frames": [
+                "black/lines.py:append",
+                "black/lines.py:has_magic_trailing_comma",
+                "black/nodes.py:is_one_sequence_between"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本直接对 issue 中的原始代码片段调用 black.format_str，运行输出显示被测包在 lines.py/nodes.py 的 is_one_sequence_between 处抛出 `LookupError: Opening paren not found in \\`leaves\\``，正是 issue 描述的崩溃（black 命令行中的 \"cannot format ... Opening paren not found in `leaves`\"），失败并非脚本自身的 assert 或 API 误用。",
+            "quote": "LookupError: Opening paren not found in `leaves`",
+            "quote_found": true,
+            "cost_usd": 0.000675
+          },
+          "log_dir": "artifacts\\warden-run-1447c8f8cc",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 12, in <module>\n    black.format_str(src, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1208, in format_str\n  File \"src/black/__init__.py\", line 1254, in _format_str_once\n  File \"src/black/linegen.py\", line 725, in transform_line\n  File \"src/black/linegen.py\", line 1816, in run_transformer\n  File \"src/black/linegen.py\", line 725, in transform_line\n  File \"src/black/linegen.py\", line 1812, in run_transformer\n  File \"src/black/linegen.py\", line 1210, in split_wrapper\n  File \"src/black/linegen.py\", line 1363, in standalone_comment_split\n  File \"src/black/linegen.py\", line 1353, in append_to_line\n  File \"src/black/lines.py\", line 112, in append_safe\n  File \"src/black/lines.py\", line 87, in append\n  File \"src/black/lines.py\", line 373, in has_magic_trailing_comma\n  File \"src/black/nodes.py\", line 655, in is_one_sequence_between\nLookupError: Opening paren not found in `leaves`"
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.12",
+          "env_key": "c73c82b2b7055345ad835bd1ba2ad61ccb3fe8059291e4ff72f98110e976408a",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "NOT_REPRODUCED",
+            "reason": "脚本正常退出，没有出现报告的失败",
+            "match": null,
+            "match_method": null,
+            "fail_rate": null,
+            "runs": 1,
+            "observed": null,
+            "reported": null
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\warden-run-284f87d6f0",
+          "output_tail": ""
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "Calling black.format_str on `help(lambda x=( # comment\\n \"bar\",\\n): False)` makes black itself raise `LookupError: Opening paren not found in `leaves`` (from black/nodes.py is_one_sequence_between), matching the reported crash for a standalone comment inside parentheses in a lambda default argument.",
+            "script": "import black\n\nsrc = '''help(lambda x=(\n    # comment\n    \"bar\",\n): False)\n'''\n\n# Expected: black reformats this code without error.\n# Buggy behavior: black raises\n#   LookupError: Opening paren not found in `leaves`\nblack.format_str(src, mode=black.Mode())\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "import black\n\nsrc = '''help(lambda x=(\n    # comment\n    \"bar\",\n): False)\n'''\n\n# Expected: black reformats this code without error.\n# Buggy behavior: black raises\n#   LookupError: Opening paren not found in `leaves`\nblack.format_str(src, mode=black.Mode())\n",
+        "final_run": {
+          "version": "25.1.0",
+          "python": "3.12",
+          "env_key": "bb13ceca262a454a77f30cf42179c73e13cbbb7633603cee1350e98b00152023",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "LookupError",
+              "message": "Opening paren not found in `leaves`",
+              "frames": [
+                "black/lines.py:append",
+                "black/lines.py:has_magic_trailing_comma",
+                "black/nodes.py:is_one_sequence_between"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本直接对 issue 中的原始代码片段调用 black.format_str，运行输出显示被测包在 lines.py/nodes.py 的 is_one_sequence_between 处抛出 `LookupError: Opening paren not found in \\`leaves\\``，正是 issue 描述的崩溃（black 命令行中的 \"cannot format ... Opening paren not found in `leaves`\"），失败并非脚本自身的 assert 或 API 误用。",
+            "quote": "LookupError: Opening paren not found in `leaves`",
+            "quote_found": true,
+            "cost_usd": 0.000675
+          },
+          "log_dir": "artifacts\\warden-run-1447c8f8cc",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 12, in <module>\n    black.format_str(src, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1208, in format_str\n  File \"src/black/__init__.py\", line 1254, in _format_str_once\n  File \"src/black/linegen.py\", line 725, in transform_line\n  File \"src/black/linegen.py\", line 1816, in run_transformer\n  File \"src/black/linegen.py\", line 725, in transform_line\n  File \"src/black/linegen.py\", line 1812, in run_transformer\n  File \"src/black/linegen.py\", line 1210, in split_wrapper\n  File \"src/black/linegen.py\", line 1363, in standalone_comment_split\n  File \"src/black/linegen.py\", line 1353, in append_to_line\n  File \"src/black/lines.py\", line 112, in append_safe\n  File \"src/black/lines.py\", line 87, in append\n  File \"src/black/lines.py\", line 373, in has_magic_trailing_comma\n  File \"src/black/nodes.py\", line 655, in is_one_sequence_between\nLookupError: Opening paren not found in `leaves`"
+        },
+        "steps": 8,
+        "tool_counts": {
+          "run": 4,
+          "write_scratch": 3,
+          "submit": 1
+        },
+        "cost_usd": 0.002653,
+        "prompt_tokens": 15395,
+        "completion_tokens": 1655,
+        "cached_tokens": 13440,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4640-1790316869.json",
+        "duration_s": 24.5
+      },
+      "intake_cost_usd": 0.002509,
+      "judge_cost_usd": 0.000675
+    },
+    {
+      "repo": "psf/black",
+      "number": 4631,
+      "title": "Internal Error when formatting a file with comments containing fmt: skip",
+      "intake_version": "25.1.0",
+      "intake_python": "3.10.6",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "25.1.0",
+        "substituted_for": null,
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "25.1.0",
+          "python": "3.10",
+          "env_key": "fa3517b625595a4ca40a2bc748f5cd9ac6a6edd147f2d1a4636d8e9c6ba46724",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black <N>.<N>.<N> on Python (CPython) <N>.<N>.<N> produced different code on the second pass of the formatter.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_stable"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 issue 中给出的原始输入调用 black.format_file_contents(fast=False)，复现了与 issue 报告完全一致的行为：Black 自身的稳定性检查失败抛出 INTERNAL ERROR 断言，说明格式化两次结果不一致（正是 first pass 删掉空行与第二条注释行、second pass 又加回的问题）。失败源于被测包，而非脚本自身。",
+            "quote": "AssertionError: INTERNAL ERROR: Black 25.1.0 on Python (CPython) 3.10.21 produced different code on the second pass of the formatter.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000702
+          },
+          "log_dir": "artifacts\\warden-run-97ee766520",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 23, in <module>\n    black.format_file_contents(src, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1085, in format_file_contents\n  File \"src/black/__init__.py\", line 1060, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1568, in assert_stable\nAssertionError: INTERNAL ERROR: Black 25.1.0 on Python (CPython) 3.10.21 produced different code on the second pass of the formatter.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_882_fhzk.log"
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.10",
+          "env_key": "d05210f7d2d80fe294470b2880a04902b616714766d709180b1d1887ec199105",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "UNRELATED_FAILURE",
+            "reason": "失败了，但和报告不一致（一致度 0.10 < 0.6）",
+            "match": 0.1,
+            "match_method": "llm",
+            "fail_rate": null,
+            "runs": 1,
+            "observed": {
+              "exc_type": null,
+              "message": "",
+              "frames": [
+                "black/__init__.py:format_file_contents"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.1,
+            "reason": "The run ends with black.report.NothingChanged, i.e. Black decided the input was already formatted; it never raised the INTERNAL ERROR / \"produced different code on the second pass\" failure described in the issue. The observed behavior neither shows the comment-block mangling nor the instability, so this run does not exhibit the reported bug (likely the script's input, which ends with a trailing newline unlike the issue's no-newline file, does not trigger it).",
+            "quote": "black.format_file_contents(src, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1120, in format_file_contents\nblack.report.NothingChanged",
+            "quote_found": true,
+            "cost_usd": 0.002377
+          },
+          "log_dir": "artifacts\\warden-run-975ff50445",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 23, in <module>\n    black.format_file_contents(src, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1120, in format_file_contents\nblack.report.NothingChanged"
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "对 issue 中的源码（末尾注释块首行带 `# fmt: skip`）调用 black.format_file_contents(fast=False)（CLI 使用的同一公开 API），黑盒触发 Black 自身的稳定性检查，在 black/__init__.py:1568 抛出 AssertionError：\"INTERNAL ERROR: Black ... produced different code on the second pass of the formatter\"，与报告的错误一致。",
+            "script": "\"\"\"Reproduce psf/black#4631: formatting a file whose trailing comment block has\n\"# fmt: skip\" on its first comment line makes Black's own stability check fail.\n\nReported command: `black file.py`\nReported error: \"cannot format file.py: INTERNAL ERROR: Black ... produced\ndifferent code on the second pass of the formatter.\"\n\n`black.format_file_contents(..., fast=False)` is the public API the CLI uses;\nwith fast=False it runs `assert_stable`, which raises Black's own AssertionError.\n\"\"\"\n\nimport black\n\nsrc = \"\"\"def foo():\n    pass\n\n\n# comment1  # fmt: skip\n# comment2\n\"\"\"\n\n# fast=False => runs the same stability/equivalence checks as the `black file.py` CLI.\nblack.format_file_contents(src, fast=False, mode=black.Mode())\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Reproduce psf/black#4631: formatting a file whose trailing comment block has\n\"# fmt: skip\" on its first comment line makes Black's own stability check fail.\n\nReported command: `black file.py`\nReported error: \"cannot format file.py: INTERNAL ERROR: Black ... produced\ndifferent code on the second pass of the formatter.\"\n\n`black.format_file_contents(..., fast=False)` is the public API the CLI uses;\nwith fast=False it runs `assert_stable`, which raises Black's own AssertionError.\n\"\"\"\n\nimport black\n\nsrc = \"\"\"def foo():\n    pass\n\n\n# comment1  # fmt: skip\n# comment2\n\"\"\"\n\n# fast=False => runs the same stability/equivalence checks as the `black file.py` CLI.\nblack.format_file_contents(src, fast=False, mode=black.Mode())\n",
+        "final_run": {
+          "version": "25.1.0",
+          "python": "3.10",
+          "env_key": "fa3517b625595a4ca40a2bc748f5cd9ac6a6edd147f2d1a4636d8e9c6ba46724",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black <N>.<N>.<N> on Python (CPython) <N>.<N>.<N> produced different code on the second pass of the formatter.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_stable"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 issue 中给出的原始输入调用 black.format_file_contents(fast=False)，复现了与 issue 报告完全一致的行为：Black 自身的稳定性检查失败抛出 INTERNAL ERROR 断言，说明格式化两次结果不一致（正是 first pass 删掉空行与第二条注释行、second pass 又加回的问题）。失败源于被测包，而非脚本自身。",
+            "quote": "AssertionError: INTERNAL ERROR: Black 25.1.0 on Python (CPython) 3.10.21 produced different code on the second pass of the formatter.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000702
+          },
+          "log_dir": "artifacts\\warden-run-97ee766520",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 23, in <module>\n    black.format_file_contents(src, fast=False, mode=black.Mode())\n  File \"src/black/__init__.py\", line 1085, in format_file_contents\n  File \"src/black/__init__.py\", line 1060, in check_stability_and_equivalence\n  File \"src/black/__init__.py\", line 1568, in assert_stable\nAssertionError: INTERNAL ERROR: Black 25.1.0 on Python (CPython) 3.10.21 produced different code on the second pass of the formatter.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_882_fhzk.log"
+        },
+        "steps": 14,
+        "tool_counts": {
+          "write_scratch": 3,
+          "search_code": 4,
+          "run": 3,
+          "read_file": 3,
+          "submit": 1
+        },
+        "cost_usd": 0.007167,
+        "prompt_tokens": 57203,
+        "completion_tokens": 4247,
+        "cached_tokens": 51328,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4631-1790316928.json",
+        "duration_s": 43.6
+      },
+      "intake_cost_usd": 0.000795,
+      "judge_cost_usd": 0.003079
+    },
+    {
+      "repo": "psf/black",
+      "number": 4599,
+      "title": "Fails to parse lambda in PEP 695 TypeVar bound",
+      "intake_version": "main@00c0d6d91ae3dc31894fadd37968ec0bb01e0d0d",
+      "intake_python": "3.12",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": "25.1.0",
+        "substituted_for": "main@00c0d6d91ae3dc31894fadd37968ec0bb01e0d0d",
+        "latest_version": "26.5.1",
+        "reported": {
+          "version": "25.1.0",
+          "python": "3.12",
+          "env_key": "bb13ceca262a454a77f30cf42179c73e13cbbb7633603cee1350e98b00152023",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "FLAKY",
+            "reason": "1 次运行中 0 次出现同样的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 0.0,
+            "runs": 1,
+            "observed": {
+              "exc_type": null,
+              "message": "",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本调用 black.format_str 解析 issue 中的代码，被测包抛出 InvalidInput，错误信息与 issue 报告的解析失败完全一致；脚本断言的是格式化成功这一预期行为，失败确由 black 无法解析该语法造成。",
+            "quote": "black.parsing.InvalidInput: Cannot parse for target version Python 3.12: 1:21: class name_5[name_4: lambda: something]:",
+            "quote_found": true,
+            "cost_usd": 0.000505
+          },
+          "log_dir": "artifacts\\warden-run-96fa7716fc",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 19, in <module>\n    formatted = black.format_str(SRC, mode=mode)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"src/black/__init__.py\", line 1208, in format_str\n  File \"src/black/__init__.py\", line 1222, in _format_str_once\n  File \"src/black/parsing.py\", line 98, in lib2to3_parse\nblack.parsing.InvalidInput: Cannot parse for target version Python 3.12: 1:21: class name_5[name_4: lambda: something]:"
+        },
+        "latest": {
+          "version": "26.5.1",
+          "python": "3.12",
+          "env_key": "c73c82b2b7055345ad835bd1ba2ad61ccb3fe8059291e4ff72f98110e976408a",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "NOT_REPRODUCED",
+            "reason": "脚本正常退出，没有出现报告的失败",
+            "match": null,
+            "match_method": null,
+            "fail_rate": null,
+            "runs": 1,
+            "observed": null,
+            "reported": null
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\warden-run-e59db8f55c",
+          "output_tail": ""
+        },
+        "level": "L1",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "repro.py",
+            "claim": "black.format_str (target py312) on `class name_5[name_4: lambda: something]:` raises black.parsing.InvalidInput \"Cannot parse for target version Python 3.12: 1:21: ...\" although CPython's ast parses the same source, matching issue #4599.",
+            "script": "\"\"\"black fails to parse a lambda used as a PEP 695 TypeVar bound (issue #4599).\n\n    class name_5[name_4: lambda: something]:\n        pass\n\nCPython parses this fine, but black raises:\n  Cannot parse for target version Python 3.12: 1:21: class name_5[name_4: lambda: something]:\n\"\"\"\nimport ast\n\nimport black\n\nSRC = \"class name_5[name_4: lambda: something]:\\n    pass\\n\"\n\n# CPython accepts this syntax, as stated in the issue.\nast.parse(SRC)\n\nmode = black.Mode(target_versions={black.TargetVersion.PY312})\nformatted = black.format_str(SRC, mode=mode)\n\nassert isinstance(formatted, str), formatted\nassert \"name_4\" in formatted, formatted\n",
+            "kind": "FLAKY",
+            "reason": "1 次运行中 0 次出现同样的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"black fails to parse a lambda used as a PEP 695 TypeVar bound (issue #4599).\n\n    class name_5[name_4: lambda: something]:\n        pass\n\nCPython parses this fine, but black raises:\n  Cannot parse for target version Python 3.12: 1:21: class name_5[name_4: lambda: something]:\n\"\"\"\nimport ast\n\nimport black\n\nSRC = \"class name_5[name_4: lambda: something]:\\n    pass\\n\"\n\n# CPython accepts this syntax, as stated in the issue.\nast.parse(SRC)\n\nmode = black.Mode(target_versions={black.TargetVersion.PY312})\nformatted = black.format_str(SRC, mode=mode)\n\nassert isinstance(formatted, str), formatted\nassert \"name_4\" in formatted, formatted\n",
+        "final_run": {
+          "version": "25.1.0",
+          "python": "3.12",
+          "env_key": "bb13ceca262a454a77f30cf42179c73e13cbbb7633603cee1350e98b00152023",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "FLAKY",
+            "reason": "1 次运行中 0 次出现同样的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 0.0,
+            "runs": 1,
+            "observed": {
+              "exc_type": null,
+              "message": "",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本调用 black.format_str 解析 issue 中的代码，被测包抛出 InvalidInput，错误信息与 issue 报告的解析失败完全一致；脚本断言的是格式化成功这一预期行为，失败确由 black 无法解析该语法造成。",
+            "quote": "black.parsing.InvalidInput: Cannot parse for target version Python 3.12: 1:21: class name_5[name_4: lambda: something]:",
+            "quote_found": true,
+            "cost_usd": 0.000505
+          },
+          "log_dir": "artifacts\\warden-run-96fa7716fc",
+          "output_tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 19, in <module>\n    formatted = black.format_str(SRC, mode=mode)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"src/black/__init__.py\", line 1208, in format_str\n  File \"src/black/__init__.py\", line 1222, in _format_str_once\n  File \"src/black/parsing.py\", line 98, in lib2to3_parse\nblack.parsing.InvalidInput: Cannot parse for target version Python 3.12: 1:21: class name_5[name_4: lambda: something]:"
+        },
+        "steps": 9,
+        "tool_counts": {
+          "write_scratch": 3,
+          "run": 4,
+          "search_code": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.003376,
+        "prompt_tokens": 23370,
+        "completion_tokens": 2239,
+        "cached_tokens": 21504,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4599-1790316976.json",
+        "duration_s": 24.6
+      },
+      "intake_cost_usd": 0.003042,
+      "judge_cost_usd": 0.000505
+    }
+  ]
+}

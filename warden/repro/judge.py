@@ -142,7 +142,9 @@ def _same_failure(run: ExecResult, first: TraceSignature | None, package: str | 
         return False
     if first is None:
         return True
-    return match_score(failure_signature(_output(run), package), first) >= MATCH_THRESHOLD
+    sig = failure_signature(_output(run), package)
+    # 先比完全相等：签名信息很少时（比如没有消息），自己和自己比打分也可能过不了阈值
+    return sig == first or match_score(sig, first) >= MATCH_THRESHOLD
 
 
 async def assess(

@@ -17,11 +17,50 @@ from warden.index.trace import TraceSignature, normalize_message
 
 _TB_START = "Traceback (most recent call last):"
 _PY_FRAME = re.compile(r'File "([^"]+)", line \d+, in ([\w<>.]+)')
+# 没有 Traceback 头的纯文本输出里，只能靠类名后缀认出异常行（"AssertionError: ..."）
 _EXC_LINE = re.compile(
     r"^([A-Za-z_][\w.]*(?:Error|Exception|Warning|Exit|Interrupt))(?::\s?(.*))?$", re.M
 )
+# 有 Traceback 头时，异常行就是栈帧之后第一个不缩进的行，类名可以是任何名字
+# （black 的 InvalidInput、NothingChanged 都不以 Error 结尾，回放里因此误判过）
+_EXC_NAME = re.compile(r"^([A-Za-z_][\w.]*)(?::\s?(.*))?$")
 TOP_FRAMES = 3
 W_TYPE, W_FRAMES, W_MESSAGE = 0.5, 0.3, 0.2
+
+
+_TB_BLOCK = re.compile(
+    r"Traceback \(most recent call last\):\n"
+    r"(?:[ \t].*\n|\n)*?"
+    r"[A-Za-z_][\w.]*(?::[^\n]*)?",
+)
+_CHAIN_SEP = re.compile(
+    r"\s*\n\s*(?:During handling of the above exception, another exception occurred:"
+    r"|The above exception was the direct cause of the following exception:)\s*\n\s*"
+)
+MAX_CHAIN_CHARS = 8000
+
+
+def extract_traceback_chain(text: str) -> str | None:
+    """从 issue 正文里提取完整的异常链（第一个 Traceback 一直到链上最后一个异常）。
+
+    Intake 的 extract_traceback 只取到第一个异常行，碰到异常链时拿到的是"起因"，
+    而用户实际看到的最终失败在链的最后。判定器比较的是最后一段，所以复现要用完整的链。
+    （Intake 的提取结果还被查重签名使用，这里不改它，避免影响 M1 的评测数据。）
+    """
+    text = text.replace("\r\n", "\n")
+    m = _TB_BLOCK.search(text)
+    if m is None:
+        return None
+    start, end = m.start(), m.end()
+    while True:
+        sep = _CHAIN_SEP.match(text, end)
+        if sep is None:
+            break
+        nxt = _TB_BLOCK.match(text, sep.end())
+        if nxt is None:
+            break
+        end = nxt.end()
+    return text[start:end].strip()[:MAX_CHAIN_CHARS]
 
 
 def last_traceback(text: str) -> str:
@@ -53,15 +92,28 @@ def failure_signature(text: str | None, package: str | None) -> TraceSignature |
         short = package_path(path, package) if package else path.replace("\\", "/")
         if short is not None and fn != "<module>":
             frames.append(f"{short}:{fn}")
-    excs = _EXC_LINE.findall(block)
-    if not excs and not frames:
+    exc = _exception_line(block)
+    if exc is None and not frames:
         return None
-    exc_type, message = excs[-1] if excs else (None, "")
+    exc_type, message = exc or (None, "")
     return TraceSignature(
         exc_type=exc_type.rsplit(".", 1)[-1] if exc_type else None,
         message=normalize_message(message or ""),
         frames=list(dict.fromkeys(frames[-TOP_FRAMES:])),
     )
+
+
+def _exception_line(block: str) -> tuple[str, str] | None:
+    """最后一个 Traceback 块里的异常行 (类名, 消息)。"""
+    if block.startswith(_TB_START):
+        for line in block.splitlines()[1:]:
+            if not line.strip() or line[0] in " \t":
+                continue  # 栈帧、源码行、^^^ 标记
+            m = _EXC_NAME.match(line.rstrip())
+            return (m.group(1), m.group(2) or "") if m else None
+        return None
+    excs = _EXC_LINE.findall(block)
+    return excs[-1] if excs else None
 
 
 def match_score(observed: TraceSignature | None, reported: TraceSignature | None) -> float:

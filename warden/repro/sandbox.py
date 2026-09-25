@@ -251,6 +251,21 @@ def find_docker(configured: str = "") -> str | None:
     return None
 
 
+def docker_env(docker: str) -> dict[str, str] | None:
+    """docker 客户端子进程的环境变量：把 docker 所在目录放到 PATH 最前面。
+
+    docker 拉镜像时要调用同目录下的凭据助手（Windows 上是 docker-credential-desktop.exe），
+    它是按 PATH 查找的。Docker Desktop 按用户安装时这个目录常常不在 PATH 里，
+    表现为"已有的镜像都能用，一拉新镜像就报 docker-credential-desktop not found"。
+    """
+    folder = Path(docker).parent
+    if not Path(docker).is_absolute() or not folder.is_dir():
+        return None  # 用继承的环境
+    env = dict(os.environ)
+    env["PATH"] = str(folder) + os.pathsep + env.get("PATH", "")
+    return env
+
+
 # ---------------------------------------------------------------- 与 Docker 交互
 
 
@@ -267,6 +282,7 @@ class DockerSandbox:
         self.limits = limits or SandboxLimits()
         self.install_network = install_network
         self.artifacts_dir = artifacts_dir
+        self._env = docker_env(self.docker)
 
     async def _docker(
         self, *args: str, limit_s: float = 120.0, stdin: bytes | None = None
@@ -277,6 +293,7 @@ class DockerSandbox:
                 self.docker, *args,
                 stdin=asyncio.subprocess.PIPE if stdin is not None else None,
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+                env=self._env,
             )
         except FileNotFoundError as e:
             raise SandboxError(f"找不到 docker：{self.docker}") from e
@@ -457,6 +474,7 @@ class DockerSandbox:
             proc = await asyncio.create_subprocess_exec(
                 self.docker, *args,
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+                env=self._env,
             )
         except FileNotFoundError as e:
             raise SandboxError(f"找不到 docker：{self.docker}") from e

@@ -96,6 +96,25 @@ def test_no_package_frames_on_either_side_falls_back_to_type():
     assert match_score(a, a) == 1.0
 
 
+def test_exception_names_without_error_suffix():
+    # 回放 #4599：black 的 InvalidInput 不以 Error 结尾，以前识别不出异常类型
+    out = (
+        "Traceback (most recent call last):\n"
+        '  File "/workspace/repro.py", line 17, in <module>\n'
+        "    formatted = black.format_str(SRC, mode=mode)\n"
+        '  File "src/black/__init__.py", line 1204, in format_str\n'
+        '  File "src/black/parsing.py", line 92, in lib2to3_parse\n'
+        "black.parsing.InvalidInput: Cannot parse for target version Python 3.12: 1:21: x\n"
+    )
+    sig = failure_signature(out, "black")
+    assert sig is not None and sig.exc_type == "InvalidInput"
+    assert sig.message.startswith("Cannot parse for target version Python <N>")
+    assert failure_signature(out.replace("black.parsing.InvalidInput: Cannot parse for target "
+                                         "version Python 3.12: 1:21: x", "black.report."
+                                         "NothingChanged"), "black").exc_type == "NothingChanged"
+    assert match_score(sig, sig) == 1.0
+
+
 def test_plain_text_without_traceback():
     assert failure_signature("everything fine", "black") is None
     sig = failure_signature("AssertionError: expected 1, got 2", "black")

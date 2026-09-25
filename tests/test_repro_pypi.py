@@ -98,6 +98,22 @@ async def test_resolve_errors(name, raw, msg):
         await client_with(PYPI_JSON).resolve(name, raw)
 
 
+@pytest.mark.parametrize("raw", ["main@e079b7e", "24.1.1.dev28+g314f8cf", None])
+async def test_unreleased_version_falls_back_to_last_release_before_issue(raw):
+    # issue 创建于 2024-02-01（不带时区，和 SQLite 取出来的一样）：之前最新的正式版是 24.1.0
+    r = await client_with(PYPI_JSON).resolve(
+        "black", raw, fallback_before=datetime(2024, 2, 1)
+    )
+    assert r.version == Version("24.1.0") and r.substituted_for == (raw or "（未报告版本）")
+    # 能装的版本不走降级
+    exact = await client_with(PYPI_JSON).resolve(
+        "black", "23.1.0", fallback_before=datetime(2024, 2, 1)
+    )
+    assert exact.version == Version("23.1.0") and exact.substituted_for is None
+    with pytest.raises(PyPIError, match="前也没有正式版"):
+        await client_with(PYPI_JSON).resolve("black", raw, fallback_before=datetime(2020, 1, 1))
+
+
 async def test_unknown_package():
     with pytest.raises(PyPIError, match="没有这个包"):
         await client_with(None).resolve("nope", "1.0")

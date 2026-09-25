@@ -72,6 +72,30 @@ async def test_json_mode_gives_up_after_repairs():
         await llm.complete_json([{"role": "user", "content": "x"}], Answer, model="m")
 
 
+async def test_tool_calls_are_sent_and_parsed():
+    tools = [{"type": "function", "function": {"name": "run", "parameters": {"type": "object"}}}]
+    reply = {
+        "model": "deepseek-flash",
+        "choices": [{"message": {"role": "assistant", "content": None, "tool_calls": [
+            {"id": "call_1", "type": "function",
+             "function": {"name": "run", "arguments": '{"command": "python x.py"}'}},
+            {"type": "function", "function": {"name": "", "arguments": "{}"}},  # 没名字的丢弃
+        ]}}],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 2},
+    }
+    client, seen = make_client(httpx.Response(200, json=reply))
+    resp = await client.chat([{"role": "user", "content": "hi"}], model="m", tools=tools)
+    assert seen[0]["tools"] == tools and resp.text == ""
+    assert [(c.id, c.name, c.arguments) for c in resp.tool_calls] == [
+        ("call_1", "run", '{"command": "python x.py"}')
+    ]
+    assert resp.tool_calls[0].as_message()["function"]["name"] == "run"
+    # 不传 tools 时请求里也不带这个字段（老的调用方行为不变）
+    client2, seen2 = make_client(httpx.Response(200, json=completion("ok")))
+    assert (await client2.chat([{"role": "user", "content": "x"}], model="m")).tool_calls == []
+    assert "tools" not in seen2[0]
+
+
 def test_usage_parses_openai_and_deepseek_formats():
     assert Usage.from_api({"prompt_tokens": 10, "prompt_cache_hit_tokens": 4}).cached_tokens == 4
     openai = {"prompt_tokens": 10, "prompt_tokens_details": {"cached_tokens": 7}}

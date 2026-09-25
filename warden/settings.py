@@ -57,3 +57,7 @@ class Settings(BaseSettings):
     # PyPI JSON API（查版本）和 pip 镜像源（装包，留空用 pip 默认）
     pypi_url: str = "https://pypi.org"
     pip_index_url: str = ""
+    # 复现 Agent（技术方案 8.5 节）：工具调用步数、提交次数、单次复现的模型花费上限（美元）
+    repro_max_steps: int = 40
+    repro_max_attempts: int = 4
+    repro_budget_usd: float = 0.5

@@ -1,0 +1,290 @@
+{
+  "meta": {
+    "started": "2026-09-25T14:44:39",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "2022-01-01 之后创建、以完成状态关闭的 T: bug，类别为 crash / invalid code / unstable formatting / parser，排除 duplicate / not a bug / invalid / outdated，按编号从新到旧取 12 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.5
+  },
+  "summary": {
+    "n": 12,
+    "outcomes": {
+      "setup_failed": 12
+    },
+    "l1": 0,
+    "l1_rate": 0.0,
+    "l1_ci": [
+      0.0,
+      0.2425007574992425
+    ],
+    "fb_pa": 0,
+    "fb_pa_rate": 0.0,
+    "fb_pa_ci": [
+      0.0,
+      0.2425007574992425
+    ],
+    "total_cost_usd": 0.0138,
+    "mean_cost_usd": 0.0011,
+    "mean_steps": 0.0,
+    "mean_submits": 0.0,
+    "mean_duration_s": 0.0,
+    "with_traceback": 0,
+    "l1_with_traceback": 0
+  },
+  "reports": [
+    {
+      "repo": "psf/black",
+      "number": 5099,
+      "title": "Bug runnig at Python 3.13 - INTERNAL ERROR: Black 26.1a1 on Python (CPython) 3.13.12 produced invalid code: multiple exception types must be parenthesized",
+      "intake_version": "26.1a1",
+      "intake_python": "3.13.12",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "拉取镜像失败：python:3.13-slim：error getting credentials - err: exec: \"docker-credential-desktop\": executable file not found in %PATH%, out: ``"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.001699,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 5083,
+      "title": "Black silently fails with exit code 1 when passed in too many files in the Python 3.14.2 on Linux",
+      "intake_version": "main@e079b7e100d1e181d4ee860ee4512bf3326f32c3",
+      "intake_python": "3.14.3",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "无法从 'main@e079b7e100d1e181d4ee860ee4512bf3326f32c3' 解析出可安装的发布版本"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.000791,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4963,
+      "title": "pygettext.py: Black 26.1.0 on Python (CPython) 3.14 produced different code on the second pass of the formatter",
+      "intake_version": "26.1.0",
+      "intake_python": "3.14",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "拉取镜像失败：python:3.14-slim：error getting credentials - err: exec: \"docker-credential-desktop\": executable file not found in %PATH%, out: ``"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.000571,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4945,
+      "title": "Cannot parse multi-line code split using backslash",
+      "intake_version": "25.12.0",
+      "intake_python": "3.14.2",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "拉取镜像失败：python:3.14-slim：error getting credentials - err: exec: \"docker-credential-desktop\": executable file not found in %PATH%, out: ``"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.000326,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4912,
+      "title": "string_processing: error with unassigned long string literal with trailing comma",
+      "intake_version": "main@c3cc5a95d4f72e6ccc27ebae23344fce8cc70786",
+      "intake_python": "3.10.4, 3.12.11",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "无法从 'main@c3cc5a95d4f72e6ccc27ebae23344fce8cc70786' 解析出可安装的发布版本"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.000743,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4880,
+      "title": "Failure upon two ignores for type checkers",
+      "intake_version": "25.1.1.dev28+g314f8cf",
+      "intake_python": "3.12.11",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "无法从 '25.1.1.dev28+g314f8cf' 解析出可安装的发布版本"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.001032,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4873,
+      "title": "`black` told me to report a bug for lines with `# fmt: skip` on them, I think",
+      "intake_version": "25.11.0",
+      "intake_python": "3.14.0",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "拉取镜像失败：python:3.14-slim：error getting credentials - err: exec: \"docker-credential-desktop\": executable file not found in %PATH%, out: ``"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.000724,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4841,
+      "title": "Unexpected error with Black 25.11.0 when fmt: off and fmt: on are used within block of comments",
+      "intake_version": "25.11.0",
+      "intake_python": "3.11.13",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "拉取镜像失败：python:3.11-slim：error getting credentials - err: exec: \"docker-credential-desktop\": executable file not found in %PATH%, out: ``"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.00056,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4677,
+      "title": "string_processing: Substitutions are never put at the end of wrapped f-strings",
+      "intake_version": "314f8cf",
+      "intake_python": null,
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "无法从 '314f8cf' 解析出可安装的发布版本"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.000339,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4640,
+      "title": "Standalone comment within parentheses in lambda default arguments crashes black",
+      "intake_version": "25.1.1.dev24+g2c135ed",
+      "intake_python": "3.12 and 3.13",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "无法从 '25.1.1.dev24+g2c135ed' 解析出可安装的发布版本"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.002918,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4631,
+      "title": "Internal Error when formatting a file with comments containing fmt: skip",
+      "intake_version": "25.1.0",
+      "intake_python": "3.10.6",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "拉取镜像失败：python:3.10-slim：error getting credentials - err: exec: \"docker-credential-desktop\": executable file not found in %PATH%, out: ``"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.003071,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4599,
+      "title": "Fails to parse lambda in PEP 695 TypeVar bound",
+      "intake_version": "current main (00c0d6d91ae3dc31894fadd37968ec0bb01e0d0d)",
+      "intake_python": "3.12",
+      "has_traceback": false,
+      "repro": {
+        "package": "black",
+        "module": "black",
+        "reported_version": null,
+        "latest_version": null,
+        "reported": null,
+        "latest": null,
+        "level": "NONE",
+        "error": "无法从 'current main (00c0d6d91ae3dc31894fadd37968ec0bb01e0d0d)' 解析出可安装的发布版本"
+      },
+      "agent": null,
+      "intake_cost_usd": 0.001026,
+      "judge_cost_usd": 0.0
+    }
+  ]
+}
