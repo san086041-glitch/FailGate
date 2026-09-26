@@ -40,9 +40,10 @@ from warden.policy.executor import EffectExecutor
 from warden.policy.gate import PolicyGate
 from warden.settings import Settings
 from warden.skills.answer import AnswerSkill
-from warden.skills.base import CommentSource
+from warden.skills.base import CommentSource, Skill
 from warden.skills.dedup import DedupSkill
 from warden.skills.intake import IntakeSkill
+from warden.skills.repro import ReproRunner, ReproSkill, SandboxReproRunner
 from warden.skills.triage import TriageSkill
 
 log = logging.getLogger(__name__)
@@ -93,6 +94,7 @@ class Warden:
         embed_transport: httpx.AsyncBaseTransport | None = None,
         github_app: GitHubApp | None = None,
         rest_transport: httpx.AsyncBaseTransport | None = None,
+        repro_runner: ReproRunner | None = None,
     ) -> None:
         self.settings = settings
         self.github_app = github_app or build_github_app(settings)
@@ -116,6 +118,7 @@ class Warden:
             permissions=self._permission if self.github_app else None,
         )
         self.llm = build_llm(settings, llm_transport)
+        self.repro_runner = self._build_repro_runner(settings, repro_runner)
         self.pipeline = (
             Pipeline(
                 self.db,
@@ -134,6 +137,7 @@ class Warden:
                         settings.llm_model_small,
                     ),
                     CaseState.ANSWERING: (AnswerSkill(), settings.llm_model_large),
+                    **self._repro_stage(settings),
                 },
                 case_budget_usd=settings.case_budget_usd,
                 index=self.index,
@@ -147,6 +151,22 @@ class Warden:
         self.executor = EffectExecutor(self.db, self._writer)
         self.worker = Worker(self.queue, self.machine, self.pipeline, self.executor)
         self._tasks: list[asyncio.Task[None]] = []
+
+    def _build_repro_runner(
+        self, settings: Settings, injected: ReproRunner | None
+    ) -> ReproRunner | None:
+        """复现阶段需要 LLM；总开关 REPRO_ENABLED 打开（或测试注入了 runner）才启用。"""
+        if injected is not None:
+            return injected
+        if settings.repro_enabled and self.llm is not None:
+            return SandboxReproRunner(settings, self.llm)
+        return None
+
+    def _repro_stage(self, settings: Settings) -> dict[CaseState, tuple[Skill, str]]:
+        if self.repro_runner is None:
+            return {}
+        skill = ReproSkill(self.repro_runner, max_budget_usd=settings.repro_budget_usd)
+        return {CaseState.REPRODUCING: (skill, settings.llm_model_large)}
 
     # ---- 平台读写的装配：只有 GitHub 且拿到了安装 ID 才能调用 ----
 
@@ -213,6 +233,8 @@ class Warden:
         if self.github_app is not None:
             await self.github_app.aclose()
         await self.rest.aclose()
+        if isinstance(self.repro_runner, SandboxReproRunner):
+            await self.repro_runner.aclose()
         if self.llm is not None:
             await self.llm.aclose()
         if self.embedder is not None:
@@ -228,6 +250,7 @@ def create_app(
     embed_transport: httpx.AsyncBaseTransport | None = None,
     github_app: GitHubApp | None = None,
     rest_transport: httpx.AsyncBaseTransport | None = None,
+    repro_runner: ReproRunner | None = None,
 ) -> FastAPI:
     warden = Warden(
         settings or Settings(),
@@ -235,6 +258,7 @@ def create_app(
         embed_transport=embed_transport,
         github_app=github_app,
         rest_transport=rest_transport,
+        repro_runner=repro_runner,
     )
 
     @asynccontextmanager

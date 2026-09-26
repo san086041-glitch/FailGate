@@ -73,7 +73,7 @@ async def test_duplicate_with_verified_quotes():
     assert out.verdict == "duplicate" and out.best == 3 and out.best_score == 0.97
     assert out.candidates[0].quotes_verified and out.candidates[0].level == "duplicate"
     assert out.candidates[1].level == "none"
-    assert result.facts == {"type": "bug", "repro_enabled": False, "dup_high": True}
+    assert result.facts == {"type": "bug", "dup_high": True}
     # 召回只看创建时间之前的 issue，并排除自己
     assert retriever.calls[0]["exclude_number"] == 10
     # 候选内容作为 untrusted 数据发给模型

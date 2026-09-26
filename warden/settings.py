@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     # PyPI JSON API（查版本）和 pip 镜像源（装包，留空用 pip 默认）
     pypi_url: str = "https://pypi.org"
     pip_index_url: str = ""
+    # 复现的总开关：打开后，配置了包名（warden repo repro）的仓库里被分诊为 bug 的 issue
+    # 会进入 REPRODUCING。需要 Docker，默认关闭
+    repro_enabled: bool = False
     # 复现 Agent（技术方案 8.5 节）：工具调用步数、提交次数、单次复现的模型花费上限（美元）
     repro_max_steps: int = 40
     repro_max_attempts: int = 4

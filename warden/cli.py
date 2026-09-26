@@ -643,6 +643,59 @@ def repo_labels(
         typer.echo(f"  不会自动打：{name}  ← {why}")
 
 
+@repo_app.command("repro")
+def repo_repro(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    package: Annotated[str | None, typer.Option(help="PyPI 包名，如 black")] = None,
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    clear: Annotated[bool, typer.Option(help="关闭这个仓库的复现")] = False,
+) -> None:
+    """查看或设置仓库的复现配置（package 模式用哪个 PyPI 包）。还需要 REPRO_ENABLED=true。"""
+    from warden.repro.config import PackageConfig
+    from warden.repro.pypi import PyPIClient, PyPIError
+
+    settings = Settings()
+    if package:
+        try:
+            PackageConfig(name=package, import_name=import_name)
+        except ValueError as e:
+            raise typer.BadParameter(str(e)) from e
+
+    async def run() -> tuple[str | None, str | None]:
+        if package:
+            pypi = PyPIClient(settings.pypi_url)
+            try:
+                await pypi.releases(package)
+            except PyPIError as e:
+                raise typer.BadParameter(str(e)) from e
+            finally:
+                await pypi.aclose()
+        db = Database(settings.warden_db_url)
+        await db.create_all()
+        async with db.session() as s, s.begin():
+            r = await s.scalar(
+                select(Repo).where(Repo.platform == "github", Repo.full_name == repo)
+            )
+            if r is None:
+                r = Repo(platform="github", full_name=repo, mode=settings.default_repo_mode)
+                s.add(r)
+            if clear:
+                r.repro_package, r.repro_import_name = None, None
+            elif package:
+                r.repro_package, r.repro_import_name = package, import_name
+            current = r.repro_package, r.repro_import_name
+        await db.dispose()
+        return current
+
+    pkg, imp = asyncio.run(run())
+    if pkg is None:
+        typer.echo(f"{repo}：不做复现")
+    else:
+        typer.echo(f"{repo}：package 模式，包 {pkg}（import 名 {imp or '由包名推出'}）")
+    if not settings.repro_enabled:
+        typer.echo("注意：总开关 REPRO_ENABLED 没有打开，流水线不会进入复现阶段")
+
+
 github_app_cli = typer.Typer(help="GitHub App：检查配置和安装情况", no_args_is_help=True)
 app.add_typer(github_app_cli, name="github")
 

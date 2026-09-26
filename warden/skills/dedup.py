@@ -139,7 +139,8 @@ class DedupSkill:
         issue = ctx.issue
         intake = ctx.prior.get("intake", {})
         triage_type = ctx.prior.get("triage", {}).get("type")
-        facts: dict[str, Any] = {"type": triage_type, "repro_enabled": False}
+        # repro_enabled / budget_ok 由流水线补上（它知道仓库配置和预算）
+        facts: dict[str, Any] = {"type": triage_type}
 
         recalled = []
         if ctx.retriever is not None and issue.repo_id is not None:

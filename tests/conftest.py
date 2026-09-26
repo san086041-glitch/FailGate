@@ -67,7 +67,9 @@ def _public_rest(request: httpx.Request) -> httpx.Response:
     return httpx.Response(404, json={"message": "not stubbed"})
 
 
-async def _harness(settings: Settings, github_app: Any = None) -> AsyncIterator[Harness]:
+async def _harness(
+    settings: Settings, github_app: Any = None, repro_runner: Any = None
+) -> AsyncIterator[Harness]:
     llm = FakeLLM()
     PUBLIC_COMMENTS.clear()
     app = create_app(
@@ -76,6 +78,7 @@ async def _harness(settings: Settings, github_app: Any = None) -> AsyncIterator[
         llm_transport=llm.transport,
         github_app=github_app,
         rest_transport=httpx.MockTransport(_public_rest),
+        repro_runner=repro_runner,
     )
     warden: Warden = app.state.warden
     await warden.start(run_worker=False)

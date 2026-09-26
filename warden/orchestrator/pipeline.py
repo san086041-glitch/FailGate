@@ -111,7 +111,8 @@ class Pipeline:
                 s.add(_run_row(case_id, skill, result, started))
                 case.spent_usd += result.cost_usd
                 await self._effects(s, repo, case, skill.name, result)
-                new_state = await self.machine.apply(s, case, "skill.done", facts=result.facts)
+                facts = {**result.facts, **self._pipeline_facts(repo, case)}
+                new_state = await self.machine.apply(s, case, "skill.done", facts=facts)
                 if new_state is not None and new_state not in self.skills:
                     # 流水线在这里停下（没有下一个自动阶段）：此时才生成汇总评论，
                     # 一次性包含前面所有阶段的结果，避免同一条评论在几秒内被反复编辑
@@ -119,6 +120,16 @@ class Pipeline:
                     await self._summary(s, repo, case, outputs)
             if new_state is None:
                 return state
+
+    def _pipeline_facts(self, repo: Repo, case: Case) -> dict[str, Any]:
+        """由流水线（而不是能力模块）决定的事实：能不能复现、预算还够不够。
+
+        能力模块不知道仓库配置和全局开关，放在这里算，状态机的守卫只看结果。
+        """
+        return {
+            "repro_enabled": CaseState.REPRODUCING in self.skills and bool(repo.repro_package),
+            "budget_ok": case.spent_usd < self.case_budget_usd,
+        }
 
     async def _context(
         self, s: AsyncSession, case: Case, repo: Repo, entry: tuple[Skill, str]
@@ -143,6 +154,11 @@ class Pipeline:
             retriever=self.index,
             docs=self.docs,
             comments=self.comments_for(repo) if self.comments_for else None,
+            repo_config={
+                "repro_package": repo.repro_package,
+                "repro_import_name": repo.repro_import_name,
+            },
+            budget_left_usd=max(self.case_budget_usd - case.spent_usd, 0.0),
         )
 
     async def _repo_labels(self, repo: Repo) -> list[Label]:
@@ -185,6 +201,7 @@ class Pipeline:
             case.spent_usd,
             outputs.get("dedup"),
             outputs.get("answer"),
+            outputs.get("repro"),
         )
         await self.gate.propose(
             s, repo=repo, case=case, action="upsert_summary", payload={"body": body}

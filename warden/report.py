@@ -46,6 +46,27 @@ _TEXT = {
         "answer_note": "（根据项目文档和维护者以往的回答自动整理，未经维护者确认）",
         "refs": "参考资料：",
         "no_answer": "暂时没有在项目文档和历史 issue 中找到可靠的依据，请等待维护者回复。",
+        "repro": "复现",
+        "repro_py": "（Python {py}）",
+        "repro_ok": (
+            "✅ 已在 {env}上复现（证据等级 {level}）：{runs} 次运行都出现与报告一致的失败。"
+        ),
+        "repro_flaky": (
+            "⚠️ 已在 {env}上复现，但不稳定（证据等级 {level}）：{runs} 次运行中约 {rate} 失败。"
+        ),
+        "repro_sub": (
+            "报告的版本 `{sub}` 无法从 PyPI 安装，这是在 issue 提交前最新的正式版上复现的。"
+        ),
+        "repro_fixed": "在最新版 `{latest}` 上没有复现，可能已经修复，建议升级后确认。",
+        "repro_still": "在最新版 `{latest}` 上仍然存在。",
+        "repro_script": "复现脚本",
+        "repro_miss": "尝试在 {env}上自动复现，暂时没有成功。",
+        "repro_retry": "补充可以直接运行的最小示例代码和完整报错后，RepoWarden 会重新尝试。",
+        "repro_version": (
+            "没能根据报告里的版本号安装对应的发布版本，"
+            "请确认准确的版本号（例如 `pip show {pkg}` 的输出）。"
+        ),
+        "repro_internal": "暂时无法自动复现，维护者会跟进。",
     },
     "en": {
         "title": "🛡️ **RepoWarden triage report**",
@@ -74,6 +95,38 @@ _TEXT = {
             "I couldn't find a reliable source in the docs or past issues. "
             "A maintainer will follow up."
         ),
+        "repro": "Reproduction",
+        "repro_py": " with Python {py}",
+        "repro_ok": (
+            "✅ Reproduced on {env} (evidence level {level}): the reported failure occurred "
+            "in all {runs} runs."
+        ),
+        "repro_flaky": (
+            "⚠️ Reproduced on {env}, but flaky (evidence level {level}): about {rate} of "
+            "{runs} runs failed."
+        ),
+        "repro_sub": (
+            "The reported version `{sub}` is not installable from PyPI, so this was reproduced "
+            "on the latest release published before the issue was opened."
+        ),
+        "repro_fixed": (
+            "Not reproduced on the latest release `{latest}`: this may already be fixed; "
+            "please try upgrading."
+        ),
+        "repro_still": "Still reproduces on the latest release `{latest}`.",
+        "repro_script": "Reproduction script",
+        "repro_miss": "Tried to reproduce this automatically on {env}, without success so far.",
+        "repro_retry": (
+            "If you add a minimal runnable example and the full error output, "
+            "RepoWarden will try again."
+        ),
+        "repro_version": (
+            "Could not install a release matching the reported version. Please confirm the "
+            "exact version (e.g. the output of `pip show {pkg}`)."
+        ),
+        "repro_internal": (
+            "Automatic reproduction is not available right now; a maintainer will follow up."
+        ),
     },
 }
 
@@ -84,6 +137,7 @@ def render_summary(
     cost_usd: float,
     dedup: dict[str, Any] | None = None,
     answer: dict[str, Any] | None = None,
+    repro: dict[str, Any] | None = None,
 ) -> str:
     lang = "zh" if intake.get("language") == "zh" else "en"
     t = _TEXT[lang]
@@ -109,12 +163,70 @@ def render_summary(
             lines += ["", f"{t['related']} {refs}"]
     if answer is not None:
         lines += ["", *_answer_lines(answer, t)]
+    reproduced = repro is not None and repro.get("level") in PROVEN
+    if repro is not None and repro.get("attempted"):
+        lines += ["", *_repro_lines(repro, t)]
     missing = intake.get("missing") or []
-    if triage["type"] == "bug" and missing:
+    # 已经复现了就不用再向提问者要信息
+    if triage["type"] == "bug" and missing and not reproduced:
         lines += ["", t["need"]]
         lines += [f"- [ ] {_MISSING_TEXT[lang].get(m, m)}" for m in missing]
     lines += ["", f"<sub>{t['cost']} ${cost_usd:.4f} · {t['footer']}</sub>"]
     return "\n".join(lines)
+
+
+PROVEN = frozenset({"L1", "L2", "L3"})
+MAX_SCRIPT_LINES = 80
+
+
+def _repro_lines(repro: dict[str, Any], t: dict[str, str]) -> list[str]:
+    head = f"**{t['repro']}**　"
+    pkg = repro.get("package") or ""
+    env = f"`{pkg}=={repro.get('reported_version')}`"
+    if repro.get("python"):
+        env += t["repro_py"].format(py=repro["python"])
+    if repro.get("level") in PROVEN:
+        if repro.get("verdict") == "FLAKY":
+            rate = f"{(repro.get('fail_rate') or 0) * 100:.0f}%"
+            first = t["repro_flaky"].format(
+                env=env, level=repro["level"], runs=repro.get("runs"), rate=rate
+            )
+        else:
+            first = t["repro_ok"].format(env=env, level=repro["level"], runs=repro.get("runs"))
+        lines = [head + first]
+        if repro.get("substituted_for"):
+            lines.append(t["repro_sub"].format(sub=_inline(repro["substituted_for"])))
+        latest = repro.get("latest_version")
+        if repro.get("fixed_in_latest") is True:
+            lines.append(t["repro_fixed"].format(latest=latest))
+        elif repro.get("fixed_in_latest") is False:
+            lines.append(t["repro_still"].format(latest=latest))
+        if repro.get("script"):
+            lines += ["", *_script_block(repro["script"], t["repro_script"])]
+        return lines
+    if repro.get("public_error"):
+        return [head + t["repro_version"].format(pkg=pkg)]
+    if repro.get("reported_version") and repro.get("agent_status"):
+        return [head + t["repro_miss"].format(env=env) + " " + t["repro_retry"]]
+    return [head + t["repro_internal"]]
+
+
+def _script_block(script: str, title: str) -> list[str]:
+    """折叠起来的代码块。围栏比脚本里最长的一串反引号还长，脚本内容就跑不出代码块。"""
+    lines = script.rstrip().splitlines()
+    if len(lines) > MAX_SCRIPT_LINES:
+        lines = lines[:MAX_SCRIPT_LINES] + ["# …"]
+    longest = max((len(m) for m in re.findall(r"`+", script)), default=0)
+    fence = "`" * max(3, longest + 1)
+    return [
+        f"<details><summary>{title}</summary>", "", f"{fence}python", *lines, fence, "",
+        "</details>",
+    ]
+
+
+def _inline(text: str) -> str:
+    """放进行内代码里的短文本：去掉反引号和换行，限制长度。"""
+    return text.replace("`", "'").replace("\n", " ")[:80]
 
 
 def answer_section(answer: dict[str, Any], language: str) -> str:

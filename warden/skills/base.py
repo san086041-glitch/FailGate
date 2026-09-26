@@ -75,6 +75,10 @@ class SkillContext:
     retriever: Retriever | None = None
     docs: DocRetriever | None = None
     comments: CommentSource | None = None
+    # 仓库级配置（如复现用的包名），由流水线从 repos 表填入
+    repo_config: dict[str, Any] = field(default_factory=dict)
+    # 这个 Case 还剩多少模型预算（美元）；None = 不限。长流程（复现）用它给自己设上限
+    budget_left_usd: float | None = None
 
 
 @dataclass

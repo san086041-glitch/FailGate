@@ -32,6 +32,9 @@ class Repo(Base):
     installation_id: Mapped[int | None] = mapped_column(BigInteger, default=None)
     # 自动打标签的白名单（通配符模式，如 ["T: *", "C: *"]）；None = 不限制，只拦结论 / 进度类标签
     auto_labels: Mapped[list[str] | None] = mapped_column(JSON, default=None)
+    # 复现（package 模式）：PyPI 包名和 import 名。包名为空 = 这个仓库不做复现
+    repro_package: Mapped[str | None] = mapped_column(String(255), default=None)
+    repro_import_name: Mapped[str | None] = mapped_column(String(255), default=None)
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 
