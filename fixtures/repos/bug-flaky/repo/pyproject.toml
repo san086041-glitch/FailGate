@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ordkit"
+version = "1.4.0"
+description = "Small helpers for ordered collections (RepoWarden fixture)."
+requires-python = ">=3.9"
+
+[tool.setuptools]
+packages = ["ordkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error"]

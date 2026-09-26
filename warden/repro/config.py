@@ -8,9 +8,10 @@ from collections.abc import Iterable
 from enum import StrEnum
 from typing import Literal
 
+from packaging.version import Version
 from pydantic import BaseModel, Field, field_validator
 
-from warden.repro.pypi import valid_package_name
+from warden.repro.pypi import normalize_version, valid_package_name
 
 
 class ReproMode(StrEnum):
@@ -62,6 +63,18 @@ class ReproConfig(BaseModel):
     package: PackageConfig | None = None
     python: str | None = None  # 技术方案里的 runtime.python
     skip_if_labels: list[str] = Field(default_factory=lambda: ["gpu", "distributed"])
+
+
+def needs_source(raw_version: str | None, package: str, released: Iterable[Version]) -> bool:
+    """用户报告了版本、但这个版本 PyPI 上装不到（开发版、main@sha、没发布的版本号）。
+
+    这时 package 模式只能退回"issue 之前最新的正式版"，而 source 模式能用 issue 创建时的
+    源码复现，更接近用户实际用的代码。没报版本的沿用 package 模式（还能查最新版是否已修复）。
+    """
+    if not raw_version or not raw_version.strip():
+        return False
+    v = normalize_version(raw_version, package)
+    return v is None or v not in set(released)
 
 
 _SPECIAL_HW = re.compile(r"\b(cuda|gpu|npu|rocm|tpu|nccl|multi[- ]?gpu)\b", re.I)

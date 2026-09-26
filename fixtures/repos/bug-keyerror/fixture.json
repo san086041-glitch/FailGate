@@ -1,0 +1,8 @@
+{
+  "package": "confkit",
+  "version": "0.3.0",
+  "python": "3.12",
+  "number": 101,
+  "kind": "有堆栈的崩溃（KeyError），判定走签名比对",
+  "expect": ["REPRODUCED"]
+}

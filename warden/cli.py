@@ -648,9 +648,14 @@ def repo_repro(
     repo: Annotated[str, typer.Argument(help="owner/name")],
     package: Annotated[str | None, typer.Option(help="PyPI 包名，如 black")] = None,
     import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    source: Annotated[
+        str | None,
+        typer.Option(help="源码仓库 owner/name：报告未发布版本时走 source 模式（L2）；传 - 关闭"),
+    ] = None,
     clear: Annotated[bool, typer.Option(help="关闭这个仓库的复现")] = False,
 ) -> None:
-    """查看或设置仓库的复现配置（package 模式用哪个 PyPI 包）。还需要 REPRO_ENABLED=true。"""
+    """查看或设置仓库的复现配置（package 模式用哪个 PyPI 包、source 模式用哪个源码仓库）。
+    还需要 REPRO_ENABLED=true。"""
     from warden.repro.config import PackageConfig
     from warden.repro.pypi import PyPIClient, PyPIError
 
@@ -660,8 +665,10 @@ def repo_repro(
             PackageConfig(name=package, import_name=import_name)
         except ValueError as e:
             raise typer.BadParameter(str(e)) from e
+    if source not in (None, "-") and not re.fullmatch(r"[\w.-]+/[\w.-]+", source or ""):
+        raise typer.BadParameter(f"源码仓库要写成 owner/name：{source!r}")
 
-    async def run() -> tuple[str | None, str | None]:
+    async def run() -> tuple[str | None, str | None, str | None]:
         if package:
             pypi = PyPIClient(settings.pypi_url)
             try:
@@ -680,18 +687,22 @@ def repo_repro(
                 r = Repo(platform="github", full_name=repo, mode=settings.default_repo_mode)
                 s.add(r)
             if clear:
-                r.repro_package, r.repro_import_name = None, None
+                r.repro_package, r.repro_import_name, r.repro_source = None, None, None
             elif package:
                 r.repro_package, r.repro_import_name = package, import_name
-            current = r.repro_package, r.repro_import_name
+            if not clear and source is not None:
+                r.repro_source = None if source == "-" else source
+            current = r.repro_package, r.repro_import_name, r.repro_source
         await db.dispose()
         return current
 
-    pkg, imp = asyncio.run(run())
+    pkg, imp, src = asyncio.run(run())
     if pkg is None:
         typer.echo(f"{repo}：不做复现")
     else:
         typer.echo(f"{repo}：package 模式，包 {pkg}（import 名 {imp or '由包名推出'}）")
+        if src:
+            typer.echo(f"  报告未发布版本时走 source 模式（L2），源码仓库 {src}")
     if not settings.repro_enabled:
         typer.echo("注意：总开关 REPRO_ENABLED 没有打开，流水线不会进入复现阶段")
 
@@ -1448,6 +1459,65 @@ def replay_l2(
         typer.echo(f"\nL2 {sm['l2']}/{sm['n']}；L2 测试严格 FB/PA "
                    f"{sm['fb_pa']}/{sm['fbpa_eligible']}；花费 ${sm['total_cost_usd']}"
                    f"\n报告：{report_path}")
+
+    asyncio.run(run())
+
+
+@replay_app.command("fixtures")
+def replay_fixtures(
+    only: Annotated[
+        str | None, typer.Option(help="逗号分隔的 fixture 名，只跑这些（调试用）")
+    ] = None,
+    runs: Annotated[int, typer.Option(help="严格 FB/PA 时每个版本跑几次")] = 2,
+) -> None:
+    """fixture 仓库验收：每个 fixture 上 Agent 写 L2 测试，再在有 bug / 打上 fix 的代码上检验。
+
+    不需要 GitHub；会花 LLM 的钱（每个 fixture 约 $0.01）。
+    """
+    from warden.replay import fixtures as fx_mod
+    from warden.repro.agent import TEST_PROMPT_VERSION
+
+    settings = Settings()
+    names = [x.strip() for x in only.split(",")] if only else []
+    items = fx_mod.load_all(only=names)
+    if not items:
+        raise typer.BadParameter("没有找到 fixture（fixtures/repos/*/fixture.json）")
+    started = datetime.now()
+    run_path, report_path = _run_paths(f"fixtures__l2__{started:%Y%m%d-%H%M}")
+    meta = {"started": started.isoformat(timespec="seconds"), "model": settings.llm_model_large,
+            "prompt": TEST_PROMPT_VERSION, "runs": runs}
+
+    async def run() -> None:
+        rt = _L2Runtime(settings)
+        s = settings
+        results: list[fx_mod.FixtureResult] = []
+        run_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            for fx in items:
+                typer.echo(f"\n===== {fx.name}：{fx.title}")
+                intake, intake_cost = await fx_mod.run_intake(fx, rt.llm, s.llm_model_small)
+                report = await fx_mod.reproduce_fixture(
+                    fx, intake, llm=rt.llm, model=s.llm_model_large, tester=rt.tester,
+                    max_steps=s.repro_max_steps, max_attempts=s.repro_max_attempts,
+                    budget_usd=s.repro_budget_usd, artifacts_dir=Path(s.sandbox_artifacts_dir),
+                )
+                report.intake_cost_usd = intake_cost
+                case = None
+                if report.source.level.value == "L2":
+                    case = await fx_mod.fixture_fbpa(fx, report, rt.tester, runs=runs)
+                result = fx_mod.FixtureResult(name=fx.name, kind=fx.kind, expect=fx.expect,
+                                              report=report, fbpa=case)
+                results.append(result)
+                typer.echo(f"  → {report.source.level} · {result.verdict or report.source.error}"
+                           f" · 严格 FB/PA {case.outcome if case else '—'}"
+                           f" · ${report.total_cost_usd:.4f} · {'✅' if result.passed else '❌'}")
+                run_path.write_text(fx_mod.dump(results, meta), encoding="utf-8")
+                report_path.write_text(fx_mod.render(results, meta), encoding="utf-8")
+        finally:
+            await rt.aclose()
+        ok = sum(r.passed for r in results)
+        typer.echo(f"\n验收 {ok}/{len(results)}\n报告：{report_path}")
 
     asyncio.run(run())
 

@@ -67,6 +67,13 @@ _TEXT = {
             "请确认准确的版本号（例如 `pip show {pkg}` 的输出）。"
         ),
         "repro_internal": "暂时无法自动复现，维护者会跟进。",
+        "repro_src_at": "（issue 创建时的源码{py}）",
+        "repro_src_py": "，Python {py}",
+        "repro_test": "测试文件 `{path}` 可以直接合进仓库：修复之前失败，修复之后应当通过。",
+        "repro_test_title": "仓库内的失败测试",
+        "repro_src_miss": (
+            "尝试在 {env}上写一个会失败的测试，暂时没有成功：可能已经修复，也可能需要更多信息。"
+        ),
     },
     "en": {
         "title": "🛡️ **RepoWarden triage report**",
@@ -127,6 +134,17 @@ _TEXT = {
         "repro_internal": (
             "Automatic reproduction is not available right now; a maintainer will follow up."
         ),
+        "repro_src_at": " (source at the time this issue was opened{py})",
+        "repro_src_py": ", Python {py}",
+        "repro_test": (
+            "The test file `{path}` can be added to the repository as is: it fails before a "
+            "fix and should pass after it."
+        ),
+        "repro_test_title": "Failing test for the repository",
+        "repro_src_miss": (
+            "Tried to write a failing test on {env}, without success so far: this may already "
+            "be fixed, or more information may be needed."
+        ),
     },
 }
 
@@ -180,6 +198,8 @@ MAX_SCRIPT_LINES = 80
 
 
 def _repro_lines(repro: dict[str, Any], t: dict[str, str]) -> list[str]:
+    if repro.get("mode") == "source":
+        return _source_lines(repro, t)
     head = f"**{t['repro']}**　"
     pkg = repro.get("package") or ""
     env = f"`{pkg}=={repro.get('reported_version')}`"
@@ -208,6 +228,31 @@ def _repro_lines(repro: dict[str, Any], t: dict[str, str]) -> list[str]:
         return [head + t["repro_version"].format(pkg=pkg)]
     if repro.get("reported_version") and repro.get("agent_status"):
         return [head + t["repro_miss"].format(env=env) + " " + t["repro_retry"]]
+    return [head + t["repro_internal"]]
+
+
+def _source_lines(repro: dict[str, Any], t: dict[str, str]) -> list[str]:
+    """source 模式（L2）：在 issue 创建时的源码上写了仓库内的失败测试。"""
+    head = f"**{t['repro']}**　"
+    sha = (repro.get("source_sha") or "")[:7]
+    py = t["repro_src_py"].format(py=repro["python"]) if repro.get("python") else ""
+    env = f"`{_inline(repro.get('source_repo') or '')}@{sha}`" + t["repro_src_at"].format(py=py)
+    if repro.get("level") in PROVEN:
+        if repro.get("verdict") == "FLAKY":
+            rate = f"{(repro.get('fail_rate') or 0) * 100:.0f}%"
+            first = t["repro_flaky"].format(
+                env=env, level=repro["level"], runs=repro.get("runs"), rate=rate
+            )
+        else:
+            first = t["repro_ok"].format(env=env, level=repro["level"], runs=repro.get("runs"))
+        lines = [head + first]
+        if repro.get("test_path"):
+            lines.append(t["repro_test"].format(path=_inline(repro["test_path"])))
+        if repro.get("script"):
+            lines += ["", *_script_block(repro["script"], t["repro_test_title"])]
+        return lines
+    if repro.get("agent_status"):
+        return [head + t["repro_src_miss"].format(env=env) + " " + t["repro_retry"]]
     return [head + t["repro_internal"]]
 
 

@@ -35,6 +35,8 @@ class Repo(Base):
     # 复现（package 模式）：PyPI 包名和 import 名。包名为空 = 这个仓库不做复现
     repro_package: Mapped[str | None] = mapped_column(String(255), default=None)
     repro_import_name: Mapped[str | None] = mapped_column(String(255), default=None)
+    # 源码仓库（owner/name）：报告的是未发布版本时走 source 模式（L2）。为空 = 只用 package 模式
+    repro_source: Mapped[str | None] = mapped_column(String(255), default=None)
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 

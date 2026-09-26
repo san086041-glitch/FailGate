@@ -1,0 +1,8 @@
+{
+  "package": "slugkit",
+  "version": "0.2.0",
+  "python": "3.12",
+  "number": 102,
+  "kind": "没有堆栈的行为错误（输出不对），issue 给出了期望输出，判定走 LLM 评委",
+  "expect": ["REPRODUCED"]
+}

@@ -666,13 +666,15 @@ async def reproduce_with_tests(
     tree: SourceTree,
     *,
     python: str | None = None,
+    version: str | None = None,
 ) -> tuple[SourceRepro, AgentResult | None]:
     """source 模式：在某个提交上准备环境（含预检）→ Agent 写仓库内的失败测试 → L2。"""
     tester = cast(TestReproducer, agent.reproducer)
     out = SourceRepro(repo=tree.repo, sha=tree.sha, committed_at=tree.committed_at,
                       package=cfg.name, module=cfg.module)
     try:
-        prepared = await tester.prepare(cfg, tree, number=task.number, python=python)
+        prepared = await tester.prepare(cfg, tree, number=task.number, python=python,
+                                        version=version)
     except (*SETUP_ERRORS, SourceError, L2Unsupported) as e:
         out.error = str(e)[:1000]
         return out, None

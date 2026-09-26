@@ -44,6 +44,8 @@ markers = ["docker: 真的起容器的沙箱集成测试（没有 Docker 时自�
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# fixture 仓库是"待复现的外部项目"，bug 是故意的，风格也按 3.9 写，不参与本项目的 lint
+extend-exclude = ["fixtures/repos"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC"]

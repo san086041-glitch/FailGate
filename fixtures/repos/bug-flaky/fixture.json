@@ -1,0 +1,8 @@
+{
+  "package": "ordkit",
+  "version": "1.4.0",
+  "python": "3.12",
+  "number": 103,
+  "kind": "偶发失败：字符串的哈希顺序每个进程不同（PYTHONHASHSEED 随机），判定应给出 FLAKY 或稳定复现",
+  "expect": ["REPRODUCED", "FLAKY"]
+}

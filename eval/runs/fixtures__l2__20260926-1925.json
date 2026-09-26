@@ -1,0 +1,573 @@
+{
+  "meta": {
+    "started": "2026-09-26T19:25:06",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "runs": 2
+  },
+  "results": [
+    {
+      "name": "bug-flaky",
+      "kind": "偶发失败：字符串的哈希顺序每个进程不同（PYTHONHASHSEED 随机），判定应给出 FLAKY 或稳定复现",
+      "expect": [
+        "REPRODUCED",
+        "FLAKY"
+      ],
+      "report": {
+        "repo": "fixture/bug-flaky",
+        "number": 103,
+        "title": "unique() sometimes reorders strings",
+        "intake_version": "1.4.0",
+        "intake_python": "3.12",
+        "has_traceback": false,
+        "source": {
+          "repo": "fixture/bug-flaky",
+          "sha": "buggy",
+          "committed_at": null,
+          "package": "ordkit",
+          "module": "ordkit",
+          "python": "3.12",
+          "version": "1.4.0",
+          "pytest": "pytest==9.1.1",
+          "test_path": "tests/test_warden_issue_103.py",
+          "run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "e9434d5ebcbc28a40c0f40073999f345e91e76616add8eaf0e34987074fe055b",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.85,
+              "match_method": "llm",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "AssertionError",
+                "message": "assert ['item-<N>', ...tem-<N>', ...] == ['item-<N>', ...tem-<N>', ...]",
+                "frames": []
+              },
+              "reported": null
+            },
+            "semantic": {
+              "match": 0.85,
+              "reason": "被测包的 unique 对字符串输入确实打乱了顺序（返回 ['item-029', ...] 而非输入顺序 ['item-000', ...]），与 issue 描述的「字符串顺序被重排」一致；脚本断言检查的正是首次出现顺序这一预期行为。不过失败发生在第二个断言，issue 中给出的最小示例 ['b','a','b'] 那个断言本身是否也失败无法从输出确认。",
+              "quote": "AssertionError: assert ['item-029', ...tem-013', ...] == ['item-000', ...tem-005', ...]",
+              "quote_found": true,
+              "cost_usd": 0.000489
+            },
+            "log_dir": "artifacts\\warden-run-c0c4dff837",
+            "output_tail": "    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_103.py\", line 11, in test_unique_preserves_first_occurrence_order_for_strings\n    assert unique(items) == items\nAssertionError: assert ['item-029', ...tem-013', ...] == ['item-000', ...tem-005', ...]\n  \n  At index 0 diff: 'item-029' != 'item-000'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_103.py::test_unique_preserves_first_occurrence_order_for_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "level": "L2",
+          "error": null
+        },
+        "agent": {
+          "status": "reproduced",
+          "attempts": [
+            {
+              "n": 1,
+              "name": "tests/test_warden_issue_103.py",
+              "claim": "unique() on strings does not keep first-occurrence order: assert unique([\"b\",\"a\",\"b\"]) == [\"b\",\"a\"] and a 30-distinct-string order check fail on the buggy set()-based implementation (ordkit/seq.py:11), matching the reported flaky reordering.",
+              "script": "from ordkit import unique\n\n\ndef test_unique_preserves_first_occurrence_order_for_strings() -> None:\n    # Exactly the example from the report: 'b' comes first and must stay first.\n    assert unique([\"b\", \"a\", \"b\"]) == [\"b\", \"a\"]\n\n    # Same property with enough distinct strings that a set-based implementation\n    # cannot accidentally come out in the right order.\n    items = [f\"item-{i:03d}\" for i in range(30)]\n    assert unique(items) == items\n",
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.85
+            }
+          ],
+          "final_script": "from ordkit import unique\n\n\ndef test_unique_preserves_first_occurrence_order_for_strings() -> None:\n    # Exactly the example from the report: 'b' comes first and must stay first.\n    assert unique([\"b\", \"a\", \"b\"]) == [\"b\", \"a\"]\n\n    # Same property with enough distinct strings that a set-based implementation\n    # cannot accidentally come out in the right order.\n    items = [f\"item-{i:03d}\" for i in range(30)]\n    assert unique(items) == items\n",
+          "final_run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "e9434d5ebcbc28a40c0f40073999f345e91e76616add8eaf0e34987074fe055b",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.85,
+              "match_method": "llm",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "AssertionError",
+                "message": "assert ['item-<N>', ...tem-<N>', ...] == ['item-<N>', ...tem-<N>', ...]",
+                "frames": []
+              },
+              "reported": null
+            },
+            "semantic": {
+              "match": 0.85,
+              "reason": "被测包的 unique 对字符串输入确实打乱了顺序（返回 ['item-029', ...] 而非输入顺序 ['item-000', ...]），与 issue 描述的「字符串顺序被重排」一致；脚本断言检查的正是首次出现顺序这一预期行为。不过失败发生在第二个断言，issue 中给出的最小示例 ['b','a','b'] 那个断言本身是否也失败无法从输出确认。",
+              "quote": "AssertionError: assert ['item-029', ...tem-013', ...] == ['item-000', ...tem-005', ...]",
+              "quote_found": true,
+              "cost_usd": 0.000489
+            },
+            "log_dir": "artifacts\\warden-run-c0c4dff837",
+            "output_tail": "    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_103.py\", line 11, in test_unique_preserves_first_occurrence_order_for_strings\n    assert unique(items) == items\nAssertionError: assert ['item-029', ...tem-013', ...] == ['item-000', ...tem-005', ...]\n  \n  At index 0 diff: 'item-029' != 'item-000'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_103.py::test_unique_preserves_first_occurrence_order_for_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "steps": 10,
+          "tool_counts": {
+            "list_files": 1,
+            "search_code": 1,
+            "read_file": 3,
+            "write_scratch": 1,
+            "run": 1,
+            "write_test": 1,
+            "run_test": 1,
+            "submit": 1
+          },
+          "cost_usd": 0.001544,
+          "prompt_tokens": 17263,
+          "completion_tokens": 1832,
+          "cached_tokens": 14592,
+          "give_up_reason": null,
+          "suspect": null,
+          "error": null,
+          "transcript_path": "artifacts\\agent-fixture__bug-flaky-103-1790418367.json",
+          "duration_s": 28.4,
+          "test_path": "tests/test_warden_issue_103.py"
+        },
+        "intake_cost_usd": 0.000671,
+        "judge_cost_usd": 0.000489,
+        "judge_prompt_tokens": 1958,
+        "judge_completion_tokens": 389,
+        "judge_cached_tokens": 256
+      },
+      "fbpa": {
+        "number": 103,
+        "title": "unique() sometimes reorders strings",
+        "reported_version": "1.4.0",
+        "python": "3.12",
+        "proxy": "—",
+        "fix": {
+          "pr": null,
+          "sha": "fixed",
+          "parent": "buggy",
+          "committed_at": null,
+          "merge": false
+        },
+        "pretend_version": "1.4.0",
+        "before": [
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.547,
+            "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_103.py\", line 11, in test_unique_preserves_first_occurrence_order_for_strings\n    assert unique(items) == items\nAssertionError: assert ['item-011', ...tem-001', ...] == ['item-000', ...tem-005', ...]\n  \n  At index 0 diff: 'item-011' != 'item-000'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_103.py::test_unique_preserves_first_occurrence_order_for_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+            "log_dir": "artifacts\\warden-run-321859cc94"
+          },
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.578,
+            "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_103.py\", line 6, in test_unique_preserves_first_occurrence_order_for_strings\n    assert unique([\"b\", \"a\", \"b\"]) == [\"b\", \"a\"]\nAssertionError: assert ['a', 'b'] == ['b', 'a']\n  \n  At index 0 diff: 'a' != 'b'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_103.py::test_unique_preserves_first_occurrence_order_for_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s",
+            "log_dir": "artifacts\\warden-run-efa372c207"
+          }
+        ],
+        "after": [
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.61,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\warden-run-84c7dbc8da"
+          },
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.578,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\warden-run-833b2b6713"
+          }
+        ],
+        "outcome": "fb_pa",
+        "error": null
+      },
+      "passed": true,
+      "verdict": "REPRODUCED"
+    },
+    {
+      "name": "bug-keyerror",
+      "kind": "有堆栈的崩溃（KeyError），判定走签名比对",
+      "expect": [
+        "REPRODUCED"
+      ],
+      "report": {
+        "repo": "fixture/bug-keyerror",
+        "number": 101,
+        "title": "Parsing a config crashes when it has keys before the first section",
+        "intake_version": "0.3.0",
+        "intake_python": null,
+        "has_traceback": true,
+        "source": {
+          "repo": "fixture/bug-keyerror",
+          "sha": "buggy",
+          "committed_at": null,
+          "package": "confkit",
+          "module": "confkit",
+          "python": "3.12",
+          "version": "0.3.0",
+          "pytest": "pytest==9.1.1",
+          "test_path": "tests/test_warden_issue_101.py",
+          "run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "59aaf51606c9a593bb6460d21e585a533b69e649e2ede24ac3be36f903bccd2b",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0,
+              "match_method": "signature",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "KeyError",
+                "message": "None",
+                "frames": [
+                  "confkit/parser.py:parse",
+                  "confkit/parser.py:_store"
+                ]
+              },
+              "reported": {
+                "exc_type": "KeyError",
+                "message": "None",
+                "frames": [
+                  "confkit/parser.py:parse",
+                  "confkit/parser.py:_store"
+                ]
+              }
+            },
+            "semantic": null,
+            "log_dir": "artifacts\\warden-run-d37aa44578",
+            "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_101.py\", line 8, in test_keys_before_first_section_go_to_default\n    assert parse(text) == {\"DEFAULT\": {\"name\": \"demo\"}, \"server\": {\"host\": \"example.org\"}}\n           ^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 27, in parse\n    _store(sections, current, line)\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 35, in _store\n    sections[section][key.strip()] = value.strip()\n    ~~~~~~~~^^^^^^^^^\nKeyError: None\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_101.py::test_keys_before_first_section_go_to_default\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "level": "L2",
+          "error": null
+        },
+        "agent": {
+          "status": "reproduced",
+          "attempts": [
+            {
+              "n": 1,
+              "name": "tests/test_warden_issue_101.py",
+              "claim": "parse() of a config with keys before the first [section] raises KeyError: None (confkit/parser.py:35 via :27) because `current` starts as None and is used as the section key; the test asserts the issue's expected {\"DEFAULT\": ..., \"server\": ...} output, which fails on the current buggy code.",
+              "script": "\"\"\"Issue #101: parsing a config with keys before the first section crashes.\"\"\"\n\nfrom confkit import parse\n\n\ndef test_keys_before_first_section_go_to_default() -> None:\n    text = \"name = demo\\n[server]\\nhost = example.org\\n\"\n    assert parse(text) == {\"DEFAULT\": {\"name\": \"demo\"}, \"server\": {\"host\": \"example.org\"}}\n",
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0
+            }
+          ],
+          "final_script": "\"\"\"Issue #101: parsing a config with keys before the first section crashes.\"\"\"\n\nfrom confkit import parse\n\n\ndef test_keys_before_first_section_go_to_default() -> None:\n    text = \"name = demo\\n[server]\\nhost = example.org\\n\"\n    assert parse(text) == {\"DEFAULT\": {\"name\": \"demo\"}, \"server\": {\"host\": \"example.org\"}}\n",
+          "final_run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "59aaf51606c9a593bb6460d21e585a533b69e649e2ede24ac3be36f903bccd2b",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0,
+              "match_method": "signature",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "KeyError",
+                "message": "None",
+                "frames": [
+                  "confkit/parser.py:parse",
+                  "confkit/parser.py:_store"
+                ]
+              },
+              "reported": {
+                "exc_type": "KeyError",
+                "message": "None",
+                "frames": [
+                  "confkit/parser.py:parse",
+                  "confkit/parser.py:_store"
+                ]
+              }
+            },
+            "semantic": null,
+            "log_dir": "artifacts\\warden-run-d37aa44578",
+            "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_101.py\", line 8, in test_keys_before_first_section_go_to_default\n    assert parse(text) == {\"DEFAULT\": {\"name\": \"demo\"}, \"server\": {\"host\": \"example.org\"}}\n           ^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 27, in parse\n    _store(sections, current, line)\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 35, in _store\n    sections[section][key.strip()] = value.strip()\n    ~~~~~~~~^^^^^^^^^\nKeyError: None\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_101.py::test_keys_before_first_section_go_to_default\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "steps": 9,
+          "tool_counts": {
+            "list_files": 1,
+            "read_file": 5,
+            "write_test": 1,
+            "run_test": 1,
+            "submit": 1
+          },
+          "cost_usd": 0.001068,
+          "prompt_tokens": 18306,
+          "completion_tokens": 872,
+          "cached_tokens": 14976,
+          "give_up_reason": null,
+          "suspect": null,
+          "error": null,
+          "transcript_path": "artifacts\\agent-fixture__bug-keyerror-101-1790418449.json",
+          "duration_s": 20.2,
+          "test_path": "tests/test_warden_issue_101.py"
+        },
+        "intake_cost_usd": 0.000459,
+        "judge_cost_usd": 0.0,
+        "judge_prompt_tokens": 0,
+        "judge_completion_tokens": 0,
+        "judge_cached_tokens": 0
+      },
+      "fbpa": {
+        "number": 101,
+        "title": "Parsing a config crashes when it has keys before the first section",
+        "reported_version": "0.3.0",
+        "python": "3.12",
+        "proxy": "—",
+        "fix": {
+          "pr": null,
+          "sha": "fixed",
+          "parent": "buggy",
+          "committed_at": null,
+          "merge": false
+        },
+        "pretend_version": "0.3.0",
+        "before": [
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.563,
+            "tail": "    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_101.py\", line 8, in test_keys_before_first_section_go_to_default\n    assert parse(text) == {\"DEFAULT\": {\"name\": \"demo\"}, \"server\": {\"host\": \"example.org\"}}\n           ^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 27, in parse\n    _store(sections, current, line)\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 35, in _store\n    sections[section][key.strip()] = value.strip()\n    ~~~~~~~~^^^^^^^^^\nKeyError: None\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_101.py::test_keys_before_first_section_go_to_default\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s",
+            "log_dir": "artifacts\\warden-run-e76857fdfd"
+          },
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.562,
+            "tail": "    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_101.py\", line 8, in test_keys_before_first_section_go_to_default\n    assert parse(text) == {\"DEFAULT\": {\"name\": \"demo\"}, \"server\": {\"host\": \"example.org\"}}\n           ^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 27, in parse\n    _store(sections, current, line)\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 35, in _store\n    sections[section][key.strip()] = value.strip()\n    ~~~~~~~~^^^^^^^^^\nKeyError: None\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_101.py::test_keys_before_first_section_go_to_default\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s",
+            "log_dir": "artifacts\\warden-run-87820994f0"
+          }
+        ],
+        "after": [
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.578,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\warden-run-2800bb6706"
+          },
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.609,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\warden-run-54c68b48c3"
+          }
+        ],
+        "outcome": "fb_pa",
+        "error": null
+      },
+      "passed": true,
+      "verdict": "REPRODUCED"
+    },
+    {
+      "name": "bug-regression",
+      "kind": "没有堆栈的行为错误（输出不对），issue 给出了期望输出，判定走 LLM 评委",
+      "expect": [
+        "REPRODUCED"
+      ],
+      "report": {
+        "repo": "fixture/bug-regression",
+        "number": 102,
+        "title": "slugify produces repeated dashes since 0.2.0",
+        "intake_version": "0.2.0",
+        "intake_python": null,
+        "has_traceback": false,
+        "source": {
+          "repo": "fixture/bug-regression",
+          "sha": "buggy",
+          "committed_at": null,
+          "package": "slugkit",
+          "module": "slugkit",
+          "python": "3.12",
+          "version": "0.2.0",
+          "pytest": "pytest==9.1.1",
+          "test_path": "tests/test_warden_issue_102.py",
+          "run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "989e7fbdedaef547cf1748dd035ec590564e5592eae417bbbd1eabea85ef4793",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.95,
+              "match_method": "llm",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "AssertionError",
+                "message": "assert 'hello---world' == 'hello-world'",
+                "frames": []
+              },
+              "reported": null
+            },
+            "semantic": {
+              "match": 0.95,
+              "reason": "脚本直接调用被测包的 slugify('Hello,  World!')，断言其应返回 'hello-world'，而运行输出显示实际返回 'hello---world'，与 issue 描述的连续连字符 bug 完全一致，断言检查的正是 issue 的预期行为。",
+              "quote": "AssertionError: assert 'hello---world' == 'hello-world'",
+              "quote_found": true,
+              "cost_usd": 0.000331
+            },
+            "log_dir": "artifacts\\warden-run-decfb75bc3",
+            "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_102.py\", line 5, in test_punctuation_and_space_runs_collapse_to_one_separator\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\nAssertionError: assert 'hello---world' == 'hello-world'\n  \n  - hello-world\n  + hello---world\n  ?       ++\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_102.py::test_punctuation_and_space_runs_collapse_to_one_separator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+          },
+          "level": "L2",
+          "error": null
+        },
+        "agent": {
+          "status": "reproduced",
+          "attempts": [
+            {
+              "n": 1,
+              "name": "tests/test_warden_issue_102.py",
+              "claim": "slugify(\"Hello,  World!\") returns 'hello---world' instead of 'hello-world' because consecutive spaces/punctuation each map to their own separator; the test asserts the issue's expected single-separator output.",
+              "script": "from slugkit import slugify\n\n\ndef test_punctuation_and_space_runs_collapse_to_one_separator() -> None:\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\n",
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.95
+            }
+          ],
+          "final_script": "from slugkit import slugify\n\n\ndef test_punctuation_and_space_runs_collapse_to_one_separator() -> None:\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\n",
+          "final_run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "989e7fbdedaef547cf1748dd035ec590564e5592eae417bbbd1eabea85ef4793",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.95,
+              "match_method": "llm",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "AssertionError",
+                "message": "assert 'hello---world' == 'hello-world'",
+                "frames": []
+              },
+              "reported": null
+            },
+            "semantic": {
+              "match": 0.95,
+              "reason": "脚本直接调用被测包的 slugify('Hello,  World!')，断言其应返回 'hello-world'，而运行输出显示实际返回 'hello---world'，与 issue 描述的连续连字符 bug 完全一致，断言检查的正是 issue 的预期行为。",
+              "quote": "AssertionError: assert 'hello---world' == 'hello-world'",
+              "quote_found": true,
+              "cost_usd": 0.000331
+            },
+            "log_dir": "artifacts\\warden-run-decfb75bc3",
+            "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_102.py\", line 5, in test_punctuation_and_space_runs_collapse_to_one_separator\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\nAssertionError: assert 'hello---world' == 'hello-world'\n  \n  - hello-world\n  + hello---world\n  ?       ++\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_102.py::test_punctuation_and_space_runs_collapse_to_one_separator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+          },
+          "steps": 10,
+          "tool_counts": {
+            "list_files": 2,
+            "search_code": 2,
+            "read_file": 2,
+            "run": 1,
+            "write_test": 1,
+            "run_test": 1,
+            "submit": 1
+          },
+          "cost_usd": 0.001033,
+          "prompt_tokens": 22605,
+          "completion_tokens": 963,
+          "cached_tokens": 19968,
+          "give_up_reason": null,
+          "suspect": null,
+          "error": null,
+          "transcript_path": "artifacts\\agent-fixture__bug-regression-102-1790418525.json",
+          "duration_s": 26.1,
+          "test_path": "tests/test_warden_issue_102.py"
+        },
+        "intake_cost_usd": 0.000244,
+        "judge_cost_usd": 0.000331,
+        "judge_prompt_tokens": 1863,
+        "judge_completion_tokens": 149,
+        "judge_cached_tokens": 256
+      },
+      "fbpa": {
+        "number": 102,
+        "title": "slugify produces repeated dashes since 0.2.0",
+        "reported_version": "0.2.0",
+        "python": "3.12",
+        "proxy": "—",
+        "fix": {
+          "pr": null,
+          "sha": "fixed",
+          "parent": "buggy",
+          "committed_at": null,
+          "merge": false
+        },
+        "pretend_version": "0.2.0",
+        "before": [
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.562,
+            "tail": "          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_102.py\", line 5, in test_punctuation_and_space_runs_collapse_to_one_separator\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\nAssertionError: assert 'hello---world' == 'hello-world'\n  \n  - hello-world\n  + hello---world\n  ?       ++\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_102.py::test_punctuation_and_space_runs_collapse_to_one_separator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s",
+            "log_dir": "artifacts\\warden-run-aea270beeb"
+          },
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.594,
+            "tail": "          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_102.py\", line 5, in test_punctuation_and_space_runs_collapse_to_one_separator\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\nAssertionError: assert 'hello---world' == 'hello-world'\n  \n  - hello-world\n  + hello---world\n  ?       ++\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_102.py::test_punctuation_and_space_runs_collapse_to_one_separator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+            "log_dir": "artifacts\\warden-run-a30cad75be"
+          }
+        ],
+        "after": [
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.594,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\warden-run-57b12898d4"
+          },
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.578,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\warden-run-3f30881239"
+          }
+        ],
+        "outcome": "fb_pa",
+        "error": null
+      },
+      "passed": true,
+      "verdict": "REPRODUCED"
+    }
+  ]
+}

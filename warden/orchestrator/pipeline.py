@@ -157,6 +157,7 @@ class Pipeline:
             repo_config={
                 "repro_package": repo.repro_package,
                 "repro_import_name": repo.repro_import_name,
+                "repro_source": repo.repro_source,
             },
             budget_left_usd=max(self.case_budget_usd - case.spent_usd, 0.0),
         )
