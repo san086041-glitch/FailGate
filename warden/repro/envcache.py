@@ -11,7 +11,8 @@
 所以先用可信步骤把 venv 的属主交给 1000，不可信的安装只在非 root 沙箱里做。
 
 env_key 覆盖所有会影响环境内容的输入：模式、官方镜像的 ID（上游更新了镜像，key 就变）、
-Python 版本、安装命令（含包名和版本）、镜像源。任何一项变了都会得到新的环境。
+Python 版本、安装命令（含包名和版本）、镜像源；source 模式再加上仓库、提交和源码包摘要
+（见 source.py）。任何一项变了都会得到新的环境。
 
 淘汰：索引文件记录每个环境的大小和最后使用时间，总量超过上限时按 LRU 删镜像。
 """
@@ -22,10 +23,11 @@ import asyncio
 import hashlib
 import json
 import time
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from warden.repro.sandbox import DockerSandbox, ExecResult, SandboxError
+from warden.repro.sandbox import DEFAULT_INSTALL_PREFIXES, DockerSandbox, ExecResult, SandboxError
 
 VENV = "/opt/venv"
 
@@ -50,13 +52,23 @@ def base_tag(python: str, upstream_id: str) -> str:
 
 
 def env_key(
-    *, mode: str, upstream_id: str, python: str, install_argv: list[str], index_url: str = ""
+    *,
+    mode: str,
+    upstream_id: str,
+    python: str,
+    install_argv: list[str],
+    index_url: str = "",
+    extra: Mapping[str, str] | None = None,
 ) -> str:
-    payload = json.dumps(
-        {"v": 1, "mode": mode, "upstream": upstream_id, "python": python,
-         "install": install_argv, "index": index_url},
-        sort_keys=True,
-    )
+    """extra：安装命令之外、同样决定环境内容的输入（source 模式的仓库、提交、源码摘要）。
+    没有 extra 时 payload 和以前完全一样，已缓存的 package 环境不会失效。"""
+    data: dict[str, object] = {
+        "v": 1, "mode": mode, "upstream": upstream_id, "python": python,
+        "install": install_argv, "index": index_url,
+    }
+    if extra:
+        data["extra"] = dict(extra)
+    payload = json.dumps(data, sort_keys=True)
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
@@ -133,11 +145,22 @@ class EnvCache:
         return upstream_id, tag
 
     async def get(
-        self, *, python: str, install_argv: list[str], mode: str = "package", timeout_s: int = 900
+        self,
+        *,
+        python: str,
+        install_argv: list[str],
+        mode: str = "package",
+        timeout_s: int = 900,
+        key_extra: Mapping[str, str] | None = None,
+        prepare_dir: Path | None = None,
+        env: Sequence[str] = (),
+        allowed: Sequence[Sequence[str]] = DEFAULT_INSTALL_PREFIXES,
     ) -> Env:
+        """prepare_dir：安装前复制进工作区的目录（source 模式的源码包）；
+        env / allowed：安装命令的额外环境变量和白名单（source 模式用自己的安装脚本）。"""
         upstream_id, base = await self.ensure_base(python)
         key = env_key(mode=mode, upstream_id=upstream_id, python=python,
-                      install_argv=install_argv, index_url=self.index_url)
+                      install_argv=install_argv, index_url=self.index_url, extra=key_extra)
         tag = env_tag(key)
         lock = self._locks.setdefault(key, asyncio.Lock())
         async with lock:
@@ -146,12 +169,15 @@ class EnvCache:
                 await asyncio.to_thread(self._touch, key, tag, await self._own_bytes(info, base))
                 return Env(key=key, image=tag, python=python, cache_hit=True)
 
-            env = [f"PIP_INDEX_URL={self.index_url}"] if self.index_url else []
+            install_env = [f"PIP_INDEX_URL={self.index_url}"] if self.index_url else []
+            install_env += env
             ws = await self.sandbox.create_workspace(f"install-{key[:8]}")
             try:
+                if prepare_dir is not None:
+                    await self.sandbox.copy_in(ws, prepare_dir, base)
                 res = await self.sandbox.install(
                     base, ws, install_argv, timeout_s=timeout_s,
-                    env=env, commit_to=tag,
+                    env=install_env, commit_to=tag, allowed=allowed,
                 )
             finally:
                 await self.sandbox.remove_workspace(ws)

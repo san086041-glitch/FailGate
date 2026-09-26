@@ -1,4 +1,5 @@
-"""GitHub REST 只读客户端：目前只用于回填历史 issue（warden index build）。
+"""GitHub 只读客户端：回填历史 issue（warden index build）、文档和源码包、
+回放时查修复提交（GraphQL，必须带 token）。
 
 - 公开仓库不带 token 也能读，但限额是每小时 60 次；带 token 是 5000 次
 - /issues 接口会把 PR 也返回回来（带 pull_request 字段），需要过滤
@@ -15,6 +16,14 @@ from typing import Any
 import httpx
 
 _NEXT = re.compile(r'<([^>]+)>;\s*rel="next"')
+
+
+class TarballTooLarge(RuntimeError):
+    pass
+
+
+class GraphQLError(RuntimeError):
+    pass
 
 
 class GitHubRest:
@@ -59,18 +68,44 @@ class GitHubRest:
                 break
         return numbers
 
-    async def fetch_tarball(self, full_name: str, ref: str = "HEAD") -> tuple[str, bytes]:
+    async def fetch_tarball(
+        self, full_name: str, ref: str = "HEAD", *, max_bytes: int | None = None
+    ) -> tuple[str, bytes]:
         """下载某个提交的源码包，返回 (完整 commit SHA, tar.gz 字节)。
 
         先把 ref 解析成 SHA 再下载，保证文档内容和引用链接里的 SHA 是同一个版本。
         /tarball 会 302 跳转到 codeload.github.com，需要跟随重定向。
+        max_bytes：边下载边计数，超过就中止（源码包是外部内容，不能无限读进内存）。
         """
+        sha = (await self.commit(full_name, ref))["sha"]
+        url = f"/repos/{full_name}/tarball/{sha}"
+        async with self._http.stream("GET", url, follow_redirects=True) as r:
+            r.raise_for_status()
+            chunks: list[bytes] = []
+            size = 0
+            async for chunk in r.aiter_bytes():
+                size += len(chunk)
+                if max_bytes is not None and size > max_bytes:
+                    raise TarballTooLarge(f"{full_name}@{sha[:10]} 的源码包超过 {max_bytes} 字节")
+                chunks.append(chunk)
+        return sha, b"".join(chunks)
+
+    async def commit(self, full_name: str, ref: str) -> dict[str, Any]:
+        """一个提交的信息：sha、commit.committer.date、parents[].sha ……"""
         r = await self._http.get(f"/repos/{full_name}/commits/{ref}")
         r.raise_for_status()
-        sha = r.json()["sha"]
-        r = await self._http.get(f"/repos/{full_name}/tarball/{sha}", follow_redirects=True)
+        data: dict[str, Any] = r.json()
+        return data
+
+    async def graphql(self, query: str, variables: dict[str, Any]) -> dict[str, Any]:
+        """GitHub GraphQL（必须带 token）。返回 data；有 errors 时抛 GraphQLError。"""
+        r = await self._http.post("/graphql", json={"query": query, "variables": variables})
         r.raise_for_status()
-        return sha, r.content
+        body = r.json()
+        if body.get("errors"):
+            raise GraphQLError("; ".join(e.get("message", "") for e in body["errors"])[:500])
+        data: dict[str, Any] = body.get("data") or {}
+        return data
 
     async def list_labels(self, full_name: str) -> list[dict[str, Any]]:
         return [x async for x in self._paginate(f"/repos/{full_name}/labels", {"per_page": 100})]

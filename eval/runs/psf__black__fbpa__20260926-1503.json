@@ -1,0 +1,668 @@
+{
+  "meta": {
+    "started": "2026-09-26T15:03:25",
+    "source_run": "eval/runs/psf__black__repro__20260925-1519.json",
+    "runs": 2,
+    "package": "black"
+  },
+  "summary": {
+    "n": 12,
+    "eligible": 11,
+    "outcomes": {
+      "fb_pa": 8,
+      "no_fix": 1,
+      "not_fail_before": 2,
+      "fail_after": 1
+    },
+    "fb_pa": 8,
+    "fb_pa_rate": 0.7272727272727273,
+    "fb_pa_ci": [
+      0.4343497069897537,
+      0.9025411942607853
+    ],
+    "proxy_fb_pa": 9,
+    "agree": 8
+  },
+  "cases": [
+    {
+      "number": 4588,
+      "title": "EOF in multi-line string error for valid format string",
+      "reported_version": "25.1.0",
+      "python": "3.10",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 4536,
+        "sha": "5342d2eeda6935a96d2bd0c74072b3c441d76bde",
+        "parent": "9f38928414e6a39044f9b148692e90f3e1fd3433",
+        "committed_at": "2025-03-16T00:41:19Z",
+        "merge": false
+      },
+      "pretend_version": "25.1.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.562,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 22, in <module>\n    assert proc.returncode == 0, (\nAssertionError: Black should accept and format this valid Python 3.10 input, but it failed.\nExpected: exit code 0 and the file reformatted.\nActual exit code: 123\nActual stderr: 'error: cannot format /tmp/tmpw6syv61g/test.py: Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string\\n\\nOh no! 💥 💔 💥\\n1 file failed to reformat.\\n'\nActual stdout: ''\nInput written: 'x = \"test\"\\n\\nif f\"{x}:\\\\\\\\\":y = f\\'{x}\\'; print(y)\\n'",
+          "log_dir": "artifacts\\warden-run-d669c24d30"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.547,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 22, in <module>\n    assert proc.returncode == 0, (\nAssertionError: Black should accept and format this valid Python 3.10 input, but it failed.\nExpected: exit code 0 and the file reformatted.\nActual exit code: 123\nActual stderr: 'error: cannot format /tmp/tmpp3uzpb0b/test.py: Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string\\n\\nOh no! 💥 💔 💥\\n1 file failed to reformat.\\n'\nActual stdout: ''\nInput written: 'x = \"test\"\\n\\nif f\"{x}:\\\\\\\\\":y = f\\'{x}\\'; print(y)\\n'",
+          "log_dir": "artifacts\\warden-run-545e203ec5"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.531,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-698a3e0a49"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.515,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-fb658e1a53"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4399,
+      "title": "Black fails with `ASTSafetyError` on comment line in return type annotation",
+      "reported_version": "24.4.2",
+      "python": "3.10",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 4453,
+        "sha": "2a45cecf2951bb778204dcf63a90f146f4cc9c6c",
+        "parent": "b4d6d8632dea33363eaa0eaad9caf94a223e0f43",
+        "committed_at": "2024-09-16T02:34:02Z",
+        "merge": false
+      },
+      "pretend_version": "24.8.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.532,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 31, in <module>\n    black.format_file_contents(SOURCE, fast=False, mode=black.Mode())\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1085, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1059, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1566, in assert_equivalent\n    raise ASTSafetyError(\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 24.8.1.dev0 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_x9sc6v9c.log",
+          "log_dir": "artifacts\\warden-run-dfd7ef960c"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.516,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 31, in <module>\n    black.format_file_contents(SOURCE, fast=False, mode=black.Mode())\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1085, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1059, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1566, in assert_equivalent\n    raise ASTSafetyError(\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 24.8.1.dev0 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_g02av87i.log",
+          "log_dir": "artifacts\\warden-run-15e0ee7eb7"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.531,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-b95b8374cb"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.5,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-b78ac8d147"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4296,
+      "title": "Standalone comments still partially broken",
+      "reported_version": "24.3.0",
+      "python": "3.12",
+      "proxy": "still_fails_latest",
+      "fix": {
+        "pr": 5144,
+        "sha": "7e8ef6bc1d2d803b01ee6cde752f7f8c5dca8260",
+        "parent": "650983f7b32b15feeb0fa30c0ed1a8b6e2a9b28f",
+        "committed_at": "2026-05-28T19:18:51Z",
+        "merge": false
+      },
+      "pretend_version": "26.5.2.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.578,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 23, in <module>\n    black.format_str(src, mode=black.Mode())\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1254, in format_str\n    return _format_str_once(dst_contents, mode=mode, lines=lines)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1267, in _format_str_once\n    src_node = lib2to3_parse(\n               ^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 111, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 9:0\n    ]\n    ^\nParseError: bad input",
+          "log_dir": "artifacts\\warden-run-d7ba2b2b24"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.547,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 23, in <module>\n    black.format_str(src, mode=black.Mode())\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1254, in format_str\n    return _format_str_once(dst_contents, mode=mode, lines=lines)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1267, in _format_str_once\n    src_node = lib2to3_parse(\n               ^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 111, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 9:0\n    ]\n    ^\nParseError: bad input",
+          "log_dir": "artifacts\\warden-run-4e59344bbe"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.609,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-7124274eb6"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.531,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-ba1944c11f"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4291,
+      "title": "Empty line and `...` and \"unindent does not match any outer indentation level\"",
+      "reported_version": "24.1.0",
+      "python": "3.12",
+      "proxy": "fb_pa",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_fix",
+      "error": null
+    },
+    {
+      "number": 4280,
+      "title": "Crash on formatting `case case` syntax when line length set to be small",
+      "reported_version": "24.2.0",
+      "python": "3.10",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 5147,
+        "sha": "13e97b44997539a16a2454d9483a746b586253e0",
+        "parent": "7613840124a7d6fdf7ce95157f9fc40360c2db88",
+        "committed_at": "2026-05-22T14:33:10Z",
+        "merge": false
+      },
+      "pretend_version": "26.5.2.dev0",
+      "before": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.875,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-09bab57c63"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.844,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-5304d4b5f9"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.5,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-62dca518de"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.5,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-9d460e6a94"
+        }
+      ],
+      "outcome": "not_fail_before",
+      "error": null
+    },
+    {
+      "number": 4261,
+      "title": "Fails to parse backslash on line by itself",
+      "reported_version": "24.2.0",
+      "python": "3.12",
+      "proxy": "l1_latest_unknown",
+      "fix": {
+        "pr": 4343,
+        "sha": "b677a643c5322b6af2dbca1f8f7a4f8c98e732aa",
+        "parent": "8447af4d8df5ae20260e0983c085ca0c04674fe6",
+        "committed_at": "2024-06-01T20:01:36Z",
+        "merge": false
+      },
+      "pretend_version": "24.4.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.547,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 19, in <module>\n    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1225, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1239, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 3:4:     pass",
+          "log_dir": "artifacts\\warden-run-86cf5789cb"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.531,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 19, in <module>\n    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1225, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1239, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 3:4:     pass",
+          "log_dir": "artifacts\\warden-run-d32c02bcf6"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": false,
+          "duration_s": 0.531,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 20, in <module>\n    assert formatted == \"class Plotter:\\n    pass\\n\", (\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: expected black to format the file successfully to 'class Plotter:\\n    pass\\n', got 'class Plotter:\\n\\n    pass\\n'",
+          "log_dir": "artifacts\\warden-run-a31375f84e"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": false,
+          "duration_s": 0.515,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 20, in <module>\n    assert formatted == \"class Plotter:\\n    pass\\n\", (\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: expected black to format the file successfully to 'class Plotter:\\n    pass\\n', got 'class Plotter:\\n\\n    pass\\n'",
+          "log_dir": "artifacts\\warden-run-6a3d853ccd"
+        }
+      ],
+      "outcome": "fail_after",
+      "error": null
+    },
+    {
+      "number": 4220,
+      "title": "`black` internal error on line-broken `==`",
+      "reported_version": "24.1.1",
+      "python": "3.11",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 4248,
+        "sha": "e4bfedbec2e8b10cc6b7b31442478f05db0ce06d",
+        "parent": "d0287e1f7558d97e6c0ebd6dc5bcb5b970e2bf8c",
+        "committed_at": "2024-03-01T15:02:56Z",
+        "merge": false
+      },
+      "pretend_version": "24.2.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.5,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 35, in <module>\n    result = black.format_file_contents(SRC, fast=False, mode=black.Mode())\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1073, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1047, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1535, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_qso5_s4y.log",
+          "log_dir": "artifacts\\warden-run-ff57e242a2"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.5,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 35, in <module>\n    result = black.format_file_contents(SRC, fast=False, mode=black.Mode())\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1073, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1047, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1535, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_g0uvtnd2.log",
+          "log_dir": "artifacts\\warden-run-83710c1702"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.5,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-9143e094e2"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.562,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-acde22c6a6"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4062,
+      "title": "Crash with preview style + line length 1",
+      "reported_version": "23.11.0",
+      "python": "3.12",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 4086,
+        "sha": "50d5756e8e63b17e4523f096f312011273ce640f",
+        "parent": "3416b2c82d51f27ce55c31ef0bfe4a9e21816611",
+        "committed_at": "2023-12-05T18:19:24Z",
+        "merge": false
+      },
+      "pretend_version": "23.11.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.891,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 7, in <module>\n    black.format_file_contents(src, fast=False, mode=mode)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1011, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 985, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1447, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line 1). Please report a bug on https://github.com/psf/black/issues.  This invalid output might be helpful: /tmp/blk_3l7t3hw7.log",
+          "log_dir": "artifacts\\warden-run-188977b532"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.515,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 7, in <module>\n    black.format_file_contents(src, fast=False, mode=mode)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1011, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 985, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1447, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line 1). Please report a bug on https://github.com/psf/black/issues.  This invalid output might be helpful: /tmp/blk_uuini10f.log",
+          "log_dir": "artifacts\\warden-run-1d812c378a"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.485,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-34461cb1b3"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-62afe2dd4d"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4036,
+      "title": "hug_parens_with_braces_and_square_brackets: \"Black produced code that is not equivalent to the source\" error in preview mode on function call with two `type:ignore` comments",
+      "reported_version": "23.11.0",
+      "python": "3.12",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 5271,
+        "sha": "011942a84347316f60ab1b3fe7f9563f8210f2cc",
+        "parent": "e744e77f4983c65101937931947862403ed75718",
+        "committed_at": "2026-08-05T21:33:57Z",
+        "merge": false
+      },
+      "pretend_version": "26.5.2.dev0",
+      "before": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.516,
+          "tail": "foo(  # type: ignore\n    [a]  # type: ignore\n)",
+          "log_dir": "artifacts\\warden-run-a3961504cb"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.516,
+          "tail": "foo(  # type: ignore\n    [a]  # type: ignore\n)",
+          "log_dir": "artifacts\\warden-run-3d9c5a8031"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.515,
+          "tail": "foo(  # type: ignore\n    [a]  # type: ignore\n)",
+          "log_dir": "artifacts\\warden-run-76ed02763d"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.516,
+          "tail": "foo(  # type: ignore\n    [a]  # type: ignore\n)",
+          "log_dir": "artifacts\\warden-run-411659b2c6"
+        }
+      ],
+      "outcome": "not_fail_before",
+      "error": null
+    },
+    {
+      "number": 3948,
+      "title": "Fails to parse type alias containing lambda",
+      "reported_version": "23.9.1",
+      "python": "3.12",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 3949,
+        "sha": "722735d20ebdc66c0da0e0df7658293455694500",
+        "parent": "abe57e3d92727f1b26c717fad3978159b987fe79",
+        "committed_at": "2023-10-16T17:53:38Z",
+        "merge": false
+      },
+      "pretend_version": "23.9.2.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.5,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 14, in <module>\n    formatted = black.format_str(src, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 1:16: type Alias[T] = lambda: T",
+          "log_dir": "artifacts\\warden-run-0f3431fdbb"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.484,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 14, in <module>\n    formatted = black.format_str(src, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 1:16: type Alias[T] = lambda: T",
+          "log_dir": "artifacts\\warden-run-612d3193b5"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.484,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-68e5151fec"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.484,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-be8e86eb1e"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 3790,
+      "title": "Black 23.7.0 thinks accessing an attribute named `type` inside brackets in a switch statement is invalid syntax",
+      "reported_version": "23.7.0",
+      "python": "3.11",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 3950,
+        "sha": "bb588073ab286a9f1f8d839ab2cebe13011dd22c",
+        "parent": "722735d20ebdc66c0da0e0df7658293455694500",
+        "committed_at": "2023-10-17T07:59:15Z",
+        "merge": false
+      },
+      "pretend_version": "23.9.2.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.5,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 30, in <module>\n    formatted = black.format_str(source, mode=mode)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):",
+          "log_dir": "artifacts\\warden-run-7e9a5c198f"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.484,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 30, in <module>\n    formatted = black.format_str(source, mode=mode)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):",
+          "log_dir": "artifacts\\warden-run-5f0ef37be9"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.5,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-7266d7756e"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.5,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-e6c5084194"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 3727,
+      "title": "Black fails on docstring with linebreak",
+      "reported_version": "23.3.0",
+      "python": "3.9",
+      "proxy": "fb_pa",
+      "fix": {
+        "pr": 4008,
+        "sha": "e50110353ab81b539aaee686453c18c707b5f045",
+        "parent": "ddfecf06c13dd86205c851e340124e325ed82c5c",
+        "committed_at": "2023-10-31T15:27:11Z",
+        "merge": false
+      },
+      "pretend_version": "23.10.2.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.516,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 30, in <module>\n    black.format_file_contents(src, fast=False, mode=black.Mode())\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 938, in format_file_contents\n    check_stability_and_equivalence(src_contents, dst_contents, mode=mode)\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 918, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 1372, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_ra5xxwy4.log",
+          "log_dir": "artifacts\\warden-run-e38c2f0bec"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.515,
+          "tail": "Traceback (most recent call last):\n  File \"/workspace/repro.py\", line 30, in <module>\n    black.format_file_contents(src, fast=False, mode=black.Mode())\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 938, in format_file_contents\n    check_stability_and_equivalence(src_contents, dst_contents, mode=mode)\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 918, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 1372, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk__jfl3gnq.log",
+          "log_dir": "artifacts\\warden-run-4b809587ae"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.484,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-a77723616a"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.484,
+          "tail": "",
+          "log_dir": "artifacts\\warden-run-f4f1d71d0a"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    }
+  ]
+}

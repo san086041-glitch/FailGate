@@ -117,7 +117,7 @@ def judge(
             **base,
         )
 
-    same = sum(1 for r in runs if _same_failure(r, observed, package))
+    same = sum(1 for r in runs if same_failure(r, observed, package))
     rate = same / len(runs)
     if rate < 1.0:
         return Verdict(
@@ -136,8 +136,9 @@ def judge(
     )
 
 
-def _same_failure(run: ExecResult, first: TraceSignature | None, package: str | None) -> bool:
-    """重跑时"又失败了一次"的标准：失败，且签名与第一次一致（换了一种失败不算）。"""
+def same_failure(run: ExecResult, first: TraceSignature | None, package: str | None) -> bool:
+    """重跑时"又失败了一次"的标准：失败，且签名与第一次一致（换了一种失败不算）。
+    严格 FB/PA 也用它判断"修复前的失败"是不是 L1 复现时的那个失败。"""
     if not run.failed:
         return False
     if first is None:

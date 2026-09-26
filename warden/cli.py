@@ -1073,5 +1073,162 @@ def replay_repro(
     asyncio.run(run())
 
 
+@repro_app.command("source")
+def repro_source(
+    repo: Annotated[str, typer.Argument(help="源码仓库 owner/name")],
+    ref: Annotated[str, typer.Argument(help="提交 SHA、分支或 tag")],
+    script: Annotated[Path, typer.Option(help="复现脚本（在沙箱里以 python repro.py 运行）")],
+    package: Annotated[str, typer.Option(help="PyPI 包名：推算伪版本号、按包名过滤栈帧")],
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    python: Annotated[str | None, typer.Option(help="Python 版本，默认按提交日期选")] = None,
+    traceback_file: Annotated[
+        Path | None, typer.Option(help="issue 里报告的堆栈，用于判定")
+    ] = None,
+) -> None:
+    """source 模式：从某个提交的源码构建环境 → 跑脚本 → 判定（不调用 LLM）。"""
+    from warden.platforms.github_rest import GitHubRest
+    from warden.repro.config import PackageConfig
+    from warden.repro.package import SETUP_ERRORS, PackageReproducer
+    from warden.repro.pypi import PyPIClient
+    from warden.repro.source import (
+        SourceError,
+        fetch_github_tree,
+        pick_python_for_commit,
+        pretend_version,
+        source_env,
+    )
+
+    settings = Settings()
+    sandbox = build_sandbox(settings)
+    cache = _env_cache(settings, sandbox)
+    cfg = PackageConfig(name=package, import_name=import_name)
+    tb = traceback_file.read_text(encoding="utf-8") if traceback_file else None
+
+    async def run() -> None:
+        gh, pypi = GitHubRest(settings.github_token), PyPIClient(settings.pypi_url)
+        try:
+            tree = await fetch_github_tree(gh, repo, ref)
+            py = pick_python_for_commit(tree, reported=python)
+            version = pretend_version(await pypi.releases(package), tree.committed_at)
+            day = f"{tree.committed_at:%Y-%m-%d}" if tree.committed_at else "日期未知"
+            size = len(tree.tarball) / 1e6
+            typer.echo(f"{repo}@{tree.sha[:10]}（{day}） · Python {py} · "
+                       f"伪版本号 {version} · 源码包 {size:.1f} MB")
+            env = await source_env(cache, tree, python=py, version=version)
+            vr = await PackageReproducer(
+                sandbox, cache, pypi, run_timeout_s=settings.sandbox_run_timeout_seconds
+            ).evaluate(cfg, env, f"{tree.sha[:10]}", script.read_text(encoding="utf-8"),
+                       reported_traceback=tb)
+        except (*SETUP_ERRORS, SourceError) as e:
+            typer.echo(f"环境没搭起来：{e}")
+            raise typer.Exit(1) from e
+        finally:
+            await gh.aclose()
+            await pypi.aclose()
+        v = vr.verdict
+        typer.echo(f"环境{'命中' if vr.cache_hit else '新建'} {vr.env_key[:12]}：{v.kind}"
+                   f" 一致度={v.match}（{v.match_method}） 运行 {v.runs} 次 · {v.reason}")
+        typer.echo(f"日志={vr.log_dir}\n{vr.output_tail}")
+
+    asyncio.run(run())
+
+
+@replay_app.command("fbpa")
+def replay_fbpa(
+    repo: Annotated[str, typer.Argument(help="owner/name（修复提交和源码都从这里取）")],
+    source_run: Annotated[
+        Path, typer.Option("--from", help="复现回放的结果 eval/runs/*__repro__*.json")
+    ],
+    runs: Annotated[int, typer.Option(help="每个版本跑几次，结果必须一致")] = 2,
+    numbers: Annotated[str | None, typer.Option(help="逗号分隔的编号，只跑这些（调试用）")] = None,
+) -> None:
+    """严格 FB/PA：把复现回放里的 L1 脚本放到修复提交的前后各跑一次。不调用 LLM。
+
+    需要 GITHUB_TOKEN（查修复提交用 GraphQL）和 Docker。
+    """
+    import httpx
+
+    from warden.platforms.github_rest import GitHubRest, GraphQLError
+    from warden.replay import fbpa
+    from warden.replay.fixes import FixCommit, find_fix
+    from warden.repro.issue import IssueReproReport
+    from warden.repro.package import SETUP_ERRORS
+    from warden.repro.pypi import PyPIClient
+    from warden.repro.sandbox import ExecResult
+    from warden.repro.source import (
+        SourceError,
+        SourceTree,
+        fetch_github_tree,
+        pretend_version,
+        run_script,
+        source_env,
+    )
+
+    settings = Settings()
+    if not settings.github_token:
+        raise typer.BadParameter("需要 GITHUB_TOKEN（GraphQL 必须认证）")
+    data = json.loads(source_run.read_text(encoding="utf-8"))
+    reports = [IssueReproReport.model_validate(r) for r in data["reports"]]
+    if numbers:
+        wanted = {int(x) for x in numbers.split(",") if x.strip()}
+        reports = [r for r in reports if r.number in wanted]
+    if not reports:
+        raise typer.BadParameter("没有可回放的 issue")
+    package = reports[0].repro.package
+    sandbox = build_sandbox(settings)
+    cache = _env_cache(settings, sandbox)
+    started = datetime.now()
+    run_id = f"{repo.replace('/', '__')}__fbpa__{started:%Y%m%d-%H%M}"
+    run_path, report_path = _run_paths(run_id)
+    meta = {"started": started.isoformat(timespec="seconds"),
+            "source_run": source_run.as_posix(), "runs": runs, "package": package}
+
+    async def run() -> None:
+        gh, pypi = GitHubRest(settings.github_token), PyPIClient(settings.pypi_url)
+        trees: dict[str, SourceTree] = {}
+
+        async def pretend(fix: FixCommit) -> str:
+            return pretend_version(await pypi.releases(package), fix.committed_at)
+
+        async def run_at(sha: str, python: str, version: str, script: str) -> list[ExecResult]:
+            if sha not in trees:
+                trees[sha] = await fetch_github_tree(gh, repo, sha)
+            env = await source_env(cache, trees[sha], python=python, version=version)
+            typer.echo(f"    {sha[:10]} 环境{'命中' if env.cache_hit else '新建'}")
+            return [
+                await run_script(sandbox, env, script,
+                                 timeout_s=settings.sandbox_run_timeout_seconds)
+                for _ in range(runs)
+            ]
+
+        cases: list[fbpa.FbpaCase] = []
+        try:
+            for i, report in enumerate(reports, 1):
+                typer.echo(f"\n===== [{i}/{len(reports)}] #{report.number} {report.title[:70]}")
+                case = await fbpa.evaluate_case(
+                    report,
+                    find_fix=lambda n: find_fix(gh, repo, n),
+                    pretend=pretend, run_at=run_at,
+                    setup_errors=(*SETUP_ERRORS, SourceError, GraphQLError, httpx.HTTPError),
+                )
+                cases.append(case)
+                pr = f"PR #{case.fix.pr}" if case.fix and case.fix.pr else "—"
+                typer.echo(f"  → {case.outcome}（{pr}；代理：{case.proxy}）"
+                           + (f" {case.error[:160]}" if case.error else ""))
+                # 每跑完一个就落盘，中途出错不丢已有结果
+                run_path.parent.mkdir(parents=True, exist_ok=True)
+                report_path.parent.mkdir(parents=True, exist_ok=True)
+                run_path.write_text(fbpa.dump(cases, meta), encoding="utf-8")
+                report_path.write_text(fbpa.render(repo, cases, meta), encoding="utf-8")
+        finally:
+            await gh.aclose()
+            await pypi.aclose()
+        s = fbpa.summarize(cases)
+        typer.echo(f"\n严格 FB/PA：{s['fb_pa']}/{s['eligible']}（代理 {s['proxy_fb_pa']}）"
+                   f"\n报告：{report_path}")
+
+    asyncio.run(run())
+
+
 if __name__ == "__main__":
     app()
