@@ -24,7 +24,7 @@ import io
 import tarfile
 import tempfile
 import tomllib
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -43,12 +43,14 @@ TARBALL_NAME = "src.tar.gz"
 MAX_TARBALL_BYTES = 50 * 1024 * 1024
 _MAX_PYPROJECT_BYTES = 256 * 1024
 _SKIP_DIRS = {".git", "__pycache__", ".mypy_cache", ".pytest_cache", ".venv", ".tox"}
+TEST_DIRS = ("tests", "test", "testing")
 
-# 在 install 沙箱里执行。argv 固定为 python -c INSTALLER <tarball> <目标目录>，
-# 白名单按整段脚本精确匹配，调用方改不了脚本内容。
+# 在 install 沙箱里执行。argv 固定为 python -c INSTALLER <tarball> <目标目录> [额外依赖…]，
+# 白名单按整段脚本精确匹配，调用方改不了脚本内容。额外依赖（L2 要的 pytest==X）来自
+# 程序自己算出的版本号，不来自 issue 或模型。
 INSTALLER = r'''
 import os, subprocess, sys, tarfile
-src, dest = sys.argv[1], sys.argv[2]
+src, dest, extra = sys.argv[1], sys.argv[2], sys.argv[3:]
 if not hasattr(tarfile, "data_filter"):
     sys.exit("这个 Python 的 tarfile 没有 data 过滤器，拒绝解压不可信的源码包")
 with tarfile.open(src, "r:gz") as tar:
@@ -66,7 +68,7 @@ with tarfile.open(src, "r:gz") as tar:
     os.makedirs(dest, exist_ok=True)
     tar.extractall(dest, members=keep, filter="data")
 os.remove(src)
-sys.exit(subprocess.call([sys.executable, "-m", "pip", "install", "--no-cache-dir", dest]))
+sys.exit(subprocess.call([sys.executable, "-m", "pip", "install", "--no-cache-dir", dest, *extra]))
 '''
 INSTALL_PREFIXES: tuple[tuple[str, ...], ...] = (("python", "-c", INSTALLER),)
 
@@ -105,6 +107,14 @@ class SourceTree:
                 return tomllib.loads(f.read().decode("utf-8", errors="replace"))
             except tomllib.TOMLDecodeError:
                 return None
+
+    def test_dir(self) -> str:
+        """仓库的测试目录（相对仓库根）：tests / test / testing 里第一个存在的，默认 tests。"""
+        top = self.top_dir
+        with tarfile.open(fileobj=io.BytesIO(self.tarball), mode="r:gz") as tar:
+            dirs = {m.name.split("/")[1] for m in tar.getmembers()
+                    if m.name.count("/") >= 2 and m.name.startswith(f"{top}/")}
+        return next((d for d in TEST_DIRS if d in dirs), TEST_DIRS[0])
 
     def requires_python(self) -> SpecifierSet | None:
         project = (self.pyproject() or {}).get("project")
@@ -175,8 +185,20 @@ def pretend_version(releases: Mapping[Version, Release], committed_at: datetime 
     return ".".join(str(x) for x in (*base[:-1], base[-1] + 1)) + ".dev0"
 
 
-async def fetch_github_tree(gh: GitHubRest, repo: str, ref: str) -> SourceTree:
-    """下载 GitHub 上某个提交的源码包（边下边数，超过上限就中止）。"""
+async def fetch_github_tree(
+    gh: GitHubRest, repo: str, ref: str | None = None, *, before: datetime | None = None
+) -> SourceTree:
+    """下载 GitHub 上某个提交的源码包（边下边数，超过上限就中止）。
+
+    ref 和 before 二选一：before 表示默认分支上不晚于这个时间的最后一个提交。
+    """
+    if ref is None:
+        if before is None:
+            raise ValueError("ref 和 before 至少给一个")
+        found = await gh.commit_before(repo, before)
+        if found is None:
+            raise SourceError(f"{repo} 在 {before:%Y-%m-%d} 之前没有提交")
+        ref = str(found["sha"])
     info = await gh.commit(repo, ref)
     date = (info.get("commit") or {}).get("committer", {}).get("date")
     try:
@@ -204,15 +226,24 @@ async def run_script(
 
 
 async def source_env(
-    cache: EnvCache, tree: SourceTree, *, python: str, version: str
+    cache: EnvCache,
+    tree: SourceTree,
+    *,
+    python: str,
+    version: str,
+    extra_requirements: Sequence[str] = (),
 ) -> Env:
-    """准备（或命中缓存）某个提交的源码环境。失败时抛 EnvBuildError / SandboxError。"""
+    """准备（或命中缓存）某个提交的源码环境。失败时抛 EnvBuildError / SandboxError。
+
+    extra_requirements：和项目一起装的依赖（L2 的 pytest==X），会进入安装命令和缓存 key。
+    """
     check_tarball(tree.tarball)
     with tempfile.TemporaryDirectory() as tmp:
         await asyncio.to_thread(Path(tmp, TARBALL_NAME).write_bytes, tree.tarball)
         return await cache.get(
             python=python,
-            install_argv=["python", "-c", INSTALLER, f"/workspace/{TARBALL_NAME}", SRC_DIR],
+            install_argv=["python", "-c", INSTALLER, f"/workspace/{TARBALL_NAME}", SRC_DIR,
+                          *extra_requirements],
             mode="source",
             # 摘要：fixture 目录没有真正的提交 SHA，内容一变就必须得到新环境
             key_extra={"repo": tree.repo, "sha": tree.sha, "version": version,

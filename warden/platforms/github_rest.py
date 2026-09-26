@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import AsyncIterator
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -96,6 +96,21 @@ class GitHubRest:
         r.raise_for_status()
         data: dict[str, Any] = r.json()
         return data
+
+    async def commit_before(self, full_name: str, until: datetime) -> dict[str, Any] | None:
+        """默认分支上不晚于 until 的最后一个提交（回放的"时间旅行"：issue 创建时的代码）。
+
+        不带时区的时间按 UTC 处理（回放库里存的就是 UTC），并显式写成 Z 结尾：不带时区
+        发给 GitHub 会被按别的时区解释，实测取到了 issue 创建 15 分钟之后的提交。
+        """
+        if until.tzinfo is None:
+            until = until.replace(tzinfo=UTC)
+        stamp = until.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        params: dict[str, str | int] = {"until": stamp, "per_page": 1}
+        r = await self._http.get(f"/repos/{full_name}/commits", params=params)
+        r.raise_for_status()
+        items = r.json()
+        return items[0] if items else None
 
     async def graphql(self, query: str, variables: dict[str, Any]) -> dict[str, Any]:
         """GitHub GraphQL（必须带 token）。返回 data；有 errors 时抛 GraphQLError。"""

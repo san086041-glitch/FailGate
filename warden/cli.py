@@ -19,7 +19,7 @@ from warden.settings import Settings
 if TYPE_CHECKING:
     from warden.repro.config import PackageConfig
     from warden.repro.envcache import EnvCache
-    from warden.repro.issue import IssueReproReport
+    from warden.repro.issue import IssueReproReport, L2IssueReport
     from warden.repro.package import PackageRepro
 
 _CJK = re.compile(r"[\u4e00-\u9fff]")
@@ -1181,7 +1181,8 @@ def replay_fbpa(
     run_id = f"{repo.replace('/', '__')}__fbpa__{started:%Y%m%d-%H%M}"
     run_path, report_path = _run_paths(run_id)
     meta = {"started": started.isoformat(timespec="seconds"),
-            "source_run": source_run.as_posix(), "runs": runs, "package": package}
+            "source_run": source_run.as_posix(), "runs": runs, "package": package,
+            "kind": "L1 脚本"}
 
     async def run() -> None:
         gh, pypi = GitHubRest(settings.github_token), PyPIClient(settings.pypi_url)
@@ -1206,7 +1207,7 @@ def replay_fbpa(
             for i, report in enumerate(reports, 1):
                 typer.echo(f"\n===== [{i}/{len(reports)}] #{report.number} {report.title[:70]}")
                 case = await fbpa.evaluate_case(
-                    report,
+                    fbpa.candidate_from_l1(report),
                     find_fix=lambda n: find_fix(gh, repo, n),
                     pretend=pretend, run_at=run_at,
                     setup_errors=(*SETUP_ERRORS, SourceError, GraphQLError, httpx.HTTPError),
@@ -1225,6 +1226,227 @@ def replay_fbpa(
             await pypi.aclose()
         s = fbpa.summarize(cases)
         typer.echo(f"\n严格 FB/PA：{s['fb_pa']}/{s['eligible']}（代理 {s['proxy_fb_pa']}）"
+                   f"\n报告：{report_path}")
+
+    asyncio.run(run())
+
+
+
+class _L2Runtime:
+    """L2 需要的一组长生命周期对象：LLM、沙箱、环境缓存、PyPI、GitHub。"""
+
+    def __init__(self, settings: Settings) -> None:
+        from warden.app import build_llm
+        from warden.platforms.github_rest import GitHubRest
+        from warden.repro.l2 import TestReproducer
+        from warden.repro.pypi import PyPIClient
+
+        llm = build_llm(settings)
+        if llm is None:
+            raise typer.BadParameter("请先在 .env 中设置 LLM_API_KEY")
+        self.settings = settings
+        self.llm = llm
+        self.sandbox = build_sandbox(settings)
+        self.pypi = PyPIClient(settings.pypi_url)
+        self.gh = GitHubRest(settings.github_token)
+        self.tester = TestReproducer(
+            self.sandbox, _env_cache(settings, self.sandbox), self.pypi,
+            run_timeout_s=settings.sandbox_run_timeout_seconds,
+        )
+
+    async def run(
+        self, repo: str, source_repo: str, doc: IssueDoc, cfg: PackageConfig,
+        *, max_steps: int | None = None,
+    ) -> L2IssueReport:
+        from warden.repro.issue import reproduce_issue_l2
+
+        s = self.settings
+        if doc.created_at is None:
+            raise typer.BadParameter(f"#{doc.number} 没有创建时间，无法确定 issue 时的代码")
+        return await reproduce_issue_l2(
+            repo=repo, number=doc.number, title=doc.title, body=doc.body,
+            created_at=doc.created_at, cfg=cfg, source_repo=source_repo, gh=self.gh,
+            llm=self.llm, small_model=s.llm_model_small, large_model=s.llm_model_large,
+            tester=self.tester, max_steps=max_steps or s.repro_max_steps,
+            max_attempts=s.repro_max_attempts, budget_usd=s.repro_budget_usd,
+            artifacts_dir=Path(s.sandbox_artifacts_dir),
+        )
+
+    async def aclose(self) -> None:
+        await self.gh.aclose()
+        await self.pypi.aclose()
+        await self.llm.aclose()
+
+
+def _echo_l2_report(report: L2IssueReport) -> None:
+    src, a = report.source, report.agent
+    typer.echo(f"#{report.number} {report.title[:70]}")
+    sha = src.sha[:10] if src.sha else "—"
+    typer.echo(f"  issue 时的提交 {sha} · Python {src.python} · {src.pytest} · {src.test_path}")
+    if a is not None:
+        typer.echo(f"  Agent：{a.status} · {a.steps} 步 · 提交 {len(a.attempts)} 次 · "
+                   f"{a.duration_s}s · ${a.cost_usd:.4f}")
+        for att in a.attempts:
+            typer.echo(f"    提交 {att.n}：{att.kind} · {att.reason[:120]}")
+    typer.echo(f"  证据等级：{src.level}" + (f" · {src.error[:300]}" if src.error else ""))
+    if src.level.value == "L2" and a and a.final_script:
+        typer.echo(f"\n--- {src.test_path} ---\n{a.final_script}")
+    typer.echo(f"  花费 ${report.total_cost_usd:.4f}；对话记录 {a.transcript_path if a else '—'}")
+
+
+@repro_app.command("l2")
+def repro_l2(
+    repo: Annotated[str, typer.Argument(help="owner/name（issue 所在仓库）")],
+    number: Annotated[int, typer.Argument(help="issue 编号（必须已在索引里）")],
+    package: Annotated[str, typer.Option(help="PyPI 包名")],
+    source_repo: Annotated[
+        str | None, typer.Option(help="源码仓库，默认就是 issue 所在仓库")
+    ] = None,
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库连接串，默认用配置")] = None,
+    max_steps: Annotated[int | None, typer.Option(help="工具调用步数上限")] = None,
+) -> None:
+    """L2：在 issue 创建时的代码上，Agent 写一个仓库内的失败测试（source 模式）。会花钱。"""
+    from warden.repro.config import PackageConfig
+
+    settings = Settings()
+    cfg = PackageConfig(name=package, import_name=import_name)
+
+    async def run() -> None:
+        docs = await _load_issue_docs(db_url or settings.warden_db_url, repo, [number])
+        if not docs:
+            raise typer.BadParameter(f"{repo}#{number} 不在索引里，先运行 warden index build")
+        rt = _L2Runtime(settings)
+        try:
+            report = await rt.run(repo, source_repo or repo, docs[0], cfg, max_steps=max_steps)
+        finally:
+            await rt.aclose()
+        _echo_l2_report(report)
+
+    asyncio.run(run())
+
+
+@replay_app.command("l2")
+def replay_l2(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    package: Annotated[str, typer.Option(help="PyPI 包名")],
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    limit: Annotated[int, typer.Option(help="按选样规则取最新的多少个 issue")] = 12,
+    offset: Annotated[int, typer.Option(help="跳过最新的多少个（开发集），用来取留出集")] = 0,
+    since: Annotated[str, typer.Option(help="只取这个日期之后创建的 issue")] = "2022-01-01",
+    numbers: Annotated[
+        str | None, typer.Option(help="逗号分隔的编号，指定时不按规则选样（调试用）")
+    ] = None,
+    runs: Annotated[int, typer.Option(help="严格 FB/PA 时每个版本跑几次")] = 2,
+    db_url: Annotated[str, typer.Option("--db", help="回放语料库")] = REPLAY_DB,
+) -> None:
+    """L2 回放：Agent 在 issue 时的代码上写仓库内的失败测试，再用严格 FB/PA 检验。会花钱。
+
+    选样规则和 replay repro 相同；需要 GITHUB_TOKEN 和 Docker。
+    """
+    import httpx
+
+    from warden.platforms.github_rest import GraphQLError
+    from warden.replay import fbpa
+    from warden.replay import l2 as l2replay
+    from warden.replay.fixes import FixCommit, find_fix
+    from warden.replay.repro import select_issues
+    from warden.repro.agent import TEST_PROMPT_VERSION
+    from warden.repro.config import PackageConfig
+    from warden.repro.l2 import L2Unsupported
+    from warden.repro.package import SETUP_ERRORS
+    from warden.repro.sandbox import ExecResult
+    from warden.repro.source import SourceError, SourceTree, fetch_github_tree
+
+    settings = Settings()
+    if not settings.github_token:
+        raise typer.BadParameter("需要 GITHUB_TOKEN（查修复提交用 GraphQL）")
+    cfg = PackageConfig(name=package, import_name=import_name)
+    started = datetime.now()
+    run_id = f"{repo.replace('/', '__')}__l2__{started:%Y%m%d-%H%M}"
+    run_path, report_path = _run_paths(run_id)
+    selection = (
+        f"指定编号 {numbers}" if numbers else
+        f"和 replay repro 相同的规则，{since} 之后创建，按编号从新到旧跳过 {offset} 个、"
+        f"取 {limit} 个"
+    )
+    meta = {
+        "started": started.isoformat(timespec="seconds"), "model": settings.llm_model_large,
+        "prompt": TEST_PROMPT_VERSION, "selection": selection,
+        "max_steps": settings.repro_max_steps, "max_attempts": settings.repro_max_attempts,
+        "budget_usd": settings.repro_budget_usd, "runs": runs, "kind": "L2 测试",
+    }
+
+    async def run() -> None:
+        if numbers:
+            wanted = [int(x) for x in numbers.split(",") if x.strip()]
+        else:
+            db = Database(db_url)
+            await db.create_all()
+            async with db.session() as s:
+                repo_row = await s.scalar(select(Repo).where(Repo.full_name == repo))
+                if repo_row is None:
+                    raise typer.BadParameter(f"{repo} 不在回放库里")
+                all_docs = (await s.scalars(
+                    select(IssueDoc).where(IssueDoc.repo_id == repo_row.id)
+                )).all()
+            await db.dispose()
+            wanted = [d.number for d in select_issues(
+                all_docs, since=datetime.fromisoformat(since), limit=limit, offset=offset
+            )]
+        docs = await _load_issue_docs(db_url, repo, wanted)
+        typer.echo(f"选中 {len(docs)} 个：{[d.number for d in docs]}")
+        rt = _L2Runtime(settings)
+        trees: dict[str, SourceTree] = {}
+        reports: list[L2IssueReport] = []
+        cases: list[fbpa.FbpaCase] = []
+        run_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            for i, doc in enumerate(docs, 1):
+                typer.echo(f"\n===== [{i}/{len(docs)}] #{doc.number} {doc.title[:70]}")
+                report = await rt.run(repo, repo, doc, cfg)
+                reports.append(report)
+                a = report.agent
+                typer.echo(f"  → {report.source.level} · {a.status if a else report.source.error}"
+                           f" · ${report.total_cost_usd:.4f}")
+                pin, src_version = report.source.pytest, report.source.version
+
+                async def pretend(fix: FixCommit, v: str | None = src_version) -> str:
+                    return v or "0.0.0.dev0"
+
+                async def run_at(sha: str, python: str, version: str, code: str,
+                                 pin: str | None = pin, number: int = doc.number
+                                 ) -> list[ExecResult]:
+                    # 修复前后用和 L2 时同一套 Python、pytest、伪版本号：只让代码变化
+                    if sha not in trees:
+                        trees[sha] = await fetch_github_tree(rt.gh, repo, sha)
+                    prepared = await rt.tester.prepare(
+                        cfg, trees[sha], number=number, python=python, version=version,
+                        pytest=pin,
+                    )
+                    return [await rt.tester.run_once(prepared, code) for _ in range(runs)]
+
+                case = await fbpa.evaluate_case(
+                    fbpa.candidate_from_l2(report),
+                    find_fix=lambda n: find_fix(rt.gh, repo, n),
+                    pretend=pretend, run_at=run_at,
+                    setup_errors=(*SETUP_ERRORS, SourceError, L2Unsupported, GraphQLError,
+                                  httpx.HTTPError),
+                )
+                cases.append(case)
+                if case.outcome != "no_script":
+                    typer.echo(f"  严格 FB/PA：{case.outcome}")
+                # 每跑完一个就落盘，中途出错不丢已有结果
+                run_path.write_text(l2replay.dump(reports, cases, meta), encoding="utf-8")
+                report_path.write_text(
+                    l2replay.render(repo, reports, cases, meta), encoding="utf-8"
+                )
+        finally:
+            await rt.aclose()
+        sm = l2replay.summarize(reports, cases)
+        typer.echo(f"\nL2 {sm['l2']}/{sm['n']}；L2 测试严格 FB/PA "
+                   f"{sm['fb_pa']}/{sm['fbpa_eligible']}；花费 ${sm['total_cost_usd']}"
                    f"\n报告：{report_path}")
 
     asyncio.run(run())

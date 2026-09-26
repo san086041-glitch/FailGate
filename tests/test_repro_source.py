@@ -389,3 +389,20 @@ async def test_real_installer_refuses_traversal(sandbox: DockerSandbox, tmp_path
     evil = make_tar({"top/ok.py": b"", "top/../../../home/warden/.bashrc": b"pwned"})
     with pytest.raises(EnvBuildError, match="OutsideDestination|outside"):
         await source_env(cache, tree_of(evil), python="3.12", version="1")
+
+
+async def test_commit_before_sends_utc_with_z():
+    # 回放库里的时间不带时区；不带时区发给 GitHub 会被按别的时区解释，取到"未来"的提交
+    seen: list[str] = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        seen.append(req.url.params["until"])
+        return httpx.Response(200, json=[{"sha": "a" * 40}])
+
+    gh = gh_with(handler)
+    try:
+        await gh.commit_before("o/r", datetime(2023, 11, 21, 6, 18, 5))
+        await gh.commit_before("o/r", datetime.fromisoformat("2023-11-21T15:18:05+09:00"))
+    finally:
+        await gh.aclose()
+    assert seen == ["2023-11-21T06:18:05Z", "2023-11-21T06:18:05Z"]

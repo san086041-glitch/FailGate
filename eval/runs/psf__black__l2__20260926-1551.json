@@ -1,0 +1,2180 @@
+{
+  "meta": {
+    "started": "2026-09-26T15:51:55",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "和 replay repro 相同的规则，2022-01-01 之后创建，按编号从新到旧跳过 12 个、取 12 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.5,
+    "runs": 2,
+    "kind": "L2 测试"
+  },
+  "summary": {
+    "n": 12,
+    "outcomes": {
+      "l2": 12
+    },
+    "l2": 12,
+    "l2_rate": 1.0,
+    "l2_ci": [
+      0.7574992425007574,
+      1.0
+    ],
+    "with_traceback": 1,
+    "l2_with_traceback": 1,
+    "fbpa_eligible": 11,
+    "fb_pa": 9,
+    "fb_pa_ci": [
+      0.5230138624217553,
+      0.9486333993289995
+    ],
+    "fbpa_outcomes": {
+      "fb_pa": 9,
+      "no_fix": 1,
+      "before_mismatch": 1,
+      "not_fail_before": 1
+    },
+    "end_to_end_n": 12,
+    "total_cost_usd": 0.1581,
+    "mean_cost_usd": 0.0132,
+    "mean_steps": 30.8,
+    "mean_submits": 1.0,
+    "mean_duration_s": 123.1
+  },
+  "reports": [
+    {
+      "repo": "psf/black",
+      "number": 4588,
+      "title": "EOF in multi-line string error for valid format string",
+      "intake_version": "25.1.0",
+      "intake_python": "3.10.12",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "256f3420b1f29f1ea004c46843081cd8fae444cf",
+        "committed_at": "2025-02-20T23:27:23Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.10",
+        "version": "25.1.1.dev0",
+        "pytest": "pytest==8.3.4",
+        "test_path": "tests/test_warden_issue_4588.py",
+        "run": {
+          "version": "256f3420b1",
+          "python": "3.10",
+          "env_key": "badc9ed96a9661e205513ba354ba420f4b6bd826205423ec049fd597d1521ccc",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse for target version Python <N>.<N>: <N>:<N>: EOF in multi-line string",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "The script feeds Black the exact valid Python 3.10 snippet from the issue (f-string ending with an escaped backslash) under target py310, and Black itself raises InvalidInput with the same 'EOF in multi-line string' error the issue reports, so the failure comes from the package, not the harness. The assertions check that formatting should succeed, which is the issue's expected behavior.",
+            "quote": "black.parsing.InvalidInput: Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string",
+            "quote_found": true,
+            "cost_usd": 0.000522
+          },
+          "log_dir": "artifacts\\warden-run-0570d19d39",
+          "output_tail": "    yield from self._runtest_for(item, \"call\")\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/logging.py\", line 829, in _runtest_for\n    yield\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/capture.py\", line 880, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/skipping.py\", line 257, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 174, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 1627, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 159, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4588.py\", line 22, in test_fstring_with_escaped_backslash_before_closing_quote\n    formatted = black.format_str(SOURCE, mode=mode)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1208, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1222, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n  File \"/opt/venv/lib/python3.10/site-packages/black/parsing.py\", line 98, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4588.py::test_fstring_with_escaped_backslash_before_closing_quote\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4588.py",
+            "claim": "tests/test_warden_issue_4588.py formats the valid Python 3.10 snippet `if f\"{x}:\\\\\":y = f'{x}'; print(y)` with black.format_str(target py310); on this commit black's tokenizer mistakes the escaped backslash before the closing quote for an escaped quote, so the call raises black.parsing.InvalidInput(\"Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string\") exactly as reported, failing the test; after a tokenizer fix it formats successfully and stably.",
+            "script": "\"\"\"Regression test for https://github.com/psf/black/issues/4588.\n\nBlack used to fail on valid Python 3.10 code in which an f-string ends with an\nescaped backslash directly before the closing quote (``f\"{x}:\\\\\"``), reporting\n``Cannot parse for target version Python 3.10: ... EOF in multi-line string``.\nThe tokenizer mistook the escaped backslash plus quote for an escaped quote, so\nit never saw the end of the f-string.  Python accepts the input and runs it.\n\"\"\"\n\nimport black\n\n# An f-string whose literal part ends with an escaped backslash; the code is\n# valid (it defines ``y`` and prints it).\nSOURCE = r\"\"\"x = \"test\"\n\nif f\"{x}:\\\\\":y = f'{x}'; print(y)\n\"\"\"\n\n\ndef test_fstring_with_escaped_backslash_before_closing_quote() -> None:\n    mode = black.Mode(target_versions={black.TargetVersion.PY310})\n    formatted = black.format_str(SOURCE, mode=mode)\n\n    assert formatted\n    # Formatting must be stable: formatting the output again changes nothing.\n    assert black.format_str(formatted, mode=mode) == formatted\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/psf/black/issues/4588.\n\nBlack used to fail on valid Python 3.10 code in which an f-string ends with an\nescaped backslash directly before the closing quote (``f\"{x}:\\\\\"``), reporting\n``Cannot parse for target version Python 3.10: ... EOF in multi-line string``.\nThe tokenizer mistook the escaped backslash plus quote for an escaped quote, so\nit never saw the end of the f-string.  Python accepts the input and runs it.\n\"\"\"\n\nimport black\n\n# An f-string whose literal part ends with an escaped backslash; the code is\n# valid (it defines ``y`` and prints it).\nSOURCE = r\"\"\"x = \"test\"\n\nif f\"{x}:\\\\\":y = f'{x}'; print(y)\n\"\"\"\n\n\ndef test_fstring_with_escaped_backslash_before_closing_quote() -> None:\n    mode = black.Mode(target_versions={black.TargetVersion.PY310})\n    formatted = black.format_str(SOURCE, mode=mode)\n\n    assert formatted\n    # Formatting must be stable: formatting the output again changes nothing.\n    assert black.format_str(formatted, mode=mode) == formatted\n",
+        "final_run": {
+          "version": "256f3420b1",
+          "python": "3.10",
+          "env_key": "badc9ed96a9661e205513ba354ba420f4b6bd826205423ec049fd597d1521ccc",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse for target version Python <N>.<N>: <N>:<N>: EOF in multi-line string",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "The script feeds Black the exact valid Python 3.10 snippet from the issue (f-string ending with an escaped backslash) under target py310, and Black itself raises InvalidInput with the same 'EOF in multi-line string' error the issue reports, so the failure comes from the package, not the harness. The assertions check that formatting should succeed, which is the issue's expected behavior.",
+            "quote": "black.parsing.InvalidInput: Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string",
+            "quote_found": true,
+            "cost_usd": 0.000522
+          },
+          "log_dir": "artifacts\\warden-run-0570d19d39",
+          "output_tail": "    yield from self._runtest_for(item, \"call\")\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/logging.py\", line 829, in _runtest_for\n    yield\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/capture.py\", line 880, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/skipping.py\", line 257, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 174, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 1627, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 159, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4588.py\", line 22, in test_fstring_with_escaped_backslash_before_closing_quote\n    formatted = black.format_str(SOURCE, mode=mode)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1208, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1222, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n  File \"/opt/venv/lib/python3.10/site-packages/black/parsing.py\", line 98, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4588.py::test_fstring_with_escaped_backslash_before_closing_quote\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 37,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 5,
+          "write_scratch": 10,
+          "run": 10,
+          "read_file": 6,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.019684,
+        "prompt_tokens": 710354,
+        "completion_tokens": 24248,
+        "cached_tokens": 689920,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4588-1790405735.json",
+        "duration_s": 178.2,
+        "test_path": "tests/test_warden_issue_4588.py"
+      },
+      "intake_cost_usd": 0.001579,
+      "judge_cost_usd": 0.000522
+    },
+    {
+      "repo": "psf/black",
+      "number": 4399,
+      "title": "Black fails with `ASTSafetyError` on comment line in return type annotation",
+      "intake_version": "24.4.2",
+      "intake_python": "3.10.9",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "7e2afc9bfdc4ec4bc3297aaa16a62d575249a5e0",
+        "committed_at": "2024-07-04T23:50:26Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.10",
+        "version": "24.4.3.dev0",
+        "pytest": "pytest==8.2.2",
+        "test_path": "tests/test_warden_issue_4399.py",
+        "run": {
+          "version": "7e2afc9bfd",
+          "python": "3.10",
+          "env_key": "bcd6898167b5f7f2c05bea4639f3195e8befdcc9cd728bfb9e0b7da56c539749",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ASTSafetyError",
+              "message": "INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 fast=False 调用 black.format_file_contents 触发稳定性与 AST 等价性检查，运行输出中 Black 自身抛出了 issue 描述的 ASTSafetyError，且提示生成的代码与源码不等价，与 issue 的实际行为完全一致；脚本没有自行 raise/assert False，断言检查的正是 issue 的预期行为（格式化不报错且等价）。",
+            "quote": "black.parsing.ASTSafetyError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000545
+          },
+          "log_dir": "artifacts\\warden-run-055b0e54cd",
+          "output_tail": "    yield\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/capture.py\", line 878, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/skipping.py\", line 257, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 183, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 173, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 1632, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 162, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4399.py\", line 39, in test_parenthesized_return_annotation_with_comment_is_safe\n    formatted = black.format_file_contents(SOURCE, fast=False, mode=black.Mode())\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1076, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1050, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1550, in assert_equivalent\n    raise ASTSafetyError(\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_cwbt3ffa.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4399.py::test_parenthesized_return_annotation_with_comment_is_safe\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4399.py",
+            "claim": "Reintroduces issue #4399: formatting the issue's snippet with black.format_file_contents(fast=False) (CLI default, incl. AST-equivalence check) raises black.parsing.ASTSafetyError because the comment as first token inside the parenthesized return annotation makes Black add a magic trailing comma, turning the annotation's Name into a Tuple.",
+            "script": "\"\"\"Regression test for https://github.com/psf/black/issues/4399.\n\nWhen a comment is the first token inside a parenthesized return type\nannotation, Black used to insert a magic trailing comma: ``-> (MyClass)``\nbecame ``-> (MyClass,)``.  In the AST this is a ``Tuple`` instead of a\n``Name``, so the safety check aborted with ``ASTSafetyError`` and the file\ncould not be formatted.\n\nThe test does not catch that exception: with the bug present,\n``black.format_file_contents`` raises ``ASTSafetyError`` on its own.\n\"\"\"\n\nimport black\n\nSOURCE = \"\"\"\\\nimport typing as t\n\nfrom my_library import Abstract\nfrom my_other_library import api\n\n_T = t.TypeVar(\"_T\")\n\nclass MyClass(Generic[_T]):\n    ...\n\ndef create_my_nested_class() -> (\n    # some linter directive that need to be here\n    MyClass\n):\n    class MyNestedClass(MyClass):\n        pass\n    return MyNestedClass\n\"\"\"\n\n\ndef test_parenthesized_return_annotation_with_comment_is_safe() -> None:\n    # ``fast=False`` makes Black run the stability and AST-equivalence checks,\n    # just like the command line does by default.\n    formatted = black.format_file_contents(SOURCE, fast=False, mode=black.Mode())\n\n    # The result must be functionally identical to the source; in particular the\n    # return annotation must not be turned into a tuple.\n    black.assert_equivalent(SOURCE, formatted)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/psf/black/issues/4399.\n\nWhen a comment is the first token inside a parenthesized return type\nannotation, Black used to insert a magic trailing comma: ``-> (MyClass)``\nbecame ``-> (MyClass,)``.  In the AST this is a ``Tuple`` instead of a\n``Name``, so the safety check aborted with ``ASTSafetyError`` and the file\ncould not be formatted.\n\nThe test does not catch that exception: with the bug present,\n``black.format_file_contents`` raises ``ASTSafetyError`` on its own.\n\"\"\"\n\nimport black\n\nSOURCE = \"\"\"\\\nimport typing as t\n\nfrom my_library import Abstract\nfrom my_other_library import api\n\n_T = t.TypeVar(\"_T\")\n\nclass MyClass(Generic[_T]):\n    ...\n\ndef create_my_nested_class() -> (\n    # some linter directive that need to be here\n    MyClass\n):\n    class MyNestedClass(MyClass):\n        pass\n    return MyNestedClass\n\"\"\"\n\n\ndef test_parenthesized_return_annotation_with_comment_is_safe() -> None:\n    # ``fast=False`` makes Black run the stability and AST-equivalence checks,\n    # just like the command line does by default.\n    formatted = black.format_file_contents(SOURCE, fast=False, mode=black.Mode())\n\n    # The result must be functionally identical to the source; in particular the\n    # return annotation must not be turned into a tuple.\n    black.assert_equivalent(SOURCE, formatted)\n",
+        "final_run": {
+          "version": "7e2afc9bfd",
+          "python": "3.10",
+          "env_key": "bcd6898167b5f7f2c05bea4639f3195e8befdcc9cd728bfb9e0b7da56c539749",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ASTSafetyError",
+              "message": "INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 fast=False 调用 black.format_file_contents 触发稳定性与 AST 等价性检查，运行输出中 Black 自身抛出了 issue 描述的 ASTSafetyError，且提示生成的代码与源码不等价，与 issue 的实际行为完全一致；脚本没有自行 raise/assert False，断言检查的正是 issue 的预期行为（格式化不报错且等价）。",
+            "quote": "black.parsing.ASTSafetyError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000545
+          },
+          "log_dir": "artifacts\\warden-run-055b0e54cd",
+          "output_tail": "    yield\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/capture.py\", line 878, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/skipping.py\", line 257, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 183, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 173, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 1632, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 162, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4399.py\", line 39, in test_parenthesized_return_annotation_with_comment_is_safe\n    formatted = black.format_file_contents(SOURCE, fast=False, mode=black.Mode())\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1076, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1050, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1550, in assert_equivalent\n    raise ASTSafetyError(\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_cwbt3ffa.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4399.py::test_parenthesized_return_annotation_with_comment_is_safe\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "steps": 29,
+        "tool_counts": {
+          "list_files": 4,
+          "run": 6,
+          "write_scratch": 3,
+          "search_code": 6,
+          "read_file": 7,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.008143,
+        "prompt_tokens": 191754,
+        "completion_tokens": 9255,
+        "cached_tokens": 178048,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4399-1790405916.json",
+        "duration_s": 86.7,
+        "test_path": "tests/test_warden_issue_4399.py"
+      },
+      "intake_cost_usd": 0.000442,
+      "judge_cost_usd": 0.000545
+    },
+    {
+      "repo": "psf/black",
+      "number": 4296,
+      "title": "Standalone comments still partially broken",
+      "intake_version": "24.3.0",
+      "intake_python": "3.12.1",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "836acad86371578527408a4c8f968cde1302e130",
+        "committed_at": "2024-03-23T02:13:53Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.12",
+        "version": "24.3.1.dev0",
+        "pytest": "pytest==8.1.1",
+        "test_path": "tests/test_warden_issue_4296.py",
+        "run": {
+          "version": "836acad863",
+          "python": "3.12",
+          "env_key": "08135e3890298a550432d54ccd91995082c53e7a4fe495cca7dc4aa88eecd97c",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>: ]",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本直接调用 black.format_str 处理 issue 中给出的第一个用例，运行输出里被测包抛出 InvalidInput: \"Cannot parse: 9:0: ]\"，与 issue 报告的错误完全一致；报错位置（第 9 行）说明 black 是在解析自己第一遍 _format_str_once 生成的无效代码时失败，正是 issue 描述的行为。失败不是脚本自身 assert/raise 或 API 误用造成的。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 9:0: ]",
+            "quote_found": true,
+            "cost_usd": 0.001565
+          },
+          "log_dir": "artifacts\\warden-run-fd2790b39a",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 182, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 172, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1772, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4296.py\", line 41, in test_standalone_comment_in_comprehension_is_formatted_parsably\n    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1239, in format_str\n    return _format_str_once(dst_contents, mode=mode, lines=lines)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1246, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 9:0: ]\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4296.py::test_standalone_comment_in_comprehension_is_formatted_parsably\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4296.py",
+            "claim": "tests/test_warden_issue_4296.py formats the three standalone-comment snippets from issue #4296 (comment splitting a comprehension target, a comprehension's `in [...]` clause, and a lambda body) and asserts the result is parseable and stable. On the current code the first `black.format_str` call raises black.parsing.InvalidInput: \"Cannot parse: 9:0: ]\" from black/__init__.py `_format_str_once` -> parsing.lib2to3_parse, exactly as reported.",
+            "script": "\"\"\"Regression tests for https://github.com/psf/black/issues/4296.\n\nStandalone comments in unusual places (mostly inside comprehensions and\nlambdas) used to split a logical line into pieces that black could not\nreassemble.  Black then emitted code that could not be parsed again, so the\nvery first formatting pass blew up with ``Cannot parse: ...``.\n\"\"\"\n\nimport ast\n\nimport black\n\n# Every one of these inputs used to make black produce unparsable output on\n# the first run of ``_format_str_once``.\nSTANDALONE_COMMENT_CASES = [\n    # The standalone comment splits the target of the comprehension.\n    '[\\n    x for\\n    # comment\\n    x, y in [\"AB\",]\\n]\\n',\n    # The standalone comment splits ``for x`` from ``in [...]``.\n    \"[\\n    [\\n\"\n    \"        x for x\\n\"\n    \"        # comment\\n\"\n    \"        in [\\n\"\n    \"            # comment\\n\"\n    '            \"ABC\"\\n'\n    \"        ]\\n\"\n    \"    ]\\n\"\n    \"]\\n\",\n    # The same problem, triggered through a lambda body.\n    \"[(lambda \\n\"\n    \"    # comment\\n\"\n    \"    x: [\\n\"\n    \"        # comment\\n\"\n    \"        1\\n\"\n    \"    ]\\n\"\n    \")]\\n\",\n]\n\n\ndef test_standalone_comment_in_comprehension_is_formatted_parsably():\n    for source in STANDALONE_COMMENT_CASES:\n        formatted = black.format_str(source, mode=black.Mode())\n\n        # Black must not emit code that Python (or black itself) cannot parse.\n        ast.parse(formatted)\n\n        # ... and formatting the result again must be a no-op.\n        assert black.format_str(formatted, mode=black.Mode()) == formatted\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression tests for https://github.com/psf/black/issues/4296.\n\nStandalone comments in unusual places (mostly inside comprehensions and\nlambdas) used to split a logical line into pieces that black could not\nreassemble.  Black then emitted code that could not be parsed again, so the\nvery first formatting pass blew up with ``Cannot parse: ...``.\n\"\"\"\n\nimport ast\n\nimport black\n\n# Every one of these inputs used to make black produce unparsable output on\n# the first run of ``_format_str_once``.\nSTANDALONE_COMMENT_CASES = [\n    # The standalone comment splits the target of the comprehension.\n    '[\\n    x for\\n    # comment\\n    x, y in [\"AB\",]\\n]\\n',\n    # The standalone comment splits ``for x`` from ``in [...]``.\n    \"[\\n    [\\n\"\n    \"        x for x\\n\"\n    \"        # comment\\n\"\n    \"        in [\\n\"\n    \"            # comment\\n\"\n    '            \"ABC\"\\n'\n    \"        ]\\n\"\n    \"    ]\\n\"\n    \"]\\n\",\n    # The same problem, triggered through a lambda body.\n    \"[(lambda \\n\"\n    \"    # comment\\n\"\n    \"    x: [\\n\"\n    \"        # comment\\n\"\n    \"        1\\n\"\n    \"    ]\\n\"\n    \")]\\n\",\n]\n\n\ndef test_standalone_comment_in_comprehension_is_formatted_parsably():\n    for source in STANDALONE_COMMENT_CASES:\n        formatted = black.format_str(source, mode=black.Mode())\n\n        # Black must not emit code that Python (or black itself) cannot parse.\n        ast.parse(formatted)\n\n        # ... and formatting the result again must be a no-op.\n        assert black.format_str(formatted, mode=black.Mode()) == formatted\n",
+        "final_run": {
+          "version": "836acad863",
+          "python": "3.12",
+          "env_key": "08135e3890298a550432d54ccd91995082c53e7a4fe495cca7dc4aa88eecd97c",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>: ]",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本直接调用 black.format_str 处理 issue 中给出的第一个用例，运行输出里被测包抛出 InvalidInput: \"Cannot parse: 9:0: ]\"，与 issue 报告的错误完全一致；报错位置（第 9 行）说明 black 是在解析自己第一遍 _format_str_once 生成的无效代码时失败，正是 issue 描述的行为。失败不是脚本自身 assert/raise 或 API 误用造成的。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 9:0: ]",
+            "quote_found": true,
+            "cost_usd": 0.001565
+          },
+          "log_dir": "artifacts\\warden-run-fd2790b39a",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 182, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 172, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1772, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4296.py\", line 41, in test_standalone_comment_in_comprehension_is_formatted_parsably\n    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1239, in format_str\n    return _format_str_once(dst_contents, mode=mode, lines=lines)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1246, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 9:0: ]\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4296.py::test_standalone_comment_in_comprehension_is_formatted_parsably\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 23,
+        "tool_counts": {
+          "list_files": 4,
+          "search_code": 3,
+          "write_scratch": 2,
+          "run": 4,
+          "read_file": 7,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.011334,
+        "prompt_tokens": 271199,
+        "completion_tokens": 13936,
+        "cached_tokens": 256512,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4296-1790406190.json",
+        "duration_s": 176.5,
+        "test_path": "tests/test_warden_issue_4296.py"
+      },
+      "intake_cost_usd": 0.000604,
+      "judge_cost_usd": 0.001565
+    },
+    {
+      "repo": "psf/black",
+      "number": 4291,
+      "title": "Empty line and `...` and \"unindent does not match any outer indentation level\"",
+      "intake_version": "24.1.0",
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "836acad86371578527408a4c8f968cde1302e130",
+        "committed_at": "2024-03-23T02:13:53Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.12",
+        "version": "24.3.1.dev0",
+        "pytest": "pytest==8.1.1",
+        "test_path": "tests/test_warden_issue_4291.py",
+        "run": {
+          "version": "836acad863",
+          "python": "3.12",
+          "env_key": "08135e3890298a550432d54ccd91995082c53e7a4fe495cca7dc4aa88eecd97c",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "IndentationError",
+              "message": "unindent does not match any outer indentation level",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中的原样代码（缩进函数体内首行为空、body 为 `...`）调用 black.format_str，被测包直接抛出 issue 描述的 `IndentationError: unindent does not match any outer indentation level`，失败来自 black 的解析而非脚本自身的断言或 API 误用；断言检查的正是 issue 要求的“该片段可被格式化”。",
+            "quote": "IndentationError: unindent does not match any outer indentation level",
+            "quote_found": true,
+            "cost_usd": 0.000417
+          },
+          "log_dir": "artifacts\\warden-run-53c9468926",
+          "output_tail": "    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4291.py\", line 20, in test_format_empty_first_line_with_ellipsis_body\n    formatted = black.format_str(SOURCE, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1239, in format_str\n    return _format_str_once(dst_contents, mode=mode, lines=lines)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1246, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 65, in lib2to3_parse\n    result = drv.parse_string(src_txt, True)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/blib2to3/pgen2/driver.py\", line 201, in parse_string\n    return self.parse_tokens(tokens, debug)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/blib2to3/pgen2/driver.py\", line 128, in parse_tokens\n    for quintuple in proxy:\n                     ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/blib2to3/pgen2/driver.py\", line 92, in __next__\n    token = next(self._tokens)\n            ^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/blib2to3/pgen2/tokenize.py\", line 538, in generate_tokens\n    raise IndentationError(\n  File \"<tokenize>\", line 5\n    ...\nIndentationError: unindent does not match any outer indentation level\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4291.py::test_format_empty_first_line_with_ellipsis_body\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4291.py",
+            "claim": "调用 black.format_str 格式化 `class C:\\n    def f(self):\\n\\n        ...\\n` 时，Black 自身在第二遍解析中抛出 IndentationError: unindent does not match any outer indentation level，与 issue 描述一致；修复后应能正常格式化且结果稳定。",
+            "script": "\"\"\"Tests for https://github.com/psf/black/issues/4291.\n\nA function whose first body line is empty and whose body is ``...`` used to make\nBlack crash while formatting (``IndentationError: unindent does not match any\nouter indentation level``).\n\"\"\"\n\nimport black\n\nSOURCE = \"\"\"\\\nclass C:\n    def f(self):\n\n        ...\n\"\"\"\n\n\ndef test_format_empty_first_line_with_ellipsis_body() -> None:\n    \"\"\"The snippet with an empty first line and a ``...`` body can be formatted.\"\"\"\n    formatted = black.format_str(SOURCE, mode=black.Mode())\n\n    # The ``...`` body must survive and Black's output must be valid, stable Python.\n    assert \"...\" in formatted\n    assert black.format_str(formatted, mode=black.Mode()) == formatted\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Tests for https://github.com/psf/black/issues/4291.\n\nA function whose first body line is empty and whose body is ``...`` used to make\nBlack crash while formatting (``IndentationError: unindent does not match any\nouter indentation level``).\n\"\"\"\n\nimport black\n\nSOURCE = \"\"\"\\\nclass C:\n    def f(self):\n\n        ...\n\"\"\"\n\n\ndef test_format_empty_first_line_with_ellipsis_body() -> None:\n    \"\"\"The snippet with an empty first line and a ``...`` body can be formatted.\"\"\"\n    formatted = black.format_str(SOURCE, mode=black.Mode())\n\n    # The ``...`` body must survive and Black's output must be valid, stable Python.\n    assert \"...\" in formatted\n    assert black.format_str(formatted, mode=black.Mode()) == formatted\n",
+        "final_run": {
+          "version": "836acad863",
+          "python": "3.12",
+          "env_key": "08135e3890298a550432d54ccd91995082c53e7a4fe495cca7dc4aa88eecd97c",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "IndentationError",
+              "message": "unindent does not match any outer indentation level",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中的原样代码（缩进函数体内首行为空、body 为 `...`）调用 black.format_str，被测包直接抛出 issue 描述的 `IndentationError: unindent does not match any outer indentation level`，失败来自 black 的解析而非脚本自身的断言或 API 误用；断言检查的正是 issue 要求的“该片段可被格式化”。",
+            "quote": "IndentationError: unindent does not match any outer indentation level",
+            "quote_found": true,
+            "cost_usd": 0.000417
+          },
+          "log_dir": "artifacts\\warden-run-53c9468926",
+          "output_tail": "    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4291.py\", line 20, in test_format_empty_first_line_with_ellipsis_body\n    formatted = black.format_str(SOURCE, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1239, in format_str\n    return _format_str_once(dst_contents, mode=mode, lines=lines)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1246, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 65, in lib2to3_parse\n    result = drv.parse_string(src_txt, True)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/blib2to3/pgen2/driver.py\", line 201, in parse_string\n    return self.parse_tokens(tokens, debug)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/blib2to3/pgen2/driver.py\", line 128, in parse_tokens\n    for quintuple in proxy:\n                     ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/blib2to3/pgen2/driver.py\", line 92, in __next__\n    token = next(self._tokens)\n            ^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/blib2to3/pgen2/tokenize.py\", line 538, in generate_tokens\n    raise IndentationError(\n  File \"<tokenize>\", line 5\n    ...\nIndentationError: unindent does not match any outer indentation level\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4291.py::test_format_empty_first_line_with_ellipsis_body\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 39,
+        "tool_counts": {
+          "search_code": 5,
+          "list_files": 4,
+          "write_scratch": 6,
+          "run": 12,
+          "read_file": 9,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.011775,
+        "prompt_tokens": 506729,
+        "completion_tokens": 11954,
+        "cached_tokens": 485760,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4291-1790406469.json",
+        "duration_s": 161.8,
+        "test_path": "tests/test_warden_issue_4291.py"
+      },
+      "intake_cost_usd": 0.00527,
+      "judge_cost_usd": 0.000417
+    },
+    {
+      "repo": "psf/black",
+      "number": 4280,
+      "title": "Crash on formatting `case case` syntax when line length set to be small",
+      "intake_version": "24.2.0",
+      "intake_python": "3.10.7",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "8332a75e82db143d33f1b873a572bb209675f8a7",
+        "committed_at": "2024-03-15T19:40:29Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.10",
+        "version": "24.3.1.dev0",
+        "pytest": "pytest==8.1.1",
+        "test_path": "tests/test_warden_issue_4280.py",
+        "run": {
+          "version": "8332a75e82",
+          "python": "3.10",
+          "env_key": "dc50245c09830eccae092b482a4ba4e57c6af9753949c58c6a81e6d4fa6f7d7b",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>:         if True",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本调用 black.format_str 时，被测包在 line_length 较小的情况下真的抛出 InvalidInput 'Cannot parse: 5:8: if True'，与 issue 中报告的 line-length 13 的报错完全一致，属于 issue 描述的格式化崩溃行为而非脚本自身错误；不过脚本还额外断言了 14 时的预期输出，无法从输出确定是在哪次迭代失败，故未给满分。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 5:8:         if True",
+            "quote_found": true,
+            "cost_usd": 0.000652
+          },
+          "log_dir": "artifacts\\warden-run-78ccf7c104",
+          "output_tail": "    yield\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/capture.py\", line 883, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/skipping.py\", line 256, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 182, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 172, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 1772, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4280.py\", line 24, in test_case_case_with_guard_at_small_line_length\n    actual = black.format_str(SOURCE, mode=black.Mode(line_length=line_length))\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1239, in format_str\n    return _format_str_once(dst_contents, mode=mode, lines=lines)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1246, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n  File \"/opt/venv/lib/python3.10/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 5:8:         if True\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4280.py::test_case_case_with_guard_at_small_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4280.py",
+            "claim": "Formatting `match test:\\n    case case if True:\\n        pass\\n` with line_length=13 (and 1) crashes inside black.format_str with `black.parsing.InvalidInput: Cannot parse: 5:8:         if True`, because the first pass wraps the guard in parentheses (`case case (\\n if True\\n):`) instead of the pattern; the test also asserts the documented expected output `case (\\n    case\\n) if True:` at line lengths 14/13.",
+            "script": "\"\"\"Regression test for https://github.com/psf/black/issues/4280.\n\n``case case if <guard>:`` is valid Python 3.10+ syntax (the second ``case`` is a\ncapture pattern named ``case``).  When the line length is small, Black used to\ninsert the optional parentheses around the *guard* instead of the pattern,\nproducing unparsable code, so the second formatting pass crashed with\n``Cannot parse``.\n\"\"\"\n\nimport black\n\n\nSOURCE = \"match test:\\n    case case if True:\\n        pass\\n\"\n\n# The pattern ``case`` is long enough to be split when the line length is small;\n# the guard must stay outside of the parentheses.\nEXPECTED = \"match test:\\n    case (\\n        case\\n    ) if True:\\n        pass\\n\"\n\n\ndef test_case_case_with_guard_at_small_line_length() -> None:\n    # At these line lengths the pattern has to be split onto its own line and\n    # Black must not move the guard inside the parentheses.\n    for line_length in (14, 13):\n        actual = black.format_str(SOURCE, mode=black.Mode(line_length=line_length))\n        assert actual == EXPECTED\n\n    # Even for tiny line lengths formatting must not fail (the reported crash).\n    black.format_str(SOURCE, mode=black.Mode(line_length=1))\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/psf/black/issues/4280.\n\n``case case if <guard>:`` is valid Python 3.10+ syntax (the second ``case`` is a\ncapture pattern named ``case``).  When the line length is small, Black used to\ninsert the optional parentheses around the *guard* instead of the pattern,\nproducing unparsable code, so the second formatting pass crashed with\n``Cannot parse``.\n\"\"\"\n\nimport black\n\n\nSOURCE = \"match test:\\n    case case if True:\\n        pass\\n\"\n\n# The pattern ``case`` is long enough to be split when the line length is small;\n# the guard must stay outside of the parentheses.\nEXPECTED = \"match test:\\n    case (\\n        case\\n    ) if True:\\n        pass\\n\"\n\n\ndef test_case_case_with_guard_at_small_line_length() -> None:\n    # At these line lengths the pattern has to be split onto its own line and\n    # Black must not move the guard inside the parentheses.\n    for line_length in (14, 13):\n        actual = black.format_str(SOURCE, mode=black.Mode(line_length=line_length))\n        assert actual == EXPECTED\n\n    # Even for tiny line lengths formatting must not fail (the reported crash).\n    black.format_str(SOURCE, mode=black.Mode(line_length=1))\n",
+        "final_run": {
+          "version": "8332a75e82",
+          "python": "3.10",
+          "env_key": "dc50245c09830eccae092b482a4ba4e57c6af9753949c58c6a81e6d4fa6f7d7b",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>:         if True",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本调用 black.format_str 时，被测包在 line_length 较小的情况下真的抛出 InvalidInput 'Cannot parse: 5:8: if True'，与 issue 中报告的 line-length 13 的报错完全一致，属于 issue 描述的格式化崩溃行为而非脚本自身错误；不过脚本还额外断言了 14 时的预期输出，无法从输出确定是在哪次迭代失败，故未给满分。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 5:8:         if True",
+            "quote_found": true,
+            "cost_usd": 0.000652
+          },
+          "log_dir": "artifacts\\warden-run-78ccf7c104",
+          "output_tail": "    yield\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/capture.py\", line 883, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/skipping.py\", line 256, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 182, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 172, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 1772, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4280.py\", line 24, in test_case_case_with_guard_at_small_line_length\n    actual = black.format_str(SOURCE, mode=black.Mode(line_length=line_length))\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1239, in format_str\n    return _format_str_once(dst_contents, mode=mode, lines=lines)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1246, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n  File \"/opt/venv/lib/python3.10/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 5:8:         if True\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4280.py::test_case_case_with_guard_at_small_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 37,
+        "tool_counts": {
+          "list_files": 2,
+          "run": 10,
+          "read_file": 8,
+          "search_code": 8,
+          "write_scratch": 6,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.012893,
+        "prompt_tokens": 455202,
+        "completion_tokens": 15190,
+        "cached_tokens": 438784,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4280-1790406645.json",
+        "duration_s": 136.6,
+        "test_path": "tests/test_warden_issue_4280.py"
+      },
+      "intake_cost_usd": 0.000854,
+      "judge_cost_usd": 0.000652
+    },
+    {
+      "repo": "psf/black",
+      "number": 4261,
+      "title": "Fails to parse backslash on line by itself",
+      "intake_version": "24.2.0",
+      "intake_python": "3.12.0",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "d0287e1f7558d97e6c0ebd6dc5bcb5b970e2bf8c",
+        "committed_at": "2024-02-28T21:20:46Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.12",
+        "version": "24.2.1.dev0",
+        "pytest": "pytest==8.0.2",
+        "test_path": "tests/test_warden_issue_4261.py",
+        "run": {
+          "version": "d0287e1f75",
+          "python": "3.12",
+          "env_key": "096f25244c25ab67804aed839a27b5aee7b1abd1875af400ce0df1bbd470d8f6",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>:     pass",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 issue 中的同类输入（单独的续行反斜杠）调用 black.format_str，被测包实际抛出 InvalidInput: Cannot parse: 3:4:     pass，正是 issue 描述的解析失败行为，且断言检查的是'应能正常格式化'这一预期行为。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 3:4:     pass",
+            "quote_found": true,
+            "cost_usd": 0.000402
+          },
+          "log_dir": "artifacts\\warden-run-cbf2531f4b",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 178, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 170, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1831, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4261.py\", line 16, in test_backslash_on_line_by_itself\n    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1218, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1232, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 3:4:     pass\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4261.py::test_backslash_on_line_by_itself\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4261.py",
+            "claim": "A backslash on a line by itself inside a class body (issue #4261 minimal repro: \"class Plotter:\\n\\\\\\n    pass\\n\") must be parseable and formattable. The test calls black.format_str, which on this code raises black.parsing.InvalidInput \"Cannot parse: 3:4:     pass\" (exactly the error in the issue, from blib2to3/pgen2/tokenize.py not emitting INDENT after the continuation line, so black/parsing.py:90 re-raises). After the fix, formatting succeeds, so the test then checks the result is AST-equivalent to the input and stable under reformatting.",
+            "script": "\"\"\"Regression test for https://github.com/psf/black/issues/4261.\n\nA backslash on a line by itself is a line continuation and therefore valid\nPython.  Black used to fail to parse such a file with::\n\n    error: cannot format parse.py: Cannot parse: 3:4:     pass\n\"\"\"\n\nimport black\n\n\ndef test_backslash_on_line_by_itself() -> None:\n    # ``\\\\\\n`` is a single backslash followed by a newline: a line continuation.\n    source = \"class Plotter:\\n\\\\\\n    pass\\n\"\n\n    formatted = black.format_str(source, mode=black.Mode())\n\n    # The formatted source must still be the same program ...\n    black.assert_equivalent(source, formatted)\n    # ... and reformatting it must be a no-op.\n    black.assert_stable(source, formatted, mode=black.Mode())\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/psf/black/issues/4261.\n\nA backslash on a line by itself is a line continuation and therefore valid\nPython.  Black used to fail to parse such a file with::\n\n    error: cannot format parse.py: Cannot parse: 3:4:     pass\n\"\"\"\n\nimport black\n\n\ndef test_backslash_on_line_by_itself() -> None:\n    # ``\\\\\\n`` is a single backslash followed by a newline: a line continuation.\n    source = \"class Plotter:\\n\\\\\\n    pass\\n\"\n\n    formatted = black.format_str(source, mode=black.Mode())\n\n    # The formatted source must still be the same program ...\n    black.assert_equivalent(source, formatted)\n    # ... and reformatting it must be a no-op.\n    black.assert_stable(source, formatted, mode=black.Mode())\n",
+        "final_run": {
+          "version": "d0287e1f75",
+          "python": "3.12",
+          "env_key": "096f25244c25ab67804aed839a27b5aee7b1abd1875af400ce0df1bbd470d8f6",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>:     pass",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 issue 中的同类输入（单独的续行反斜杠）调用 black.format_str，被测包实际抛出 InvalidInput: Cannot parse: 3:4:     pass，正是 issue 描述的解析失败行为，且断言检查的是'应能正常格式化'这一预期行为。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 3:4:     pass",
+            "quote_found": true,
+            "cost_usd": 0.000402
+          },
+          "log_dir": "artifacts\\warden-run-cbf2531f4b",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 178, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 170, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1831, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4261.py\", line 16, in test_backslash_on_line_by_itself\n    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1218, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1232, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 3:4:     pass\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4261.py::test_backslash_on_line_by_itself\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 21,
+        "tool_counts": {
+          "list_files": 3,
+          "read_file": 9,
+          "write_scratch": 1,
+          "run": 1,
+          "search_code": 4,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.00913,
+        "prompt_tokens": 200812,
+        "completion_tokens": 10016,
+        "cached_tokens": 183680,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4261-1790406829.json",
+        "duration_s": 82.4,
+        "test_path": "tests/test_warden_issue_4261.py"
+      },
+      "intake_cost_usd": 0.001017,
+      "judge_cost_usd": 0.000402
+    },
+    {
+      "repo": "psf/black",
+      "number": 4220,
+      "title": "`black` internal error on line-broken `==`",
+      "intake_version": "24.1.1",
+      "intake_python": "3.11.7",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "dab37a6a1117d690d683121edc4d7c8fb8dd75a7",
+        "committed_at": "2024-02-07T14:55:02Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.11",
+        "version": "24.1.2.dev0",
+        "pytest": "pytest==8.0.0",
+        "test_path": "tests/test_warden_issue_4220.py",
+        "run": {
+          "version": "dab37a6a11",
+          "python": "3.11",
+          "env_key": "42e73e104c6c80bc6343f29bd8b38ff72e1bf6021b44e3d51583b7cd8ee96add",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 issue 中给出的同一段源码（`==` 在首行且带 `type: ignore`）调用 black.format_str 后执行 assert_equivalent，被测包实际抛出了与 issue 中完全一致的 INTERNAL ERROR 等价性失败，说明失败来自 black 本身而非脚本伪造；只是通过 API 而非 CLI 触发，且未展示 TypeIgnore diff 细节。",
+            "quote": "AssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000478
+          },
+          "log_dir": "artifacts\\warden-run-e8d3e91806",
+          "output_tail": "  File \"/opt/venv/lib/python3.11/site-packages/_pytest/capture.py\", line 882, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/skipping.py\", line 257, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 181, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 173, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 1836, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 193, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4220.py\", line 31, in test_type_ignore_on_line_broken_eq_is_equivalent\n    black.assert_equivalent(source, dst)\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1541, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_ujcaaney.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4220.py::test_type_ignore_on_line_broken_eq_is_equivalent\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4220.py",
+            "claim": "tests/test_warden_issue_4220.py formats the issue's line-broken `==` with `type: ignore` comments via black.format_str and runs black.assert_equivalent (the check the CLI performs, which raises the reported INTERNAL ERROR): on this code it raises AssertionError \"Black produced code that is not equivalent to the source\" because the two `# type: ignore[foo]` comments get merged onto one line, matching the issue's diff; after a fix that keeps both comments the equivalence check passes.",
+            "script": "\"\"\"Regression test for https://github.com/psf/black/issues/4220.\n\nBlack reported ``INTERNAL ERROR: Black produced code that is not equivalent to\nthe source`` when a ``type: ignore`` comment was attached to a line-broken\ncomparison whose operator sat on the *first* line, e.g.::\n\n    z = (\n        x == # type: ignore[foo]\n        y # type: ignore[foo]\n      )\n\nFormatting such code must not make Black's own equivalence check (the one the\nCLI performs unless ``--fast`` is given) blow up.\n\"\"\"\n\nimport black\n\n\ndef test_type_ignore_on_line_broken_eq_is_equivalent() -> None:\n    source = (\n        \"z = (\\n\"\n        \"    x == # type: ignore[foo]\\n\"\n        \"    y # type: ignore[foo]\\n\"\n        \"  ) # <-- to trigger black\\n\"\n    )\n\n    dst = black.format_str(source, mode=black.Mode())\n\n    # This is the very check that used to raise the internal error: it must not\n    # complain that the formatted code is not equivalent to the source.\n    black.assert_equivalent(source, dst)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/psf/black/issues/4220.\n\nBlack reported ``INTERNAL ERROR: Black produced code that is not equivalent to\nthe source`` when a ``type: ignore`` comment was attached to a line-broken\ncomparison whose operator sat on the *first* line, e.g.::\n\n    z = (\n        x == # type: ignore[foo]\n        y # type: ignore[foo]\n      )\n\nFormatting such code must not make Black's own equivalence check (the one the\nCLI performs unless ``--fast`` is given) blow up.\n\"\"\"\n\nimport black\n\n\ndef test_type_ignore_on_line_broken_eq_is_equivalent() -> None:\n    source = (\n        \"z = (\\n\"\n        \"    x == # type: ignore[foo]\\n\"\n        \"    y # type: ignore[foo]\\n\"\n        \"  ) # <-- to trigger black\\n\"\n    )\n\n    dst = black.format_str(source, mode=black.Mode())\n\n    # This is the very check that used to raise the internal error: it must not\n    # complain that the formatted code is not equivalent to the source.\n    black.assert_equivalent(source, dst)\n",
+        "final_run": {
+          "version": "dab37a6a11",
+          "python": "3.11",
+          "env_key": "42e73e104c6c80bc6343f29bd8b38ff72e1bf6021b44e3d51583b7cd8ee96add",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 issue 中给出的同一段源码（`==` 在首行且带 `type: ignore`）调用 black.format_str 后执行 assert_equivalent，被测包实际抛出了与 issue 中完全一致的 INTERNAL ERROR 等价性失败，说明失败来自 black 本身而非脚本伪造；只是通过 API 而非 CLI 触发，且未展示 TypeIgnore diff 细节。",
+            "quote": "AssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000478
+          },
+          "log_dir": "artifacts\\warden-run-e8d3e91806",
+          "output_tail": "  File \"/opt/venv/lib/python3.11/site-packages/_pytest/capture.py\", line 882, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/skipping.py\", line 257, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 181, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 173, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 1836, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 193, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4220.py\", line 31, in test_type_ignore_on_line_broken_eq_is_equivalent\n    black.assert_equivalent(source, dst)\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1541, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_ujcaaney.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4220.py::test_type_ignore_on_line_broken_eq_is_equivalent\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "steps": 37,
+        "tool_counts": {
+          "run": 13,
+          "list_files": 2,
+          "search_code": 6,
+          "write_scratch": 7,
+          "read_file": 6,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.011091,
+        "prompt_tokens": 476486,
+        "completion_tokens": 11005,
+        "cached_tokens": 455680,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4220-1790407053.json",
+        "duration_s": 120.7,
+        "test_path": "tests/test_warden_issue_4220.py"
+      },
+      "intake_cost_usd": 0.000875,
+      "judge_cost_usd": 0.000478
+    },
+    {
+      "repo": "psf/black",
+      "number": 4062,
+      "title": "Crash with preview style + line length 1",
+      "intake_version": "23.11.0",
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "psf/black",
+        "sha": "a8062983cd1f8ac8859297c870847906b10cf6a2",
+        "committed_at": "2023-11-21T04:45:39Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.12",
+        "version": "23.11.1.dev0",
+        "pytest": "pytest==7.4.3",
+        "test_path": "tests/test_warden_issue_4062.py",
+        "run": {
+          "version": "a8062983cd",
+          "python": "3.12",
+          "env_key": "5331e1a53041054ed08d8cfdd88aab0678ca6bf70d61be4ddb1df6bc2992520f",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line <N>). Please report a bug on http<PATH>  This invalid output might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line <N>). Please report a bug on http<PATH>  This invalid output might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            }
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\warden-run-fa50f882fb",
+          "output_tail": "    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4062.py\", line 24, in test_parenthesize_long_type_hints_with_short_line_length\n    black.format_file_contents(source, fast=False, mode=mode)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1011, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 985, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1447, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line 1). Please report a bug on https://github.com/psf/black/issues.  This invalid output might be helpful: /tmp/blk__1j875q_.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4062.py::test_parenthesize_long_type_hints_with_short_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4062.py",
+            "claim": "With preview style and line_length=1, black.format_file_contents on 'def f() -> tuple[int, int]: pass' raises AssertionError \"INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line 1)\" from black/__init__.py assert_equivalent, because the parenthesize_long_type_hints preview feature emits an illegal newline after '->'.",
+            "script": "\"\"\"Regression test for https://github.com/psf/black/issues/4062.\n\nWith the preview style enabled, the ``parenthesize_long_type_hints`` feature\n(#3899) used to insert an illegal newline after the ``->`` of a function\ndefinition whose return annotation does not fit on the line.  Black then\nfailed its own safety check with::\n\n    AssertionError: INTERNAL ERROR: Black produced invalid code:\n    expected ':' (<unknown>, line 1)\n\nHere we only check that Black no longer produces invalid code for this input,\ni.e. that the safety checks inside ``format_file_contents`` do not blow up.\n\"\"\"\n\nimport black\n\n\ndef test_parenthesize_long_type_hints_with_short_line_length() -> None:\n    source = \"def f() -> tuple[int, int]: pass\\n\"\n    mode = black.Mode(preview=True, line_length=1)\n\n    # A crash here is the bug: Black produces code that fails to parse, so the\n    # equivalence check raises an \"INTERNAL ERROR\" AssertionError.\n    black.format_file_contents(source, fast=False, mode=mode)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/psf/black/issues/4062.\n\nWith the preview style enabled, the ``parenthesize_long_type_hints`` feature\n(#3899) used to insert an illegal newline after the ``->`` of a function\ndefinition whose return annotation does not fit on the line.  Black then\nfailed its own safety check with::\n\n    AssertionError: INTERNAL ERROR: Black produced invalid code:\n    expected ':' (<unknown>, line 1)\n\nHere we only check that Black no longer produces invalid code for this input,\ni.e. that the safety checks inside ``format_file_contents`` do not blow up.\n\"\"\"\n\nimport black\n\n\ndef test_parenthesize_long_type_hints_with_short_line_length() -> None:\n    source = \"def f() -> tuple[int, int]: pass\\n\"\n    mode = black.Mode(preview=True, line_length=1)\n\n    # A crash here is the bug: Black produces code that fails to parse, so the\n    # equivalence check raises an \"INTERNAL ERROR\" AssertionError.\n    black.format_file_contents(source, fast=False, mode=mode)\n",
+        "final_run": {
+          "version": "a8062983cd",
+          "python": "3.12",
+          "env_key": "5331e1a53041054ed08d8cfdd88aab0678ca6bf70d61be4ddb1df6bc2992520f",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line <N>). Please report a bug on http<PATH>  This invalid output might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line <N>). Please report a bug on http<PATH>  This invalid output might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:format_file_contents",
+                "black/__init__.py:check_stability_and_equivalence",
+                "black/__init__.py:assert_equivalent"
+              ]
+            }
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\warden-run-fa50f882fb",
+          "output_tail": "    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4062.py\", line 24, in test_parenthesize_long_type_hints_with_short_line_length\n    black.format_file_contents(source, fast=False, mode=mode)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1011, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 985, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1447, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line 1). Please report a bug on https://github.com/psf/black/issues.  This invalid output might be helpful: /tmp/blk__1j875q_.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4062.py::test_parenthesize_long_type_hints_with_short_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 17,
+        "tool_counts": {
+          "search_code": 4,
+          "list_files": 3,
+          "read_file": 5,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.004374,
+        "prompt_tokens": 113517,
+        "completion_tokens": 3779,
+        "cached_tokens": 101504,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4062-1790407179.json",
+        "duration_s": 48.2,
+        "test_path": "tests/test_warden_issue_4062.py"
+      },
+      "intake_cost_usd": 0.000301,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "repo": "psf/black",
+      "number": 4036,
+      "title": "hug_parens_with_braces_and_square_brackets: \"Black produced code that is not equivalent to the source\" error in preview mode on function call with two `type:ignore` comments",
+      "intake_version": "main",
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "58f31a70efe6509ce8213afac998bc5d5bb7e34d",
+        "committed_at": "2023-11-08T06:10:35Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.12",
+        "version": "23.11.1.dev0",
+        "pytest": "pytest==7.4.3",
+        "test_path": "tests/test_warden_issue_4036.py",
+        "run": {
+          "version": "58f31a70ef",
+          "python": "3.12",
+          "env_key": "2feb4f8568b06e2967420bdc067054584547664d537c59b962625bf6381612a9",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.88,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.88,
+            "reason": "脚本使用 issue 中的同一段源码在 preview 模式下格式化，black.assert_equivalent 抛出的正是 issue 描述的 'Black produced code that is not equivalent to the source' 内部错误，说明被测包在 preview + hug_parens 场景下确实产生了语义不等价的输出（丢失 TypeIgnore）。断言检查的是 issue 的预期行为（等价性），失败源于包本身而非脚本，唯一小差异是 issue 直接展示 CLI 内部错误而脚本通过显式调用 assert_equivalent 触发。",
+            "quote": "AssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_k9ncuei2.log",
+            "quote_found": true,
+            "cost_usd": 0.000572
+          },
+          "log_dir": "artifacts\\warden-run-926e58ab06",
+          "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4036.py\", line 23, in test_preview_hug_parens_with_type_ignores_is_equivalent\n    black.assert_equivalent(source, dst)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1457, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_k9ncuei2.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4036.py::test_preview_hug_parens_with_type_ignores_is_equivalent\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_4036.py",
+            "claim": "With preview mode, formatting `foo(  # type:ignore\\n    [  # type:ignore\\n        a\\n    ]\\n)` under hug_parens_with_braces_and_square_brackets moves both comments onto one line so the result's AST loses a TypeIgnore; the test asserts black.assert_equivalent(source, black.format_str(...)) holds, which currently raises the reported \"INTERNAL ERROR: Black produced code that is not equivalent to the source\".",
+            "script": "import black\n\n\ndef test_preview_hug_parens_with_type_ignores_is_equivalent() -> None:\n    \"\"\"Hugging parentheses must not drop a ``# type: ignore`` comment.\n\n    Regression test for https://github.com/psf/black/issues/4036: with\n    ``hug_parens_with_braces_and_square_brackets`` enabled, formatting a call\n    whose head and body bracket both carry a ``# type:ignore`` comment moved\n    both comments onto one line, so the AST of the result had fewer\n    ``TypeIgnore`` nodes than the source and Black bailed out with\n    \"Black produced code that is not equivalent to the source\".\n    \"\"\"\n    source = (\n        \"foo(  # type:ignore\\n\"\n        \"    [  # type:ignore\\n\"\n        \"        a\\n\"\n        \"    ]\\n\"\n        \")\\n\"\n    )\n    mode = black.Mode(preview=True)\n    dst = black.format_str(source, mode=mode)\n    black.assert_equivalent(source, dst)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.88
+          }
+        ],
+        "final_script": "import black\n\n\ndef test_preview_hug_parens_with_type_ignores_is_equivalent() -> None:\n    \"\"\"Hugging parentheses must not drop a ``# type: ignore`` comment.\n\n    Regression test for https://github.com/psf/black/issues/4036: with\n    ``hug_parens_with_braces_and_square_brackets`` enabled, formatting a call\n    whose head and body bracket both carry a ``# type:ignore`` comment moved\n    both comments onto one line, so the AST of the result had fewer\n    ``TypeIgnore`` nodes than the source and Black bailed out with\n    \"Black produced code that is not equivalent to the source\".\n    \"\"\"\n    source = (\n        \"foo(  # type:ignore\\n\"\n        \"    [  # type:ignore\\n\"\n        \"        a\\n\"\n        \"    ]\\n\"\n        \")\\n\"\n    )\n    mode = black.Mode(preview=True)\n    dst = black.format_str(source, mode=mode)\n    black.assert_equivalent(source, dst)\n",
+        "final_run": {
+          "version": "58f31a70ef",
+          "python": "3.12",
+          "env_key": "2feb4f8568b06e2967420bdc067054584547664d537c59b962625bf6381612a9",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.88,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.88,
+            "reason": "脚本使用 issue 中的同一段源码在 preview 模式下格式化，black.assert_equivalent 抛出的正是 issue 描述的 'Black produced code that is not equivalent to the source' 内部错误，说明被测包在 preview + hug_parens 场景下确实产生了语义不等价的输出（丢失 TypeIgnore）。断言检查的是 issue 的预期行为（等价性），失败源于包本身而非脚本，唯一小差异是 issue 直接展示 CLI 内部错误而脚本通过显式调用 assert_equivalent 触发。",
+            "quote": "AssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_k9ncuei2.log",
+            "quote_found": true,
+            "cost_usd": 0.000572
+          },
+          "log_dir": "artifacts\\warden-run-926e58ab06",
+          "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4036.py\", line 23, in test_preview_hug_parens_with_type_ignores_is_equivalent\n    black.assert_equivalent(source, dst)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1457, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_k9ncuei2.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4036.py::test_preview_hug_parens_with_type_ignores_is_equivalent\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 29,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 2,
+          "read_file": 8,
+          "write_scratch": 3,
+          "run": 10,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.008889,
+        "prompt_tokens": 232155,
+        "completion_tokens": 10245,
+        "cached_tokens": 218240,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-4036-1790407374.json",
+        "duration_s": 94.6,
+        "test_path": "tests/test_warden_issue_4036.py"
+      },
+      "intake_cost_usd": 0.000589,
+      "judge_cost_usd": 0.000572
+    },
+    {
+      "repo": "psf/black",
+      "number": 3948,
+      "title": "Fails to parse type alias containing lambda",
+      "intake_version": "23.9.2.dev39+g3208b76.d20231016",
+      "intake_python": "3.12.0",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "6f84f652850dca8a1b578581e2fbb2cb95e791cc",
+        "committed_at": "2023-10-16T12:24:16Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.12",
+        "version": "23.9.2.dev0",
+        "pytest": "pytest==7.4.2",
+        "test_path": "tests/test_warden_issue_3948.py",
+        "run": {
+          "version": "6f84f65285",
+          "python": "3.12",
+          "env_key": "115af5862b6c09a57ce624ee9b6abe8982e52900044b50669921bd391ab0853e",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>: type Alias[T] = lambda: T",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中的源码 `type Alias[T] = lambda: T` 调用 black.format_str，被测包抛出 InvalidInput「Cannot parse: 1:16」，与 issue 报告的实际行为（error: cannot format ... Cannot parse: 1:16）完全一致，且断言检查的正是该代码应可被解析/格式化这一预期行为。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 1:16: type Alias[T] = lambda: T",
+            "quote_found": true,
+            "cost_usd": 0.000428
+          },
+          "log_dir": "artifacts\\warden-run-746b0b2360",
+          "output_tail": "          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_3948.py\", line 20, in test_type_alias_with_lambda_can_be_formatted\n    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 1:16: type Alias[T] = lambda: T\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3948.py::test_type_alias_with_lambda_can_be_formatted\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_3948.py",
+            "claim": "Reproduces issue #3948: `black.format_str(\"type Alias[T] = lambda: T\\n\")` raises black.parsing.InvalidInput(\"Cannot parse: 1:16: type Alias[T] = lambda: T\") on the current code (blib2to3 grammar only allows `expr`, not `lambda`, as the RHS of a `type` alias); the test asserts the source can be formatted and that re-formatting is stable, which holds once the parser accepts lambda there (verified by simulating the grammar fix `type_stmt ... '=' test`).",
+            "script": "\"\"\"Regression test for https://github.com/psf/black/issues/3948.\n\nBlack could not parse a ``type`` alias whose right-hand side is a lambda,\neven though such code is valid Python 3.12::\n\n    type Alias[T] = lambda: T\n\nBlack used to fail with::\n\n    error: cannot format <string>: Cannot parse: 1:16: type Alias[T] = lambda: T\n\"\"\"\n\nimport black\n\n\ndef test_type_alias_with_lambda_can_be_formatted() -> None:\n    source = \"type Alias[T] = lambda: T\\n\"\n\n    # Parsing/formatting this must not raise black.InvalidInput.\n    formatted = black.format_str(source, mode=black.Mode())\n\n    # The result must be stable under repeated formatting.\n    assert black.format_str(formatted, mode=black.Mode()) == formatted\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/psf/black/issues/3948.\n\nBlack could not parse a ``type`` alias whose right-hand side is a lambda,\neven though such code is valid Python 3.12::\n\n    type Alias[T] = lambda: T\n\nBlack used to fail with::\n\n    error: cannot format <string>: Cannot parse: 1:16: type Alias[T] = lambda: T\n\"\"\"\n\nimport black\n\n\ndef test_type_alias_with_lambda_can_be_formatted() -> None:\n    source = \"type Alias[T] = lambda: T\\n\"\n\n    # Parsing/formatting this must not raise black.InvalidInput.\n    formatted = black.format_str(source, mode=black.Mode())\n\n    # The result must be stable under repeated formatting.\n    assert black.format_str(formatted, mode=black.Mode()) == formatted\n",
+        "final_run": {
+          "version": "6f84f65285",
+          "python": "3.12",
+          "env_key": "115af5862b6c09a57ce624ee9b6abe8982e52900044b50669921bd391ab0853e",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>: type Alias[T] = lambda: T",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中的源码 `type Alias[T] = lambda: T` 调用 black.format_str，被测包抛出 InvalidInput「Cannot parse: 1:16」，与 issue 报告的实际行为（error: cannot format ... Cannot parse: 1:16）完全一致，且断言检查的正是该代码应可被解析/格式化这一预期行为。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 1:16: type Alias[T] = lambda: T",
+            "quote_found": true,
+            "cost_usd": 0.000428
+          },
+          "log_dir": "artifacts\\warden-run-746b0b2360",
+          "output_tail": "          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_3948.py\", line 20, in test_type_alias_with_lambda_can_be_formatted\n    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 1:16: type Alias[T] = lambda: T\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3948.py::test_type_alias_with_lambda_can_be_formatted\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 36,
+        "tool_counts": {
+          "list_files": 4,
+          "search_code": 6,
+          "run": 12,
+          "write_scratch": 2,
+          "read_file": 9,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.010429,
+        "prompt_tokens": 352706,
+        "completion_tokens": 11901,
+        "cached_tokens": 337536,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-3948-1790407604.json",
+        "duration_s": 117.9,
+        "test_path": "tests/test_warden_issue_3948.py"
+      },
+      "intake_cost_usd": 0.001314,
+      "judge_cost_usd": 0.000428
+    },
+    {
+      "repo": "psf/black",
+      "number": 3790,
+      "title": "Black 23.7.0 thinks accessing an attribute named `type` inside brackets in a switch statement is invalid syntax",
+      "intake_version": "23.7.0",
+      "intake_python": "3.11.4",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "6123b4ac2696116090fee3da77e9be66417980dd",
+        "committed_at": "2023-07-11T19:16:43Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.11",
+        "version": "23.7.1.dev0",
+        "pytest": "pytest==7.4.0",
+        "test_path": "tests/test_warden_issue_3790.py",
+        "run": {
+          "version": "6123b4ac26",
+          "python": "3.11",
+          "env_key": "a2fb217e1e33c09b2f078eb0ae6dd7d538dd6224cc6845aa70f885a6c8b246c7",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>: match (SomeClass.type):",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本调用 black.format_str 处理 issue 中的最小复现代码，被测包直接抛出 InvalidInput: Cannot parse: 5:0: match (SomeClass.type):，与 issue 报告的 \"cannot format file.py: Cannot parse: 5:0: match (SomeClass.type):\" 完全一致，说明失败来自 black 的解析行为而非脚本自身断言。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):",
+            "quote_found": true,
+            "cost_usd": 0.000435
+          },
+          "log_dir": "artifacts\\warden-run-2e2ef46327",
+          "output_tail": "          ^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 1788, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_3790.py\", line 28, in test_match_subject_with_type_attribute_in_parens\n    formatted = black.format_str(SOURCE, mode=MODE)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1085, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1095, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/parsing.py\", line 100, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3790.py::test_match_subject_with_type_attribute_in_parens\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_3790.py",
+            "claim": "格式化为 issue 中的代码（match 语句中带括号的 `SomeClass.type` 属性访问）时，black 自身抛出 black.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):；测试断言格式化不报错且结果稳定，修复前失败、修复后通过。",
+            "script": "\"\"\"Regression test for https://github.com/psf/black/issues/3790.\n\n``type`` became a soft keyword (PEP 695) in black's lib2to3 grammar, and\naccessing an attribute named ``type`` inside parentheses used as the subject of\na ``match`` statement made lib2to3 fail to parse an otherwise valid Python 3.11\nfile.\n\"\"\"\n\nimport black\n\n# Minimal reproduction taken from the issue report.\nSOURCE = '''\\\nclass SomeClass:\n    type = \"\"\n\n\nmatch (SomeClass.type):\n    case _:\n        print(\"Hello there ...\")\n'''\n\nMODE = black.Mode(target_versions={black.TargetVersion.PY311})\n\n\ndef test_match_subject_with_type_attribute_in_parens() -> None:\n    # This used to raise ``InvalidInput: Cannot parse: 5:0: match\n    # (SomeClass.type):`` even though the code is valid Python 3.11.\n    formatted = black.format_str(SOURCE, mode=MODE)\n\n    # Formatting must be stable, i.e. re-formatting the output is a no-op.\n    assert black.format_str(formatted, mode=MODE) == formatted\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/psf/black/issues/3790.\n\n``type`` became a soft keyword (PEP 695) in black's lib2to3 grammar, and\naccessing an attribute named ``type`` inside parentheses used as the subject of\na ``match`` statement made lib2to3 fail to parse an otherwise valid Python 3.11\nfile.\n\"\"\"\n\nimport black\n\n# Minimal reproduction taken from the issue report.\nSOURCE = '''\\\nclass SomeClass:\n    type = \"\"\n\n\nmatch (SomeClass.type):\n    case _:\n        print(\"Hello there ...\")\n'''\n\nMODE = black.Mode(target_versions={black.TargetVersion.PY311})\n\n\ndef test_match_subject_with_type_attribute_in_parens() -> None:\n    # This used to raise ``InvalidInput: Cannot parse: 5:0: match\n    # (SomeClass.type):`` even though the code is valid Python 3.11.\n    formatted = black.format_str(SOURCE, mode=MODE)\n\n    # Formatting must be stable, i.e. re-formatting the output is a no-op.\n    assert black.format_str(formatted, mode=MODE) == formatted\n",
+        "final_run": {
+          "version": "6123b4ac26",
+          "python": "3.11",
+          "env_key": "a2fb217e1e33c09b2f078eb0ae6dd7d538dd6224cc6845aa70f885a6c8b246c7",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidInput",
+              "message": "Cannot parse: <N>:<N>: match (SomeClass.type):",
+              "frames": [
+                "black/__init__.py:format_str",
+                "black/__init__.py:_format_str_once",
+                "black/parsing.py:lib2to3_parse"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本调用 black.format_str 处理 issue 中的最小复现代码，被测包直接抛出 InvalidInput: Cannot parse: 5:0: match (SomeClass.type):，与 issue 报告的 \"cannot format file.py: Cannot parse: 5:0: match (SomeClass.type):\" 完全一致，说明失败来自 black 的解析行为而非脚本自身断言。",
+            "quote": "black.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):",
+            "quote_found": true,
+            "cost_usd": 0.000435
+          },
+          "log_dir": "artifacts\\warden-run-2e2ef46327",
+          "output_tail": "          ^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 1788, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_3790.py\", line 28, in test_match_subject_with_type_attribute_in_parens\n    formatted = black.format_str(SOURCE, mode=MODE)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1085, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1095, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/parsing.py\", line 100, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3790.py::test_match_subject_with_type_attribute_in_parens\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "steps": 25,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 4,
+          "read_file": 4,
+          "run": 12,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.007844,
+        "prompt_tokens": 182253,
+        "completion_tokens": 8936,
+        "cached_tokens": 169088,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-3790-1790407781.json",
+        "duration_s": 80.3,
+        "test_path": "tests/test_warden_issue_3790.py"
+      },
+      "intake_cost_usd": 0.000777,
+      "judge_cost_usd": 0.000435
+    },
+    {
+      "repo": "psf/black",
+      "number": 3727,
+      "title": "Black fails on docstring with linebreak",
+      "intake_version": "23.3.0",
+      "intake_python": "3.9.7",
+      "has_traceback": false,
+      "source": {
+        "repo": "psf/black",
+        "sha": "3aad6e385bfbd4348b2e13695cb6741806951160",
+        "committed_at": "2023-06-02T01:37:08Z",
+        "package": "black",
+        "module": "black",
+        "python": "3.9",
+        "version": "23.3.1.dev0",
+        "pytest": "pytest==7.3.1",
+        "test_path": "tests/test_warden_issue_3727.py",
+        "run": {
+          "version": "3aad6e385b",
+          "python": "3.9",
+          "env_key": "bfc6f02fcef326305f5c1b01c63c00db17a3ab4f20f70f6a03239833b944af5a",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 issue 中的 docstring（含反斜杠加空格续行）调用 black.format_str 并通过 black.assert_equivalent 校验，Black 自身抛出与 issue 完全一致的 \"INTERNAL ERROR: Black produced code that is not equivalent to the source\"，说明被测包确实改动了字符串内容；失败来自包的行为而非脚本自造的断言。",
+            "quote": "AssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000339
+          },
+          "log_dir": "artifacts\\warden-run-e648a75e4c",
+          "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________ test_docstring_with_backslash_and_whitespace_before_newline __________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_warden_issue_3727.py\", line 59, in test_docstring_with_backslash_and_whitespace_before_newline\n    black.assert_equivalent(SOURCE, formatted)\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 1370, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_4cbo8wf9.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3727.py::test_docstring_with_backslash_and_whitespace_before_newline\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_warden_issue_3727.py",
+            "claim": "Formatting the issue's class docstring (line ends with backslash + space before the newline) makes Black rewrite the docstring, so Black's --safe check raises AssertionError \"INTERNAL ERROR: Black produced code that is not equivalent to the source\" from black.assert_equivalent; the test also asserts the docstring's string constants are unchanged and the output is stable.",
+            "script": "r\"\"\"Regression test for https://github.com/psf/black/issues/3727.\n\nA docstring that contains a backslash followed by whitespace before the newline\n(the ``\\ `` in the issue) used to be rewritten by Black: the trailing whitespace\nwas stripped, which turned the escape into a real line continuation and\ntherefore changed the value of the string.  Black then aborted with::\n\n    INTERNAL ERROR: Black produced code that is not equivalent to the source.\n\nThe expected behaviour is that formatting simply completes and the docstring\nkeeps its contents.\n\"\"\"\n\nimport ast\nimport warnings\n\nimport black\n\n# The docstring is exactly the code from the bug report, including the trailing\n# space after the backslash on the \"gitlab-audit\" line.\nSOURCE = (\n    \"class Database:\\n\"\n    '    \"\"\"\\n'\n    \"    ## Database Base Class\\n\"\n    \"    The custom ORM specificaly created for the [gitlab-audit project]\"\n    \"(https://gitlab.itwm.fraunhofer.de/it-linux/gitlab-audit).\\\\ \\n\"\n    \"    Provides a lot of functions to interact with the database in a pythonic,\"\n    \" easy and\\n\"\n    \"    fast way.\\n\"\n    '    \"\"\"\\n'\n    \"    def __init__(self):\\n\"\n    \"        ...\\n\"\n)\n\n\ndef _string_constants(source: str) -> list:\n    with warnings.catch_warnings():\n        # The input deliberately uses an invalid escape sequence (\"\\ \"), whose\n        # DeprecationWarning is otherwise turned into an error by the test\n        # configuration.\n        warnings.simplefilter(\"ignore\")\n        tree = ast.parse(source)\n    return [\n        node.value\n        for node in ast.walk(tree)\n        if isinstance(node, ast.Constant) and isinstance(node.value, str)\n    ]\n\n\ndef test_docstring_with_backslash_and_whitespace_before_newline() -> None:\n    mode = black.Mode()\n    formatted = black.format_str(SOURCE, mode=mode)\n\n    with warnings.catch_warnings():\n        warnings.simplefilter(\"ignore\")\n        # This is the check the CLI performs; it is what used to raise\n        # \"INTERNAL ERROR: Black produced code that is not equivalent to the\n        # source\" (the backslash before the newline disappeared).\n        black.assert_equivalent(SOURCE, formatted)\n\n    # The docstring must be left alone, i.e. the string constants of the file\n    # must not change.\n    assert _string_constants(formatted) == _string_constants(SOURCE)\n\n    # And the result must be stable.\n    with warnings.catch_warnings():\n        warnings.simplefilter(\"ignore\")\n        black.assert_stable(SOURCE, formatted, mode=mode)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "r\"\"\"Regression test for https://github.com/psf/black/issues/3727.\n\nA docstring that contains a backslash followed by whitespace before the newline\n(the ``\\ `` in the issue) used to be rewritten by Black: the trailing whitespace\nwas stripped, which turned the escape into a real line continuation and\ntherefore changed the value of the string.  Black then aborted with::\n\n    INTERNAL ERROR: Black produced code that is not equivalent to the source.\n\nThe expected behaviour is that formatting simply completes and the docstring\nkeeps its contents.\n\"\"\"\n\nimport ast\nimport warnings\n\nimport black\n\n# The docstring is exactly the code from the bug report, including the trailing\n# space after the backslash on the \"gitlab-audit\" line.\nSOURCE = (\n    \"class Database:\\n\"\n    '    \"\"\"\\n'\n    \"    ## Database Base Class\\n\"\n    \"    The custom ORM specificaly created for the [gitlab-audit project]\"\n    \"(https://gitlab.itwm.fraunhofer.de/it-linux/gitlab-audit).\\\\ \\n\"\n    \"    Provides a lot of functions to interact with the database in a pythonic,\"\n    \" easy and\\n\"\n    \"    fast way.\\n\"\n    '    \"\"\"\\n'\n    \"    def __init__(self):\\n\"\n    \"        ...\\n\"\n)\n\n\ndef _string_constants(source: str) -> list:\n    with warnings.catch_warnings():\n        # The input deliberately uses an invalid escape sequence (\"\\ \"), whose\n        # DeprecationWarning is otherwise turned into an error by the test\n        # configuration.\n        warnings.simplefilter(\"ignore\")\n        tree = ast.parse(source)\n    return [\n        node.value\n        for node in ast.walk(tree)\n        if isinstance(node, ast.Constant) and isinstance(node.value, str)\n    ]\n\n\ndef test_docstring_with_backslash_and_whitespace_before_newline() -> None:\n    mode = black.Mode()\n    formatted = black.format_str(SOURCE, mode=mode)\n\n    with warnings.catch_warnings():\n        warnings.simplefilter(\"ignore\")\n        # This is the check the CLI performs; it is what used to raise\n        # \"INTERNAL ERROR: Black produced code that is not equivalent to the\n        # source\" (the backslash before the newline disappeared).\n        black.assert_equivalent(SOURCE, formatted)\n\n    # The docstring must be left alone, i.e. the string constants of the file\n    # must not change.\n    assert _string_constants(formatted) == _string_constants(SOURCE)\n\n    # And the result must be stable.\n    with warnings.catch_warnings():\n        warnings.simplefilter(\"ignore\")\n        black.assert_stable(SOURCE, formatted, mode=mode)\n",
+        "final_run": {
+          "version": "3aad6e385b",
+          "python": "3.9",
+          "env_key": "bfc6f02fcef326305f5c1b01c63c00db17a3ab4f20f70f6a03239833b944af5a",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on http<PATH>  This diff might be helpful: <PATH>",
+              "frames": [
+                "black/__init__.py:assert_equivalent"
+              ]
+            },
+            "reported": null
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 issue 中的 docstring（含反斜杠加空格续行）调用 black.format_str 并通过 black.assert_equivalent 校验，Black 自身抛出与 issue 完全一致的 \"INTERNAL ERROR: Black produced code that is not equivalent to the source\"，说明被测包确实改动了字符串内容；失败来自包的行为而非脚本自造的断言。",
+            "quote": "AssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.",
+            "quote_found": true,
+            "cost_usd": 0.000339
+          },
+          "log_dir": "artifacts\\warden-run-e648a75e4c",
+          "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________ test_docstring_with_backslash_and_whitespace_before_newline __________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_warden_issue_3727.py\", line 59, in test_docstring_with_backslash_and_whitespace_before_newline\n    black.assert_equivalent(SOURCE, formatted)\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 1370, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_4cbo8wf9.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3727.py::test_docstring_with_backslash_and_whitespace_before_newline\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "steps": 39,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 9,
+          "read_file": 11,
+          "write_scratch": 2,
+          "run": 10,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.022207,
+        "prompt_tokens": 761328,
+        "completion_tokens": 28316,
+        "cached_tokens": 741376,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-psf__black-3727-1790408071.json",
+        "duration_s": 193.1,
+        "test_path": "tests/test_warden_issue_3727.py"
+      },
+      "intake_cost_usd": 0.000284,
+      "judge_cost_usd": 0.000339
+    }
+  ],
+  "fbpa": [
+    {
+      "number": 4588,
+      "title": "EOF in multi-line string error for valid format string",
+      "reported_version": "25.1.0",
+      "python": "3.10",
+      "proxy": "—",
+      "fix": {
+        "pr": 4536,
+        "sha": "5342d2eeda6935a96d2bd0c74072b3c441d76bde",
+        "parent": "9f38928414e6a39044f9b148692e90f3e1fd3433",
+        "committed_at": "2025-03-16T00:41:19Z",
+        "merge": false
+      },
+      "pretend_version": "25.1.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.594,
+          "tail": "  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 159, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4588.py\", line 22, in test_fstring_with_escaped_backslash_before_closing_quote\n    formatted = black.format_str(SOURCE, mode=mode)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1208, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1222, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n  File \"/opt/venv/lib/python3.10/site-packages/black/parsing.py\", line 98, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4588.py::test_fstring_with_escaped_backslash_before_closing_quote\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts\\warden-run-fea7885ec9"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.609,
+          "tail": "  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 159, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4588.py\", line 22, in test_fstring_with_escaped_backslash_before_closing_quote\n    formatted = black.format_str(SOURCE, mode=mode)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1208, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1222, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n  File \"/opt/venv/lib/python3.10/site-packages/black/parsing.py\", line 98, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse for target version Python 3.10: 3:22: EOF in multi-line string\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4588.py::test_fstring_with_escaped_backslash_before_closing_quote\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\warden-run-72ed4f9771"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.609,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-151cc4f137"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-8541dc3ab6"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4399,
+      "title": "Black fails with `ASTSafetyError` on comment line in return type annotation",
+      "reported_version": "24.4.2",
+      "python": "3.10",
+      "proxy": "—",
+      "fix": {
+        "pr": 4453,
+        "sha": "2a45cecf2951bb778204dcf63a90f146f4cc9c6c",
+        "parent": "b4d6d8632dea33363eaa0eaad9caf94a223e0f43",
+        "committed_at": "2024-09-16T02:34:02Z",
+        "merge": false
+      },
+      "pretend_version": "24.4.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.641,
+          "tail": "  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 162, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4399.py\", line 39, in test_parenthesized_return_annotation_with_comment_is_safe\n    formatted = black.format_file_contents(SOURCE, fast=False, mode=black.Mode())\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1085, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1059, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1566, in assert_equivalent\n    raise ASTSafetyError(\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 24.4.3.dev0 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_88dfs27j.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4399.py::test_parenthesized_return_annotation_with_comment_is_safe\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-542595536a"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.609,
+          "tail": "  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 162, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_warden_issue_4399.py\", line 39, in test_parenthesized_return_annotation_with_comment_is_safe\n    formatted = black.format_file_contents(SOURCE, fast=False, mode=black.Mode())\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1085, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1059, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.10/site-packages/black/__init__.py\", line 1566, in assert_equivalent\n    raise ASTSafetyError(\nblack.parsing.ASTSafetyError: INTERNAL ERROR: Black 24.4.3.dev0 on Python (CPython) 3.10.21 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_u4knh_ul.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4399.py::test_parenthesized_return_annotation_with_comment_is_safe\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-6cc591a8fc"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.07s",
+          "log_dir": "artifacts\\warden-run-0c14d4699d"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.64,
+          "tail": ".                                                                        [100%]\n1 passed in 0.07s",
+          "log_dir": "artifacts\\warden-run-18cb5ccc87"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4296,
+      "title": "Standalone comments still partially broken",
+      "reported_version": "24.3.0",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 5144,
+        "sha": "7e8ef6bc1d2d803b01ee6cde752f7f8c5dca8260",
+        "parent": "650983f7b32b15feeb0fa30c0ed1a8b6e2a9b28f",
+        "committed_at": "2026-05-28T19:18:51Z",
+        "merge": false
+      },
+      "pretend_version": "24.3.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.609,
+          "tail": "    return _format_str_once(dst_contents, mode=mode, lines=lines)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1267, in _format_str_once\n    src_node = lib2to3_parse(\n               ^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 111, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 9:0\n    ]\n    ^\nParseError: bad input\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4296.py::test_standalone_comment_in_comprehension_is_formatted_parsably\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-2ec6857c28"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.64,
+          "tail": "    return _format_str_once(dst_contents, mode=mode, lines=lines)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1267, in _format_str_once\n    src_node = lib2to3_parse(\n               ^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 111, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 9:0\n    ]\n    ^\nParseError: bad input\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4296.py::test_standalone_comment_in_comprehension_is_formatted_parsably\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\warden-run-76876fe29f"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.64,
+          "tail": ".                                                                        [100%]\n1 passed in 0.07s",
+          "log_dir": "artifacts\\warden-run-c769d23ae5"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.641,
+          "tail": ".                                                                        [100%]\n1 passed in 0.07s",
+          "log_dir": "artifacts\\warden-run-d454dbb444"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4291,
+      "title": "Empty line and `...` and \"unindent does not match any outer indentation level\"",
+      "reported_version": "24.1.0",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_fix",
+      "error": null
+    },
+    {
+      "number": 4280,
+      "title": "Crash on formatting `case case` syntax when line length set to be small",
+      "reported_version": "24.2.0",
+      "python": "3.10",
+      "proxy": "—",
+      "fix": {
+        "pr": 5147,
+        "sha": "13e97b44997539a16a2454d9483a746b586253e0",
+        "parent": "7613840124a7d6fdf7ce95157f9fc40360c2db88",
+        "committed_at": "2026-05-22T14:33:10Z",
+        "merge": false
+      },
+      "pretend_version": "24.3.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": false,
+          "duration_s": 0.641,
+          "tail": "    assert actual == EXPECTED\nAssertionError: assert 'match test:\\...       pass\\n' == 'match test:\\...       pass\\n'\n  \n  Skipping 35 identical leading characters in diff, use -v to show\n    \n  -     ) if True:\n  ?          ^^^^^\n  +     ) if (\n  ?          ^...\n  \n  ...Full output truncated (3 lines hidden), use '-vv' to show\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4280.py::test_case_case_with_guard_at_small_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.08s",
+          "log_dir": "artifacts\\warden-run-3f3106e6a1"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": false,
+          "duration_s": 0.625,
+          "tail": "    assert actual == EXPECTED\nAssertionError: assert 'match test:\\...       pass\\n' == 'match test:\\...       pass\\n'\n  \n  Skipping 35 identical leading characters in diff, use -v to show\n    \n  -     ) if True:\n  ?          ^^^^^\n  +     ) if (\n  ?          ^...\n  \n  ...Full output truncated (3 lines hidden), use '-vv' to show\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4280.py::test_case_case_with_guard_at_small_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\warden-run-7a06172a1c"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": false,
+          "duration_s": 0.828,
+          "tail": "    assert actual == EXPECTED\nAssertionError: assert 'match test:\\...       pass\\n' == 'match test:\\...       pass\\n'\n  \n  Skipping 35 identical leading characters in diff, use -v to show\n    \n  -     ) if True:\n  ?          ^^^^^\n  +     ) if (\n  ?          ^...\n  \n  ...Full output truncated (3 lines hidden), use '-vv' to show\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4280.py::test_case_case_with_guard_at_small_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.08s",
+          "log_dir": "artifacts\\warden-run-5380c95551"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": false,
+          "duration_s": 0.609,
+          "tail": "    assert actual == EXPECTED\nAssertionError: assert 'match test:\\...       pass\\n' == 'match test:\\...       pass\\n'\n  \n  Skipping 35 identical leading characters in diff, use -v to show\n    \n  -     ) if True:\n  ?          ^^^^^\n  +     ) if (\n  ?          ^...\n  \n  ...Full output truncated (3 lines hidden), use '-vv' to show\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4280.py::test_case_case_with_guard_at_small_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\warden-run-aa9340baa8"
+        }
+      ],
+      "outcome": "before_mismatch",
+      "error": null
+    },
+    {
+      "number": 4261,
+      "title": "Fails to parse backslash on line by itself",
+      "reported_version": "24.2.0",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 4343,
+        "sha": "b677a643c5322b6af2dbca1f8f7a4f8c98e732aa",
+        "parent": "8447af4d8df5ae20260e0983c085ca0c04674fe6",
+        "committed_at": "2024-06-01T20:01:36Z",
+        "merge": false
+      },
+      "pretend_version": "24.2.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.656,
+          "tail": "    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1225, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1239, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 3:4:     pass\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4261.py::test_backslash_on_line_by_itself\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\warden-run-e82008391d"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.656,
+          "tail": "    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1225, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1239, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 90, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 3:4:     pass\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4261.py::test_backslash_on_line_by_itself\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\warden-run-e87c48e42f"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.07s",
+          "log_dir": "artifacts\\warden-run-3dc20db8de"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.61,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-8f2c4a8bc6"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4220,
+      "title": "`black` internal error on line-broken `==`",
+      "reported_version": "24.1.1",
+      "python": "3.11",
+      "proxy": "—",
+      "fix": {
+        "pr": 4248,
+        "sha": "e4bfedbec2e8b10cc6b7b31442478f05db0ce06d",
+        "parent": "d0287e1f7558d97e6c0ebd6dc5bcb5b970e2bf8c",
+        "committed_at": "2024-03-01T15:02:56Z",
+        "merge": false
+      },
+      "pretend_version": "24.1.2.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.594,
+          "tail": "  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 193, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4220.py\", line 31, in test_type_ignore_on_line_broken_eq_is_equivalent\n    black.assert_equivalent(source, dst)\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1535, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_9doygnir.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4220.py::test_type_ignore_on_line_broken_eq_is_equivalent\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts\\warden-run-166da5366f"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.609,
+          "tail": "  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 193, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4220.py\", line 31, in test_type_ignore_on_line_broken_eq_is_equivalent\n    black.assert_equivalent(source, dst)\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1535, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_gtv2epcp.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4220.py::test_type_ignore_on_line_broken_eq_is_equivalent\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-48ebc55722"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\warden-run-00bce2b25c"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.593,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\warden-run-5d3cd2f52d"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4062,
+      "title": "Crash with preview style + line length 1",
+      "reported_version": "23.11.0",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 4086,
+        "sha": "50d5756e8e63b17e4523f096f312011273ce640f",
+        "parent": "3416b2c82d51f27ce55c31ef0bfe4a9e21816611",
+        "committed_at": "2023-12-05T18:19:24Z",
+        "merge": false
+      },
+      "pretend_version": "23.11.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.641,
+          "tail": "    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4062.py\", line 24, in test_parenthesize_long_type_hints_with_short_line_length\n    black.format_file_contents(source, fast=False, mode=mode)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1011, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 985, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1447, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line 1). Please report a bug on https://github.com/psf/black/issues.  This invalid output might be helpful: /tmp/blk_vexj04d9.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4062.py::test_parenthesize_long_type_hints_with_short_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-1eca9b2cc7"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.64,
+          "tail": "    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_warden_issue_4062.py\", line 24, in test_parenthesize_long_type_hints_with_short_line_length\n    black.format_file_contents(source, fast=False, mode=mode)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1011, in format_file_contents\n    check_stability_and_equivalence(\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 985, in check_stability_and_equivalence\n    assert_equivalent(src_contents, dst_contents)\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1447, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced invalid code: expected ':' (<unknown>, line 1). Please report a bug on https://github.com/psf/black/issues.  This invalid output might be helpful: /tmp/blk_ba6t_23h.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_4062.py::test_parenthesize_long_type_hints_with_short_line_length\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts\\warden-run-2ff031a984"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.641,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-8d0827ac16"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\warden-run-d1ff5772ef"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 4036,
+      "title": "hug_parens_with_braces_and_square_brackets: \"Black produced code that is not equivalent to the source\" error in preview mode on function call with two `type:ignore` comments",
+      "reported_version": "main",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 5271,
+        "sha": "011942a84347316f60ab1b3fe7f9563f8210f2cc",
+        "parent": "e744e77f4983c65101937931947862403ed75718",
+        "committed_at": "2026-08-05T21:33:57Z",
+        "merge": false
+      },
+      "pretend_version": "23.11.1.dev0",
+      "before": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\warden-run-9713cb70b5"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-ae5ce6e314"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-230ba88466"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-b5f6ece6c6"
+        }
+      ],
+      "outcome": "not_fail_before",
+      "error": null
+    },
+    {
+      "number": 3948,
+      "title": "Fails to parse type alias containing lambda",
+      "reported_version": "23.9.2.dev39+g3208b76.d20231016",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 3949,
+        "sha": "722735d20ebdc66c0da0e0df7658293455694500",
+        "parent": "abe57e3d92727f1b26c717fad3978159b987fe79",
+        "committed_at": "2023-10-16T17:53:38Z",
+        "merge": false
+      },
+      "pretend_version": "23.9.2.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.625,
+          "tail": "    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 1:16: type Alias[T] = lambda: T\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3948.py::test_type_alias_with_lambda_can_be_formatted\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-2e60973c49"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.641,
+          "tail": "    formatted = black.format_str(source, mode=black.Mode())\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 1:16: type Alias[T] = lambda: T\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3948.py::test_type_alias_with_lambda_can_be_formatted\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-c3539fbbb2"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.64,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-755661a2e6"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.641,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\warden-run-19f7f03aa0"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 3790,
+      "title": "Black 23.7.0 thinks accessing an attribute named `type` inside brackets in a switch statement is invalid syntax",
+      "reported_version": "23.7.0",
+      "python": "3.11",
+      "proxy": "—",
+      "fix": {
+        "pr": 3950,
+        "sha": "bb588073ab286a9f1f8d839ab2cebe13011dd22c",
+        "parent": "722735d20ebdc66c0da0e0df7658293455694500",
+        "committed_at": "2023-10-17T07:59:15Z",
+        "merge": false
+      },
+      "pretend_version": "23.7.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.813,
+          "tail": "    formatted = black.format_str(SOURCE, mode=MODE)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3790.py::test_match_subject_with_type_attribute_in_parens\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-9e999b6bcf"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.609,
+          "tail": "    formatted = black.format_str(SOURCE, mode=MODE)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1079, in format_str\n    dst_contents = _format_str_once(src_contents, mode=mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/__init__.py\", line 1089, in _format_str_once\n    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/black/parsing.py\", line 89, in lib2to3_parse\n    raise exc from None\nblack.parsing.InvalidInput: Cannot parse: 5:0: match (SomeClass.type):\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3790.py::test_match_subject_with_type_attribute_in_parens\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts\\warden-run-b49c792631"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\warden-run-9deecf59d8"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.656,
+          "tail": ".                                                                        [100%]\n1 passed in 0.07s",
+          "log_dir": "artifacts\\warden-run-28389f4ce6"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 3727,
+      "title": "Black fails on docstring with linebreak",
+      "reported_version": "23.3.0",
+      "python": "3.9",
+      "proxy": "—",
+      "fix": {
+        "pr": 4008,
+        "sha": "e50110353ab81b539aaee686453c18c707b5f045",
+        "parent": "ddfecf06c13dd86205c851e340124e325ed82c5c",
+        "committed_at": "2023-10-31T15:27:11Z",
+        "merge": false
+      },
+      "pretend_version": "23.3.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.625,
+          "tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________ test_docstring_with_backslash_and_whitespace_before_newline __________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_warden_issue_3727.py\", line 59, in test_docstring_with_backslash_and_whitespace_before_newline\n    black.assert_equivalent(SOURCE, formatted)\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 1372, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_jz49l0_5.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3727.py::test_docstring_with_backslash_and_whitespace_before_newline\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-4a4c615a46"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.578,
+          "tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________ test_docstring_with_backslash_and_whitespace_before_newline __________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_warden_issue_3727.py\", line 59, in test_docstring_with_backslash_and_whitespace_before_newline\n    black.assert_equivalent(SOURCE, formatted)\n  File \"/opt/venv/lib/python3.9/site-packages/black/__init__.py\", line 1372, in assert_equivalent\n    raise AssertionError(\nAssertionError: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_vh_h50wv.log\n=========================== short test summary info ============================\nFAILED src/tests/test_warden_issue_3727.py::test_docstring_with_backslash_and_whitespace_before_newline\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\warden-run-40be4ab0c1"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.625,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\warden-run-f0736b721c"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.656,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\warden-run-13f751a866"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    }
+  ]
+}

@@ -6,6 +6,7 @@
 
 辅助程序只用 importlib.util.find_spec 定位包，不 import 它：import 会执行包的代码。
 路径一律相对 site-packages，读文件时校验解析后的真实路径仍在 site-packages 之内。
+source 模式（L2）传一个目录（仓库源码树），路径改为相对这个目录，同样做越界校验。
 """
 
 from __future__ import annotations
@@ -23,24 +24,30 @@ def out(obj):
     sys.exit(0)
 
 mode, module = sys.argv[1], sys.argv[2]
-try:
-    spec = importlib.util.find_spec(module)
-except (ImportError, ValueError) as e:
-    out({"error": f"找不到模块 {module}: {e}"})
-if spec is None or spec.origin is None and not spec.submodule_search_locations:
-    out({"error": f"找不到模块 {module}"})
-if spec.submodule_search_locations:
-    pkg = list(spec.submodule_search_locations)[0]
-    base = os.path.dirname(pkg)
+if module.startswith("/"):
+    # 目录模式（source 模式的仓库源码树）：路径相对这个目录
+    if not os.path.isdir(module):
+        out({"error": f"目录不存在：{module}"})
+    pkg = base = module
 else:
-    pkg = spec.origin
-    base = os.path.dirname(pkg)
+    try:
+        spec = importlib.util.find_spec(module)
+    except (ImportError, ValueError) as e:
+        out({"error": f"找不到模块 {module}: {e}"})
+    if spec is None or spec.origin is None and not spec.submodule_search_locations:
+        out({"error": f"找不到模块 {module}"})
+    if spec.submodule_search_locations:
+        pkg = list(spec.submodule_search_locations)[0]
+        base = os.path.dirname(pkg)
+    else:
+        pkg = spec.origin
+        base = os.path.dirname(pkg)
 base_real = os.path.realpath(base)
 
 def inside(rel):
     p = os.path.realpath(os.path.join(base, rel))
     if p != base_real and not p.startswith(base_real + os.sep):
-        out({"error": "路径必须在 site-packages 之内"})
+        out({"error": "路径必须在代码目录之内"})
     return p
 
 def walk(root):
@@ -97,6 +104,7 @@ class CodeTools:
     """一个环境镜像上的只读代码工具。每次调用起一个断网的 run 阶段容器。"""
 
     def __init__(self, sandbox: DockerSandbox, image: str, volume: str, module: str) -> None:
+        """module：import 名（在 site-packages 里找包），或以 / 开头的目录（仓库源码树）。"""
         self.sandbox = sandbox
         self.image = image
         self.volume = volume

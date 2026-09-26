@@ -10,6 +10,7 @@ import pytest
 from warden.replay.fbpa import (
     FbpaCase,
     RunBrief,
+    candidate_from_l1,
     classify,
     dump,
     evaluate_case,
@@ -80,7 +81,8 @@ async def run_case(report: IssueReproReport, outputs: dict[str, list[ExecResult]
         calls.append((sha, python))
         return outputs[sha]
 
-    case = await evaluate_case(report, find_fix=find_fix, pretend=pretend, run_at=run_at,
+    case = await evaluate_case(candidate_from_l1(report), find_fix=find_fix, pretend=pretend,
+                               run_at=run_at,
                                setup_errors=(RuntimeError,))
     return case, calls
 
@@ -130,7 +132,8 @@ async def test_no_fix_commit_and_setup_errors():
     async def pretend(_: FixCommit) -> str:
         return "1"
 
-    case = await evaluate_case(report, find_fix=find, pretend=pretend, run_at=boom,
+    case = await evaluate_case(candidate_from_l1(report), find_fix=find, pretend=pretend,
+                               run_at=boom,
                                setup_errors=(RuntimeError,))
     assert case.outcome == "setup_failed" and "上限" in (case.error or "")
 

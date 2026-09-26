@@ -26,14 +26,24 @@ import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field
 
 from warden.llm import LLMClient, LLMError, ToolCall, Usage
 from warden.repro.codetools import CodeTools
 from warden.repro.config import PackageConfig
+from warden.repro.envcache import Env
+from warden.repro.evidence import EvidenceLevel
 from warden.repro.judge import VerdictKind
+from warden.repro.l2 import (
+    PYTEST_INVALID,
+    L2Unsupported,
+    SourcePrepared,
+    SourceRepro,
+    TestReproducer,
+    pytest_argv,
+)
 from warden.repro.package import (
     SETUP_ERRORS,
     IssueContext,
@@ -43,9 +53,11 @@ from warden.repro.package import (
     VersionRun,
 )
 from warden.repro.sandbox import SandboxError
+from warden.repro.source import SRC_DIR, SourceError, SourceTree
 from warden.skills.base import load_prompt, priced, untrusted
 
 PROMPT_VERSION = "1"
+TEST_PROMPT_VERSION = "1"
 SCRATCH_DIR = ".warden"
 _SCRATCH_NAME = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,60}\.(py|txt)$")
 MAX_SCRATCH_BYTES = 20_000
@@ -111,6 +123,54 @@ TOOLS: list[dict[str, Any]] = [
     }},
 ]
 
+# source 模式（L2）：代码工具看的是仓库源码树；交付物是仓库测试目录里的一个 pytest 文件
+_BY_NAME = {t["function"]["name"]: t for t in TOOLS}
+TEST_TOOLS: list[dict[str, Any]] = [
+    {"type": "function", "function": {
+        "name": "list_files",
+        "description": "列出仓库源码树里的 .py 文件"
+                       "（路径相对仓库根，如 src/black/linegen.py、tests/）。",
+        "parameters": {"type": "object", "properties": {
+            "path": {"type": "string", "description": "子目录；留空为整个仓库"},
+        }},
+    }},
+    {"type": "function", "function": {
+        "name": "search_code",
+        "description": "在仓库源码树里按正则搜索（含 tests/），"
+                       "返回 路径:行号: 内容（最多 60 条）。",
+        "parameters": _BY_NAME["search_code"]["function"]["parameters"],
+    }},
+    {"type": "function", "function": {
+        "name": "read_file",
+        "description": "读取仓库里的文件若干行（一次最多 250 行），路径相对仓库根。"
+                       "也可以读自己写的 .warden/ 文件。",
+        "parameters": _BY_NAME["read_file"]["function"]["parameters"],
+    }},
+    _BY_NAME["write_scratch"],
+    _BY_NAME["run"],
+    {"type": "function", "function": {
+        "name": "write_test",
+        "description": "写（覆盖）这次要交付的测试文件，路径固定（见任务说明）。"
+                       "内容是 pytest 测试模块。",
+        "parameters": {"type": "object", "properties": {
+            "content": {"type": "string"},
+        }, "required": ["content"]},
+    }},
+    {"type": "function", "function": {
+        "name": "run_test",
+        "description": "按仓库自己的 pytest 配置运行测试文件（断网，120 秒超时），返回输出。",
+        "parameters": {"type": "object", "properties": {}},
+    }},
+    {"type": "function", "function": {
+        "name": "submit",
+        "description": "提交当前的测试文件作为候选复现，由独立判定器放进全新的仓库副本里核对。",
+        "parameters": {"type": "object", "properties": {
+            "claim": {"type": "string", "description": "一句话：这个测试复现了什么、怎么失败"},
+        }, "required": ["claim"]},
+    }},
+    _BY_NAME["give_up"],
+]
+
 
 class AgentTask(BaseModel):
     repo: str
@@ -151,6 +211,8 @@ class AgentResult(BaseModel):
     error: str | None = None
     transcript_path: str | None = None
     duration_s: float = 0.0
+    # source 模式：final_script 是测试文件的内容，test_path 是它在仓库里的路径
+    test_path: str | None = None
 
 
 def clip(text: str, head: int = 30, tail: int = 50, max_chars: int = 8000) -> str:
@@ -174,7 +236,7 @@ class ReproAgent:
         self,
         llm: LLMClient,
         model: str,
-        reproducer: PackageReproducer,
+        reproducer: PackageReproducer | TestReproducer,
         *,
         max_steps: int = 40,
         max_attempts: int = 4,
@@ -192,10 +254,19 @@ class ReproAgent:
 
     # ---------------------------------------------------------------- 主循环
 
-    async def run(self, task: AgentTask, prepared: Prepared) -> AgentResult:
+    async def run(self, task: AgentTask, prepared: Prepared | SourcePrepared) -> AgentResult:
         started = time.monotonic()
-        session = _Session(self, task, prepared)
-        session.volume = await self.sandbox.create_workspace(f"agent-{prepared.env.key[:8]}")
+        session: _BaseSession
+        key = f"agent-{prepared.env.key[:8]}"
+        if isinstance(prepared, SourcePrepared):
+            # 按 prepared 的类型区分模式；reproducer 用鸭子类型（测试里会注入假的）
+            tester = cast(TestReproducer, self.reproducer)
+            session = _TestSession(self, task, prepared, tester)
+            # 工作区里先放一份仓库源码副本，run_test 在这份副本里跑
+            session.volume = await tester.open_workspace(prepared, key)
+        else:
+            session = _Session(self, task, prepared)
+            session.volume = await self.sandbox.create_workspace(key)
         try:
             await session.loop()
         finally:
@@ -206,11 +277,19 @@ class ReproAgent:
         return result
 
 
-class _Session:
-    def __init__(self, agent: ReproAgent, task: AgentTask, prepared: Prepared) -> None:
+class _BaseSession:
+    """两种会话共用的部分：主循环、草稿脚本、试运行、放弃、记录。
+
+    子类决定：系统提示词、可用工具、代码工具看哪里、任务说明、提交后怎么判定。
+    """
+
+    prompt_name = f"repro_agent_v{PROMPT_VERSION}"
+    tool_defs: list[dict[str, Any]] = TOOLS
+
+    def __init__(self, agent: ReproAgent, task: AgentTask, env: Env) -> None:
         self.agent = agent
         self.task = task
-        self.prepared = prepared
+        self.env = env
         self.volume = ""
         self.scratch: dict[str, str] = {}
         self.synced: dict[str, str] = {}
@@ -218,30 +297,21 @@ class _Session:
         self.result = AgentResult(status="steps")
         self.warned = False
         self.messages: list[dict[str, Any]] = [
-            {"role": "system", "content": load_prompt(f"repro_agent_v{PROMPT_VERSION}")},
+            {"role": "system", "content": load_prompt(self.prompt_name)},
             {"role": "user", "content": self._task_message()},
         ]
 
     @property
     def tools(self) -> CodeTools:
-        return CodeTools(
-            self.agent.sandbox, self.prepared.env.image, self.volume, self.prepared.cfg.module
-        )
+        raise NotImplementedError
 
     def _task_message(self) -> str:
-        p, t = self.prepared, self.task
-        parts = [
-            f"仓库：{t.repo}" + (f"，issue #{t.number}" if t.number else ""),
-            f"包：{p.cfg.name}（import 名 `{p.cfg.module}`），沙箱里装的版本：{p.resolved.version}"
-            f"（报告原文：{t.reported_version_text!r}），Python {p.python}",
-            *(
-                [f"注意：报告的版本装不到，沙箱里装的是 issue 提交前最新的正式版 "
-                 f"{p.resolved.version}。bug 可能是在这之后才引入的；如果确认这个版本上"
-                 f"不存在该问题，调用 give_up 并说明。"]
-                if p.resolved.substituted_for else []
-            ),
-            untrusted("issue", "issue", f"{t.issue.title}\n\n{t.issue.body[:12000]}"),
-        ]
+        raise NotImplementedError
+
+    def _issue_parts(self) -> list[str]:
+        """任务说明里和 issue 有关的部分：正文、堆栈或预期 / 实际行为、限制。"""
+        t = self.task
+        parts = [untrusted("issue", "issue", f"{t.issue.title}\n\n{t.issue.body[:12000]}")]
         if t.reported_traceback:
             parts.append(
                 "程序从报告里提取到的报错堆栈（判定器会用它比对你的脚本的失败）：\n"
@@ -256,7 +326,7 @@ class _Session:
         parts.append(
             f"限制：最多 {self.agent.max_steps} 次工具调用、{self.agent.max_attempts} 次提交。"
         )
-        return "\n\n".join(parts)
+        return parts
 
     def _cost(self) -> float:
         return priced(self.agent.model, self.usage)
@@ -269,7 +339,7 @@ class _Session:
                 self.result.status = "budget"
                 return
             try:
-                resp = await a.llm.chat(self.messages, model=a.model, tools=TOOLS)
+                resp = await a.llm.chat(self.messages, model=a.model, tools=self.tool_defs)
             except LLMError as e:
                 self.result.status, self.result.error = "error", str(e)
                 return
@@ -392,7 +462,7 @@ class _Session:
             await asyncio.to_thread(d.mkdir)
             for name, content in self.scratch.items():
                 await asyncio.to_thread((d / name).write_text, content, encoding="utf-8")
-            await self.agent.sandbox.copy_in(self.volume, Path(tmp), self.prepared.env.image)
+            await self.agent.sandbox.copy_in(self.volume, Path(tmp), self.env.image)
         self.synced = dict(self.scratch)
 
     async def _tool_run(self, command: str) -> str:
@@ -404,7 +474,7 @@ class _Session:
             return "只允许以 python 开头的命令（不经过 shell，管道和重定向不可用）。"
         await self._sync_scratch()
         res = await self.agent.sandbox.run(
-            self.prepared.env.image, self.volume, argv, timeout_s=RUN_TIMEOUT_S,
+            self.env.image, self.volume, argv, timeout_s=RUN_TIMEOUT_S,
             allowed=(("python",), ("python3",)),
         )
         head = f"exit={res.exit_code}"
@@ -416,16 +486,9 @@ class _Session:
         log = f"\n（完整日志：{res.log_dir}）" if res.log_dir and res.truncated else ""
         return f"{head}\n{body}{log}"
 
-    async def _tool_submit(self, name: str, claim: str) -> str:
-        name = name.removeprefix("/workspace/").removeprefix(f"{SCRATCH_DIR}/")
-        if name not in self.scratch or not name.endswith(".py"):
-            return f"没有这个脚本：{SCRATCH_DIR}/{name}。先用 write_scratch 写好。"
-        a, p = self.agent, self.prepared
-        script = self.scratch[name]
-        run = await a.reproducer.evaluate(
-            p.cfg, p.env, str(p.resolved.version), script,
-            reported_traceback=self.task.reported_traceback, issue=self.task.issue,
-        )
+    def _judged(self, name: str, claim: str, script: str, run: VersionRun, noun: str) -> str:
+        """记下一次提交的判定；复现了就结束，否则把判定理由反馈给模型。noun：脚本 / 测试。"""
+        a = self.agent
         v = run.verdict
         attempt = Attempt(
             n=len(self.result.attempts) + 1, name=name, claim=claim, script=script,
@@ -439,13 +502,16 @@ class _Session:
         feedback = [f"判定：{v.kind}。{v.reason}。"]
         if v.kind == VerdictKind.NOT_REPRODUCED:
             feedback.append(
+                # L1 的反馈保持原文（留出集评测用的就是这句）；L2 强调"只断言 issue 说了的"
                 "脚本正常退出了。bug 存在时脚本必须失败：让包自己抛出报告里的异常，"
-                "或者对 issue 描述的预期行为写 assert。"
+                "或者对 issue 描述的预期行为写 assert。" if noun == "脚本" else
+                f"{noun}正常通过了。bug 存在时{noun}必须失败：让包自己抛出报告里的异常，"
+                "或者对 issue 明确描述的预期行为写 assert。"
             )
         elif v.kind == VerdictKind.UNRELATED_FAILURE:
             if v.observed is not None:
                 feedback.append(
-                    f"你的脚本的失败：{v.observed.exc_type}，包内栈帧 {v.observed.frames}，"
+                    f"你的{noun}的失败：{v.observed.exc_type}，包内栈帧 {v.observed.frames}，"
                     f"消息 {v.observed.message!r}。"
                 )
             if v.reported is not None:
@@ -455,7 +521,7 @@ class _Session:
                 )
             if run.semantic is not None:
                 feedback.append(f"评委的理由：{run.semantic.reason}")
-        feedback.append(f"脚本输出结尾：\n{clip(run.output_tail, 10, 25)}")
+        feedback.append(f"{noun}输出结尾：\n{clip(run.output_tail, 10, 25)}")
         if len(self.result.attempts) >= a.max_attempts:
             self.result.status = "not_reproduced"
             raise _Done("\n".join(feedback) + "\n提交次数已用完，结束。")
@@ -489,6 +555,138 @@ class _Session:
         return str(path)
 
 
+class _Session(_BaseSession):
+    """package 模式（L1）：看 site-packages 里的包源码，交付一个独立脚本。"""
+
+    def __init__(self, agent: ReproAgent, task: AgentTask, prepared: Prepared) -> None:
+        self.prepared = prepared
+        super().__init__(agent, task, prepared.env)
+
+    @property
+    def tools(self) -> CodeTools:
+        return CodeTools(self.agent.sandbox, self.env.image, self.volume, self.prepared.cfg.module)
+
+    def _task_message(self) -> str:
+        p, t = self.prepared, self.task
+        parts = [
+            f"仓库：{t.repo}" + (f"，issue #{t.number}" if t.number else ""),
+            f"包：{p.cfg.name}（import 名 `{p.cfg.module}`），沙箱里装的版本：{p.resolved.version}"
+            f"（报告原文：{t.reported_version_text!r}），Python {p.python}",
+            *(
+                [f"注意：报告的版本装不到，沙箱里装的是 issue 提交前最新的正式版 "
+                 f"{p.resolved.version}。bug 可能是在这之后才引入的；如果确认这个版本上"
+                 f"不存在该问题，调用 give_up 并说明。"]
+                if p.resolved.substituted_for else []
+            ),
+        ]
+        return "\n\n".join(parts + self._issue_parts())
+
+    async def _tool_submit(self, name: str, claim: str) -> str:
+        name = name.removeprefix("/workspace/").removeprefix(f"{SCRATCH_DIR}/")
+        if name not in self.scratch or not name.endswith(".py"):
+            return f"没有这个脚本：{SCRATCH_DIR}/{name}。先用 write_scratch 写好。"
+        reproducer, p = cast(PackageReproducer, self.agent.reproducer), self.prepared
+        script = self.scratch[name]
+        run = await reproducer.evaluate(
+            p.cfg, p.env, str(p.resolved.version), script,
+            reported_traceback=self.task.reported_traceback, issue=self.task.issue,
+        )
+        return self._judged(name, claim, script, run, "脚本")
+
+
+class _TestSession(_BaseSession):
+    """source 模式（L2）：看仓库源码树（含 tests/），交付仓库测试目录里的一个 pytest 文件。"""
+
+    prompt_name = f"repro_test_v{TEST_PROMPT_VERSION}"
+    tool_defs = TEST_TOOLS
+
+    def __init__(
+        self, agent: ReproAgent, task: AgentTask, prepared: SourcePrepared,
+        tester: TestReproducer,
+    ) -> None:
+        self.prepared = prepared
+        self.tester = tester
+        self.test_code: str | None = None
+        super().__init__(agent, task, prepared.env)
+
+    @property
+    def tools(self) -> CodeTools:
+        # 读镜像里的原始源码（不是工作区副本）：Agent 看到的永远是这个提交本来的样子
+        return CodeTools(self.agent.sandbox, self.env.image, self.volume, SRC_DIR)
+
+    def _task_message(self) -> str:
+        p, t = self.prepared, self.task
+        day = f"{p.tree.committed_at:%Y-%m-%d}" if p.tree.committed_at else "日期未知"
+        parts = [
+            f"仓库：{t.repo}" + (f"，issue #{t.number}" if t.number else ""),
+            f"源码：{p.tree.repo} 的提交 {p.tree.sha[:10]}（{day}），已从源码装好"
+            f"（包 {p.cfg.name}，import 名 `{p.cfg.module}`），Python {p.python}，{p.pytest}。"
+            f"用户报告的版本原文：{t.reported_version_text!r}。",
+            f"你要交付的测试文件：`{p.test_path}`（相对仓库根，路径固定）。"
+            f"运行方式：`{shlex.join(pytest_argv(p.test_path))}`，"
+            "即按仓库自己的 pytest 配置运行（conftest、filterwarnings 等都生效）。",
+        ]
+        return "\n\n".join(parts + self._issue_parts())
+
+    async def _tool_write_test(self, content: str) -> str:
+        if len(content.encode()) > MAX_SCRATCH_BYTES:
+            return f"文件太大（上限 {MAX_SCRATCH_BYTES} 字节），请写最小的测试。"
+        self.test_code = content
+        return f"已写入 {self.prepared.test_path}（{len(content.splitlines())} 行）"
+
+    async def _tool_run_test(self) -> str:
+        if self.test_code is None:
+            return "还没有测试文件，先用 write_test 写好。"
+        await self.tester.write_test(self.volume, self.prepared, self.test_code)
+        res = await self.tester.run_test(self.volume, self.prepared, timeout_s=RUN_TIMEOUT_S)
+        head = f"exit={res.exit_code}"
+        if res.timed_out:
+            head += "（超时）"
+        elif res.exit_code in PYTEST_INVALID:
+            head += f"（{PYTEST_INVALID[res.exit_code]}；判定器会判为无关失败）"
+        body = clip((res.stdout + ("\n[stderr]\n" + res.stderr if res.stderr else "")).strip())
+        return f"{head}\n{body}"
+
+    async def _tool_submit(self, claim: str) -> str:
+        if self.test_code is None:
+            return "还没有测试文件，先用 write_test 写好。"
+        code = self.test_code
+        run = await self.tester.evaluate(
+            self.prepared, code,
+            reported_traceback=self.task.reported_traceback, issue=self.task.issue,
+        )
+        self.result.test_path = self.prepared.test_path
+        return self._judged(self.prepared.test_path, claim, code, run, "测试")
+
+
+async def reproduce_with_tests(
+    agent: ReproAgent,
+    cfg: PackageConfig,
+    task: AgentTask,
+    tree: SourceTree,
+    *,
+    python: str | None = None,
+) -> tuple[SourceRepro, AgentResult | None]:
+    """source 模式：在某个提交上准备环境（含预检）→ Agent 写仓库内的失败测试 → L2。"""
+    tester = cast(TestReproducer, agent.reproducer)
+    out = SourceRepro(repo=tree.repo, sha=tree.sha, committed_at=tree.committed_at,
+                      package=cfg.name, module=cfg.module)
+    try:
+        prepared = await tester.prepare(cfg, tree, number=task.number, python=python)
+    except (*SETUP_ERRORS, SourceError, L2Unsupported) as e:
+        out.error = str(e)[:1000]
+        return out, None
+    out.python, out.version, out.pytest = prepared.python, prepared.version, prepared.pytest
+    out.test_path = prepared.test_path
+    result = await agent.run(task, prepared)
+    if result.final_run is None:
+        out.error = None if result.attempts else f"Agent 没有提交测试（{result.status}）"
+        return out, result
+    out.run = result.final_run
+    out.level = EvidenceLevel.L2
+    return out, result
+
+
 async def reproduce_with_agent(
     agent: ReproAgent,
     cfg: PackageConfig,
@@ -499,7 +697,7 @@ async def reproduce_with_agent(
     check_latest: bool = True,
 ) -> tuple[PackageRepro, AgentResult | None]:
     """准备报告版本的环境 → 复现 Agent 写脚本并提交 → 复现了再到最新版上复查。"""
-    reproducer = agent.reproducer
+    reproducer = cast(PackageReproducer, agent.reproducer)
     out = PackageRepro(package=cfg.name, module=cfg.module)
     try:
         prepared = await reproducer.prepare(

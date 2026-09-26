@@ -1,12 +1,12 @@
 """严格 FB/PA 回放（技术方案 18 节）：复现脚本在修复提交的父提交上失败、在修复提交上通过。
 
-    复现回放的结果（每个 issue 的 L1 脚本、当时的 Python、失败签名）
+    复现回放的结果（每个 issue 的 L1 脚本或 L2 测试、当时的 Python、失败签名）
         │  GraphQL 找关闭 issue 的 PR → 修复提交 + 父提交
         ▼
     父提交、修复提交各自从源码构建环境（source.py），用 L1 时的同一个 Python
         │  每个版本跑 RUNS 次，结果必须一致
         ▼
-    父提交：失败，且和 L1 复现时是同一个失败      修复提交：通过
+    父提交：失败，且和当初复现时是同一个失败      修复提交：通过
         └──────────────── 两个都满足 = FB/PA ────────────────┘
 
 和代理指标的区别：代理指标比的是"报告版本 vs 最新正式版"，中间隔着很多提交，
@@ -28,7 +28,7 @@ from warden.index.trace import TraceSignature
 from warden.replay.fixes import FixCommit
 from warden.replay.metrics import wilson
 from warden.replay.repro import outcome as proxy_outcome
-from warden.repro.issue import IssueReproReport
+from warden.repro.issue import IssueReproReport, L2IssueReport
 from warden.repro.judge import same_failure
 from warden.repro.sandbox import ExecResult
 
@@ -84,7 +84,7 @@ OUTCOME_LABELS = {
     "inconclusive": "超时或内存超限",
     "setup_failed": "源码环境没搭起来",
     "no_fix": "没有修复提交（手动关闭等），不参与统计",
-    "no_script": "原回放没有 L1 脚本，不参与统计",
+    "no_script": "当初没有复现（没有脚本或测试），不参与统计",
 }
 ELIGIBLE_EXCLUDED = ("no_fix", "no_script")
 
@@ -115,39 +115,70 @@ def classify(before: Sequence[RunBrief], after: Sequence[RunBrief]) -> str:
     return "fb_pa"
 
 
+class Candidate(BaseModel):
+    """要做严格 FB/PA 的一份复现：L1 脚本或 L2 测试，以及它当初复现时的条件。"""
+
+    number: int
+    title: str
+    reported_version: str | None = None
+    python: str | None = None  # 当初复现用的 Python；修复前后都用它
+    code: str | None = None  # 脚本或测试文件的内容；None = 当初没复现，不参与统计
+    observed: TraceSignature | None = None  # 当初复现时的失败签名
+    module: str | None = None
+    proxy: str = "—"
+
+
+def candidate_from_l1(report: IssueReproReport) -> Candidate:
+    rep = report.repro.reported
+    ok = report.repro.level.value == "L1" and rep is not None and report.agent is not None
+    return Candidate(
+        number=report.number, title=report.title, reported_version=report.repro.reported_version,
+        python=rep.python if rep else None, module=report.repro.module,
+        code=report.agent.final_script if ok and report.agent else None,
+        observed=rep.verdict.observed if rep else None, proxy=proxy_outcome(report),
+    )
+
+
+def candidate_from_l2(report: L2IssueReport) -> Candidate:
+    src, run = report.source, report.source.run
+    ok = src.level.value == "L2" and run is not None and report.agent is not None
+    return Candidate(
+        number=report.number, title=report.title, reported_version=report.intake_version,
+        python=src.python, module=src.module,
+        code=report.agent.final_script if ok and report.agent else None,
+        observed=run.verdict.observed if run else None,
+    )
+
+
 async def evaluate_case(
-    report: IssueReproReport,
+    cand: Candidate,
     *,
     find_fix: Callable[[int], Awaitable[FixCommit | None]],
     pretend: Callable[[FixCommit], Awaitable[str]],
     run_at: Callable[[str, str, str, str], Awaitable[list[ExecResult]]],
     setup_errors: tuple[type[BaseException], ...],
 ) -> FbpaCase:
-    """一个 issue 的严格 FB/PA。run_at(提交, Python, 伪版本号, 脚本) 返回该提交上的各次运行。"""
-    rep = report.repro.reported
+    """一个 issue 的严格 FB/PA。run_at(提交, Python, 伪版本号, 代码) 返回该提交上的各次运行。"""
     case = FbpaCase(
-        number=report.number, title=report.title, reported_version=report.repro.reported_version,
-        python=rep.python if rep else None, proxy=proxy_outcome(report),
+        number=cand.number, title=cand.title, reported_version=cand.reported_version,
+        python=cand.python, proxy=cand.proxy,
     )
-    script = report.agent.final_script if report.agent else None
-    if report.repro.level.value != "L1" or not script or rep is None:
+    if not cand.code or not cand.python:
         case.outcome = "no_script"
         return case
     try:
-        case.fix = await find_fix(report.number)
+        case.fix = await find_fix(cand.number)
         if case.fix is None:
             case.outcome = "no_fix"
             return case
         case.pretend_version = await pretend(case.fix)
-        l1 = rep.verdict.observed
-        module = report.repro.module
-        before = await run_at(case.fix.parent, rep.python, case.pretend_version, script)
-        after = await run_at(case.fix.sha, rep.python, case.pretend_version, script)
+        before = await run_at(case.fix.parent, cand.python, case.pretend_version, cand.code)
+        after = await run_at(case.fix.sha, cand.python, case.pretend_version, cand.code)
     except setup_errors as e:
         case.outcome, case.error = "setup_failed", str(e)[:500]
         return case
-    case.before = [brief(r, l1, module) for r in before]
-    case.after = [brief(r, l1, module) for r in after]
+    case.before = [brief(r, cand.observed, cand.module) for r in before]
+    case.after = [brief(r, cand.observed, cand.module) for r in after]
     case.outcome = classify(case.before, case.after)
     return case
 
@@ -188,20 +219,21 @@ def _runs(runs: Sequence[RunBrief]) -> str:
 def render(repo: str, cases: Sequence[FbpaCase], meta: dict[str, Any]) -> str:
     s = summarize(cases)
     lo, hi = s["fb_pa_ci"]
+    kind = meta.get("kind", "L1 脚本")
     lines = [
-        f"# {repo} 严格 FB/PA 回放",
+        f"# {repo} 严格 FB/PA 回放（{kind}）",
         "",
         f"- 时间：{meta['started']}；来源：`{meta['source_run']}`",
-        "- 定义：原复现回放里 L1 的脚本，放到**修复提交的父提交**上应失败"
-        "（且和 L1 时是同一个失败），放到**修复提交**上应通过。"
-        "两份代码都从源码构建，Python 用 L1 时的同一个。",
+        f"- 定义：原复现回放里的{kind}，放到**修复提交的父提交**上应失败"
+        "（且和当初复现时是同一个失败），放到**修复提交**上应通过。"
+        "两份代码都从源码构建，Python 用当初复现时的同一个。",
         f"- 每个版本跑 {meta['runs']} 次，结果必须一致；不调用 LLM。",
         "",
         "## 汇总",
         "",
         "| 指标 | 结果 |",
         "|---|---|",
-        f"| 样本数 | {s['n']}，参与统计 {s['eligible']}（有 L1 脚本且有修复提交） |",
+        f"| 样本数 | {s['n']}，参与统计 {s['eligible']}（有{kind}且有修复提交） |",
         f"| **严格 FB/PA** | **{s['fb_pa']}/{s['eligible']} = {_pct(s['fb_pa_rate'])}**"
         f"（95% Wilson 区间 {_pct(lo)}–{_pct(hi)}） |",
         f"| 同一批 issue 上的代理 FB/PA | {s['proxy_fb_pa']}/{s['eligible']} |",
@@ -218,7 +250,7 @@ def render(repo: str, cases: Sequence[FbpaCase], meta: dict[str, Any]) -> str:
         "",
         "## 逐条",
         "",
-        "败 = 和 L1 同一个失败；败≠ = 失败但不是同一个；过 = 通过。",
+        "败 = 和当初复现时同一个失败；败≠ = 失败但不是同一个；过 = 通过。",
         "",
         "| # | 标题 | 报告版本 | Python | 修复 PR | 父提交 → 修复提交 "
         "| 修复前 | 修复后 | 严格 | 代理 |",
@@ -237,7 +269,7 @@ def render(repo: str, cases: Sequence[FbpaCase], meta: dict[str, Any]) -> str:
     if notes:
         lines += ["", "## 不是 FB/PA 的", ""]
         for c in notes:
-            lines.append(f"- #{c.number}（{c.outcome}）：{_note(c)[:200]}")
+            lines.append(f"- #{c.number}（{c.outcome}）：{note_for(c)[:200]}")
     return "\n".join(lines) + "\n"
 
 
@@ -245,7 +277,7 @@ def _last_line(runs: Sequence[RunBrief]) -> str:
     return next((r.tail.strip().splitlines()[-1] for r in runs if r.tail.strip()), "")
 
 
-def _note(c: FbpaCase) -> str:
+def note_for(c: FbpaCase) -> str:
     if c.error:
         return c.error
     if c.outcome == "no_fix":
