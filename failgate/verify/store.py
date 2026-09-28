@@ -8,7 +8,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from failgate.db import Case, Evidence, Repo
+from failgate.index.trace import TraceSignature
 
+from .engine import Exam
 from .receipt import check_receipt
 
 MIN_PREFIX = 6
@@ -48,6 +50,29 @@ async def list_evidence(s: AsyncSession, repo: str | None = None) -> list[Eviden
     if repo:
         q = q.where(Repo.full_name == repo)
     return [EvidenceRef(ev, r, n) for ev, r, n in (await s.execute(q)).all()]
+
+
+async def latest_exam(s: AsyncSession, repo: str, issue: int) -> Exam | None:
+    """#issue 当前有效的考卷：能当考卷（L2）、没被取代的最新一份。"""
+    row = (await s.execute(
+        select(Evidence, Repo.repro_import_name)
+        .join(Case, Evidence.case_id == Case.id).join(Repo, Case.repo_id == Repo.id)
+        .where(Repo.full_name == repo, Case.number == issue, Evidence.acceptance.is_(True),
+               Evidence.superseded_by.is_(None))
+        .order_by(Evidence.created_at.desc()).limit(1)
+    )).first()
+    if row is None:
+        return None
+    ev, import_name = row
+    r = ev.receipt
+    sig = r.get("signature")
+    return Exam(
+        evidence_id=ev.id, issue=issue, test_path=ev.test_path, code=ev.test_code,
+        test_sha256=ev.test_sha256, receipt_sha256=ev.receipt_sha256, package=r["package"],
+        module=import_name or r["package"].replace("-", "_").lower(), python=ev.python,
+        pytest=ev.pytest, version=r.get("version"),
+        signature=TraceSignature.model_validate(sig) if sig else None,
+    )
 
 
 def audit(ref: EvidenceRef) -> list[str]:

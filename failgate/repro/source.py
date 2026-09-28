@@ -24,7 +24,7 @@ import io
 import tarfile
 import tempfile
 import tomllib
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -107,6 +107,26 @@ class SourceTree:
                 return tomllib.loads(f.read().decode("utf-8", errors="replace"))
             except tomllib.TOMLDecodeError:
                 return None
+
+    def read_files(
+        self, want: Callable[[str], bool], *, max_bytes: int = 256 * 1024, limit: int = 3000
+    ) -> dict[str, str]:
+        """在内存里读出 want(相对路径) 为真的普通文件（跳过过大的、链接等），不写磁盘。"""
+        top = self.top_dir
+        out: dict[str, str] = {}
+        with tarfile.open(fileobj=io.BytesIO(self.tarball), mode="r:gz") as tar:
+            for m in tar.getmembers():
+                if not m.isfile() or m.size > max_bytes or not m.name.startswith(f"{top}/"):
+                    continue
+                rel = m.name[len(top) + 1:]
+                if not want(rel):
+                    continue
+                f = tar.extractfile(m)
+                if f is not None:
+                    out[rel] = f.read().decode("utf-8", errors="replace")
+                if len(out) >= limit:
+                    break
+        return out
 
     def test_dir(self) -> str:
         """仓库的测试目录（相对仓库根）：tests / test / testing 里第一个存在的，默认 tests。"""

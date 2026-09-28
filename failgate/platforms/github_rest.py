@@ -122,6 +122,25 @@ class GitHubRest:
         data: dict[str, Any] = body.get("data") or {}
         return data
 
+    async def pull(self, full_name: str, number: int) -> dict[str, Any]:
+        """PR 的信息：title、body、base.sha、head.sha、head.repo.full_name ……"""
+        r = await self._http.get(f"/repos/{full_name}/pulls/{number}")
+        r.raise_for_status()
+        data: dict[str, Any] = r.json()
+        return data
+
+    async def pull_files(self, full_name: str, number: int) -> list[dict[str, Any]]:
+        """PR 改动的文件：filename、status、previous_filename、patch（大文件没有 patch）。
+        GitHub 最多返回 3000 个文件。"""
+        url = f"/repos/{full_name}/pulls/{number}/files"
+        return [f async for f in self._paginate(url, {"per_page": 100})]
+
+    async def merge_base(self, full_name: str, base: str, head: str) -> str:
+        """两个提交的合并基点：PR 的 diff 就是相对它算的。"""
+        r = await self._http.get(f"/repos/{full_name}/compare/{base}...{head}")
+        r.raise_for_status()
+        return str(r.json()["merge_base_commit"]["sha"])
+
     async def list_labels(self, full_name: str) -> list[dict[str, Any]]:
         return [x async for x in self._paginate(f"/repos/{full_name}/labels", {"per_page": 100})]
 

@@ -868,6 +868,68 @@ def evidence_show(
     raise typer.Exit(asyncio.run(run()))
 
 
+@app.command("verify")
+def verify_pr(
+    target: Annotated[str, typer.Argument(help="owner/name#PR 编号")],
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库 URL，默认读配置")] = None,
+    out: Annotated[Path | None, typer.Option(help="把核验收据写到这个 JSON 文件")] = None,
+    lang: Annotated[str, typer.Option(help="报告语言 zh / en")] = "zh",
+) -> None:
+    """用封存的考卷核验一个 PR（ClaimVerify 三层）。需要 Docker 和 GITHUB_TOKEN。
+
+    退出码：0 通过验收，1 驳回，2 无法判定或没有声明。"""
+    from failgate.platforms.github_rest import GitHubRest
+    from failgate.repro.l2 import TestReproducer
+    from failgate.repro.pypi import PyPIClient
+    from failgate.verify.claims import parse_claims
+    from failgate.verify.engine import ClaimVerdict, ClaimVerifier, Exam
+    from failgate.verify.report import render_verification
+    from failgate.verify.store import latest_exam
+    from failgate.verify.workbench import SandboxWorkbench, fetch_pull
+
+    m = re.fullmatch(r"([\w.-]+/[\w.-]+)#(\d+)", target)
+    if m is None:
+        raise typer.BadParameter("要写成 owner/name#PR编号")
+    repo, number = m.group(1), int(m.group(2))
+    settings = Settings()
+
+    async def run() -> int:
+        gh = GitHubRest(settings.github_token)
+        sandbox = DockerSandbox(
+            settings.docker_bin,
+            limits=SandboxLimits(memory=settings.sandbox_memory, cpus=settings.sandbox_cpus),
+            install_network=settings.sandbox_install_network,
+            artifacts_dir=Path(settings.sandbox_artifacts_dir),
+        )
+        pypi = PyPIClient(settings.pypi_url)
+        db = Database(db_url or settings.failgate_db_url)
+        await db.create_all()
+        try:
+            pr = await fetch_pull(gh, repo, number)
+            claims = parse_claims(pr.title, pr.body, repo)
+            exams: dict[int, Exam | None] = {}
+            async with db.session() as s:
+                for n in claims:
+                    exams[n] = await latest_exam(s, repo, n)
+            typer.echo(f"{repo}#{number}：声称修复 {claims or '（无）'}；"
+                       f"合并基点 {pr.base_sha[:7]} → head {pr.head_sha[:7]}", err=True)
+            tester = TestReproducer(sandbox, _env_cache(settings, sandbox), pypi,
+                                    run_timeout_s=settings.sandbox_run_timeout_seconds)
+            verifier = ClaimVerifier(SandboxWorkbench.for_github(gh, tester))
+            result = await verifier.verify(pr, claims, exams)
+        finally:
+            await db.dispose()
+            await gh.aclose()
+            await pypi.aclose()
+        typer.echo(render_verification(result, lang))
+        if out is not None:
+            out.write_text(json.dumps(result.receipt(), ensure_ascii=False, indent=2,
+                                      sort_keys=True) + "\n", encoding="utf-8")
+        return {ClaimVerdict.VERIFIED: 0, ClaimVerdict.REFUTED: 1}.get(result.verdict, 2)  # type: ignore[arg-type]
+
+    raise typer.Exit(asyncio.run(run()))
+
+
 sandbox_app = typer.Typer(help="复现沙箱：自检、清理", no_args_is_help=True)
 app.add_typer(sandbox_app, name="sandbox")
 
