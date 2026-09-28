@@ -3,10 +3,10 @@ from typing import Any
 
 import pytest
 
-from warden.llm import LLMClient
-from warden.report import render_summary
-from warden.skills.base import IssueSnapshot, SkillContext
-from warden.skills.repro import ReproOutput, ReproSkill
+from failgate.llm import LLMClient
+from failgate.report import render_summary
+from failgate.skills.base import IssueSnapshot, SkillContext
+from failgate.skills.repro import ReproOutput, ReproSkill
 
 TRIAGE = {"type": "bug", "labels": ["bug"], "priority": "P2", "confidence": 0.9,
           "rationale": "crash"}

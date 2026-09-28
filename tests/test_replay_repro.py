@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from warden.replay.repro import outcome, render, select_issues, summarize
-from warden.repro.agent import AgentResult
-from warden.repro.evidence import EvidenceLevel
-from warden.repro.issue import IssueReproReport
-from warden.repro.judge import Verdict, VerdictKind
-from warden.repro.package import PackageRepro, VersionRun
+from failgate.replay.repro import outcome, render, select_issues, summarize
+from failgate.repro.agent import AgentResult
+from failgate.repro.evidence import EvidenceLevel
+from failgate.repro.issue import IssueReproReport
+from failgate.repro.judge import Verdict, VerdictKind
+from failgate.repro.package import PackageRepro, VersionRun
 
 
 @dataclass

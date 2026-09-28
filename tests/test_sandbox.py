@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from warden.repro.judge import VerdictKind, assess
-from warden.repro.sandbox import (
+from failgate.repro.judge import VerdictKind, assess
+from failgate.repro.sandbox import (
     OUTPUT_LIMIT,
     DockerSandbox,
     SandboxError,
@@ -19,7 +19,7 @@ from warden.repro.sandbox import (
     classify_exit,
     find_docker,
 )
-from warden.repro.selfcheck import self_check
+from failgate.repro.selfcheck import self_check
 
 IMAGE = "python:3.12-slim"
 
@@ -27,7 +27,7 @@ IMAGE = "python:3.12-slim"
 def args_for(phase: str) -> list[str]:
     return build_run_args(
         name="n", image=IMAGE, volume="ws", argv=["python", "repro.py"], phase=phase,  # type: ignore[arg-type]
-        timeout_s=120, limits=SandboxLimits(), install_network="warden-egress",
+        timeout_s=120, limits=SandboxLimits(), install_network="failgate-egress",
     )
 
 
@@ -55,7 +55,7 @@ def test_run_phase_is_offline_and_readonly_install_is_not():
     run, install = args_for("run"), args_for("install")
     assert flag(run, "--network") == ["none"] and "--read-only" in run
     assert flag(run, "--pids-limit") == ["256"]
-    assert flag(install, "--network") == ["warden-egress"] and "--read-only" not in install
+    assert flag(install, "--network") == ["failgate-egress"] and "--read-only" not in install
     assert flag(install, "--pids-limit") == ["512"]
 
 

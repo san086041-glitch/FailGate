@@ -20,13 +20,13 @@ from conftest import (
 from fake_llm import INTAKE_OK
 from sqlalchemy import select
 
-from warden.db import Repo
-from warden.repro.agent import AgentResult, Attempt
-from warden.repro.evidence import EvidenceLevel
-from warden.repro.issue import IssueReproReport
-from warden.repro.judge import Verdict, VerdictKind
-from warden.repro.package import PackageRepro, VersionRun
-from warden.skills.repro import ReproRequest
+from failgate.db import Repo
+from failgate.repro.agent import AgentResult, Attempt
+from failgate.repro.evidence import EvidenceLevel
+from failgate.repro.issue import IssueReproReport
+from failgate.repro.judge import Verdict, VerdictKind
+from failgate.repro.package import PackageRepro, VersionRun
+from failgate.skills.repro import ReproRequest
 
 SCRIPT = 'import mylib\nmylib.parse({"title": "x"})\n'
 
@@ -88,7 +88,7 @@ class FakeRunner:
 
 async def configure(h: Harness, package: str | None = "mylib") -> None:
     """仓库在第一个事件时才建；先建好并配上包名。"""
-    async with h.warden.db.session() as s, s.begin():
+    async with h.failgate.db.session() as s, s.begin():
         s.add(Repo(platform="github", full_name=REPO, mode="shadow", repro_package=package))
 
 
@@ -106,7 +106,7 @@ async def run_issue(runner: FakeRunner, tmp_path, package: str | None = "mylib",
     async for h in _harness(make_settings(tmp_path, **settings), repro_runner=runner):
         await configure(h, package)
         await h.send("issues", issue_event("opened"), "d-1")
-        await h.warden.worker.drain()
+        await h.failgate.worker.drain()
         yield h
 
 
@@ -143,19 +143,19 @@ async def test_not_reproduced_asks_for_info_then_retries_with_author_comment(tmp
         case = await case_detail(h)
         assert case["state"] == "NEED_INFO"
         body = summary(case)
-        assert "暂时没有成功" in body and "RepoWarden 会重新尝试" in body
+        assert "暂时没有成功" in body and "FailGate 会重新尝试" in body
         assert "请补充以下信息" in body  # 没复现：照常列出缺的信息
 
         # 陌生人评论不触发；提问者本人补充后重新复现，补充内容进了正文
         await h.send("issue_comment", comment_event("+1", login="bob"), "d-2")
-        await h.warden.worker.drain()
+        await h.failgate.worker.drain()
         assert len(runner.requests) == 1
         PUBLIC_COMMENTS[1] = [{
             "id": 9, "user": {"login": "alice", "type": "User"}, "author_association": "NONE",
             "body": "最小复现：mylib.parse({'title': 'x'})", "created_at": "2024-01-01T00:00:00Z",
         }]
         await h.send("issue_comment", comment_event("最小复现 …", login="alice"), "d-3")
-        await h.warden.worker.drain()
+        await h.failgate.worker.drain()
         assert len(runner.requests) == 2
         assert "mylib.parse({'title': 'x'})" in runner.requests[1].body
         case = await case_detail(h)
@@ -186,15 +186,15 @@ async def test_disabled_globally_means_no_repro_stage(tmp_path):
     async for h in _harness(make_settings(tmp_path)):
         await configure(h)
         await h.send("issues", issue_event("opened"), "d-1")
-        await h.warden.worker.drain()
+        await h.failgate.worker.drain()
         assert (await case_detail(h))["state"] == "TRIAGE_ONLY"
-        assert h.warden.repro_runner is None
+        assert h.failgate.repro_runner is None
 
 
 async def test_repo_config_survives_repo_row_updates(tmp_path):
     runner = FakeRunner(reproduced())
     async for h in run_issue(runner, tmp_path):
-        async with h.warden.db.session() as s:
+        async with h.failgate.db.session() as s:
             repo = await s.scalar(select(Repo).where(Repo.full_name == REPO))
         # webhook 会更新 installation_id，但不能把复现配置冲掉
         assert repo is not None and repo.repro_package == "mylib" and repo.installation_id == 42

@@ -6,9 +6,9 @@ services:
     ports: ["8080:8080"]
     env_file: .env
     environment:
-      WARDEN_DB_URL: sqlite+aiosqlite:////data/warden.db
+      FAILGATE_DB_URL: sqlite+aiosqlite:////data/failgate.db
     volumes:
-      - warden-data:/data
+      - failgate-data:/data
 
 volumes:
-  warden-data:
+  failgate-data:

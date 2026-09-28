@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ordkit"
 version = "1.4.0"
-description = "Small helpers for ordered collections (RepoWarden fixture)."
+description = "Small helpers for ordered collections (FailGate fixture)."
 requires-python = ">=3.9"
 
 [tool.setuptools]

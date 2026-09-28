@@ -5,7 +5,7 @@ import pytest
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from warden.repro.pypi import PyPIClient, PyPIError, Release, normalize_version, pick_python
+from failgate.repro.pypi import PyPIClient, PyPIError, Release, normalize_version, pick_python
 
 
 @pytest.mark.parametrize(

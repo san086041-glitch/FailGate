@@ -11,8 +11,8 @@ import httpx
 import pytest
 from fake_llm import FakeLLM
 
-from warden.app import Warden, create_app
-from warden.settings import Settings
+from failgate.app import FailGate, create_app
+from failgate.settings import Settings
 
 SECRET = "test-secret"
 REPO = "acme/widgets"
@@ -20,7 +20,7 @@ REPO = "acme/widgets"
 
 @dataclass
 class Harness:
-    warden: Warden
+    failgate: FailGate
     client: httpx.AsyncClient
     llm: FakeLLM
 
@@ -43,7 +43,7 @@ class Harness:
 
 def make_settings(tmp_path, **overrides: Any) -> Settings:
     values: dict[str, Any] = {
-        "warden_db_url": f"sqlite+aiosqlite:///{(tmp_path / 'warden.db').as_posix()}",
+        "failgate_db_url": f"sqlite+aiosqlite:///{(tmp_path / 'failgate.db').as_posix()}",
         "github_webhook_secret": SECRET,
         "default_repo_mode": "shadow",
         "llm_api_key": "test-key",
@@ -80,12 +80,12 @@ async def _harness(
         rest_transport=httpx.MockTransport(_public_rest),
         repro_runner=repro_runner,
     )
-    warden: Warden = app.state.warden
-    await warden.start(run_worker=False)
+    failgate: FailGate = app.state.failgate
+    await failgate.start(run_worker=False)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        yield Harness(warden, client, llm)
-    await warden.stop()
+        yield Harness(failgate, client, llm)
+    await failgate.stop()
 
 
 @pytest.fixture

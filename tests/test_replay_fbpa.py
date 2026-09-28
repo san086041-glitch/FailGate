@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from warden.replay.fbpa import (
+from failgate.replay.fbpa import (
     FbpaCase,
     RunBrief,
     candidate_from_l1,
@@ -17,9 +17,9 @@ from warden.replay.fbpa import (
     render,
     summarize,
 )
-from warden.replay.fixes import FixCommit
-from warden.repro.issue import IssueReproReport
-from warden.repro.sandbox import ExecResult
+from failgate.replay.fixes import FixCommit
+from failgate.repro.issue import IssueReproReport
+from failgate.repro.sandbox import ExecResult
 
 HELD_OUT = Path("eval/runs/psf__black__repro__20260925-1519.json")
 

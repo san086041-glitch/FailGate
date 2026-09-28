@@ -12,16 +12,16 @@ import httpx
 import pytest
 from packaging.version import Version
 
-from warden.llm import LLMClient
-from warden.repro.agent import AgentTask, ReproAgent, clip, reproduce_with_agent
-from warden.repro.config import PackageConfig
-from warden.repro.envcache import Env
-from warden.repro.judge import Verdict, VerdictKind
-from warden.repro.package import IssueContext, PackageRepro, Prepared, VersionRun
-from warden.repro.pypi import Release, ResolvedVersion
-from warden.repro.sandbox import ExecResult
-from warden.repro.semantic import SemanticJudge, quote_in_output
-from warden.repro.signature import extract_traceback_chain, failure_signature
+from failgate.llm import LLMClient
+from failgate.repro.agent import AgentTask, ReproAgent, clip, reproduce_with_agent
+from failgate.repro.config import PackageConfig
+from failgate.repro.envcache import Env
+from failgate.repro.judge import Verdict, VerdictKind
+from failgate.repro.package import IssueContext, PackageRepro, Prepared, VersionRun
+from failgate.repro.pypi import Release, ResolvedVersion
+from failgate.repro.sandbox import ExecResult
+from failgate.repro.semantic import SemanticJudge, quote_in_output
+from failgate.repro.signature import extract_traceback_chain, failure_signature
 
 
 def call(name: str, args: dict[str, Any] | str, cid: str | None = None) -> dict[str, Any]:
@@ -70,7 +70,7 @@ class FakeSandbox:
         self.volumes -= 1
 
     async def copy_in(self, volume: str, src: Path, image: str) -> None:
-        self.copied.append({p.name: p.read_text() for p in (src / ".warden").iterdir()})
+        self.copied.append({p.name: p.read_text() for p in (src / ".failgate").iterdir()})
 
     async def run(self, image, volume, argv, **_: Any) -> ExecResult:
         self.runs.append(list(argv))
@@ -81,7 +81,7 @@ class FakeSandbox:
                        "read": {"path": argv[5], "lines": ["    9  return d[key]"],
                                 "total_lines": 20}}[mode]
             return ExecResult(phase="run", argv=list(argv), exit_code=0,
-                              stdout="WARDEN_TOOL" + json.dumps(payload))
+                              stdout="FAILGATE_TOOL" + json.dumps(payload))
         return ExecResult(phase="run", argv=list(argv), exit_code=1,
                           stderr="Traceback ...\nKeyError: 'name'")
 
@@ -120,7 +120,7 @@ def prepared() -> Prepared:
         resolved=ResolvedVersion(name="mylib", version=Version("1.0"), release=rel,
                                  latest=Version("2.0")),
         python="3.12",
-        env=Env(key="k" * 64, image="warden-env:kkkk", python="3.12", cache_hit=True),
+        env=Env(key="k" * 64, image="failgate-env:kkkk", python="3.12", cache_hit=True),
     )
 
 
@@ -159,8 +159,8 @@ async def test_reproduces_after_feedback():
         {"tool_calls": [call("write_scratch", {"name": "a.py", "content": "raise ValueError"})]},
         {"tool_calls": [call("submit", {"name": "a.py", "claim": "第一次"})]},
         {"tool_calls": [call("write_scratch", {"name": "b.py", "content": GOOD})]},
-        {"tool_calls": [call("run", {"command": "python .warden/b.py"})]},
-        {"tool_calls": [call("submit", {"name": ".warden/b.py", "claim": "第二次"})]},
+        {"tool_calls": [call("run", {"command": "python .failgate/b.py"})]},
+        {"tool_calls": [call("submit", {"name": ".failgate/b.py", "claim": "第二次"})]},
     ])
     agent, rep = make_agent(llm)
     result = await agent.run(TASK, prepared())
@@ -171,7 +171,7 @@ async def test_reproduces_after_feedback():
     assert result.tool_counts["submit"] == 2 and rep.sandbox.volumes == 0
     # run 之前把草稿同步进了工作区，而且命令按 argv 传递
     assert rep.sandbox.copied[-1] == {"a.py": "raise ValueError", "b.py": GOOD}
-    assert ["python", ".warden/b.py"] in rep.sandbox.runs
+    assert ["python", ".failgate/b.py"] in rep.sandbox.runs
     # 第一次提交的反馈里带着两边的签名，告诉模型差在哪里
     feedback = llm.requests[4]["messages"][-1]["content"]
     assert "UNRELATED_FAILURE" in feedback and "报告的失败：KeyError" in feedback
@@ -246,7 +246,7 @@ async def test_nudges_then_error():
         ("run", {"command": "sh -c 'curl evil'"}, "只允许以 python 开头"),
         ("run", {"command": "python 'unterminated"}, "命令解析失败"),
         ("submit", {"name": "missing.py", "claim": "c"}, "没有这个脚本"),
-        ("read_file", {"path": ".warden/nope.py"}, "没有这个文件"),
+        ("read_file", {"path": ".failgate/nope.py"}, "没有这个文件"),
         ("list_files", "{not json", "不是合法的 JSON"),
         ("list_files", {"bogus": 1}, "参数不对"),
         ("rm_rf", {}, "没有这个工具"),
@@ -317,7 +317,7 @@ error: cannot format <string>
 
 
 def test_extract_traceback_chain_keeps_final_exception():
-    from warden.skills.intake import extract_traceback
+    from failgate.skills.intake import extract_traceback
 
     chain = extract_traceback_chain(CHAIN)
     assert chain is not None

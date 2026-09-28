@@ -10,10 +10,10 @@ from fake_llm import INTAKE_OK, TRIAGE_OK
 from harness_utils import only_case
 from sqlalchemy import select
 
-from warden.db import Repo
-from warden.index.docs import Chunk, DocIndex, chunk_document, extract_docs, is_doc_path
-from warden.platforms.base import Comment, User
-from warden.skills.answer import (
+from failgate.db import Repo
+from failgate.index.docs import Chunk, DocIndex, chunk_document, extract_docs, is_doc_path
+from failgate.platforms.base import Comment, User
+from failgate.skills.answer import (
     RawAnswer,
     RawCitation,
     Source,
@@ -127,7 +127,8 @@ def test_only_maintainer_comments_before_cutoff_count():
         _comment("random user tip", "NONE"),
         _comment("contributor tip", "CONTRIBUTOR"),
         _comment("bot says", "NONE", bot=True),
-        _comment("old warden summary <!-- repowarden:summary -->", "OWNER"),
+        _comment("old failgate summary <!-- failgate:summary -->", "OWNER"),
+        _comment("pre-rename summary <!-- repowarden:summary -->", "OWNER"),
         _comment("maintainer answer", "MEMBER", day=2),
         _comment("answer from the future", "OWNER", day=20),
     ]
@@ -179,9 +180,9 @@ def test_extract_docs_from_tarball():
 # ---------- 端到端 ----------
 
 async def _seed_docs(h: Harness) -> None:
-    async with h.warden.db.session() as s, s.begin():
+    async with h.failgate.db.session() as s, s.begin():
         repo = (await s.scalars(select(Repo))).one()
-        await DocIndex(h.warden.db).replace(
+        await DocIndex(h.failgate.db).replace(
             s, repo.id, repo.full_name, "abc123",
             [Chunk("docs/usage.md", "Usage › Line length", "line-length",
                    "Use the --line-length option to change the maximum line length.")],
@@ -201,7 +202,7 @@ async def test_question_is_answered_with_references(harness: Harness):
     # 先有一个历史提问，登记仓库；再建文档索引
     old = _asking(1, "Can I change the max line length?", "Is the line length configurable?")
     await harness.send("issues", old, "d-1")
-    await harness.warden.worker.drain()
+    await harness.failgate.worker.drain()
     await _seed_docs(harness)
     # 历史 issue #1 下有维护者的回答（读评论走只读 REST 后备，测试里是假的）
     PUBLIC_COMMENTS[1] = [
@@ -220,7 +221,7 @@ async def test_question_is_answered_with_references(harness: Harness):
     })
     new = _asking(2, "How to set line length?", "I want lines up to 100 chars. Which option?")
     await harness.send("issues", new, "d-2")
-    await harness.warden.worker.drain()
+    await harness.failgate.worker.drain()
 
     case = await only_case(harness, 2)
     assert case["state"] == "ANSWERED"
@@ -240,7 +241,7 @@ async def test_question_without_reliable_source_waits_for_maintainer(harness: Ha
     harness.llm.queue("intake", {**INTAKE_OK, "language": "zh"})
     harness.llm.queue("triage", QUESTION)
     await harness.send("issues", issue_event("opened"), "d-1")
-    await harness.warden.worker.drain()
+    await harness.failgate.worker.drain()
     case = await only_case(harness)
     assert case["state"] == "ANSWERED"
     answer = next(r for r in case["runs"] if r["skill"] == "answer")
@@ -254,7 +255,7 @@ async def test_question_without_reliable_source_waits_for_maintainer(harness: Ha
 
 async def test_bug_summary_still_posted_once(harness: Harness):
     await harness.send("issues", issue_event("opened"), "d-1")
-    await harness.warden.worker.drain()
+    await harness.failgate.worker.drain()
     case = await only_case(harness)
     assert case["state"] == "TRIAGE_ONLY"
     assert [e["action"] for e in case["effects"]].count("upsert_summary") == 1
@@ -268,8 +269,8 @@ async def test_doc_index_semantic_channel_bridges_vocabulary_gap(tmp_path):
 
     import httpx
 
-    from warden.db import Database
-    from warden.index.embed import Embedder
+    from failgate.db import Database
+    from failgate.index.embed import Embedder
 
     def vec(text: str) -> list[float]:
         # 玩具 embedding："comma" 相关的文本指向同一个方向

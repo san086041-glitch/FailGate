@@ -1,7 +1,7 @@
 import pytest
 
-from warden.repro.judge import VerdictKind, assess, judge
-from warden.repro.sandbox import ExecResult
+from failgate.repro.judge import VerdictKind, assess, judge
+from failgate.repro.sandbox import ExecResult
 
 REPORTED = """\
 Traceback (most recent call last):
@@ -54,7 +54,7 @@ def test_manufactured_failure_is_rejected():
 def test_failure_raised_by_the_script_itself_is_rejected():
     # 类型和消息都抄对了（签名分数会有 0.5 + 0.2 = 0.7），但一帧都没经过 mylib
     forged = (
-        'Traceback (most recent call last):\n  File "/workspace/.warden/repro.py", line 3, in '
+        'Traceback (most recent call last):\n  File "/workspace/.failgate/repro.py", line 3, in '
         "<module>\n    raise KeyError('name')\nKeyError: 'name'\n"
     )
     v = j([run(stderr=forged)])

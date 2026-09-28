@@ -1,4 +1,4 @@
-"""假的 GitHub REST API：只实现 RepoWarden 用到的接口，状态存在内存里，便于断言。"""
+"""假的 GitHub REST API：只实现 FailGate 用到的接口，状态存在内存里，便于断言。"""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from warden.platforms.github_app import GitHubApp
+from failgate.platforms.github_app import GitHubApp
 
 _KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 PRIVATE_KEY = _KEY.private_bytes(
@@ -26,7 +26,7 @@ PRIVATE_KEY = _KEY.private_bytes(
 ).decode()
 PUBLIC_KEY = _KEY.public_key()
 
-BOT = {"login": "repowarden-test[bot]", "type": "Bot"}
+BOT = {"login": "failgate-test[bot]", "type": "Bot"}
 
 
 @dataclass
@@ -120,7 +120,7 @@ class FakeGitHub:
 
     def _get_app(self, req: httpx.Request, body: Any) -> httpx.Response:
         assert req.headers["authorization"].startswith("Bearer ")
-        return httpx.Response(200, json={"id": 12345, "slug": "repowarden-test", "name": "RW"})
+        return httpx.Response(200, json={"id": 12345, "slug": "failgate-test", "name": "RW"})
 
     def _installations(self, req: httpx.Request, body: Any) -> httpx.Response:
         return httpx.Response(200, json=[{"id": 42, "account": {"login": "acme"}}])

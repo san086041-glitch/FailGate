@@ -7,8 +7,8 @@ import jwt
 import pytest
 from fake_github import PUBLIC_KEY, FakeGitHub
 
-from warden.platforms.base import CaseKind, CaseRef, RepoRef
-from warden.platforms.github_app import GitHubApiError, app_jwt
+from failgate.platforms.base import CaseKind, CaseRef, RepoRef
+from failgate.platforms.github_app import GitHubApiError, app_jwt
 
 REPO = RepoRef(platform="github", full_name="acme/widgets")
 ISSUE = CaseRef(repo=REPO, kind=CaseKind.ISSUE, number=7)
@@ -49,7 +49,7 @@ async def test_clock_skew_is_learned_from_date_header(offset: float):
     fake = FakeGitHub(server_offset=offset)
     gh = fake.app()
     info = await gh.get_app()
-    assert info["slug"] == "repowarden-test"
+    assert info["slug"] == "failgate-test"
     assert fake.jwt_rejections == 1 and abs(gh._skew - offset) < 3
     # 学到偏差之后，后续的 JWT 一次就过
     await gh.installation(42).list_labels(REPO)
@@ -169,9 +169,9 @@ async def test_set_labels_adds_and_removes_with_url_encoding():
 async def test_find_comment_only_matches_bot_comments_with_marker():
     fake = FakeGitHub()
     fake.comments[("acme/widgets", 7)] = [
-        {"id": 1, "body": "<!-- repowarden:summary --> fake", "user": {"type": "User"}},
-        {"id": 2, "body": "report\n<!-- repowarden:summary -->", "user": {"type": "Bot"}},
+        {"id": 1, "body": "<!-- failgate:summary --> fake", "user": {"type": "User"}},
+        {"id": 2, "body": "report\n<!-- failgate:summary -->", "user": {"type": "Bot"}},
     ]
     gh = fake.app()
-    assert await gh.installation(42).find_comment(ISSUE, "<!-- repowarden:summary -->") == "2"
+    assert await gh.installation(42).find_comment(ISSUE, "<!-- failgate:summary -->") == "2"
     await gh.aclose()

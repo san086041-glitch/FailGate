@@ -20,13 +20,13 @@ import pytest
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from warden.platforms.github_rest import GitHubRest, GraphQLError, TarballTooLarge
-from warden.replay.fixes import parse_closer
-from warden.repro import source
-from warden.repro.envcache import EnvBuildError, EnvCache, env_key
-from warden.repro.pypi import Release
-from warden.repro.sandbox import DockerSandbox, ExecResult
-from warden.repro.source import (
+from failgate.platforms.github_rest import GitHubRest, GraphQLError, TarballTooLarge
+from failgate.replay.fixes import parse_closer
+from failgate.repro import source
+from failgate.repro.envcache import EnvBuildError, EnvCache, env_key
+from failgate.repro.pypi import Release
+from failgate.repro.sandbox import DockerSandbox, ExecResult
+from failgate.repro.source import (
     INSTALL_PREFIXES,
     INSTALLER,
     SourceError,
@@ -151,7 +151,7 @@ def test_installer_refuses_multiple_top_dirs(tmp_path: Path):
 
 
 def test_install_whitelist_matches_only_the_exact_installer():
-    from warden.repro.sandbox import SandboxError, check_command
+    from failgate.repro.sandbox import SandboxError, check_command
 
     check_command(["python", "-c", INSTALLER, "/workspace/src.tar.gz", "/x"], INSTALL_PREFIXES)
     with pytest.raises(SandboxError):
@@ -386,7 +386,7 @@ async def test_real_source_env_from_local_dir(sandbox: DockerSandbox, tmp_path: 
 @pytest.mark.docker
 async def test_real_installer_refuses_traversal(sandbox: DockerSandbox, tmp_path: Path):
     cache = EnvCache(sandbox, tmp_path / "envcache.json")
-    evil = make_tar({"top/ok.py": b"", "top/../../../home/warden/.bashrc": b"pwned"})
+    evil = make_tar({"top/ok.py": b"", "top/../../../home/failgate/.bashrc": b"pwned"})
     with pytest.raises(EnvBuildError, match="OutsideDestination|outside"):
         await source_env(cache, tree_of(evil), python="3.12", version="1")
 

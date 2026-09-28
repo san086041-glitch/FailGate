@@ -5,10 +5,10 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fake_llm import TRIAGE_OK, FakeLLM
 
-from warden.db import Database, IssueDoc, Repo
-from warden.index.store import IssueIndex
-from warden.llm import LLMClient
-from warden.replay.triage import (
+from failgate.db import Database, IssueDoc, Repo
+from failgate.index.store import IssueIndex
+from failgate.llm import LLMClient
+from failgate.replay.triage import (
     RepoLabel,
     TriageRecord,
     TriageRunConfig,

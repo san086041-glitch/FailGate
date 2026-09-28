@@ -2,10 +2,10 @@ import httpx
 import pytest
 from fake_llm import INTAKE_OK, FakeLLM
 
-from warden.llm import LLMClient
-from warden.skills.base import IssueSnapshot, SkillContext, untrusted
-from warden.skills.intake import IntakeSkill, extract_traceback, verifiability
-from warden.skills.triage import TriageSkill, constrain_labels
+from failgate.llm import LLMClient
+from failgate.skills.base import IssueSnapshot, SkillContext, untrusted
+from failgate.skills.intake import IntakeSkill, extract_traceback, verifiability
+from failgate.skills.triage import TriageSkill, constrain_labels
 
 PY_BODY = """读取文件时报错：
 
@@ -101,7 +101,7 @@ async def test_skill_error_propagates(ctx):
 
 
 def test_label_formats_by_prompt_version(ctx):
-    from warden.skills.triage import format_labels
+    from failgate.skills.triage import format_labels
 
     ctx.labels = ("T: style", "bug")
     ctx.label_descriptions = {"T: style": "What do we want Blackened code to look like?"}

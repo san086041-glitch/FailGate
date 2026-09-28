@@ -4,8 +4,8 @@ import json
 
 from conftest import comment_event, issue_event
 
-from warden.platforms.base import CaseKind
-from warden.platforms.github import GitHubPlatform, verify_signature
+from failgate.platforms.base import CaseKind
+from failgate.platforms.github import GitHubPlatform, verify_signature
 
 SECRET = "s3cret"
 

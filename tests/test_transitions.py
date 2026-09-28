@@ -1,9 +1,9 @@
 import pytest
 
-from warden.orchestrator.commands import Command, parse_command
-from warden.orchestrator.states import TERMINAL, CaseState
-from warden.orchestrator.transitions import TABLE, GuardContext, resolve
-from warden.platforms.base import User
+from failgate.orchestrator.commands import Command, parse_command
+from failgate.orchestrator.states import TERMINAL, CaseState
+from failgate.orchestrator.transitions import TABLE, GuardContext, resolve
+from failgate.platforms.base import User
 
 S = CaseState
 MAINT = User(login="maint", association="MEMBER")
@@ -80,11 +80,12 @@ def test_every_state_is_reachable():
 @pytest.mark.parametrize(
     ("body", "expected"),
     [
-        ("/warden fix", Command("fix")),
-        ("thanks!\n/warden retry py3.12 pandas2.3", Command("retry", "py3.12 pandas2.3")),
-        ("  /warden budget 2.00  ", Command("budget", "2.00")),
-        ("/warden merge", None),
-        ("please /warden fix", None),
+        ("/failgate fix", Command("fix")),
+        ("thanks!\n/failgate retry py3.12 pandas2.3", Command("retry", "py3.12 pandas2.3")),
+        ("  /failgate budget 2.00  ", Command("budget", "2.00")),
+        ("/warden ignore", Command("ignore")),
+        ("/failgate merge", None),
+        ("please /failgate fix", None),
         ("no command here", None),
     ],
 )

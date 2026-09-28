@@ -1,0 +1,572 @@
+{
+  "meta": {
+    "started": "2026-09-28T18:55:08",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "runs": 2
+  },
+  "results": [
+    {
+      "name": "bug-flaky",
+      "kind": "偶发失败：字符串的哈希顺序每个进程不同（PYTHONHASHSEED 随机），判定应给出 FLAKY 或稳定复现",
+      "expect": [
+        "REPRODUCED",
+        "FLAKY"
+      ],
+      "report": {
+        "repo": "fixture/bug-flaky",
+        "number": 103,
+        "title": "unique() sometimes reorders strings",
+        "intake_version": "1.4.0",
+        "intake_python": "3.12",
+        "has_traceback": false,
+        "source": {
+          "repo": "fixture/bug-flaky",
+          "sha": "buggy",
+          "committed_at": null,
+          "package": "ordkit",
+          "module": "ordkit",
+          "python": "3.12",
+          "version": "1.4.0",
+          "pytest": "pytest==9.1.1",
+          "test_path": "tests/test_failgate_issue_103.py",
+          "run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "67ad17f12fb99284fd2c353f17dde5d1370fa296e1a50a55abb57d85ea678818",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.9,
+              "match_method": "llm",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "AssertionError",
+                "message": "assert ['k<N>', 'k<N>'...', 'k<N>', ...] == ['k<N>', 'k<N>'...', 'k<N>', ...]",
+                "frames": []
+              },
+              "reported": null
+            },
+            "semantic": {
+              "match": 0.9,
+              "reason": "运行输出显示 ordkit.unique 对字符串列表返回了与输入顺序不同的结果（'k06' 排在 'k00' 之前），正是 issue 描述的字符串顺序被打乱的行为，脚本断言的也正是 issue 的预期行为（保持首次出现顺序）。唯一差异是脚本用更长列表让失败稳定出现，而非依赖哈希种子随机复现。",
+              "quote": "AssertionError: assert ['k06', 'k03'...', 'k01', ...] == ['k00', 'k01'...', 'k05', ...]",
+              "quote_found": true,
+              "cost_usd": 0.001013
+            },
+            "log_dir": "artifacts\\failgate-run-15c355e35b",
+            "output_tail": "    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_103.py\", line 18, in test_unique_keeps_first_occurrence_order_for_strings\n    assert unique(items) == list(items)\nAssertionError: assert ['k06', 'k03'...', 'k01', ...] == ['k00', 'k01'...', 'k05', ...]\n  \n  At index 0 diff: 'k06' != 'k00'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_103.py::test_unique_keeps_first_occurrence_order_for_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "level": "L2",
+          "error": null
+        },
+        "agent": {
+          "status": "reproduced",
+          "attempts": [
+            {
+              "n": 1,
+              "name": "tests/test_failgate_issue_103.py",
+              "claim": "`unique` is implemented as `list(set(items))`, so ordering of string results depends on PYTHONHASHSEED. The test asserts unique() preserves input order (12 distinct strings, deterministically failing on every hash seed) plus the issue's exact example `unique([\"b\",\"a\",\"b\"]) == [\"b\",\"a\"]`; on unfixed code it fails with an AssertionError showing the reordered list.",
+              "script": "\"\"\"Regression test for issue #103: ``ordkit.unique`` must keep the first\noccurrence of each item *in order*.\n\nThe buggy implementation returns ``list(set(items))``, so the result order for\nstrings depends on ``PYTHONHASHSEED`` and the example from the report only\nfails on some runs.  A longer list of distinct strings is used first so the\norder violation shows up on every hash seed.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom ordkit import unique\n\n\ndef test_unique_keeps_first_occurrence_order_for_strings() -> None:\n    # All items are distinct: the documented behaviour is a list in input order.\n    items = [f\"k{i:02d}\" for i in range(12)]\n    assert unique(items) == list(items)\n\n    # Exact example from the issue report.\n    assert unique([\"b\", \"a\", \"b\"]) == [\"b\", \"a\"]\n",
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.9
+            }
+          ],
+          "final_script": "\"\"\"Regression test for issue #103: ``ordkit.unique`` must keep the first\noccurrence of each item *in order*.\n\nThe buggy implementation returns ``list(set(items))``, so the result order for\nstrings depends on ``PYTHONHASHSEED`` and the example from the report only\nfails on some runs.  A longer list of distinct strings is used first so the\norder violation shows up on every hash seed.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom ordkit import unique\n\n\ndef test_unique_keeps_first_occurrence_order_for_strings() -> None:\n    # All items are distinct: the documented behaviour is a list in input order.\n    items = [f\"k{i:02d}\" for i in range(12)]\n    assert unique(items) == list(items)\n\n    # Exact example from the issue report.\n    assert unique([\"b\", \"a\", \"b\"]) == [\"b\", \"a\"]\n",
+          "final_run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "67ad17f12fb99284fd2c353f17dde5d1370fa296e1a50a55abb57d85ea678818",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 0.9,
+              "match_method": "llm",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "AssertionError",
+                "message": "assert ['k<N>', 'k<N>'...', 'k<N>', ...] == ['k<N>', 'k<N>'...', 'k<N>', ...]",
+                "frames": []
+              },
+              "reported": null
+            },
+            "semantic": {
+              "match": 0.9,
+              "reason": "运行输出显示 ordkit.unique 对字符串列表返回了与输入顺序不同的结果（'k06' 排在 'k00' 之前），正是 issue 描述的字符串顺序被打乱的行为，脚本断言的也正是 issue 的预期行为（保持首次出现顺序）。唯一差异是脚本用更长列表让失败稳定出现，而非依赖哈希种子随机复现。",
+              "quote": "AssertionError: assert ['k06', 'k03'...', 'k01', ...] == ['k00', 'k01'...', 'k05', ...]",
+              "quote_found": true,
+              "cost_usd": 0.001013
+            },
+            "log_dir": "artifacts\\failgate-run-15c355e35b",
+            "output_tail": "    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_103.py\", line 18, in test_unique_keeps_first_occurrence_order_for_strings\n    assert unique(items) == list(items)\nAssertionError: assert ['k06', 'k03'...', 'k01', ...] == ['k00', 'k01'...', 'k05', ...]\n  \n  At index 0 diff: 'k06' != 'k00'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_103.py::test_unique_keeps_first_occurrence_order_for_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "steps": 15,
+          "tool_counts": {
+            "list_files": 1,
+            "search_code": 2,
+            "read_file": 4,
+            "run": 4,
+            "write_scratch": 1,
+            "write_test": 1,
+            "run_test": 1,
+            "submit": 1
+          },
+          "cost_usd": 0.005006,
+          "prompt_tokens": 43205,
+          "completion_tokens": 2653,
+          "cached_tokens": 37888,
+          "give_up_reason": null,
+          "suspect": null,
+          "error": null,
+          "transcript_path": "artifacts\\agent-fixture__bug-flaky-103-1790589367.json",
+          "duration_s": 38.4,
+          "test_path": "tests/test_failgate_issue_103.py"
+        },
+        "intake_cost_usd": 0.000817,
+        "judge_cost_usd": 0.001013,
+        "judge_prompt_tokens": 2068,
+        "judge_completion_tokens": 327,
+        "judge_cached_tokens": 0
+      },
+      "fbpa": {
+        "number": 103,
+        "title": "unique() sometimes reorders strings",
+        "reported_version": "1.4.0",
+        "python": "3.12",
+        "proxy": "—",
+        "fix": {
+          "pr": null,
+          "sha": "fixed",
+          "parent": "buggy",
+          "committed_at": null,
+          "merge": false
+        },
+        "pretend_version": "1.4.0",
+        "before": [
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.578,
+            "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_103.py\", line 18, in test_unique_keeps_first_occurrence_order_for_strings\n    assert unique(items) == list(items)\nAssertionError: assert ['k02', 'k10'...', 'k00', ...] == ['k00', 'k01'...', 'k05', ...]\n  \n  At index 0 diff: 'k02' != 'k00'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_103.py::test_unique_keeps_first_occurrence_order_for_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+            "log_dir": "artifacts\\failgate-run-9c6cd174b2"
+          },
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 1.5,
+            "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_103.py\", line 18, in test_unique_keeps_first_occurrence_order_for_strings\n    assert unique(items) == list(items)\nAssertionError: assert ['k06', 'k03'...', 'k11', ...] == ['k00', 'k01'...', 'k05', ...]\n  \n  At index 0 diff: 'k06' != 'k00'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_103.py::test_unique_keeps_first_occurrence_order_for_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+            "log_dir": "artifacts\\failgate-run-c1011fc0ce"
+          }
+        ],
+        "after": [
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.546,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-84b0692635"
+          },
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.547,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-124308c48c"
+          }
+        ],
+        "outcome": "fb_pa",
+        "error": null
+      },
+      "passed": true,
+      "verdict": "REPRODUCED"
+    },
+    {
+      "name": "bug-keyerror",
+      "kind": "有堆栈的崩溃（KeyError），判定走签名比对",
+      "expect": [
+        "REPRODUCED"
+      ],
+      "report": {
+        "repo": "fixture/bug-keyerror",
+        "number": 101,
+        "title": "Parsing a config crashes when it has keys before the first section",
+        "intake_version": "0.3.0",
+        "intake_python": "3.12",
+        "has_traceback": true,
+        "source": {
+          "repo": "fixture/bug-keyerror",
+          "sha": "buggy",
+          "committed_at": null,
+          "package": "confkit",
+          "module": "confkit",
+          "python": "3.12",
+          "version": "0.3.0",
+          "pytest": "pytest==9.1.1",
+          "test_path": "tests/test_failgate_issue_101.py",
+          "run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "1397983d4b99faea7319041ea1c75450a730d46793134402bc7bebd1b7831203",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0,
+              "match_method": "signature",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "KeyError",
+                "message": "None",
+                "frames": [
+                  "confkit/parser.py:parse",
+                  "confkit/parser.py:_store"
+                ]
+              },
+              "reported": {
+                "exc_type": "KeyError",
+                "message": "None",
+                "frames": [
+                  "confkit/parser.py:parse",
+                  "confkit/parser.py:_store"
+                ]
+              }
+            },
+            "semantic": null,
+            "log_dir": "artifacts\\failgate-run-fee95c8617",
+            "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_101.py\", line 6, in test_keys_before_first_section_go_to_default\n    assert parse(\"name = demo\\n[server]\\nhost = example.org\\n\") == {\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 27, in parse\n    _store(sections, current, line)\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 35, in _store\n    sections[section][key.strip()] = value.strip()\n    ~~~~~~~~^^^^^^^^^\nKeyError: None\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_101.py::test_keys_before_first_section_go_to_default\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "level": "L2",
+          "error": null
+        },
+        "agent": {
+          "status": "reproduced",
+          "attempts": [
+            {
+              "n": 1,
+              "name": "tests/test_failgate_issue_101.py",
+              "claim": "test_keys_before_first_section_go_to_default calls confkit.parse on the issue's input; buggy code lets the parser raise KeyError: None at confkit/parser.py:35 because keys before any section are stored under section=None, while fixed code should return {\"DEFAULT\": {\"name\": \"demo\"}, \"server\": {\"host\": \"example.org\"}}.",
+              "script": "from confkit import parse\n\n\ndef test_keys_before_first_section_go_to_default() -> None:\n    \"\"\"Keys appearing before the first [section] must land in DEFAULT, not crash.\"\"\"\n    assert parse(\"name = demo\\n[server]\\nhost = example.org\\n\") == {\n        \"DEFAULT\": {\"name\": \"demo\"},\n        \"server\": {\"host\": \"example.org\"},\n    }\n",
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0
+            }
+          ],
+          "final_script": "from confkit import parse\n\n\ndef test_keys_before_first_section_go_to_default() -> None:\n    \"\"\"Keys appearing before the first [section] must land in DEFAULT, not crash.\"\"\"\n    assert parse(\"name = demo\\n[server]\\nhost = example.org\\n\") == {\n        \"DEFAULT\": {\"name\": \"demo\"},\n        \"server\": {\"host\": \"example.org\"},\n    }\n",
+          "final_run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "1397983d4b99faea7319041ea1c75450a730d46793134402bc7bebd1b7831203",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0,
+              "match_method": "signature",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "KeyError",
+                "message": "None",
+                "frames": [
+                  "confkit/parser.py:parse",
+                  "confkit/parser.py:_store"
+                ]
+              },
+              "reported": {
+                "exc_type": "KeyError",
+                "message": "None",
+                "frames": [
+                  "confkit/parser.py:parse",
+                  "confkit/parser.py:_store"
+                ]
+              }
+            },
+            "semantic": null,
+            "log_dir": "artifacts\\failgate-run-fee95c8617",
+            "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_101.py\", line 6, in test_keys_before_first_section_go_to_default\n    assert parse(\"name = demo\\n[server]\\nhost = example.org\\n\") == {\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 27, in parse\n    _store(sections, current, line)\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 35, in _store\n    sections[section][key.strip()] = value.strip()\n    ~~~~~~~~^^^^^^^^^\nKeyError: None\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_101.py::test_keys_before_first_section_go_to_default\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "steps": 9,
+          "tool_counts": {
+            "list_files": 1,
+            "read_file": 5,
+            "write_test": 1,
+            "run_test": 1,
+            "submit": 1
+          },
+          "cost_usd": 0.002618,
+          "prompt_tokens": 22896,
+          "completion_tokens": 1224,
+          "cached_tokens": 19456,
+          "give_up_reason": null,
+          "suspect": null,
+          "error": null,
+          "transcript_path": "artifacts\\agent-fixture__bug-keyerror-101-1790589445.json",
+          "duration_s": 23.1,
+          "test_path": "tests/test_failgate_issue_101.py"
+        },
+        "intake_cost_usd": 0.001044,
+        "judge_cost_usd": 0.0,
+        "judge_prompt_tokens": 0,
+        "judge_completion_tokens": 0,
+        "judge_cached_tokens": 0
+      },
+      "fbpa": {
+        "number": 101,
+        "title": "Parsing a config crashes when it has keys before the first section",
+        "reported_version": "0.3.0",
+        "python": "3.12",
+        "proxy": "—",
+        "fix": {
+          "pr": null,
+          "sha": "fixed",
+          "parent": "buggy",
+          "committed_at": null,
+          "merge": false
+        },
+        "pretend_version": "0.3.0",
+        "before": [
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.532,
+            "tail": "    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_101.py\", line 6, in test_keys_before_first_section_go_to_default\n    assert parse(\"name = demo\\n[server]\\nhost = example.org\\n\") == {\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 27, in parse\n    _store(sections, current, line)\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 35, in _store\n    sections[section][key.strip()] = value.strip()\n    ~~~~~~~~^^^^^^^^^\nKeyError: None\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_101.py::test_keys_before_first_section_go_to_default\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-edee0ef8cc"
+          },
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.594,
+            "tail": "    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_101.py\", line 6, in test_keys_before_first_section_go_to_default\n    assert parse(\"name = demo\\n[server]\\nhost = example.org\\n\") == {\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 27, in parse\n    _store(sections, current, line)\n  File \"/opt/venv/lib/python3.12/site-packages/confkit/parser.py\", line 35, in _store\n    sections[section][key.strip()] = value.strip()\n    ~~~~~~~~^^^^^^^^^\nKeyError: None\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_101.py::test_keys_before_first_section_go_to_default\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+            "log_dir": "artifacts\\failgate-run-8352319aaf"
+          }
+        ],
+        "after": [
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.547,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-f2d52fe92b"
+          },
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.562,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-0e5d38601a"
+          }
+        ],
+        "outcome": "fb_pa",
+        "error": null
+      },
+      "passed": true,
+      "verdict": "REPRODUCED"
+    },
+    {
+      "name": "bug-regression",
+      "kind": "没有堆栈的行为错误（输出不对），issue 给出了期望输出，判定走 LLM 评委",
+      "expect": [
+        "REPRODUCED"
+      ],
+      "report": {
+        "repo": "fixture/bug-regression",
+        "number": 102,
+        "title": "slugify produces repeated dashes since 0.2.0",
+        "intake_version": "0.2.0",
+        "intake_python": null,
+        "has_traceback": false,
+        "source": {
+          "repo": "fixture/bug-regression",
+          "sha": "buggy",
+          "committed_at": null,
+          "package": "slugkit",
+          "module": "slugkit",
+          "python": "3.12",
+          "version": "0.2.0",
+          "pytest": "pytest==9.1.1",
+          "test_path": "tests/test_failgate_issue_102.py",
+          "run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "c06c17c11534a58750c2e9240a851d3b78a4c4503e11d8c83d7a49982be5ecae",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0,
+              "match_method": "llm",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "AssertionError",
+                "message": "assert 'hello---world' == 'hello-world'",
+                "frames": []
+              },
+              "reported": null
+            },
+            "semantic": {
+              "match": 1.0,
+              "reason": "脚本直接调用 slugify(\"Hello,  World!\") 并断言结果为 'hello-world'，运行输出显示被测包实际返回 'hello---world'，正是 issue 描述的连续多个连字符的行为，且断言检查的正是预期行为。",
+              "quote": "AssertionError: assert 'hello---world' == 'hello-world'",
+              "quote_found": true,
+              "cost_usd": 0.000637
+            },
+            "log_dir": "artifacts\\failgate-run-996957e7cf",
+            "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_102.py\", line 8, in test_runs_of_spaces_and_punctuation_collapse_to_one_separator\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\nAssertionError: assert 'hello---world' == 'hello-world'\n  \n  - hello-world\n  + hello---world\n  ?       ++\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_102.py::test_runs_of_spaces_and_punctuation_collapse_to_one_separator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "level": "L2",
+          "error": null
+        },
+        "agent": {
+          "status": "reproduced",
+          "attempts": [
+            {
+              "n": 1,
+              "name": "tests/test_failgate_issue_102.py",
+              "claim": "slugify(\"Hello,  World!\") returns 'hello---world' (each non-alphanumeric char becomes its own separator) instead of the expected 'hello-world'; test asserts single collapsed separator and fails on current code.",
+              "script": "from slugkit import slugify\n\n\ndef test_runs_of_spaces_and_punctuation_collapse_to_one_separator() -> None:\n    # Issue #102: since 0.2.0 each non-alphanumeric character became its own\n    # separator, so \"Hello,  World!\" produced \"hello---world\" instead of the\n    # 0.1.x result \"hello-world\".\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\n",
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0
+            }
+          ],
+          "final_script": "from slugkit import slugify\n\n\ndef test_runs_of_spaces_and_punctuation_collapse_to_one_separator() -> None:\n    # Issue #102: since 0.2.0 each non-alphanumeric character became its own\n    # separator, so \"Hello,  World!\" produced \"hello---world\" instead of the\n    # 0.1.x result \"hello-world\".\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\n",
+          "final_run": {
+            "version": "buggy",
+            "python": "3.12",
+            "env_key": "c06c17c11534a58750c2e9240a851d3b78a4c4503e11d8c83d7a49982be5ecae",
+            "cache_hit": false,
+            "verdict": {
+              "kind": "REPRODUCED",
+              "reason": "4 次运行都出现与报告一致的失败",
+              "match": 1.0,
+              "match_method": "llm",
+              "fail_rate": 1.0,
+              "runs": 4,
+              "observed": {
+                "exc_type": "AssertionError",
+                "message": "assert 'hello---world' == 'hello-world'",
+                "frames": []
+              },
+              "reported": null
+            },
+            "semantic": {
+              "match": 1.0,
+              "reason": "脚本直接调用 slugify(\"Hello,  World!\") 并断言结果为 'hello-world'，运行输出显示被测包实际返回 'hello---world'，正是 issue 描述的连续多个连字符的行为，且断言检查的正是预期行为。",
+              "quote": "AssertionError: assert 'hello---world' == 'hello-world'",
+              "quote_found": true,
+              "cost_usd": 0.000637
+            },
+            "log_dir": "artifacts\\failgate-run-996957e7cf",
+            "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_102.py\", line 8, in test_runs_of_spaces_and_punctuation_collapse_to_one_separator\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\nAssertionError: assert 'hello---world' == 'hello-world'\n  \n  - hello-world\n  + hello---world\n  ?       ++\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_102.py::test_runs_of_spaces_and_punctuation_collapse_to_one_separator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s"
+          },
+          "steps": 9,
+          "tool_counts": {
+            "list_files": 2,
+            "search_code": 1,
+            "read_file": 3,
+            "write_test": 1,
+            "run_test": 1,
+            "submit": 1
+          },
+          "cost_usd": 0.00204,
+          "prompt_tokens": 18985,
+          "completion_tokens": 874,
+          "cached_tokens": 16000,
+          "give_up_reason": null,
+          "suspect": null,
+          "error": null,
+          "transcript_path": "artifacts\\agent-fixture__bug-regression-102-1790589526.json",
+          "duration_s": 22.6,
+          "test_path": "tests/test_failgate_issue_102.py"
+        },
+        "intake_cost_usd": 0.001196,
+        "judge_cost_usd": 0.000637,
+        "judge_prompt_tokens": 1935,
+        "judge_completion_tokens": 110,
+        "judge_cached_tokens": 256
+      },
+      "fbpa": {
+        "number": 102,
+        "title": "slugify produces repeated dashes since 0.2.0",
+        "reported_version": "0.2.0",
+        "python": "3.12",
+        "proxy": "—",
+        "fix": {
+          "pr": null,
+          "sha": "fixed",
+          "parent": "buggy",
+          "committed_at": null,
+          "merge": false
+        },
+        "pretend_version": "0.2.0",
+        "before": [
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.563,
+            "tail": "          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_102.py\", line 8, in test_runs_of_spaces_and_punctuation_collapse_to_one_separator\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\nAssertionError: assert 'hello---world' == 'hello-world'\n  \n  - hello-world\n  + hello---world\n  ?       ++\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_102.py::test_runs_of_spaces_and_punctuation_collapse_to_one_separator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-d5880ca5e2"
+          },
+          {
+            "exit_code": 1,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": true,
+            "duration_s": 0.547,
+            "tail": "          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_102.py\", line 8, in test_runs_of_spaces_and_punctuation_collapse_to_one_separator\n    assert slugify(\"Hello,  World!\") == \"hello-world\"\nAssertionError: assert 'hello---world' == 'hello-world'\n  \n  - hello-world\n  + hello---world\n  ?       ++\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_102.py::test_runs_of_spaces_and_punctuation_collapse_to_one_separator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-f40c9ba234"
+          }
+        ],
+        "after": [
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.563,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-4c89ae5fbc"
+          },
+          {
+            "exit_code": 0,
+            "timed_out": false,
+            "oom_killed": false,
+            "same_failure": null,
+            "duration_s": 0.578,
+            "tail": ".                                                                        [100%]\n1 passed in 0.00s",
+            "log_dir": "artifacts\\failgate-run-c5c7444e2d"
+          }
+        ],
+        "outcome": "fb_pa",
+        "error": null
+      },
+      "passed": true,
+      "verdict": "REPRODUCED"
+    }
+  ]
+}

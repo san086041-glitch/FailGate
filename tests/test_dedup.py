@@ -4,10 +4,10 @@ import pytest
 from fake_llm import FakeLLM
 from harness_utils import only_case
 
-from warden.index.store import Recalled
-from warden.llm import LLMClient
-from warden.skills.base import IssueSnapshot, SkillContext
-from warden.skills.dedup import DedupSkill, quote_found
+from failgate.index.store import Recalled
+from failgate.llm import LLMClient
+from failgate.skills.base import IssueSnapshot, SkillContext
+from failgate.skills.dedup import DedupSkill, quote_found
 
 NEW_BODY = "升级到 2.4.1 后 read_parquet 读取分区目录报 KeyError: 'a'"
 
@@ -113,7 +113,7 @@ async def test_end_to_end_second_issue_finds_first(harness):
     first["issue"]["title"] = "read_parquet 读取分区目录报 KeyError"
     first["issue"]["body"] = "升级到 2.4.1 后读取分区目录报 KeyError: 'a'"
     await harness.send("issues", first, "d-1")
-    await harness.warden.worker.drain()
+    await harness.failgate.worker.drain()
 
     second = issue_event("opened", 2, author="carol")
     second["issue"]["title"] = "分区 parquet 读取报 KeyError"
@@ -123,7 +123,7 @@ async def test_end_to_end_second_issue_finds_first(harness):
               qc="读取分区目录报 KeyError: 'a'"),
     ]})
     await harness.send("issues", second, "d-2")
-    await harness.warden.worker.drain()
+    await harness.failgate.worker.drain()
 
     case = await only_case(harness, number=2)
     dedup = case["runs"][2]["output"]

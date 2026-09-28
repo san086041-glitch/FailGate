@@ -4,13 +4,13 @@ from datetime import UTC, datetime, timedelta
 import httpx
 import pytest
 
-from warden.db import Database, Repo
-from warden.index.bm25 import BM25
-from warden.index.embed import Embedder, cosine
-from warden.index.store import IssueIndex, rrf
-from warden.index.text import tokenize
-from warden.index.trace import signature, similarity
-from warden.platforms.github_rest import GitHubRest
+from failgate.db import Database, Repo
+from failgate.index.bm25 import BM25
+from failgate.index.embed import Embedder, cosine
+from failgate.index.store import IssueIndex, rrf
+from failgate.index.text import tokenize
+from failgate.index.trace import signature, similarity
+from failgate.platforms.github_rest import GitHubRest
 
 TB_A = """Traceback (most recent call last):
   File "/home/alice/repro.py", line 2, in <module>
@@ -207,7 +207,7 @@ async def test_github_rest_paginates_and_skips_pull_requests():
 # ---------- 模板行过滤 ----------
 
 def test_boilerplate_lines_learned_from_corpus():
-    from warden.index.text import boilerplate_lines, strip_boilerplate
+    from failgate.index.text import boilerplate_lines, strip_boilerplate
 
     template = "**Describe the bug**\n{}\n**To Reproduce**\n<!-- fill this in -->\n{}"
     texts = [template.format(f"bug {i}", f"step {i}") for i in range(20)] + ["unrelated"]
@@ -219,7 +219,7 @@ def test_boilerplate_lines_learned_from_corpus():
 
 
 def test_boilerplate_needs_minimum_support():
-    from warden.index.text import boilerplate_lines
+    from failgate.index.text import boilerplate_lines
 
     # 只有 2 个 issue 时，任何行都达不到"至少 3 次"的门槛，避免小语料误删真实内容
     assert boilerplate_lines(["same line", "same line"]) == frozenset()

@@ -6,9 +6,9 @@ import pytest
 from fake_llm import completion
 from pydantic import BaseModel
 
-from warden.llm import LLMClient, LLMError, Usage
-from warden.llm import client as client_mod
-from warden.llm.pricing import cost_usd, is_deepseek_peak
+from failgate.llm import LLMClient, LLMError, Usage
+from failgate.llm import client as client_mod
+from failgate.llm.pricing import cost_usd, is_deepseek_peak
 
 
 @pytest.fixture(autouse=True)
@@ -120,7 +120,7 @@ def test_cost_counts_cache_and_off_peak_discount():
 
 
 def test_parse_json_object_tolerates_fences_and_trailing_text():
-    from warden.llm.client import parse_json_object
+    from failgate.llm.client import parse_json_object
 
     assert parse_json_object('```json\n{"n": 1}\n```') == {"n": 1}
     # 回放评测中真实遇到的情况：完整 JSON 之后还有内容

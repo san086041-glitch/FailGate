@@ -18,15 +18,15 @@ from packaging.version import Version
 from test_repro_agent import REPORTED, TASK, ScriptedLLM, call
 from test_repro_source import make_tar, tree_of, write_project
 
-from warden.replay import l2 as l2replay
-from warden.replay.fbpa import FbpaCase, candidate_from_l2
-from warden.repro.agent import TEST_TOOLS, ReproAgent, reproduce_with_tests
-from warden.repro.config import PackageConfig
-from warden.repro.envcache import Env, EnvCache
-from warden.repro.evidence import EvidenceLevel
-from warden.repro.issue import L2IssueReport
-from warden.repro.judge import VerdictKind
-from warden.repro.l2 import (
+from failgate.replay import l2 as l2replay
+from failgate.replay.fbpa import FbpaCase, candidate_from_l2
+from failgate.repro.agent import TEST_TOOLS, ReproAgent, reproduce_with_tests
+from failgate.repro.config import PackageConfig
+from failgate.repro.envcache import Env, EnvCache
+from failgate.repro.evidence import EvidenceLevel
+from failgate.repro.issue import L2IssueReport
+from failgate.repro.judge import VerdictKind
+from failgate.repro.l2 import (
     PREPARE_ARGV,
     PROBE_TEST,
     RUN_PREFIXES,
@@ -39,9 +39,9 @@ from warden.repro.l2 import (
     pytest_argv,
     repo_test_file,
 )
-from warden.repro.pypi import Release
-from warden.repro.sandbox import DockerSandbox, ExecResult, SandboxError, check_command
-from warden.repro.source import SRC_DIR, pack_dir
+from failgate.repro.pypi import Release
+from failgate.repro.sandbox import DockerSandbox, ExecResult, SandboxError, check_command
+from failgate.repro.source import SRC_DIR, pack_dir
 
 # ---------------------------------------------------------------- 纯函数
 
@@ -85,18 +85,18 @@ def test_repo_test_file_uses_repo_test_dir(tmp_path: Path):
     root = write_project(tmp_path / "p")
     (root / "test").mkdir()
     (root / "test" / "test_a.py").write_text("", encoding="utf-8")
-    assert repo_test_file(tree_of(pack_dir(root)), 42) == "test/test_warden_issue_42.py"
+    assert repo_test_file(tree_of(pack_dir(root)), 42) == "test/test_failgate_issue_42.py"
     bare = tree_of(make_tar({"t/src/x.py": b""}))
-    assert repo_test_file(bare, None) == "tests/test_warden_issue_0.py"
+    assert repo_test_file(bare, None) == "tests/test_failgate_issue_0.py"
 
 
 def test_run_whitelist_is_exact_for_copy_and_pytest_prefix():
     check_command(PREPARE_ARGV, RUN_PREFIXES)
-    check_command(pytest_argv("tests/test_warden_issue_1.py"), RUN_PREFIXES)
+    check_command(pytest_argv("tests/test_failgate_issue_1.py"), RUN_PREFIXES)
     for bad in (["python", "-c", "import os"], ["python", "x.py"], ["sh", "-c", "id"]):
         with pytest.raises(SandboxError):
             check_command(bad, RUN_PREFIXES)
-    argv = pytest_argv("tests/test_warden_issue_1.py")
+    argv = pytest_argv("tests/test_failgate_issue_1.py")
     assert "--tb=native" in argv and "no:cacheprovider" in argv  # 签名解析和只读根文件系统都靠它们
 
 
@@ -105,7 +105,7 @@ def test_run_whitelist_is_exact_for_copy_and_pytest_prefix():
 
 TB_OUT = (
     "Traceback (most recent call last):\n"
-    '  File "/workspace/src/tests/test_warden_issue_7.py", line 3, in test_x\n'
+    '  File "/workspace/src/tests/test_failgate_issue_7.py", line 3, in test_x\n'
     "    mylib.parse({})\n"
     '  File "/opt/venv/lib/python3.12/site-packages/mylib/core.py", line 9, in parse\n'
     "    return d[key]\nKeyError: 'name'\n"
@@ -138,7 +138,7 @@ class FakeTestSandbox:
             return res(0)
         if argv[:3] == ["python", "-c", argv[2]] and SRC_DIR in argv:  # CodeTools
             return ExecResult(phase="run", argv=list(argv), exit_code=0,
-                              stdout='WARDEN_TOOL{"hits": ["tests/test_core.py:1: import mylib"],'
+                              stdout='FAILGATE_TOOL{"hits": ["tests/test_core.py:1: import mylib"],'
                                      ' "truncated": false}')
         content = next(v for k, v in self.files.items() if k.endswith(".py"))
         for marker, outcome in self.outcomes.items():
@@ -160,9 +160,9 @@ def fake_prepared(tmp_path: Path) -> SourcePrepared:
     tree = tree_of(pack_dir(write_project(tmp_path / "p")))
     return SourcePrepared(
         cfg=PackageConfig(name="mylib"), tree=tree, python="3.12", version="1.0.1.dev0",
-        pytest="pytest==8.0.0", env=Env(key="k" * 64, image="warden-env:k", python="3.12",
+        pytest="pytest==8.0.0", env=Env(key="k" * 64, image="failgate-env:k", python="3.12",
                                         cache_hit=True),
-        test_path="tests/test_warden_issue_7.py",
+        test_path="tests/test_failgate_issue_7.py",
     )
 
 
@@ -176,9 +176,9 @@ async def test_evaluate_writes_test_into_repo_copy_and_judges(tmp_path: Path):
 
     run = await tester.evaluate(prep, "# BUG\nimport mylib", reported_traceback=REPORTED)
     assert run.verdict.kind == VerdictKind.REPRODUCED and run.verdict.runs == 4
-    assert "src/tests/test_warden_issue_7.py" in sb.files
+    assert "src/tests/test_failgate_issue_7.py" in sb.files
     assert sb.runs[0] == PREPARE_ARGV  # 先放源码副本，再跑测试
-    assert sb.runs[1] == pytest_argv("tests/test_warden_issue_7.py")
+    assert sb.runs[1] == pytest_argv("tests/test_failgate_issue_7.py")
 
     bad = await tester.evaluate(prep, "# IMPORTERR", reported_traceback=REPORTED)
     assert bad.verdict.kind == VerdictKind.UNRELATED_FAILURE and "退出码 2" in bad.verdict.reason
@@ -205,12 +205,12 @@ async def test_agent_writes_runs_and_submits_a_test(tmp_path: Path):
     result = await agent.run(TASK, prep)
     assert result.status == "reproduced" and len(result.attempts) == 1
     assert result.final_script == "import mylib\n# BUG\n"
-    assert result.test_path == "tests/test_warden_issue_7.py"
+    assert result.test_path == "tests/test_failgate_issue_7.py"
     # 用的是测试会话的工具和提示词
     names = [t["function"]["name"] for t in llm.requests[0]["tools"]]
     assert names == [t["function"]["name"] for t in TEST_TOOLS]
     assert "pytest 测试文件" in llm.requests[0]["messages"][0]["content"]
-    assert "tests/test_warden_issue_7.py" in llm.requests[0]["messages"][1]["content"]
+    assert "tests/test_failgate_issue_7.py" in llm.requests[0]["messages"][1]["content"]
     # 代码工具看的是仓库源码树；没写测试就提交会被挡回
     assert any(SRC_DIR in argv for argv in sb.runs)
     tool_msgs = [m["content"] for m in llm.requests[-1]["messages"] if m["role"] == "tool"]
@@ -271,9 +271,9 @@ async def test_reproduce_with_tests_reports_l2_or_setup_error(tmp_path: Path):
 
 def l2_report(number: int, *, level: str = "L2", status: str = "reproduced",
               tb: bool = True, error: str | None = None) -> L2IssueReport:
-    from warden.repro.agent import AgentResult
-    from warden.repro.judge import Verdict
-    from warden.repro.package import VersionRun
+    from failgate.repro.agent import AgentResult
+    from failgate.repro.judge import Verdict
+    from failgate.repro.package import VersionRun
 
     run = VersionRun(version="abc", python="3.12", env_key="k", cache_hit=True,
                      verdict=Verdict(kind=VerdictKind.REPRODUCED, reason="ok"))
@@ -348,7 +348,7 @@ async def test_real_l2_prepare_probe_and_judge(sandbox: DockerSandbox, tmp_path:
     tester = TestReproducer(sandbox, cache, OfflinePyPI())  # type: ignore[arg-type]
     prep = await tester.prepare(PackageConfig(name="mylib"), tree, number=7, python="3.12")
     try:
-        assert prep.pytest == "pytest==8.3.3" and prep.test_path == "tests/test_warden_issue_7.py"
+        assert prep.pytest == "pytest==8.3.3" and prep.test_path == "tests/test_failgate_issue_7.py"
         probe = await tester.run_once(prep, PROBE_TEST)
         assert probe.exit_code == 0
         bug = "from mylib.core import parse\n\ndef test_parse():\n    parse({})\n"

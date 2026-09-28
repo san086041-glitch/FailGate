@@ -10,13 +10,13 @@ from pathlib import Path
 import httpx
 import pytest
 
-from warden.repro.config import PackageConfig
-from warden.repro.envcache import EnvBuildError, EnvCache, env_key
-from warden.repro.evidence import EvidenceLevel
-from warden.repro.judge import VerdictKind
-from warden.repro.package import PackageReproducer
-from warden.repro.pypi import PyPIClient
-from warden.repro.sandbox import DockerSandbox, ExecResult
+from failgate.repro.config import PackageConfig
+from failgate.repro.envcache import EnvBuildError, EnvCache, env_key
+from failgate.repro.evidence import EvidenceLevel
+from failgate.repro.judge import VerdictKind
+from failgate.repro.package import PackageReproducer
+from failgate.repro.pypi import PyPIClient
+from failgate.repro.sandbox import DockerSandbox, ExecResult
 
 
 class FakeSandbox:
@@ -52,7 +52,7 @@ class FakeSandbox:
         assert (src / "repro.py").exists()
 
     async def install(self, image, volume, argv, *, commit_to=None, **_: object) -> ExecResult:
-        assert image.startswith("warden-base:py")
+        assert image.startswith("failgate-base:py")
         self.installs.append(list(argv))
         if self.install_exit == 0 and commit_to:
             self.images[commit_to] = (f"sha256:{commit_to}", 130)
@@ -161,7 +161,7 @@ async def reproduce(sb: FakeSandbox, tmp_path: Path, version: str = "mylib 1.0")
 
 def image_for(tmp_path: Path, version: str) -> str:
     # 两个版本的环境镜像名要先算出来，才能告诉假沙箱"哪个镜像会失败"
-    from warden.repro.envcache import env_tag
+    from failgate.repro.envcache import env_tag
 
     key = env_key(mode="package", upstream_id="sha256:up312", python="3.12",
                   install_argv=PackageConfig(name="mylib").install_argv(version))

@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from warden.repro.config import PackageConfig, ReproConfig, ReproMode, choose_mode
-from warden.repro.sandbox import DEFAULT_INSTALL_PREFIXES, SandboxError, check_command
+from failgate.repro.config import PackageConfig, ReproConfig, ReproMode, choose_mode
+from failgate.repro.sandbox import DEFAULT_INSTALL_PREFIXES, SandboxError, check_command
 
 
 def test_install_argv_rendering():

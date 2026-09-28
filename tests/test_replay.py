@@ -5,11 +5,11 @@ import httpx
 import pytest
 from fake_llm import FakeLLM
 
-from warden.db import Database, Repo
-from warden.index.store import IssueIndex
-from warden.llm import LLMClient
-from warden.platforms.github_rest import GitHubRest
-from warden.replay.dataset import (
+from failgate.db import Database, Repo
+from failgate.index.store import IssueIndex
+from failgate.llm import LLMClient
+from failgate.platforms.github_rest import GitHubRest
+from failgate.replay.dataset import (
     Clusters,
     GoldPair,
     GoldSet,
@@ -18,10 +18,10 @@ from warden.replay.dataset import (
     load_gold,
     save_gold,
 )
-from warden.replay.dedup import RunConfig, run_dedup_replay
-from warden.replay.metrics import JudgedCandidate, Record, evaluate, recommend, sweep, wilson
-from warden.replay.mine import duplicate_pattern, find_original, mine_gold
-from warden.replay.report import render_report
+from failgate.replay.dedup import RunConfig, run_dedup_replay
+from failgate.replay.metrics import JudgedCandidate, Record, evaluate, recommend, sweep, wilson
+from failgate.replay.mine import duplicate_pattern, find_original, mine_gold
+from failgate.replay.report import render_report
 
 # ---------- 数据集 ----------
 

@@ -17,20 +17,20 @@ from packaging.version import Version
 from test_repro_agent import ScriptedLLM, call
 from test_repro_pipeline import FakeRunner, case_detail, summary
 
-from warden.db import Repo
-from warden.replay import fixtures as fx_mod
-from warden.repro.agent import AgentResult, Attempt
-from warden.repro.config import PackageConfig, needs_source
-from warden.repro.envcache import EnvCache
-from warden.repro.evidence import EvidenceLevel
-from warden.repro.issue import L2IssueReport
-from warden.repro.judge import Verdict, VerdictKind
-from warden.repro.l2 import SourceRepro, TestReproducer
-from warden.repro.package import VersionRun
-from warden.repro.sandbox import DockerSandbox
-from warden.settings import Settings
-from warden.skills.intake import IntakeOutput
-from warden.skills.repro import ReproOutput, ReproRequest, SandboxReproRunner
+from failgate.db import Repo
+from failgate.replay import fixtures as fx_mod
+from failgate.repro.agent import AgentResult, Attempt
+from failgate.repro.config import PackageConfig, needs_source
+from failgate.repro.envcache import EnvCache
+from failgate.repro.evidence import EvidenceLevel
+from failgate.repro.issue import L2IssueReport
+from failgate.repro.judge import Verdict, VerdictKind
+from failgate.repro.l2 import SourceRepro, TestReproducer
+from failgate.repro.package import VersionRun
+from failgate.repro.sandbox import DockerSandbox
+from failgate.settings import Settings
+from failgate.skills.intake import IntakeOutput
+from failgate.skills.repro import ReproOutput, ReproRequest, SandboxReproRunner
 
 TEST_CODE = "import mylib\n\ndef test_parse():\n    mylib.parse({})\n"
 RELEASED = [Version("2.4.0"), Version("2.4.1"), Version("2.6.0")]
@@ -90,15 +90,15 @@ def l2_report(*, level: str = "L2", kind: VerdictKind = VerdictKind.REPRODUCED,
                                      VerdictKind.REPRODUCED else 30, fail_rate=fail_rate))
     src = SourceRepro(
         repo="acme/mylib", sha="3f2a9c1e00" + "0" * 30, package="mylib", module="mylib",
-        python="3.12", pytest="pytest==8.0.0", test_path="tests/test_warden_issue_1.py",
+        python="3.12", pytest="pytest==8.0.0", test_path="tests/test_failgate_issue_1.py",
         level=EvidenceLevel(level), run=run if level == "L2" else None,
     )
     agent = AgentResult(
         status=status, final_script=TEST_CODE if level == "L2" else None, steps=20,  # type: ignore[arg-type]
         cost_usd=0.013, prompt_tokens=40_000, completion_tokens=1_000,
-        attempts=[Attempt(n=1, name="tests/test_warden_issue_1.py", claim="c", script=TEST_CODE,
+        attempts=[Attempt(n=1, name="tests/test_failgate_issue_1.py", claim="c", script=TEST_CODE,
                           kind=kind, reason="r", match=1.0)],
-        test_path="tests/test_warden_issue_1.py",
+        test_path="tests/test_failgate_issue_1.py",
     )
     return L2IssueReport(repo=REPO, number=1, title="t", intake_version="2.4.2.dev3",
                          intake_python="3.12", has_traceback=True, source=src, agent=agent,
@@ -107,11 +107,11 @@ def l2_report(*, level: str = "L2", kind: VerdictKind = VerdictKind.REPRODUCED,
 
 async def run_source_issue(runner: FakeRunner, tmp_path):
     async for h in _harness(make_settings(tmp_path), repro_runner=runner):
-        async with h.warden.db.session() as s, s.begin():
+        async with h.failgate.db.session() as s, s.begin():
             s.add(Repo(platform="github", full_name=REPO, mode="shadow",
                        repro_package="mylib", repro_source="acme/mylib"))
         await h.send("issues", issue_event("opened"), "d-1")
-        await h.warden.worker.drain()
+        await h.failgate.worker.drain()
         yield h
 
 
@@ -126,7 +126,7 @@ async def test_l2_result_reaches_reproduced_with_test_in_summary(tmp_path):
         body = summary(case)
         env = "`acme/mylib@3f2a9c1`（issue 创建时的源码，Python 3.12）"
         assert f"已在 {env}上复现（证据等级 L2）" in body
-        assert "`tests/test_warden_issue_1.py` 可以直接合进仓库" in body
+        assert "`tests/test_failgate_issue_1.py` 可以直接合进仓库" in body
         assert "<details><summary>仓库内的失败测试</summary>" in body and "mylib.parse({})" in body
         assert "最新版" not in body  # source 模式不做"最新版是否已修复"的判断
 
@@ -144,12 +144,12 @@ async def test_l2_miss_goes_to_need_info_without_leaking_internals(tmp_path):
 
 
 def test_render_english_and_flaky():
-    from warden.report import _repro_lines
+    from failgate.report import _repro_lines
 
     out = ReproOutput.from_l2_report(
         l2_report(kind=VerdictKind.FLAKY, fail_rate=0.5), followups=0
     ).model_dump()
-    from warden.report import _TEXT
+    from failgate.report import _TEXT
 
     text = "\n".join(_repro_lines(out, _TEXT["en"]))
     assert "Reproduced on `acme/mylib@3f2a9c1` (source at the time this issue was opened, " \
@@ -161,7 +161,7 @@ def test_render_english_and_flaky():
 def test_setup_error_is_not_public():
     rep = l2_report(level="NONE")
     rep.agent = None
-    rep.source.error = "空测试在这个环境里跑不通（exit=2）：/home/warden/src/conftest.py"
+    rep.source.error = "空测试在这个环境里跑不通（exit=2）：/home/failgate/src/conftest.py"
     out = ReproOutput.from_l2_report(rep, followups=0)
     assert out.public_error is None and out.error is not None
 
@@ -201,7 +201,7 @@ def test_keys_before_first_section_go_to_default() -> None:
 @pytest.mark.docker
 async def test_fixture_end_to_end_with_scripted_llm(sandbox: DockerSandbox, tmp_path: Path):
     """真实 Docker、真实 pytest（要访问 PyPI 装 setuptools / pytest），LLM 按剧本走。"""
-    from warden.repro.pypi import PyPIClient
+    from failgate.repro.pypi import PyPIClient
 
     fx = fx_mod.load_all(only=["bug-keyerror"])[0]
     intake = IntakeOutput.model_validate({

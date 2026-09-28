@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "slugkit"
 version = "0.2.0"
-description = "Turn titles into URL slugs (RepoWarden fixture)."
+description = "Turn titles into URL slugs (FailGate fixture)."
 requires-python = ">=3.9"
 
 [tool.setuptools]

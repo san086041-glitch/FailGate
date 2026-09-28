@@ -1,5 +1,5 @@
-from warden.index.trace import TraceSignature
-from warden.repro.signature import failure_signature, last_traceback, match_score, package_path
+from failgate.index.trace import TraceSignature
+from failgate.repro.signature import failure_signature, last_traceback, match_score, package_path
 
 # 用户报告里的堆栈：装在用户家目录的 site-packages 里，前面还有用户自己的脚本
 REPORTED = """\
@@ -20,7 +20,7 @@ KeyError: 'walrus_42'
 # 沙箱里复现出来的：source 模式，代码在 /workspace/src 下，行号不同
 OBSERVED = """\
 Traceback (most recent call last):
-  File "/workspace/.warden/repro.py", line 5, in <module>
+  File "/workspace/.failgate/repro.py", line 5, in <module>
     black.format_str(SRC, mode=black.Mode())
   File "/workspace/src/black/__init__.py", line 1190, in format_str
   File "/workspace/src/black/__init__.py", line 1203, in _format_str_once

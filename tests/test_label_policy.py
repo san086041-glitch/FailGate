@@ -9,8 +9,8 @@ from fake_llm import TRIAGE_OK
 from harness_utils import only_case
 from sqlalchemy import select
 
-from warden.db import Repo
-from warden.policy.labels import decision_phrase, filter_auto_labels
+from failgate.db import Repo
+from failgate.policy.labels import decision_phrase, filter_auto_labels
 
 
 @pytest.mark.parametrize(
@@ -69,7 +69,7 @@ async def test_gate_strips_decision_labels_and_records_why(live):
     h, fake = live
     h.llm.queue("triage", {**TRIAGE_OK, "labels": ["bug", "duplicate", "S: needs discussion"]})
     await h.send("issues", issue_event("opened"), "d-1")
-    await h.warden.worker.drain()
+    await h.failgate.worker.drain()
     effect = next(e for e in (await only_case(h))["effects"] if e["action"] == "set_labels")
     assert effect["payload"]["add"] == ["bug"] and effect["status"] == "executed"
     assert set(effect["payload"]["blocked"]) == {"duplicate", "S: needs discussion"}
@@ -80,7 +80,7 @@ async def test_all_blocked_is_never_sent(live):
     h, fake = live
     h.llm.queue("triage", {**TRIAGE_OK, "labels": ["duplicate"]})
     await h.send("issues", issue_event("opened"), "d-1")
-    await h.warden.worker.drain()
+    await h.failgate.worker.drain()
     effect = next(e for e in (await only_case(h))["effects"] if e["action"] == "set_labels")
     assert effect["status"] == "blocked" and effect["payload"]["add"] == []
     assert (REPO, 1) not in fake.issue_labels
@@ -90,13 +90,13 @@ async def test_all_blocked_is_never_sent(live):
 async def test_repo_allowlist_limits_auto_labels(live):
     h, fake = live
     await h.send("issues", issue_event("opened", 1), "d-1")
-    await h.warden.worker.drain()
-    async with h.warden.db.session() as s, s.begin():
+    await h.failgate.worker.drain()
+    async with h.failgate.db.session() as s, s.begin():
         repo = (await s.scalars(select(Repo))).one()
         repo.auto_labels = ["area:*"]
     h.llm.queue("triage", {**TRIAGE_OK, "labels": ["bug", "area:io"]})
     await h.send("issues", issue_event("opened", 2), "d-2")
-    await h.warden.worker.drain()
+    await h.failgate.worker.drain()
     effect = next(e for e in (await only_case(h, 2))["effects"] if e["action"] == "set_labels")
     assert effect["payload"]["add"] == ["area:io"]
     assert effect["payload"]["blocked"] == {"bug": "not in repo allowlist"}

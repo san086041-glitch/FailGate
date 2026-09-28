@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "repowarden"
+name = "failgate"
 version = "0.0.1"
 description = "证据驱动的开源仓库值班 Agent"
 readme = "README.md"
@@ -30,10 +30,10 @@ dev = [
 ]
 
 [project.scripts]
-warden = "warden.cli:app"
+failgate = "failgate.cli:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["warden"]
+packages = ["failgate"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
