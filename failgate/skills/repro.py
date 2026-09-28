@@ -10,6 +10,7 @@
 - 真正干活的 runner 可以替换：线上是 Docker + LLM，测试里是假的。
 
 facts 里的 evidence_level 决定下一个状态：L1 及以上（含 L2）→ REPRODUCED，否则 → NEED_INFO。
+复现成功时同时生成证据收据（ADR 0016）：收据进评论，收据 + 完整代码由流水线封存进 evidence 表。
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 from pydantic import BaseModel, ValidationError
@@ -30,6 +31,7 @@ from failgate.repro.evidence import EvidenceLevel
 from failgate.repro.issue import IssueReproReport, L2IssueReport
 from failgate.skills.base import SkillContext, SkillResult
 from failgate.skills.intake import IntakeOutput
+from failgate.verify.receipt import SealedTest, build_receipt
 
 if TYPE_CHECKING:
     from failgate.llm import LLMClient
@@ -97,6 +99,9 @@ class ReproOutput(BaseModel):
     source_repo: str | None = None
     source_sha: str | None = None
     test_path: str | None = None
+    # 证据收据（带 receipt_sha256）；只有复现成功时才有
+    evidence_id: str | None = None
+    receipt: dict[str, Any] | None = None
 
     @classmethod
     def from_any(cls, report: IssueReproReport | L2IssueReport, followups: int) -> ReproOutput:
@@ -184,6 +189,10 @@ class ReproSkill:
             source_repo=ctx.repo_config.get("repro_source") or None,
         ))
         out = ReproOutput.from_any(report, followups)
+        sealed = seal(report)
+        if sealed is not None:
+            out.evidence_id = sealed.receipt.evidence_id
+            out.receipt = sealed.signed()
         return SkillResult(
             output=out,
             confidence=1.0 if out.level != EvidenceLevel.NONE.value else 0.0,
@@ -191,6 +200,7 @@ class ReproSkill:
             usage=report.repro_usage(),
             cost_usd=report.total_cost_usd,
             facts={"evidence_level": out.level},
+            evidence=sealed,
         )
 
     @staticmethod
@@ -225,6 +235,45 @@ class ReproSkill:
             return issue.body, 0
         extra = "\n\n".join(c.body for c in own)[:MAX_FOLLOWUP_CHARS]
         return f"{issue.body}\n\n---\n（提问者后来补充的评论）\n\n{extra}", len(own)
+
+
+PROVEN = (EvidenceLevel.L1, EvidenceLevel.L2)
+
+
+def seal(report: IssueReproReport | L2IssueReport) -> SealedTest | None:
+    """复现成功（L1 / L2）时生成收据；没复现、或拿不到最终代码和判定时返回 None。"""
+    from failgate.repro.l2 import pytest_argv
+    from failgate.repro.package import SCRIPT_NAME
+
+    a = report.agent
+    code = a.final_script if a else None
+    if not code:
+        return None
+    if isinstance(report, L2IssueReport):
+        src = report.source
+        run = src.run
+        if src.level not in PROVEN or run is None or not src.test_path:
+            return None
+        receipt = build_receipt(
+            repo=report.repo, issue=report.number, level=src.level.value, mode="source",
+            test_path=src.test_path, code=code, package=src.package,
+            command=pytest_argv(src.test_path), verdict=run.verdict, version=src.version,
+            source_repo=src.repo, source_sha=src.sha, python=src.python, pytest=src.pytest,
+        )
+    else:
+        r = report.repro
+        run = r.reported
+        if r.level not in PROVEN or run is None:
+            return None
+        receipt = build_receipt(
+            repo=report.repo, issue=report.number, level=r.level.value, mode="package",
+            test_path=SCRIPT_NAME, code=code, package=r.package,
+            command=["python", SCRIPT_NAME], verdict=run.verdict, version=run.version,
+            python=run.python,
+        )
+    if not run.verdict.reproduced:
+        return None
+    return SealedTest(receipt=receipt, code=code)
 
 
 def _result(out: ReproOutput, model: str) -> SkillResult:

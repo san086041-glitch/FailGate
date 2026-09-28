@@ -775,6 +775,87 @@ def effects_flush() -> None:
     typer.echo(json.dumps(asyncio.run(run()), ensure_ascii=False))
 
 
+evidence_app = typer.Typer(help="证据与考卷：查看封存的收据、核对哈希", no_args_is_help=True)
+app.add_typer(evidence_app, name="evidence")
+
+
+@evidence_app.command("list")
+def evidence_list(
+    repo: Annotated[str | None, typer.Argument(help="owner/name；不填列出全部")] = None,
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库 URL，默认读配置")] = None,
+) -> None:
+    """列出封存的证据：短 ID、issue、证据等级、能否当考卷、判定、测试文件。"""
+    from failgate.verify.store import list_evidence
+
+    async def run() -> None:
+        db = Database(db_url or Settings().failgate_db_url)
+        await db.create_all()
+        try:
+            async with db.session() as s:
+                refs = await list_evidence(s, repo)
+        finally:
+            await db.dispose()
+        if not refs:
+            typer.echo("没有证据")
+        for ref in refs:
+            ev = ref.evidence
+            exam = "考卷" if ev.acceptance else "非考卷"
+            old = f"（已被 {ev.superseded_by[:8]} 取代）" if ev.superseded_by else ""
+            typer.echo(
+                f"{ev.id[:12]}  {ref.repo}#{ref.issue:<6} {ev.level} {exam:<3} {ev.verdict:<10} "
+                f"{ev.test_path}  {ev.created_at:%Y-%m-%d %H:%M}{old}"
+            )
+
+    asyncio.run(run())
+
+
+@evidence_app.command("show")
+def evidence_show(
+    evidence_id: Annotated[str, typer.Argument(help="证据 ID 或前缀（至少 6 位）")],
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库 URL，默认读配置")] = None,
+    out: Annotated[
+        Path | None, typer.Option(help="把收据 receipt.json 和测试文件写到这个目录，便于本地复验")
+    ] = None,
+) -> None:
+    """打印收据，并重算哈希核对：收据、考卷代码、表里的列三者一致才算完好。"""
+    from failgate.verify.store import audit, find_evidence
+
+    async def run() -> int:
+        db = Database(db_url or Settings().failgate_db_url)
+        await db.create_all()
+        try:
+            async with db.session() as s:
+                try:
+                    ref = await find_evidence(s, evidence_id)
+                except ValueError as e:
+                    raise typer.BadParameter(str(e)) from e
+        finally:
+            await db.dispose()
+        if ref is None:
+            typer.echo(f"找不到证据 {evidence_id}", err=True)
+            return 1
+        ev = ref.evidence
+        typer.echo(json.dumps(ev.receipt, ensure_ascii=False, indent=2, sort_keys=True))
+        problems = audit(ref)
+        if out is not None:
+            out.mkdir(parents=True, exist_ok=True)
+            (out / "receipt.json").write_text(
+                json.dumps(ev.receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            test_file = out / Path(ev.test_path).name
+            test_file.write_bytes(ev.test_code.encode("utf-8"))
+            typer.echo(f"已写出 {out / 'receipt.json'} 和 {test_file}")
+        if problems:
+            for p in problems:
+                typer.echo(f"❌ {p}")
+            return 1
+        typer.echo(f"✅ 哈希一致：receipt {ev.receipt_sha256[:12]} · test {ev.test_sha256[:12]}")
+        return 0
+
+    raise typer.Exit(asyncio.run(run()))
+
+
 sandbox_app = typer.Typer(help="复现沙箱：自检、清理", no_args_is_help=True)
 app.add_typer(sandbox_app, name="sandbox")
 

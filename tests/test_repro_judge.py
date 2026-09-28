@@ -79,6 +79,11 @@ def test_sparse_signature_still_matches_itself():
 def test_rerun_with_a_different_failure_counts_as_not_failing():
     v = j([run(), run(), run(stderr=DIFFERENT), run()])
     assert v.kind == VerdictKind.FLAKY and v.fail_rate == 0.75
+    # 每次运行的记录进证据收据：哪一次换了一种失败，一目了然
+    assert [(r.exit_code, r.same_failure) for r in v.records] == [
+        (1, True), (1, True), (1, False), (1, True)
+    ]
+    assert j([run(exit_code=0)]).records == []  # 没进入稳定性判定就不记
 
 
 def test_no_traceback_needs_llm_then_uses_its_score():

@@ -40,6 +40,13 @@ class VerdictKind(StrEnum):
     INCONCLUSIVE = "INCONCLUSIVE"
 
 
+class RunRecord(BaseModel):
+    """一次运行的摘要，写进证据收据：退出码，以及是否出现了同一个失败。"""
+
+    exit_code: int
+    same_failure: bool
+
+
 class Verdict(BaseModel):
     kind: VerdictKind
     reason: str
@@ -49,6 +56,8 @@ class Verdict(BaseModel):
     runs: int = 1
     observed: TraceSignature | None = None
     reported: TraceSignature | None = None
+    # 参与判定的每次运行（只在进入稳定性判定后填，也就是 REPRODUCED / FLAKY）
+    records: list[RunRecord] = []
 
     @property
     def reproduced(self) -> bool:
@@ -117,7 +126,10 @@ def judge(
             **base,
         )
 
-    same = sum(1 for r in runs if same_failure(r, observed, package))
+    flags = [same_failure(r, observed, package) for r in runs]
+    records = [RunRecord(exit_code=r.exit_code, same_failure=f) for r, f in zip(runs, flags,
+                                                                                strict=True)]
+    same = sum(flags)
     rate = same / len(runs)
     if rate < 1.0:
         return Verdict(
@@ -125,6 +137,7 @@ def judge(
             reason=f"{len(runs)} 次运行中 {same} 次出现同样的失败",
             fail_rate=round(rate, 4),
             runs=len(runs),
+            records=records,
             **base,
         )
     return Verdict(
@@ -132,6 +145,7 @@ def judge(
         reason=f"{len(runs)} 次运行都出现与报告一致的失败",
         fail_rate=1.0,
         runs=len(runs),
+        records=records,
         **base,
     )
 

@@ -10,13 +10,16 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from importlib import resources
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from pydantic import BaseModel
 
 from failgate.llm import LLMClient, Usage
 from failgate.llm.pricing import cost_usd
 from failgate.platforms.base import Comment
+
+if TYPE_CHECKING:
+    from failgate.verify.receipt import SealedTest
 
 # GitHub 新仓库的默认标签；拿不到仓库真实标签表时使用（M1 后半段改为从平台 API 读取）
 DEFAULT_LABELS = (
@@ -90,6 +93,8 @@ class SkillResult:
     cost_usd: float
     # 提供给状态机守卫的事实，例如 {"type": "bug"}
     facts: dict[str, Any] = field(default_factory=dict)
+    # 复现成功时要封存的证据（收据 + 完整代码）；由流水线写进 evidence 表，模块自己不落库
+    evidence: SealedTest | None = None
 
 
 class Skill(Protocol):

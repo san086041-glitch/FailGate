@@ -15,12 +15,13 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from failgate.db import Case, Database, Repo, Run
+from failgate.db import Case, Database, Evidence, Repo, Run
 from failgate.index.store import IssueIndex
 from failgate.llm import LLMClient
 from failgate.platforms.base import Label
 from failgate.policy.gate import PolicyGate
 from failgate.report import render_summary
+from failgate.repro.judge import RunRecord
 from failgate.skills.base import (
     DEFAULT_LABELS,
     CommentSource,
@@ -30,6 +31,7 @@ from failgate.skills.base import (
     SkillContext,
     SkillResult,
 )
+from failgate.verify.receipt import SealedTest
 
 from .machine import CaseMachine
 from .states import CaseState
@@ -109,6 +111,9 @@ class Pipeline:
                     # 运行期间 Case 被关闭或忽略，结果作废
                     return CaseState(case.state)
                 s.add(_run_row(case_id, skill, result, started))
+                if result.evidence is not None:
+                    # 和 Run 在同一个事务里：要么都落库，要么都不落
+                    s.add(_evidence_row(case_id, result.evidence))
                 case.spent_usd += result.cost_usd
                 await self._effects(s, repo, case, skill.name, result)
                 facts = {**result.facts, **self._pipeline_facts(repo, case)}
@@ -224,6 +229,22 @@ class Pipeline:
                     ended_at=datetime.now(UTC),
                 )
             )
+
+
+def _evidence_row(case_id: int, sealed: SealedTest) -> Evidence:
+    r = sealed.receipt
+    signed = sealed.signed()
+    return Evidence(
+        id=r.evidence_id, case_id=case_id, level=r.level, mode=r.mode, acceptance=r.acceptance,
+        test_path=r.test_path, test_code=sealed.code, test_sha256=r.test_sha256,
+        source_repo=r.source_repo, source_sha=r.source_sha, python=r.python, pytest=r.pytest,
+        verdict=r.verdict, fail_rate=_fail_rate(r.runs), receipt=signed,
+        receipt_sha256=signed["receipt_sha256"],
+    )
+
+
+def _fail_rate(runs: list[RunRecord]) -> float | None:
+    return round(sum(x.same_failure for x in runs) / len(runs), 4) if runs else None
 
 
 def _run_row(case_id: int, skill: Skill, result: SkillResult, started: datetime) -> Run:

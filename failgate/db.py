@@ -4,10 +4,19 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, Connection, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Connection,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    event,
+)
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 log = logging.getLogger(__name__)
 
@@ -163,6 +172,60 @@ class Effect(Base):
     error: Mapped[str | None] = mapped_column(Text, default=None)
     created_at: Mapped[datetime] = mapped_column(default=_now)
     executed_at: Mapped[datetime | None] = mapped_column(default=None)
+
+
+class Evidence(Base):
+    """复现证据与考卷封存（技术方案 9.4、16 节）。
+
+    判定为复现（L1 / L2）时写一行，之后**不再修改**：核验 PR 时跑的永远是这里的 test_code。
+    唯一允许改的是 superseded_by——维护者 /failgate reseal 重新封存时，旧行指向新行（W2–4）。
+    """
+
+    __tablename__ = "evidence"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)  # = 收据的 evidence_id
+    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"), index=True)
+    level: Mapped[str] = mapped_column(String(8))
+    mode: Mapped[str] = mapped_column(String(16))
+    acceptance: Mapped[bool]  # 能不能当考卷（只有 L2 能）
+    test_path: Mapped[str] = mapped_column(String(512))
+    test_code: Mapped[str] = mapped_column(Text)
+    test_sha256: Mapped[str] = mapped_column(String(64))
+    source_repo: Mapped[str | None] = mapped_column(String(255), default=None)
+    source_sha: Mapped[str | None] = mapped_column(String(64), default=None)
+    python: Mapped[str | None] = mapped_column(String(16), default=None)
+    pytest: Mapped[str | None] = mapped_column(String(64), default=None)
+    verdict: Mapped[str] = mapped_column(String(32))
+    fail_rate: Mapped[float | None] = mapped_column(default=None)
+    receipt: Mapped[dict[str, Any]] = mapped_column(JSON)
+    receipt_sha256: Mapped[str] = mapped_column(String(64))
+    superseded_by: Mapped[str | None] = mapped_column(String(32), default=None)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
+SEALED_MUTABLE = frozenset({"superseded_by"})
+
+
+class SealedEvidenceError(RuntimeError):
+    pass
+
+
+@event.listens_for(Session, "before_flush")
+def _guard_sealed_evidence(session: Session, _ctx: Any, _instances: Any) -> None:
+    """封存的证据只能加、不能改（除了 superseded_by）、不能删。
+
+    在 ORM 这一层拦，挡住的是"代码里不小心改了"；直接写 SQL 挡不住，那要靠数据库权限。
+    """
+    for obj in session.dirty:
+        if not isinstance(obj, Evidence):
+            continue
+        state = sa_inspect(obj)
+        changed = {a.key for a in state.attrs if a.history.has_changes()}
+        if changed - SEALED_MUTABLE:
+            raise SealedEvidenceError(f"证据 {obj.id} 已封存，不能修改：{sorted(changed)}")
+    for obj in session.deleted:
+        if isinstance(obj, Evidence):
+            raise SealedEvidenceError(f"证据 {obj.id} 已封存，不能删除")
 
 
 def add_missing_columns(conn: Connection) -> list[str]:

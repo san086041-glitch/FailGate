@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any
 
@@ -71,6 +72,13 @@ _TEXT = {
         "repro_src_py": "，Python {py}",
         "repro_test": "测试文件 `{path}` 可以直接合进仓库：修复之前失败，修复之后应当通过。",
         "repro_test_title": "仓库内的失败测试",
+        "repro_accept": "验收命令（在仓库根目录运行，修复前失败、修复后应当通过）：`{cmd}`",
+        "repro_receipt": "证据收据 `{short}`",
+        "repro_receipt_note": (
+            "这份测试已封存（`test_sha256` 是换行统一为 LF 后的哈希）。之后核验声称修复本 issue "
+            "的 PR 时，运行的是封存的版本；PR 里改了它会被当作篡改信号。"
+        ),
+        "repro_receipt_l1": "L1 是独立脚本，只证明 bug 存在，不作为验收测试。",
         "repro_src_miss": (
             "尝试在 {env}上写一个会失败的测试，暂时没有成功：可能已经修复，也可能需要更多信息。"
         ),
@@ -141,6 +149,20 @@ _TEXT = {
             "fix and should pass after it."
         ),
         "repro_test_title": "Failing test for the repository",
+        "repro_accept": (
+            "Acceptance command (run from the repository root; fails before a fix, "
+            "should pass after it): `{cmd}`"
+        ),
+        "repro_receipt": "Evidence receipt `{short}`",
+        "repro_receipt_note": (
+            "This test is sealed (`test_sha256` is taken after normalizing line endings to LF). "
+            "PRs claiming to fix this issue will be checked against the sealed version; "
+            "changing it in the PR is treated as a tampering signal."
+        ),
+        "repro_receipt_l1": (
+            "L1 is a standalone script: it proves the bug exists but is not used as an "
+            "acceptance test."
+        ),
         "repro_src_miss": (
             "Tried to write a failing test on {env}, without success so far: this may already "
             "be fixed, or more information may be needed."
@@ -223,6 +245,7 @@ def _repro_lines(repro: dict[str, Any], t: dict[str, str]) -> list[str]:
             lines.append(t["repro_still"].format(latest=latest))
         if repro.get("script"):
             lines += ["", *_script_block(repro["script"], t["repro_script"])]
+        lines += _receipt_block(repro, t)
         return lines
     if repro.get("public_error"):
         return [head + t["repro_version"].format(pkg=pkg)]
@@ -248,12 +271,32 @@ def _source_lines(repro: dict[str, Any], t: dict[str, str]) -> list[str]:
         lines = [head + first]
         if repro.get("test_path"):
             lines.append(t["repro_test"].format(path=_inline(repro["test_path"])))
+            cmd = f"python -m pytest {_inline(repro['test_path'])}"
+            lines.append(t["repro_accept"].format(cmd=cmd))
         if repro.get("script"):
             lines += ["", *_script_block(repro["script"], t["repro_test_title"])]
+        lines += _receipt_block(repro, t)
         return lines
     if repro.get("agent_status"):
         return [head + t["repro_src_miss"].format(env=env) + " " + t["repro_retry"]]
     return [head + t["repro_internal"]]
+
+
+def _receipt_block(repro: dict[str, Any], t: dict[str, str]) -> list[str]:
+    """折叠的证据收据：完整 JSON，任何人都能按 ADR 0016 的规则重算哈希。"""
+    receipt = repro.get("receipt")
+    if not receipt:
+        return []
+    note = t["repro_receipt_note"] if receipt.get("acceptance") else t["repro_receipt_l1"]
+    body = json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True)
+    # 收据里的签名消息来自被测代码的输出，同样要防止跑出代码块
+    longest = max((len(m) for m in re.findall(r"`+", body)), default=0)
+    fence = "`" * max(3, longest + 1)
+    short = str(receipt.get("receipt_sha256", ""))[:12]
+    return [
+        "", f"<details><summary>{t['repro_receipt'].format(short=short)}</summary>", "", note,
+        "", f"{fence}json", body, fence, "", "</details>",
+    ]
 
 
 def _script_block(script: str, title: str) -> list[str]:
