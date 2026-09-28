@@ -5,7 +5,14 @@ import pytest
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from failgate.repro.pypi import PyPIClient, PyPIError, Release, normalize_version, pick_python
+from failgate.repro.pypi import (
+    PackageNotFound,
+    PyPIClient,
+    PyPIError,
+    Release,
+    normalize_version,
+    pick_python,
+)
 
 
 @pytest.mark.parametrize(
@@ -117,6 +124,9 @@ async def test_unreleased_version_falls_back_to_last_release_before_issue(raw):
 async def test_unknown_package():
     with pytest.raises(PyPIError, match="没有这个包"):
         await client_with(None).resolve("nope", "1.0")
+    # 404 单独成类：没发布过的项目要改走 source 模式，不能和"版本不对"混在一起
+    with pytest.raises(PackageNotFound):
+        await client_with(None).releases("nope")
 
 
 def rel(uploaded: str | None, requires: str | None = None) -> Release:

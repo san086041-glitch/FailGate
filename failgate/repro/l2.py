@@ -33,7 +33,7 @@ from failgate.repro.envcache import Env, EnvCache
 from failgate.repro.evidence import EvidenceLevel
 from failgate.repro.judge import Verdict, VerdictKind, assess
 from failgate.repro.package import IssueContext, VersionRun
-from failgate.repro.pypi import PyPIClient, Release
+from failgate.repro.pypi import PackageNotFound, PyPIClient, Release
 from failgate.repro.sandbox import DockerSandbox, ExecResult
 from failgate.repro.semantic import SemanticJudge, SemanticVerdict
 from failgate.repro.source import (
@@ -161,7 +161,7 @@ class TestReproducer:
         """
         py = pick_python_for_commit(tree, reported=python)
         if version is None:
-            version = pretend_version(await self.pypi.releases(cfg.name), tree.committed_at)
+            version = pretend_version(await self._own_releases(cfg.name), tree.committed_at)
         pin = pytest or pick_pytest(await self.pypi.releases("pytest"), py, tree.committed_at)
         env = await source_env(self.cache, tree, python=py, version=version,
                                extra_requirements=[pin])
@@ -193,6 +193,13 @@ class TestReproducer:
             await asyncio.to_thread(dest.parent.mkdir, parents=True)
             await asyncio.to_thread(dest.write_text, content, encoding="utf-8")
             await self.sandbox.copy_in(ws, Path(tmp), prepared.env.image)
+
+    async def _own_releases(self, name: str) -> dict[Version, Release]:
+        """被测包自己的发布记录；没发布到 PyPI 的项目（应用、内部库）当作没有发布过。"""
+        try:
+            return await self.pypi.releases(name)
+        except PackageNotFound:
+            return {}
 
     async def run_test(self, ws: str, prepared: SourcePrepared, *, timeout_s: int | None = None
                        ) -> ExecResult:

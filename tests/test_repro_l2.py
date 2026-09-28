@@ -39,7 +39,7 @@ from failgate.repro.l2 import (
     pytest_argv,
     repo_test_file,
 )
-from failgate.repro.pypi import Release
+from failgate.repro.pypi import PackageNotFound, Release
 from failgate.repro.sandbox import DockerSandbox, ExecResult, SandboxError, check_command
 from failgate.repro.source import SRC_DIR, pack_dir
 
@@ -323,12 +323,13 @@ def sandbox(tmp_path_factory: pytest.TempPathFactory) -> DockerSandbox:
 
 
 class OfflinePyPI:
-    """只为 prepare 提供 mylib 和 pytest 的发布列表，不访问网络（pytest 本身仍从 PyPI 装）。"""
+    """只为 prepare 提供 pytest 的发布列表，不访问网络（pytest 本身仍从 PyPI 装）。
+    mylib 当作没发布到 PyPI 的项目：prepare 照样能推出伪版本号。"""
 
     async def releases(self, name: str) -> dict[Version, Release]:
         if name == "pytest":
             return dict([rel("8.3.3", "2024-09-10", ">=3.8")])
-        return {}
+        raise PackageNotFound(f"PyPI 上没有这个包：{name}")
 
 
 @pytest.mark.docker

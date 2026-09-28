@@ -27,6 +27,7 @@ from failgate.repro.issue import L2IssueReport
 from failgate.repro.judge import Verdict, VerdictKind
 from failgate.repro.l2 import SourceRepro, TestReproducer
 from failgate.repro.package import VersionRun
+from failgate.repro.pypi import PackageNotFound
 from failgate.repro.sandbox import DockerSandbox
 from failgate.settings import Settings
 from failgate.skills.intake import IntakeOutput
@@ -78,6 +79,22 @@ async def test_runner_uses_source_only_for_unreleased_versions_with_a_source_rep
     assert await runner._use_source(request("mylib 2.4.2.dev3", "acme/mylib")) is True
     assert await runner._use_source(request("mylib 2.4.1", "acme/mylib")) is False
     assert await runner._use_source(request("mylib 2.4.2.dev3", None)) is False
+
+
+async def test_runner_uses_source_for_packages_never_published_to_pypi():
+    runner = SandboxReproRunner(Settings(_env_file=None), llm=None)  # type: ignore[arg-type]
+
+    class Unpublished:
+        async def releases(self, name: str) -> dict[Version, object]:
+            raise PackageNotFound(f"PyPI 上没有这个包：{name}")
+
+    class Rep:
+        pypi = Unpublished()
+
+    runner._get_reproducer = lambda: Rep()  # type: ignore[method-assign,assignment,return-value]
+    assert await runner._use_source(request(None, "acme/app")) is True  # 没报版本也走 source
+    assert await runner._use_source(request("1.0", "acme/app")) is True
+    assert await runner._use_source(request(None, None)) is False  # 没配源码仓库就没法复现
 
 
 # ---------------------------------------------------------------- 流水线和汇总评论

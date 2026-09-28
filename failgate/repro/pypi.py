@@ -91,6 +91,10 @@ class PyPIError(RuntimeError):
     pass
 
 
+class PackageNotFound(PyPIError):
+    """PyPI 上根本没有这个包（404）：项目没发布过，只能从源码复现。"""
+
+
 class PyPIClient:
     """只读 PyPI JSON API 客户端；同一个包的发布列表在进程内缓存。"""
 
@@ -108,7 +112,7 @@ class PyPIClient:
             return self._cache[key]
         resp = await self._client.get(f"{self.base_url}/pypi/{key}/json")
         if resp.status_code == 404:
-            raise PyPIError(f"PyPI 上没有这个包：{name}")
+            raise PackageNotFound(f"PyPI 上没有这个包：{name}")
         resp.raise_for_status()
         out: dict[Version, Release] = {}
         for ver, files in resp.json().get("releases", {}).items():

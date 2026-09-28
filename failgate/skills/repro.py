@@ -286,8 +286,8 @@ def _result(out: ReproOutput, model: str) -> SkillResult:
 class SandboxReproRunner:
     """线上用的 runner：Docker 沙箱 + 环境缓存 + PyPI + 复现 Agent。第一次调用时才初始化。
 
-    先决定模式：报告的版本 PyPI 上装不到、并且仓库配置了源码仓库 → source 模式（L2）；
-    否则 → package 模式（L1）。
+    先决定模式：仓库配置了源码仓库，并且包根本没发布到 PyPI、或者报告的版本 PyPI 上装不到
+    → source 模式（L2）；否则 → package 模式（L1）。
     """
 
     def __init__(self, settings: Settings, llm: LLMClient) -> None:
@@ -332,15 +332,24 @@ class SandboxReproRunner:
 
     async def _use_source(self, req: ReproRequest) -> bool:
         from failgate.repro.config import needs_source
-        from failgate.repro.pypi import PyPIError
+        from failgate.repro.pypi import PackageNotFound, PyPIError
 
         if not req.source_repo:
             return False
         try:
             released = await self._get_reproducer().pypi.releases(req.cfg.name)
+        except PackageNotFound:
+            log.info("%s is not on PyPI: source mode via %s", req.cfg.name, req.source_repo)
+            return True  # 没发布过的项目只能从源码复现，报没报版本都一样
         except (PyPIError, httpx.HTTPError):
-            return False  # 查不到发布记录就按原来的 package 模式走，由它报出具体错误
-        return needs_source(req.intake.reported_version, req.cfg.name, released)
+            # 查不到发布记录就按原来的 package 模式走，由它报出具体错误
+            log.warning("PyPI lookup for %s failed, falling back to package mode",
+                        req.cfg.name, exc_info=True)
+            return False
+        use = needs_source(req.intake.reported_version, req.cfg.name, released)
+        log.info("%s#%s: reported %r → %s mode", req.repo, req.number,
+                 req.intake.reported_version, "source" if use else "package")
+        return use
 
     async def __call__(self, req: ReproRequest) -> IssueReproReport | L2IssueReport:
         from failgate.repro.issue import reproduce_after_intake, reproduce_l2_after_intake

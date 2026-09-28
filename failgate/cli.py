@@ -657,9 +657,10 @@ def repo_repro(
     """查看或设置仓库的复现配置（package 模式用哪个 PyPI 包、source 模式用哪个源码仓库）。
     还需要 REPRO_ENABLED=true。"""
     from failgate.repro.config import PackageConfig
-    from failgate.repro.pypi import PyPIClient, PyPIError
+    from failgate.repro.pypi import PackageNotFound, PyPIClient, PyPIError
 
     settings = Settings()
+    unpublished = False
     if package:
         try:
             PackageConfig(name=package, import_name=import_name)
@@ -669,10 +670,18 @@ def repo_repro(
         raise typer.BadParameter(f"源码仓库要写成 owner/name：{source!r}")
 
     async def run() -> tuple[str | None, str | None, str | None]:
+        nonlocal unpublished
         if package:
             pypi = PyPIClient(settings.pypi_url)
             try:
                 await pypi.releases(package)
+            except PackageNotFound as e:
+                # 没发布到 PyPI 的项目（应用、内部库）只能从源码复现，必须同时给源码仓库
+                if source in (None, "-"):
+                    raise typer.BadParameter(
+                        f"{e}；没发布的项目要同时用 --source 指定源码仓库"
+                    ) from e
+                unpublished = True
             except PyPIError as e:
                 raise typer.BadParameter(str(e)) from e
             finally:
@@ -699,6 +708,9 @@ def repo_repro(
     pkg, imp, src = asyncio.run(run())
     if pkg is None:
         typer.echo(f"{repo}：不做复现")
+    elif unpublished:
+        typer.echo(f"{repo}：包 {pkg}（import 名 {imp or '由包名推出'}）没发布到 PyPI，"
+                   f"所有 bug 都走 source 模式（L2），源码仓库 {src}")
     else:
         typer.echo(f"{repo}：package 模式，包 {pkg}（import 名 {imp or '由包名推出'}）")
         if src:
