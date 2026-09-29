@@ -69,3 +69,7 @@ class Settings(BaseSettings):
     repro_max_steps: int = 40
     repro_max_attempts: int = 4
     repro_budget_usd: float = 0.5
+    # 考卷强度（技术方案 9.5 节）：核验第一层通过后，对修复改动过、考卷执行到的行做变异测试。
+    # 只附加在报告里，不改变结论；每个 PR 多建一个带 coverage 的环境、最多跑这么多个变异体
+    verify_strength: bool = True
+    strength_max_mutants: int = 30

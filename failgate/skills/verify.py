@@ -138,8 +138,10 @@ class SandboxVerifyRunner:
         pr = await fetch_pull(gh, repo, number)
         claims = parse_claims(pr.title, pr.body, repo)
         exams = await self._exams(repo, claims)
-        return await ClaimVerifier(SandboxWorkbench.for_github(gh, tester)).verify(
-            pr, claims, exams)
+        verifier = ClaimVerifier(SandboxWorkbench.for_github(gh, tester),
+                                 strength=self.settings.verify_strength,
+                                 max_mutants=self.settings.strength_max_mutants)
+        return await verifier.verify(pr, claims, exams)
 
     async def reseal(self, repo: str, number: int, actor: str) -> ResealOutcome:
         from failgate.verify.claims import parse_claims

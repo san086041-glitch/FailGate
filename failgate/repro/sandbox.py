@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import shlex
 import shutil
 import time
@@ -46,6 +47,9 @@ DEFAULT_RUN_PREFIXES: tuple[tuple[str, ...], ...] = (
     ("python3",),
     ("pytest",),
 )
+# run 阶段允许传的环境变量：只能把 PYTHONPATH 指向工作区里的目录
+_WS_PATH = r"/workspace(?:/(?!\.\.?(?:[/:]|$))[\w.-]+)*"  # 不允许 . 和 .. 这两种路径段
+RUN_ENV = re.compile(rf"PYTHONPATH={_WS_PATH}(?::{_WS_PATH})*")
 # install 阶段只允许装包
 DEFAULT_INSTALL_PREFIXES: tuple[tuple[str, ...], ...] = (
     ("pip", "install"),
@@ -443,10 +447,16 @@ class DockerSandbox:
         *,
         timeout_s: int = 120,
         allowed: Sequence[Sequence[str]] = DEFAULT_RUN_PREFIXES,
+        env: Sequence[str] = (),
     ) -> ExecResult:
-        """执行复现：断网、只读根文件系统，命令必须在白名单内。"""
+        """执行复现：断网、只读根文件系统，命令必须在白名单内。
+
+        env 只允许把 PYTHONPATH 指向工作区（考卷强度评估让测试导入工作区里的源码副本）。"""
         check_command(argv, allowed)
-        return await self._exec("run", image, volume, argv, timeout_s)
+        for kv in env:
+            if not RUN_ENV.fullmatch(kv):
+                raise SandboxError(f"环境变量不在白名单内：{kv}")
+        return await self._exec("run", image, volume, argv, timeout_s, env=env)
 
     async def _exec(
         self,

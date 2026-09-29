@@ -19,6 +19,8 @@ dependencies = [
   "typer>=0.12",
   "pyjwt[crypto]>=2.8",
   "packaging>=23",
+  # 考卷强度的变异算子（ADR 0020）；锁版本，只当库用（在宿主机生成变异体）
+  "cosmic-ray==8.7.0",
 ]
 
 [project.optional-dependencies]

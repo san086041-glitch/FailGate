@@ -30,6 +30,7 @@ from failgate.repro.sandbox import ExecResult
 
 from .receipt import receipt_digest
 from .related import failed_nodes, outcomes, select_related_tests
+from .strength import MAX_MUTANTS, StrengthEvaluator, StrengthReport, is_source_file
 from .tamper import PullFile, Signal, is_test_file, tamper_signals
 
 SCHEMA = "failgate.verify/v1"
@@ -132,6 +133,8 @@ class ClaimResult(BaseModel):
     layer1: Layer1 | None = None
     layer2: Layer2 | None = None
     layer3: Layer3 | None = None
+    # 考卷强度（W5）：只在第一层通过、没有高危篡改时计算；不影响 verdict
+    strength: StrengthReport | None = None
 
 
 class Verification(BaseModel):
@@ -242,9 +245,12 @@ def overall(claims: list[ClaimResult]) -> ClaimVerdict | None:
 
 
 class ClaimVerifier:
-    def __init__(self, bench: Workbench, *, exam_runs: int = EXAM_RUNS) -> None:
+    def __init__(self, bench: Workbench, *, exam_runs: int = EXAM_RUNS,
+                 strength: bool = False, max_mutants: int = MAX_MUTANTS) -> None:
         self.bench = bench
         self.exam_runs = exam_runs
+        # strength=True 时 bench 还要实现 strength.StrengthBench
+        self.strength = StrengthEvaluator(bench, max_mutants=max_mutants) if strength else None  # type: ignore[arg-type]
 
     async def verify(
         self, pr: PullRequest, claims: list[int], exams: dict[int, Exam | None],
@@ -287,11 +293,25 @@ class ClaimVerifier:
             layer1 = await self._layer1(base_env, head_env, exam)
             layer3 = await self._layer3(pr, base_env, head_env, exam)
         verdict, reasons = combine(layer1, layer2, layer3)
+        strength = None
+        if self.strength is not None and layer1.status == "pass" and not layer2.high:
+            strength = await self._strength(pr, base_env, head_env, exam)
         return ClaimResult(
             issue=issue, verdict=verdict, reasons=reasons, evidence_id=exam.evidence_id,
             exam_receipt_sha256=exam.receipt_sha256, test_path=exam.test_path,
             test_sha256=exam.test_sha256, layer1=layer1, layer2=layer2, layer3=layer3,
+            strength=strength,
         )
+
+    async def _strength(self, pr: PullRequest, base_env: Any, head_env: Any, exam: Exam
+                        ) -> StrengthReport:
+        assert self.strength is not None
+        paths = {f.filename for f in pr.files
+                 if f.status != "removed" and is_source_file(f.filename)}
+        head = self.bench.read_files(head_env, paths)
+        base = self.bench.read_files(base_env, paths)
+        sources = {p: (base.get(p), code) for p, code in head.items()}
+        return await self.strength.evaluate(pr.repo, pr.head_sha, exam, sources)
 
     async def _layer1(self, base_env: Any, head_env: Any, exam: Exam) -> Layer1:
         base = [classify_base(await self.bench.run_exam(base_env, exam), exam)

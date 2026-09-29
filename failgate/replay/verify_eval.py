@@ -161,7 +161,7 @@ BenchFor = Callable[[FetchTree], Workbench]
 
 async def run_case(
     repo: str, case: EvalCase, kind: str, *, fetch: FetchTree, compare: FetchFiles,
-    bench_for: BenchFor, trees: dict[str, SourceTree] | None = None,
+    bench_for: BenchFor, trees: dict[str, SourceTree] | None = None, strength: bool = False,
 ) -> dict[str, Any]:
     trees = trees if trees is not None else {}
     for sha in (case.parent, case.fix):
@@ -178,8 +178,8 @@ async def run_case(
                      body=f"Fixes #{case.number}", base_sha=case.parent, head_sha=head.sha,
                      head_repo=repo, files=files)
     started = time.monotonic()
-    v = await ClaimVerifier(bench_for(fetch_local)).verify(pr, [case.number],
-                                                          {case.number: case.exam})
+    v = await ClaimVerifier(bench_for(fetch_local), strength=strength).verify(
+        pr, [case.number], {case.number: case.exam})
     c = v.claims[0]
     return {
         "number": case.number, "kind": kind, "expected": EXPECTED[kind].value,
@@ -189,6 +189,7 @@ async def run_case(
         "layer2": [s.model_dump(mode="json") for s in c.layer2.signals] if c.layer2 else [],
         "layer3": c.layer3.model_dump(mode="json") if c.layer3 else None,
         "parent": case.parent, "fix": case.fix, "upstream_pr": case.upstream_pr,
+        "strength": c.strength.model_dump(mode="json") if c.strength else None,
     }
 
 
@@ -262,9 +263,43 @@ def render(results: Sequence[dict[str, Any]], meta: dict[str, Any]) -> str:
         mark = "✅" if r["correct"] else "❌"
         lines.append(f"| #{r['number']} | {r['kind']} | {r['verdict']} | {mark} | "
                      f"{', '.join(r['reasons']) or '—'} | {r['seconds']}s |")
+    lines += _strength_section(results)
     wrong = [r for r in results if not r["correct"]]
     if wrong:
         lines += ["", "## 误判诊断（待逐条填写）", ""]
         lines += [f"- #{r['number']} {r['kind']}：{r['verdict']}（{', '.join(r['reasons'])}）"
                   for r in wrong]
     return "\n".join(lines) + "\n"
+
+
+def _strength_section(results: Sequence[dict[str, Any]]) -> list[str]:
+    """考卷强度（ADR 0020）：只在带 --strength 跑、并且算出了强度的案例上汇总。"""
+    rows = [r for r in results if r.get("strength")]
+    if not rows:
+        return []
+    ok = [r for r in rows if r["strength"]["status"] == "ok"]
+    grades = Counter(r["strength"]["grade"] for r in rows)
+    lines = ["", "## 考卷强度（变异测试，ADR 0020）", "",
+             f"- 算了强度的案例 {len(rows)} 个，其中能给出分数的 {len(ok)} 个；"
+             f"分级：{'、'.join(f'{g} {n}' for g, n in sorted(grades.items()))}"]
+    if ok:
+        killed = sum(r["strength"]["killed"] for r in ok)
+        valid = killed + sum(r["strength"]["survived"] for r in ok)
+        crash = sum(r["strength"]["killed_crash"] for r in ok)
+        lines.append(f"- 合计：有效变异体 {valid} 个，杀死 {killed} 个"
+                     f"（{killed / valid:.0%}），其中崩溃杀死 {crash} 个" if valid else "")
+    lines += ["", "| issue | 变体 | 改动行 | 执行到 | 变异体 | 杀死 | 断言 / 崩溃 / 超时 | 存活 | "
+              "无效 | 杀死率 | 分级 | 说明 |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for r in sorted(rows, key=lambda r: (r["number"], VARIANTS.index(r["kind"]))):
+        s = r["strength"]
+        rate = f"{s['kill_rate']:.0%}" if s["kill_rate"] is not None else "—"
+        survivors = [m for m in s["mutants"] if m["outcome"] == "survived"][:2]
+        note = s["reason"] if s["status"] != "ok" else "；".join(
+            f"`{m['path'].rsplit('/', 1)[-1]}:{m['line']}` {m['operator']}" for m in survivors)
+        lines.append(
+            f"| #{r['number']} | {r['kind']} | {s['changed_lines']} | {s['executed_lines']} | "
+            f"{len(s['mutants'])} | {s['killed']} | {s['killed_assert']} / "
+            f"{s['killed_crash']} / {s['killed_timeout']} | {s['survived']} | {s['invalid']} | "
+            f"{rate} | {s['grade']} | {note or '—'} |")
+    return lines

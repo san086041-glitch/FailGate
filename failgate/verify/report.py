@@ -11,6 +11,7 @@ import re
 from typing import Any
 
 from .engine import ClaimResult, ClaimVerdict, ExamRun, Layer1, Layer3, Verification
+from .strength import StrengthReport
 from .tamper import Signal
 
 _CJK = re.compile(r"[一-鿿]")
@@ -68,6 +69,24 @@ _TEXT: dict[str, dict[str, str]] = {
         "t.pytest_config": "改动了 pytest 配置",
         "t.test_removed": "删除了测试文件",
         "t.skip_added": "给测试加了 skip / xfail",
+        # 考卷强度
+        "s.ok": ("④ 考卷强度：**{grade}**　把修复改动过的代码悄悄改坏 {valid} 次，"
+                 "考卷发现了 {killed} 次（{rate}；断言失败 {a}、崩溃 {c}、超时 {t}）"),
+        "s.scope": "  修复改动了 {changed} 行源码，考卷执行到其中 {executed} 行",
+        "s.unexec": "  考卷没有执行到的改动：{lines}",
+        "s.survivors": "  考卷察觉不到的改动：",
+        "s.weak": "  考卷偏弱：通过验收只能说明 issue 里描述的症状消失了",
+        "s.caveat": ("  强度只看修复改动过的行：看不出修复漏掉了哪些情况，"
+                     "等价变异体也会让杀死率偏低"),
+        "s.na": "④ 考卷强度：没有评估（{reason}）",
+        "g.strong": "强", "g.medium": "中", "g.weak": "弱",
+        "s.no_source_change": "PR 没有改动源码文件",
+        "s.not_executed": "考卷没有执行到修复改动的任何一行",
+        "s.shadow": "测试导入的不是工作区里的源码副本，无法注入变异体",
+        "s.baseline_failed": "带 coverage 的环境里考卷没有通过",
+        "s.parse_error": "源码解析失败",
+        "s.no_mutants": "改动的行上没有可以变异的代码",
+        "s.setup": "带 coverage 的环境搭不起来",
     },
     "en": {
         "title": "🛡️ **FailGate verification: PR #{pr}**",
@@ -128,6 +147,27 @@ _TEXT: dict[str, dict[str, str]] = {
         "t.pytest_config": "changes pytest configuration",
         "t.test_removed": "deletes a test file",
         "t.skip_added": "adds skip / xfail to tests",
+        "s.ok": ("④ Test strength: **{grade}**. The changed code was quietly broken {valid} "
+                 "times and the acceptance test noticed {killed} ({rate}; assertion {a}, "
+                 "crash {c}, timeout {t})"),
+        "s.scope": ("  The fix changes {changed} source line(s); the test executes "
+                    "{executed} of them"),
+        "s.unexec": "  Changed lines the test never executes: {lines}",
+        "s.survivors": "  Changes the test cannot detect:",
+        "s.weak": ("  Weak test: passing it only shows that the symptom described in the issue "
+                   "is gone"),
+        "s.caveat": ("  Strength only looks at the lines the fix changed: it cannot see cases the "
+                     "fix misses, and equivalent mutants make the score a lower bound"),
+        "s.na": "④ Test strength: not assessed ({reason})",
+        "g.strong": "strong", "g.medium": "medium", "g.weak": "weak",
+        "s.no_source_change": "the PR changes no source files",
+        "s.not_executed": "the acceptance test executes none of the changed lines",
+        "s.shadow": "tests import an installed copy, not the workspace source, so mutants "
+                    "cannot be injected",
+        "s.baseline_failed": "the acceptance test did not pass in the coverage environment",
+        "s.parse_error": "the source could not be parsed",
+        "s.no_mutants": "no mutable code on the changed lines",
+        "s.setup": "the coverage environment could not be built",
     },
 }
 
@@ -206,9 +246,36 @@ def _claim_lines(c: ClaimResult, v: Verification, t: dict[str, str], lang: str) 
         if c.layer3.new_failures:
             lines.append("  " + t["new_fail"] + " " + ", ".join(
                 f"`{n}`" for n in c.layer3.new_failures[:10]))
+    if c.strength is not None:
+        lines += _strength_lines(c.strength, t)
     if any(r == "tamper:exam_modified" for r in c.reasons):
         lines.append(t["reseal_hint"])
     return lines
+
+
+def _strength_lines(s: StrengthReport, t: dict[str, str]) -> list[str]:
+    if s.status != "ok" or s.kill_rate is None:
+        return ["- " + t["s.na"].format(reason=t.get(f"s.{s.reason}", s.reason))]
+    lines = ["- " + t["s.ok"].format(
+        grade=t[f"g.{s.grade}"], valid=s.killed + s.survived, killed=s.killed,
+        rate=f"{s.kill_rate:.0%}", a=s.killed_assert, c=s.killed_crash, t=s.killed_timeout)]
+    lines.append(t["s.scope"].format(changed=s.changed_lines, executed=s.executed_lines))
+    if s.unexecuted:
+        lines.append(t["s.unexec"].format(lines=", ".join(f"`{x}`" for x in s.unexecuted[:5])))
+    if s.survivors:
+        lines.append(t["s.survivors"])
+        lines += [f"  - `{m.path}:{m.line}` `{_code(m.before)}` → `{_code(m.after)}`"
+                  for m in s.survivors[:3]]
+    if s.grade == "weak":
+        lines.append(t["s.weak"])
+    lines.append(t["s.caveat"])
+    return lines
+
+
+def _code(text: str) -> str:
+    """放进行内代码的一行源码：去掉反引号（防止逃出代码格式），过长截断。"""
+    text = text.replace("`", "'")
+    return text if len(text) <= 80 else text[:77] + "..."
 
 
 def render_verification(v: Verification, lang: str = "en") -> str:

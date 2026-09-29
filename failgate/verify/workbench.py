@@ -7,8 +7,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
+import json
+import tempfile
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -18,9 +22,11 @@ from failgate.repro.config import PackageConfig
 from failgate.repro.envcache import EnvBuildError
 from failgate.repro.l2 import (
     RUN_PREFIXES,
+    WORK_SRC,
     L2Unsupported,
     SourcePrepared,
     TestReproducer,
+    pick_release,
     pytest_argv,
 )
 from failgate.repro.pypi import PyPIError
@@ -28,6 +34,7 @@ from failgate.repro.sandbox import ExecResult, SandboxError
 from failgate.repro.source import SourceError, SourceTree, fetch_github_tree
 
 from .engine import Exam, PullRequest, SetupFailed
+from .strength import COVERAGE_PREFIX
 from .tamper import PullFile
 
 EXAM_TIMEOUT_S = 120
@@ -35,6 +42,15 @@ RELATED_ARGS = ["-q", "--tb=native", "-p", "no:cacheprovider", "--rootdir=src", 
                 "--continue-on-collection-errors"]
 _SETUP_ERRORS = (SourceError, EnvBuildError, PyPIError, SandboxError, L2Unsupported,
                  httpx.HTTPError)
+
+
+STRENGTH_PREFIXES = (*RUN_PREFIXES, COVERAGE_PREFIX)
+
+
+@dataclasses.dataclass
+class StrengthHandle:
+    source: SourcePrepared
+    workspace: str
 
 
 @dataclasses.dataclass
@@ -92,6 +108,55 @@ class SandboxWorkbench:
             )
         finally:
             await self.tester.sandbox.remove_workspace(ws)
+
+    # ---------------------------------------------------------------- 考卷强度（strength.py）
+
+    async def prepare_strength(self, repo: str, sha: str, exam: Exam) -> SourcePrepared:
+        """head 的源码环境 + coverage：和核验用的环境分开缓存，核验本身不受影响。"""
+        tree = await self.fetch_tree(repo, sha)
+        cfg = PackageConfig(name=exam.package, import_name=exam.module)
+        python = exam.python
+        releases = await self.tester.pypi.releases("coverage")
+        # coverage 是我们的工具，不是项目的依赖：不按提交日期锁，取支持这个 Python 的最新版
+        pin = pick_release("coverage", releases, python or "3.12", None)
+        src = await self.tester.prepare(cfg, tree, number=exam.issue, python=python,
+                                        version=exam.version, pytest=exam.pytest, extra=[pin])
+        return dataclasses.replace(src, test_path=exam.test_path)
+
+    async def open_strength(self, prepared: SourcePrepared, exam: Exam) -> StrengthHandle:
+        ws = await self.tester.open_workspace(prepared, f"strength-{prepared.env.key[:8]}")
+        try:
+            await self.tester.write_test(ws, prepared, exam.code)
+        except BaseException:
+            await self.tester.sandbox.remove_workspace(ws)
+            raise
+        return StrengthHandle(prepared, ws)
+
+    async def run_coverage(self, handle: StrengthHandle, exam: Exam, pythonpath: str,
+                           watch: list[str]) -> ExecResult:
+        argv = [*COVERAGE_PREFIX, json.dumps(watch), *pytest_argv(exam.test_path)[3:], "-rA"]
+        return await self.tester.sandbox.run(
+            handle.source.env.image, handle.workspace, argv, timeout_s=EXAM_TIMEOUT_S,
+            allowed=STRENGTH_PREFIXES, env=[f"PYTHONPATH={pythonpath}"],
+        )
+
+    async def put_file(self, handle: StrengthHandle, path: str, content: str) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp, WORK_SRC, path)
+            await asyncio.to_thread(dest.parent.mkdir, parents=True)
+            await asyncio.to_thread(dest.write_text, content, encoding="utf-8")
+            await self.tester.sandbox.copy_in(handle.workspace, Path(tmp),
+                                              handle.source.env.image)
+
+    async def run_mutant(self, handle: StrengthHandle, exam: Exam, pythonpath: str,
+                         timeout_s: int) -> ExecResult:
+        return await self.tester.sandbox.run(
+            handle.source.env.image, handle.workspace, [*pytest_argv(exam.test_path), "-rA"],
+            timeout_s=timeout_s, allowed=RUN_PREFIXES, env=[f"PYTHONPATH={pythonpath}"],
+        )
+
+    async def close_strength(self, handle: StrengthHandle) -> None:
+        await self.tester.sandbox.remove_workspace(handle.workspace)
 
     async def run_tests(self, prepared: Any, targets: list[str], timeout_s: int) -> ExecResult:
         src: SourcePrepared = prepared.source

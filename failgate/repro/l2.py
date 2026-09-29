@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import tempfile
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -82,13 +83,19 @@ def invalid_run(run: ExecResult) -> Verdict | None:
 
 def pick_pytest(releases: dict[Version, Release], python: str, before: datetime | None) -> str:
     """该提交当时已发布、支持这个 Python 的最新 pytest。找不到就不锁版本。"""
+    return pick_release("pytest", releases, python, before)
+
+
+def pick_release(name: str, releases: dict[Version, Release], python: str,
+                 before: datetime | None) -> str:
+    """before 之前已发布、支持这个 Python 的最新正式版，写成 name==X；找不到就不锁版本。"""
     ok = [
         v for v, r in releases.items()
         if not v.is_prerelease and not r.yanked
         and (before is None or (r.uploaded is not None and r.uploaded <= before))
         and (r.requires_python is None or r.requires_python.contains(f"{python}.0"))
     ]
-    return f"pytest=={max(ok)}" if ok else "pytest"
+    return f"{name}=={max(ok)}" if ok else name
 
 
 @dataclass
@@ -152,19 +159,21 @@ class TestReproducer:
         python: str | None = None,
         version: str | None = None,
         pytest: str | None = None,
+        extra: Sequence[str] = (),
     ) -> SourcePrepared:
         """构建环境（含 pytest）并预检。失败时抛 PyPIError / EnvBuildError / SandboxError /
         SourceError，预检不通过抛 L2Unsupported。
 
         version / pytest：指定伪版本号和 pytest 版本（严格 FB/PA 在修复前后用同一套，
         只让代码这一个变量变化）；不指定时按提交日期推算。
+        extra：额外装的依赖（考卷强度要 coverage）；会进入缓存 key，得到单独的环境。
         """
         py = pick_python_for_commit(tree, reported=python)
         if version is None:
             version = pretend_version(await self._own_releases(cfg.name), tree.committed_at)
         pin = pytest or pick_pytest(await self.pypi.releases("pytest"), py, tree.committed_at)
         env = await source_env(self.cache, tree, python=py, version=version,
-                               extra_requirements=[pin])
+                               extra_requirements=[pin, *extra])
         prepared = SourcePrepared(cfg=cfg, tree=tree, python=py, version=version, pytest=pin,
                                   env=env, test_path=repo_test_file(tree, number))
         probe = await self.run_once(prepared, PROBE_TEST)

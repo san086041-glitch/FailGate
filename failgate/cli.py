@@ -874,8 +874,10 @@ def verify_pr(
     db_url: Annotated[str | None, typer.Option("--db", help="数据库 URL，默认读配置")] = None,
     out: Annotated[Path | None, typer.Option(help="把核验收据写到这个 JSON 文件")] = None,
     lang: Annotated[str, typer.Option(help="报告语言 zh / en")] = "zh",
+    strength: Annotated[bool | None, typer.Option(
+        "--strength/--no-strength", help="是否评估考卷强度（默认读 VERIFY_STRENGTH）")] = None,
 ) -> None:
-    """用封存的考卷核验一个 PR（ClaimVerify 三层）。需要 Docker 和 GITHUB_TOKEN。
+    """用封存的考卷核验一个 PR（ClaimVerify 三层 + 考卷强度）。需要 Docker 和 GITHUB_TOKEN。
 
     退出码：0 通过验收，1 驳回，2 无法判定或没有声明。"""
     from failgate.platforms.github_rest import GitHubRest
@@ -915,7 +917,11 @@ def verify_pr(
                        f"合并基点 {pr.base_sha[:7]} → head {pr.head_sha[:7]}", err=True)
             tester = TestReproducer(sandbox, _env_cache(settings, sandbox), pypi,
                                     run_timeout_s=settings.sandbox_run_timeout_seconds)
-            verifier = ClaimVerifier(SandboxWorkbench.for_github(gh, tester))
+            verifier = ClaimVerifier(
+                SandboxWorkbench.for_github(gh, tester),
+                strength=settings.verify_strength if strength is None else strength,
+                max_mutants=settings.strength_max_mutants,
+            )
             result = await verifier.verify(pr, claims, exams)
         finally:
             await db.dispose()
@@ -1687,6 +1693,8 @@ def replay_verify(
     resume: Annotated[
         Path | None, typer.Option(help="接着一份没跑完的结果（.jsonl）继续，跳过已完成的")
     ] = None,
+    strength: Annotated[bool, typer.Option(
+        "--strength", help="第一层通过的案例顺带算考卷强度（变异测试，ADR 0020）")] = False,
 ) -> None:
     """ClaimVerify 正负例评测：上游真实修复当正例，程序构造的 4 种作弊当负例（ADR 0019）。
 
@@ -1755,13 +1763,18 @@ def replay_verify(
                     res = await ve.run_case(
                         repo, case, kind, fetch=fetch, compare=compare,
                         bench_for=lambda f: SandboxWorkbench(f, tester), trees=trees,
+                        strength=strength,
                     )
                     results.append(res)
                     with jsonl.open("a", encoding="utf-8") as fh:
                         fh.write(json.dumps(res, ensure_ascii=False) + "\n")
                     mark = "✅" if res["correct"] else "❌"
+                    st = res.get("strength") or {}
+                    extra = (f" · 强度 {st['grade']} {st['killed']}/{st['killed'] + st['survived']}"
+                             if st.get("status") == "ok" else
+                             f" · 强度 n/a（{st['reason']}）" if st else "")
                     typer.echo(f"  → {res['verdict']} {mark} {', '.join(res['reasons'])}"
-                               f" · {res['seconds']}s")
+                               f" · {res['seconds']}s{extra}")
                     report_path.write_text(ve.render(results, meta), encoding="utf-8")
         finally:
             await gh.aclose()
