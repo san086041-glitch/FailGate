@@ -34,6 +34,7 @@ from failgate.skills.base import (
 from failgate.verify.engine import Verification
 from failgate.verify.receipt import SealedTest
 from failgate.verify.report import language_of, render_verification
+from failgate.verify.store import hidden_row
 
 from .machine import CaseMachine
 from .states import CaseState
@@ -114,8 +115,11 @@ class Pipeline:
                     return CaseState(case.state)
                 s.add(_run_row(case_id, skill, result, started))
                 # 和 Run 在同一个事务里：要么都落库，要么都不落
-                for sealed in result.evidence:
-                    await self._seal(s, repo, case, sealed)
+                sealed_ids = {sealed.receipt.evidence_id for sealed in result.evidence
+                              if await self._seal(s, repo, case, sealed)}
+                for h in result.hidden:
+                    if h.evidence_id in sealed_ids:
+                        s.add(hidden_row(h))
                 if result.verification is not None:
                     s.add(_verification_row(case_id, result.verification))
                 case.spent_usd += result.cost_usd
@@ -205,7 +209,7 @@ class Pipeline:
                     s, repo=repo, case=case, action="set_labels", payload={"add": output["labels"]}
                 )
 
-    async def _seal(self, s: AsyncSession, repo: Repo, case: Case, sealed: SealedTest) -> None:
+    async def _seal(self, s: AsyncSession, repo: Repo, case: Case, sealed: SealedTest) -> bool:
         """证据挂在它所属 issue 的 Case 下（重新封存是在 PR 上发起的）；取代旧证据时，
         旧行的 superseded_by 指向新行——这是封存后唯一允许的修改。"""
         r = sealed.receipt
@@ -215,13 +219,14 @@ class Pipeline:
                 Case.repo_id == repo.id, Case.kind == "issue", Case.number == r.issue))
             if found is None:
                 log.warning("no issue case for evidence %s (#%s)", r.evidence_id, r.issue)
-                return
+                return False
             owner = found
         s.add(_evidence_row(owner.id, sealed))
         if r.supersedes:
             old = await s.get(Evidence, r.supersedes)
             if old is not None:
                 old.superseded_by = r.evidence_id
+        return True
 
     async def _summary(
         self, s: AsyncSession, repo: Repo, case: Case, outputs: dict[str, dict[str, Any]]

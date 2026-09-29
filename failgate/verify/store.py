@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -65,14 +66,20 @@ async def latest_exam(s: AsyncSession, repo: str, issue: int) -> Exam | None:
     if row is None:
         return None
     ev, import_name = row
-    r = ev.receipt
+    exam = exam_from_receipt(ev.receipt, ev.test_code, import_name)
+    exam.hidden = await latest_hidden(s, ev.id)
+    return exam
+
+
+def exam_from_receipt(receipt: dict[str, Any], code: str, import_name: str | None) -> Exam:
+    """签好名的证据收据 + 考卷代码 → Exam（重放它需要的条件都在收据里）。"""
+    r = receipt
     sig = r.get("signature")
-    hidden = await latest_hidden(s, ev.id)
-    return Exam(hidden=hidden,
-        evidence_id=ev.id, issue=issue, test_path=ev.test_path, code=ev.test_code,
-        test_sha256=ev.test_sha256, receipt_sha256=ev.receipt_sha256, package=r["package"],
-        module=import_name or r["package"].replace("-", "_").lower(), python=ev.python,
-        pytest=ev.pytest, version=r.get("version"),
+    return Exam(
+        evidence_id=r["evidence_id"], issue=r["issue"], test_path=r["test_path"], code=code,
+        test_sha256=r["test_sha256"], receipt_sha256=r["receipt_sha256"], package=r["package"],
+        module=import_name or r["package"].replace("-", "_").lower(), python=r.get("python"),
+        pytest=r.get("pytest"), version=r.get("version"),
         signature=TraceSignature.model_validate(sig) if sig else None, receipt=r,
     )
 

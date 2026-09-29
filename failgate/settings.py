@@ -73,3 +73,6 @@ class Settings(BaseSettings):
     # 只附加在报告里，不改变结论；每个 PR 多建一个带 coverage 的环境、最多跑这么多个变异体
     verify_strength: bool = True
     strength_max_mutants: int = 30
+    # 隐藏考卷（ADR 0021）：封存 L2 考卷时自动出几道变体题（一次 LLM 调用 + 两次沙箱运行），
+    # 核验时提示"疑似只迎合了公开考卷"；只公布题数和哈希
+    hidden_exam_enabled: bool = True

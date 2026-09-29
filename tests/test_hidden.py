@@ -288,3 +288,88 @@ async def test_hidden_exam_is_loaded_with_the_exam_and_cannot_be_changed(tmp_pat
                 row = await s.get(HiddenExamRecord, HIDDEN.hidden_id)
                 assert row is not None
                 row.test_code = "def test_hidden_a(): pass\n"
+
+
+# ---------------------------------------------------------------- 流水线：封存考卷时自动出题
+
+
+class HiddenRunner:
+    """复现 runner：返回 L2 报告，并且会出隐藏题（结果由 make 决定）。"""
+
+    def __init__(self, report: Any, make: Any) -> None:
+        from test_repro_pipeline import FakeRunner
+
+        self.inner = FakeRunner(report)
+        self.requests = self.inner.requests
+        self.make = make
+        self.hidden_calls: list[Any] = []
+
+    async def __call__(self, req: Any) -> Any:
+        return await self.inner(req)
+
+    async def hidden(self, req: Any, sealed: Any) -> Any:
+        self.hidden_calls.append((req, sealed))
+        return self.make(sealed)
+
+
+def _sealed_hidden(sealed: Any) -> Any:
+    from failgate.verify.hidden import HiddenSeal
+
+    h = HIDDEN.model_copy(update={"evidence_id": sealed.receipt.evidence_id,
+                                  "receipt": {"receipt_sha256": "r" * 64}})
+    return HiddenSeal(hidden=h, cost_usd=0.01)
+
+
+async def test_pipeline_seals_hidden_exam_with_the_evidence_and_publishes_only_the_hash(tmp_path):
+    from sqlalchemy import select
+    from test_repro_fixtures import l2_report, run_source_issue
+    from test_repro_pipeline import case_detail, summary
+
+    from failgate.db import Evidence, HiddenExamRecord
+
+    runner = HiddenRunner(l2_report(), _sealed_hidden)
+    async for h in run_source_issue(runner, tmp_path):  # type: ignore[arg-type]
+        req, sealed = runner.hidden_calls[0]
+        assert sealed.receipt.acceptance and req.title  # 出题人拿到 issue 和刚封存的考卷
+        async with h.failgate.db.session() as s:
+            ev = (await s.scalars(select(Evidence))).one()
+            row = (await s.scalars(select(HiddenExamRecord))).one()
+        assert row.evidence_id == ev.id and row.test_code == CODE
+        case = await case_detail(h)
+        out = next(r for r in case["runs"] if r["skill"] == "repro")["output"]
+        assert (out["hidden_tests"], out["hidden_sha256"]) == (2, HIDDEN.test_sha256)
+        body = summary(case)
+        sha = HIDDEN.test_sha256[:12]
+        assert f"隐藏考卷：2 道变体题已封存，题目不公开（sha256 `{sha}`）" in body
+        assert "test_hidden_a" not in body and 'parse({"x": 1})' not in body
+
+
+def _none_kept(sealed: Any) -> Any:
+    from failgate.verify.hidden import HiddenSeal
+
+    return HiddenSeal(reason="none_kept")
+
+
+def _llm_down(sealed: Any) -> Any:
+    raise RuntimeError("LLM down")
+
+
+@pytest.mark.parametrize(("make", "reason"), [(_none_kept, "none_kept"),
+                                              (_llm_down, "error:RuntimeError")])
+async def test_hidden_exam_failure_never_blocks_the_public_exam(tmp_path, make, reason):
+    from sqlalchemy import select
+    from test_repro_fixtures import l2_report, run_source_issue
+    from test_repro_pipeline import case_detail, summary
+
+    from failgate.db import Evidence, HiddenExamRecord
+
+    runner = HiddenRunner(l2_report(), make)
+    async for h in run_source_issue(runner, tmp_path):  # type: ignore[arg-type]
+        async with h.failgate.db.session() as s:
+            assert (await s.scalars(select(Evidence))).one() is not None
+            assert (await s.scalars(select(HiddenExamRecord))).all() == []
+        case = await case_detail(h)
+        assert case["state"] == "REPRODUCED"
+        out = next(r for r in case["runs"] if r["skill"] == "repro")["output"]
+        assert out["hidden_reason"] == reason and out["hidden_sha256"] is None
+        assert "隐藏考卷" not in summary(case)

@@ -177,7 +177,8 @@ class FailGate:
     def _repro_stage(self, settings: Settings) -> dict[CaseState, tuple[Skill, str]]:
         if self.repro_runner is None:
             return {}
-        skill = ReproSkill(self.repro_runner, max_budget_usd=settings.repro_budget_usd)
+        skill = ReproSkill(self.repro_runner, max_budget_usd=settings.repro_budget_usd,
+                           hidden_exam=settings.hidden_exam_enabled)
         return {CaseState.REPRODUCING: (skill, settings.llm_model_large)}
 
     def _verify_stage(self) -> dict[CaseState, tuple[Skill, str]]:

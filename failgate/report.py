@@ -73,6 +73,8 @@ _TEXT = {
         "repro_test": "测试文件 `{path}` 可以直接合进仓库：修复之前失败，修复之后应当通过。",
         "repro_test_title": "仓库内的失败测试",
         "repro_accept": "验收命令（在仓库根目录运行，修复前失败、修复后应当通过）：`{cmd}`",
+        "repro_hidden": ("隐藏考卷：{n} 道变体题已封存，题目不公开（sha256 `{sha}`）。"
+                         "核验 PR 时会一并运行，用来发现只迎合了上面这份测试的修复"),
         "repro_receipt": "证据收据 `{short}`",
         "repro_receipt_note": (
             "这份测试已封存（`test_sha256` 是换行统一为 LF 后的哈希）。之后核验声称修复本 issue "
@@ -152,6 +154,10 @@ _TEXT = {
         "repro_accept": (
             "Acceptance command (run from the repository root; fails before a fix, "
             "should pass after it): `{cmd}`"
+        ),
+        "repro_hidden": (
+            "Hidden tests: {n} variant test(s) sealed and not published (sha256 `{sha}`). "
+            "They also run when a PR is verified, to catch fixes that only fit the test above"
         ),
         "repro_receipt": "Evidence receipt `{short}`",
         "repro_receipt_note": (
@@ -273,6 +279,9 @@ def _source_lines(repro: dict[str, Any], t: dict[str, str]) -> list[str]:
             lines.append(t["repro_test"].format(path=_inline(repro["test_path"])))
             cmd = f"python -m pytest {_inline(repro['test_path'])}"
             lines.append(t["repro_accept"].format(cmd=cmd))
+        if repro.get("hidden_sha256"):
+            lines.append(t["repro_hidden"].format(n=repro.get("hidden_tests") or 0,
+                                                  sha=str(repro["hidden_sha256"])[:12]))
         if repro.get("script"):
             lines += ["", *_script_block(repro["script"], t["repro_test_title"])]
         lines += _receipt_block(repro, t)

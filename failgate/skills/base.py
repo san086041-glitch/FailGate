@@ -20,6 +20,7 @@ from failgate.platforms.base import Comment
 
 if TYPE_CHECKING:
     from failgate.verify.engine import Verification
+    from failgate.verify.hidden import HiddenExam
     from failgate.verify.receipt import SealedTest
 
 # GitHub 新仓库的默认标签；拿不到仓库真实标签表时使用（M1 后半段改为从平台 API 读取）
@@ -101,6 +102,8 @@ class SkillResult:
     evidence: list[SealedTest] = field(default_factory=list)
     # PR 核验的结果；由流水线写进 verifications 表
     verification: Verification | None = None
+    # 隐藏考卷（ADR 0021）：公开考卷封存时一并出的题；由流水线写进 hidden_exams 表
+    hidden: list[HiddenExam] = field(default_factory=list)
 
 
 class Skill(Protocol):

@@ -31,6 +31,7 @@ from failgate.repro.evidence import EvidenceLevel
 from failgate.repro.issue import IssueReproReport, L2IssueReport
 from failgate.skills.base import SkillContext, SkillResult
 from failgate.skills.intake import IntakeOutput
+from failgate.verify.hidden import HiddenExam, HiddenSeal
 from failgate.verify.receipt import SealedTest, build_receipt
 
 if TYPE_CHECKING:
@@ -102,6 +103,10 @@ class ReproOutput(BaseModel):
     # 证据收据（带 receipt_sha256）；只有复现成功时才有
     evidence_id: str | None = None
     receipt: dict[str, Any] | None = None
+    # 隐藏考卷（ADR 0021）：只公布题数和哈希；没出成时 hidden_reason 说明原因（不对外）
+    hidden_tests: int = 0
+    hidden_sha256: str | None = None
+    hidden_reason: str | None = None
 
     @classmethod
     def from_any(cls, report: IssueReproReport | L2IssueReport, followups: int) -> ReproOutput:
@@ -165,9 +170,12 @@ class ReproSkill:
     name = "repro"
     version = "1"
 
-    def __init__(self, runner: ReproRunner, *, max_budget_usd: float) -> None:
+    def __init__(self, runner: ReproRunner, *, max_budget_usd: float,
+                 hidden_exam: bool = False) -> None:
         self.runner = runner
         self.max_budget_usd = max_budget_usd
+        # 封存 L2 考卷时自动出隐藏题（runner 要有 hidden 方法）
+        self.hidden_exam = hidden_exam
 
     async def run(self, ctx: SkillContext) -> SkillResult:
         skipped = self._skip_reason(ctx)
@@ -183,25 +191,51 @@ class ReproSkill:
             budget = min(budget, ctx.budget_left_usd)
         body, followups = await self._body_with_followups(ctx)
         issue = ctx.issue
-        report = await self.runner(ReproRequest(
+        req = ReproRequest(
             repo=issue.repo, number=issue.number, title=issue.title, body=body,
             created_at=issue.created_at, intake=intake, cfg=cfg, budget_usd=budget,
             source_repo=ctx.repo_config.get("repro_source") or None,
-        ))
+        )
+        report = await self.runner(req)
         out = ReproOutput.from_any(report, followups)
         sealed = seal(report)
+        hidden: list[HiddenExam] = []
+        cost = report.total_cost_usd
         if sealed is not None:
             out.evidence_id = sealed.receipt.evidence_id
             out.receipt = sealed.signed()
+            if self.hidden_exam and sealed.receipt.acceptance:
+                h, extra = await self._hidden(req, sealed, out)
+                hidden, cost = h, cost + extra
         return SkillResult(
             output=out,
             confidence=1.0 if out.level != EvidenceLevel.NONE.value else 0.0,
             model=ctx.model,
             usage=report.repro_usage(),
-            cost_usd=report.total_cost_usd,
+            cost_usd=cost,
             facts={"evidence_level": out.level},
             evidence=[sealed] if sealed is not None else [],
+            hidden=hidden,
         )
+
+    async def _hidden(self, req: ReproRequest, sealed: SealedTest, out: ReproOutput
+                      ) -> tuple[list[HiddenExam], float]:
+        """出隐藏题。任何失败都只记下原因，不影响公开考卷的封存和复现结论。"""
+        make = getattr(self.runner, "hidden", None)
+        if make is None:
+            return [], 0.0
+        try:
+            got = await make(req, sealed)
+        except Exception as e:  # noqa: BLE001
+            log.warning("hidden exam failed for %s#%s", req.repo, req.number, exc_info=True)
+            out.hidden_reason = f"error:{type(e).__name__}"
+            return [], 0.0
+        if got.hidden is None:
+            out.hidden_reason = got.reason
+            return [], got.cost_usd
+        out.hidden_tests = len(got.hidden.tests)
+        out.hidden_sha256 = got.hidden.test_sha256
+        return [got.hidden], got.cost_usd
 
     @staticmethod
     def _skip_reason(ctx: SkillContext) -> str | None:
@@ -376,6 +410,25 @@ class SandboxReproRunner:
             max_steps=s.repro_max_steps, max_attempts=s.repro_max_attempts,
             budget_usd=req.budget_usd, artifacts_dir=Path(s.sandbox_artifacts_dir),
         )
+
+    async def hidden(self, req: ReproRequest, sealed: SealedTest) -> HiddenSeal:
+        """给刚封存的 L2 考卷出隐藏题（ADR 0021）：在同一个 issue 时的提交上挑题。"""
+        from failgate.platforms.github_rest import GitHubRest
+        from failgate.verify.hidden import HiddenWriter, seal_hidden
+        from failgate.verify.store import exam_from_receipt
+        from failgate.verify.workbench import SandboxWorkbench
+
+        r = sealed.receipt
+        if not r.source_sha:
+            return HiddenSeal(reason="no_source")
+        if self._gh is None:
+            self._gh = GitHubRest(self.settings.github_token)
+        exam = exam_from_receipt(sealed.signed(), sealed.code, req.cfg.import_name)
+        bench = SandboxWorkbench.for_github(self._gh, self._get_tester())
+        writer = HiddenWriter(self.llm, self.settings.llm_model_large)
+        return await seal_hidden(bench, writer, exam, repo=req.repo, title=req.title,
+                                 body=req.body, source_repo=r.source_repo,
+                                 source_sha=r.source_sha)
 
     async def aclose(self) -> None:
         if self._reproducer is not None:
