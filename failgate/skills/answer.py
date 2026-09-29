@@ -10,18 +10,32 @@ finalize_answer() 做三道程序化检查：
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import UTC, datetime
 from typing import Any, Literal
 
+import httpx
 from pydantic import BaseModel, Field
 
 from failgate.index.text import strip_boilerplate
 from failgate.llm import Usage
-from failgate.platforms.base import WRITE_ASSOCIATIONS, Comment
+from failgate.platforms.base import WRITE_ASSOCIATIONS, Comment, PlatformError
 
 from .base import SkillContext, SkillResult, load_prompt, priced, render, untrusted
 from .dedup import quote_found
+
+log = logging.getLogger(__name__)
+
+# 读相似 issue 的评论时，这些状态码表示 issue 已经不在了（删除 / 转移）
+_GONE = (404, 410)
+
+
+def _status(exc: Exception) -> int | None:
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code
+    return getattr(exc, "status", None)
+
 
 MIN_CONFIDENCE = 0.75
 DOC_K = 6
@@ -233,9 +247,15 @@ class AnswerSkill:
             for r in recalled:
                 if used >= ISSUE_K:
                     break
-                answers = maintainer_answers(
-                    await ctx.comments(issue.repo, r.number), issue.created_at
-                )
+                try:
+                    comments = await ctx.comments(issue.repo, r.number)
+                except (PlatformError, httpx.HTTPStatusError) as exc:
+                    if _status(exc) not in _GONE:
+                        raise
+                    # 索引里还在、平台上已删除或转移的 issue：跳过这个候选，别让整次答疑失败
+                    log.warning("answer: #%s is gone (%s), skipped", r.number, _status(exc))
+                    continue
+                answers = maintainer_answers(comments, issue.created_at)
                 if not answers:
                     continue  # 没有维护者回答的 issue 不是依据
                 used += 1

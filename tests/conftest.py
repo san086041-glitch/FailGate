@@ -58,11 +58,15 @@ def make_settings(tmp_path, **overrides: Any) -> Settings:
 
 # 没配置 App 时的只读 REST 后备（读公开仓库的评论）：测试里绝不能访问真实网络
 PUBLIC_COMMENTS: dict[int, list[dict[str, Any]]] = {}
+# 平台上已经删除 / 转移的 issue：读评论返回 404
+GONE_ISSUES: set[int] = set()
 
 
 def _public_rest(request: httpx.Request) -> httpx.Response:
     parts = request.url.path.split("/")
     if len(parts) >= 7 and parts[-1] == "comments":
+        if int(parts[-2]) in GONE_ISSUES:
+            return httpx.Response(404, json={"message": "Not Found"})
         return httpx.Response(200, json=PUBLIC_COMMENTS.get(int(parts[-2]), []))
     return httpx.Response(404, json={"message": "not stubbed"})
 
@@ -73,6 +77,7 @@ async def _harness(
 ) -> AsyncIterator[Harness]:
     llm = FakeLLM()
     PUBLIC_COMMENTS.clear()
+    GONE_ISSUES.clear()
     app = create_app(
         settings,
         run_worker=False,

@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
 
@@ -2029,3 +2029,98 @@ def replay_hidden(
 
 if __name__ == "__main__":
     app()
+
+
+@replay_app.command("latency")
+def replay_latency(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    since: Annotated[str, typer.Option(help="开始时间（ISO 8601，本机时间或带时区）")],
+    until: Annotated[str | None, typer.Option(help="结束时间（默认到现在）")] = None,
+    title: Annotated[str, typer.Option(help="报告标题")] = "排队延迟测量",
+    label: Annotated[str, typer.Option(help="报告文件名里的标签，如 before / after")] = "run",
+    github: Annotated[bool, typer.Option(help="用 GitHub 时间戳补上触发 → bot 评论的延迟")] = True,
+    bot: Annotated[str | None, typer.Option(help="bot 的登录名（默认任何 [bot]）")] = None,
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库连接串，默认用配置")] = None,
+) -> None:
+    """排队延迟（W6）：deliveries 表的排队 / 处理时间 + GitHub 上的触发到评论时间。"""
+    from failgate.platforms.github_rest import GitHubRest
+    from failgate.replay import latency as lat
+
+    settings = Settings()
+
+    def parse(ts: str) -> datetime:
+        dt = datetime.fromisoformat(ts)
+        return dt if dt.tzinfo else dt.astimezone()
+
+    start = parse(since).astimezone(UTC)
+    end = parse(until).astimezone(UTC) if until else None
+
+    async def run() -> list[lat.EventTiming]:
+        db = Database(db_url or settings.failgate_db_url)
+        await db.create_all()
+        try:
+            rows = await lat.load_timings(db, repo, start.replace(tzinfo=None),
+                                          end.replace(tzinfo=None) if end else None)
+        finally:
+            await db.dispose()
+        if github and rows:
+            rest = GitHubRest(settings.github_token)
+            try:
+                await lat.attach_github(rows, repo, rest, bot)
+            finally:
+                await rest.aclose()
+        return rows
+
+    rows = asyncio.run(run())
+    summary = lat.summarize(rows)
+    stem = f"{repo.replace('/', '__')}__latency-{label}__{datetime.now():%Y%m%d-%H%M}"
+    report = Path("eval/reports") / f"{stem}.md"
+    report.parent.mkdir(parents=True, exist_ok=True)
+    notes = [f"窗口：{start.isoformat(timespec='seconds')} 起"
+             + (f"，到 {end.isoformat(timespec='seconds')}" if end else "") + "（UTC）。"]
+    report.write_text(lat.render(rows, summary, repo=repo, title=title, notes=notes),
+                      encoding="utf-8")
+    typer.echo(json.dumps(summary, ensure_ascii=False, indent=1))
+    typer.echo(f"报告：{report.as_posix()}")
+
+
+@replay_app.command("load")
+def replay_load(
+    repo: Annotated[str, typer.Argument(help="owner/name（必须是影子模式）")],
+    maintainer: Annotated[str, typer.Option(help="发命令的维护者登录名（会实时查权限）")],
+    pulls: Annotated[str, typer.Option(help="PR 编号，逗号分隔；空 = 只发快 issue")] = "",
+    fast: Annotated[int, typer.Option(help="快 issue 个数")] = 20,
+    first_at: Annotated[float, typer.Option(help="第一个快 issue 的时间（秒）")] = 5.0,
+    interval: Annotated[float, typer.Option(help="快 issue 的间隔（秒）")] = 6.0,
+    base: Annotated[int, typer.Option(help="快 issue 的起始编号（用不存在的编号）")] = 90001,
+    url: Annotated[str, typer.Option(help="服务地址")] = "http://127.0.0.1:8081/webhooks/github",
+    db_url: Annotated[str | None, typer.Option("--db", help="服务用的库（查影子模式）")] = None,
+) -> None:
+    """合成负载（W6）：按固定剧本往本地服务发签名 webhook，之后用 replay latency 出报告。"""
+    from failgate.replay import loadgen
+
+    settings = Settings()
+
+    async def check() -> int | None:
+        db = Database(db_url or settings.failgate_db_url)
+        try:
+            async with db.session() as s:
+                row = (await s.execute(select(Repo).where(Repo.full_name == repo))).scalar_one()
+        finally:
+            await db.dispose()
+        if row.mode != "shadow":
+            raise typer.BadParameter(f"{repo} 是 {row.mode} 模式：合成负载只能对影子模式的仓库用")
+        return row.installation_id
+
+    installation = asyncio.run(check())
+    plan = loadgen.mixed_scenario(
+        repo, pulls=[int(x) for x in pulls.split(",") if x.strip()],
+        fast=fast, first_fast_at=first_at,
+        interval=interval, base=base, maintainer=maintainer, installation=installation)
+    started = datetime.now(UTC)
+    typer.echo(f"开始（UTC）：{started.isoformat(timespec='seconds')}，{len(plan)} 个事件")
+    codes = asyncio.run(loadgen.send_plan(plan, url, settings.github_webhook_secret,
+                                          echo=typer.echo))
+    typer.echo(f"已发出：{sum(c == 202 for c in codes)}/{len(codes)} 入队。"
+               f"处理完后运行：failgate replay latency {repo} --since "
+               f"{started.isoformat(timespec='seconds')} --no-github --db <同一个库>")

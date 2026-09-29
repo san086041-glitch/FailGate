@@ -58,6 +58,10 @@ class Delivery(Base):
     platform: Mapped[str] = mapped_column(String(32))
     event: Mapped[str] = mapped_column(String(64))
     received_at: Mapped[datetime] = mapped_column(default=_now)
+    # 排队延迟测量（W6）：worker 开始 / 处理完（含写回平台）的时间，和这次事件落到的 Case
+    started_at: Mapped[datetime | None] = mapped_column(default=None)
+    finished_at: Mapped[datetime | None] = mapped_column(default=None)
+    case_id: Mapped[int | None] = mapped_column(default=None)
 
 
 class Case(Base):

@@ -5,7 +5,7 @@ import tarfile
 from datetime import UTC, datetime
 from typing import Any
 
-from conftest import PUBLIC_COMMENTS, Harness, issue_event
+from conftest import GONE_ISSUES, PUBLIC_COMMENTS, Harness, issue_event
 from fake_llm import INTAKE_OK, TRIAGE_OK
 from harness_utils import only_case
 from sqlalchemy import select
@@ -235,6 +235,31 @@ async def test_question_is_answered_with_references(harness: Harness):
     assert "**Answer**" in body and "Sources:" in body
     assert "https://github.com/acme/widgets/blob/abc123/docs/usage.md#line-length" in body
     assert "please add" not in body  # 提问不追问复现信息
+
+
+async def test_gone_similar_issue_is_skipped(harness: Harness):
+    # 相似的历史 issue 在索引里、平台上已删除：读评论 404，答疑照常完成（只用文档）
+    old = _asking(1, "Can I change the max line length?", "Is the line length configurable?")
+    await harness.send("issues", old, "d-1")
+    await harness.failgate.worker.drain()
+    await _seed_docs(harness)
+    GONE_ISSUES.add(1)
+
+    harness.llm.queue("intake", {**INTAKE_OK, "language": "en", "missing": []})
+    harness.llm.queue("triage", QUESTION)
+    harness.llm.queue("answer", {
+        "abstain": False, "answer": "Use `--line-length` [S1].",
+        "citations": [{"id": "S1", "quote": "Use the --line-length option"}],
+        "confidence": 0.9,
+    })
+    await harness.send("issues", _asking(2, "How to set line length?", "Which option?"), "d-2")
+    await harness.failgate.worker.drain()
+
+    case = await only_case(harness, 2)
+    assert case["state"] == "ANSWERED"
+    answer = next(r for r in case["runs"] if r["skill"] == "answer")
+    assert answer["status"] == "ok" and answer["output"]["status"] == "answered"
+    assert [r["kind"] for r in answer["output"]["references"]] == ["doc"]
 
 
 async def test_question_without_reliable_source_waits_for_maintainer(harness: Harness):

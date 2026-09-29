@@ -9,6 +9,8 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from failgate.db import Database
+from failgate.ingress.dedupe import mark_delivery, now
 from failgate.platforms.base import DomainEvent
 from failgate.policy.executor import EffectExecutor
 
@@ -27,11 +29,14 @@ class Worker:
         machine: CaseMachine,
         pipeline: Pipeline | None = None,
         executor: EffectExecutor | None = None,
+        db: Database | None = None,
     ) -> None:
         self.queue = queue
         self.machine = machine
         self.pipeline = pipeline
         self.executor = executor
+        # 给了 db 就在 deliveries 表上记开始 / 结束时间（W6 排队延迟测量）
+        self.db = db
 
     async def run_forever(self) -> None:
         while True:
@@ -47,10 +52,13 @@ class Worker:
         return n
 
     async def _process(self, event: DomainEvent) -> None:
+        case_id: int | None = None
+        await self._mark(event, started_at=now())
         try:
             outcome = await self.machine.handle(event)
             if outcome is None:
                 return
+            case_id = outcome.case_id
             if self.pipeline is not None:
                 await self.pipeline.advance(outcome.case_id)
             # 本轮各阶段提出的写操作（打标签、汇总评论）在这里统一发出
@@ -59,4 +67,14 @@ class Worker:
         except Exception:
             log.exception("failed to handle event %s (%s)", event.delivery_id, event.name)
         finally:
+            await self._mark(event, finished_at=now(), case_id=case_id)
             self.queue.task_done()
+
+    async def _mark(self, event: DomainEvent, **fields: object) -> None:
+        if self.db is None:
+            return
+        try:
+            await mark_delivery(self.db, event.delivery_id, **fields)
+        except Exception:
+            # 计时失败不能影响事件处理
+            log.exception("failed to record timing for %s", event.delivery_id)

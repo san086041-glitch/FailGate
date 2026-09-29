@@ -161,7 +161,7 @@ class FailGate:
             else None
         )
         self.executor = EffectExecutor(self.db, self._writer)
-        self.worker = Worker(self.queue, self.machine, self.pipeline, self.executor)
+        self.worker = Worker(self.queue, self.machine, self.pipeline, self.executor, db=self.db)
         self._tasks: list[asyncio.Task[None]] = []
 
     def _build_repro_runner(
