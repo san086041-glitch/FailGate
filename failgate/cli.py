@@ -6,7 +6,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Any
 
 import typer
 import uvicorn
@@ -1675,6 +1675,101 @@ def replay_fixtures(
         typer.echo(f"\n验收 {ok}/{len(results)}\n报告：{report_path}")
 
     asyncio.run(run())
+
+
+@replay_app.command("verify")
+def replay_verify(
+    repo: Annotated[str, typer.Argument(help="owner/name，例如 psf/black")],
+    source: Annotated[Path, typer.Option("--from", help="replay l2 的运行记录 JSON")],
+    kinds: Annotated[str, typer.Option(help="逗号分隔的变体")] = ",".join(
+        ("fix", "revert_code", "exam_skip", "conftest_skip", "unrelated")),
+    only: Annotated[str | None, typer.Option(help="逗号分隔的 issue 编号（调试用）")] = None,
+    resume: Annotated[
+        Path | None, typer.Option(help="接着一份没跑完的结果（.jsonl）继续，跳过已完成的")
+    ] = None,
+) -> None:
+    """ClaimVerify 正负例评测：上游真实修复当正例，程序构造的 4 种作弊当负例（ADR 0019）。
+
+    需要 Docker 和 GITHUB_TOKEN；不花 LLM 的钱。每个案例要建两个源码环境，几十秒到几分钟。
+    """
+    import httpx
+
+    from failgate.platforms.github_rest import GitHubRest
+    from failgate.replay import verify_eval as ve
+    from failgate.repro.l2 import TestReproducer
+    from failgate.repro.pypi import PyPIClient
+    from failgate.repro.source import fetch_github_tree
+    from failgate.verify.workbench import SandboxWorkbench
+
+    settings = Settings()
+    variants = [k.strip() for k in kinds.split(",") if k.strip()]
+    if bad := [k for k in variants if k not in ve.VARIANTS]:
+        raise typer.BadParameter(f"未知的变体：{bad}，可选 {ve.VARIANTS}")
+    run = json.loads(source.read_text(encoding="utf-8"))
+    cases = ve.load_cases(run)
+    if only:
+        wanted = {int(x) for x in only.split(",")}
+        cases = [c for c in cases if c.number in wanted]
+    started = datetime.now()
+    stem = resume.stem if resume else f"{repo.replace('/', '__')}__verify__{started:%Y%m%d-%H%M}"
+    jsonl = resume or Path("eval/runs") / f"{stem}.jsonl"
+    report_path = Path("eval/reports") / f"{stem}.md"
+    meta = {"repo": repo, "started": started.isoformat(timespec="seconds"),
+            "source": source.as_posix()}
+
+    async def run_all() -> None:
+        gh = GitHubRest(settings.github_token)
+        pypi = PyPIClient(settings.pypi_url)
+        sandbox = build_sandbox(settings)
+        tester = TestReproducer(sandbox, _env_cache(settings, sandbox), pypi,
+                                run_timeout_s=settings.sandbox_run_timeout_seconds)
+
+        async def retrying(make: Any) -> Any:
+            # 评测一跑几十分钟，GitHub 偶尔连不上不该让整个评测退出（实测遇到过 ConnectError）
+            for attempt in range(3):
+                try:
+                    return await make()
+                except httpx.TransportError:
+                    if attempt == 2:
+                        raise
+                    typer.echo(f"  网络错误，{5 * (attempt + 1)} 秒后重试", err=True)
+                    await asyncio.sleep(5 * (attempt + 1))
+
+        async def fetch(r: str, sha: str) -> Any:
+            return await retrying(lambda: fetch_github_tree(gh, r, sha))
+
+        async def compare(r: str, base: str, head: str) -> Any:
+            return await retrying(lambda: gh.compare_files(r, base, head))
+
+        results = ve.load_done(jsonl)
+        done = {(r["number"], r["kind"]) for r in results}
+        jsonl.parent.mkdir(parents=True, exist_ok=True)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            for case in cases:
+                trees: dict[str, Any] = {}
+                for kind in variants:
+                    if (case.number, kind) in done:
+                        continue
+                    typer.echo(f"#{case.number} {kind} …")
+                    res = await ve.run_case(
+                        repo, case, kind, fetch=fetch, compare=compare,
+                        bench_for=lambda f: SandboxWorkbench(f, tester), trees=trees,
+                    )
+                    results.append(res)
+                    with jsonl.open("a", encoding="utf-8") as fh:
+                        fh.write(json.dumps(res, ensure_ascii=False) + "\n")
+                    mark = "✅" if res["correct"] else "❌"
+                    typer.echo(f"  → {res['verdict']} {mark} {', '.join(res['reasons'])}"
+                               f" · {res['seconds']}s")
+                    report_path.write_text(ve.render(results, meta), encoding="utf-8")
+        finally:
+            await gh.aclose()
+            await pypi.aclose()
+        s = ve.summarize(results)
+        typer.echo(f"\n准确率 {s['correct']}/{s['n']}；报告：{report_path}")
+
+    asyncio.run(run_all())
 
 
 if __name__ == "__main__":

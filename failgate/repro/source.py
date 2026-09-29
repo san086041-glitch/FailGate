@@ -136,6 +136,30 @@ class SourceTree:
                     if m.name.count("/") >= 2 and m.name.startswith(f"{top}/")}
         return next((d for d in TEST_DIRS if d in dirs), TEST_DIRS[0])
 
+    def overlay(self, changes: Mapping[str, str | None], *, label: str) -> SourceTree:
+        """在这个源码包上改文件，得到一个新的源码包（离线评测构造负例用）。
+
+        changes：相对仓库根的路径 → 新内容（None 表示删除）。label 当作新包的"提交号"，
+        环境缓存按源码摘要区分，所以不会和原提交的环境混在一起。"""
+        top = self.top_dir
+        out = io.BytesIO()
+        with tarfile.open(fileobj=io.BytesIO(self.tarball), mode="r:gz") as src, \
+                tarfile.open(fileobj=out, mode="w:gz") as dst:
+            for m in src.getmembers():
+                rel = m.name[len(top) + 1:] if m.name.startswith(f"{top}/") else None
+                if rel is not None and rel in changes:
+                    continue
+                dst.addfile(m, src.extractfile(m) if m.isfile() else None)
+            for rel, content in changes.items():
+                if content is None:
+                    continue
+                data = content.encode("utf-8")
+                info = tarfile.TarInfo(f"{top}/{rel}")
+                info.size, info.mode = len(data), 0o644
+                dst.addfile(info, io.BytesIO(data))
+        return SourceTree(repo=self.repo, sha=label, committed_at=self.committed_at,
+                          tarball=out.getvalue())
+
     def requires_python(self) -> SpecifierSet | None:
         project = (self.pyproject() or {}).get("project")
         raw = project.get("requires-python") if isinstance(project, dict) else None

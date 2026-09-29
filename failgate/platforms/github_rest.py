@@ -144,6 +144,13 @@ class GitHubRest:
         r.raise_for_status()
         return r.text
 
+    async def compare_files(self, full_name: str, base: str, head: str) -> list[dict[str, Any]]:
+        """两个提交之间改动的文件（格式同 PR 文件接口）；GitHub 最多返回 300 个。"""
+        r = await self._http.get(f"/repos/{full_name}/compare/{base}...{head}")
+        r.raise_for_status()
+        files: list[dict[str, Any]] = r.json().get("files") or []
+        return files
+
     async def merge_base(self, full_name: str, base: str, head: str) -> str:
         """两个提交的合并基点：PR 的 diff 就是相对它算的。"""
         r = await self._http.get(f"/repos/{full_name}/compare/{base}...{head}")
