@@ -87,6 +87,14 @@ _TEXT: dict[str, dict[str, str]] = {
         "s.parse_error": "源码解析失败",
         "s.no_mutants": "改动的行上没有可以变异的代码",
         "s.setup": "带 coverage 的环境搭不起来",
+        # 隐藏考卷
+        "h.ok": "⑤ 隐藏考卷（sha256 `{sha}`）：{total} 道全部通过",
+        "h.suspicious": ("⑤ 隐藏考卷（sha256 `{sha}`）：**{failed}/{total} 道没有通过**——"
+                         "通过了公开考卷，但同一个 bug 换个输入就不行，疑似只迎合了公开考卷"),
+        "h.hint": ("  隐藏考卷是封存考卷时只根据 issue 出的变体题，题目不公开；维护者可以用 "
+                   "`failgate hidden show` 在本地查看。它可能出错，所以只作提示，不改变结论"),
+        "h.na": "⑤ 隐藏考卷：没有跑成（{reason}）",
+        "h.infra": "超时或内存超限", "h.invalid": "跑不起来",
     },
     "en": {
         "title": "🛡️ **FailGate verification: PR #{pr}**",
@@ -168,6 +176,16 @@ _TEXT: dict[str, dict[str, str]] = {
         "s.parse_error": "the source could not be parsed",
         "s.no_mutants": "no mutable code on the changed lines",
         "s.setup": "the coverage environment could not be built",
+        "h.ok": "⑤ Hidden tests (sha256 `{sha}`): all {total} passed",
+        "h.suspicious": ("⑤ Hidden tests (sha256 `{sha}`): **{failed}/{total} failed**: the "
+                         "PR passes the public acceptance test but not the same bug with other "
+                         "inputs, so it may only fit the public test"),
+        "h.hint": ("  Hidden tests are variants written from the issue alone when the acceptance "
+                   "test was sealed; they are not published (maintainers can run "
+                   "`failgate hidden show` locally). They can be wrong, so this is only a hint "
+                   "and does not change the verdict"),
+        "h.na": "⑤ Hidden tests: could not run ({reason})",
+        "h.infra": "timeout or out of memory", "h.invalid": "could not run",
     },
 }
 
@@ -248,6 +266,16 @@ def _claim_lines(c: ClaimResult, v: Verification, t: dict[str, str], lang: str) 
                 f"`{n}`" for n in c.layer3.new_failures[:10]))
     if c.strength is not None:
         lines += _strength_lines(c.strength, t)
+    if c.hidden is not None:
+        h = c.hidden
+        sha = (h.test_sha256 or "")[:12]
+        if h.status != "ok":
+            lines.append("- " + t["h.na"].format(reason=t.get(f"h.{h.reason}", h.reason)))
+        elif h.suspicious:
+            lines += ["- " + t["h.suspicious"].format(sha=sha, failed=h.failed, total=h.total),
+                      t["h.hint"]]
+        else:
+            lines.append("- " + t["h.ok"].format(sha=sha, total=h.total))
     if any(r == "tamper:exam_modified" for r in c.reasons):
         lines.append(t["reseal_hint"])
     return lines

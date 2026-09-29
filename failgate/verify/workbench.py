@@ -34,6 +34,7 @@ from failgate.repro.sandbox import ExecResult, SandboxError
 from failgate.repro.source import SourceError, SourceTree, fetch_github_tree
 
 from .engine import Exam, PullRequest, SetupFailed
+from .hidden import is_hidden_path
 from .strength import COVERAGE_PREFIX
 from .tamper import PullFile
 
@@ -101,10 +102,16 @@ class SandboxWorkbench:
         src: SourcePrepared = prepared.source
         ws = await self.tester.open_workspace(src, f"verify-{src.env.key[:8]}")
         try:
-            await self.tester.write_test(ws, src, exam.code)
+            # 写到这份考卷自己的路径（隐藏考卷和公开考卷路径不同）
+            await self.tester.write_test(ws, dataclasses.replace(src, test_path=exam.test_path),
+                                         exam.code)
+            argv = pytest_argv(exam.test_path)
+            if is_hidden_path(exam.test_path):
+                # 隐藏考卷有好几道题，每道都要跑到；公开考卷保持 -x（和封存时的命令一致）
+                argv = [a for a in argv if a != "-x"]
             return await self.tester.sandbox.run(
-                src.env.image, ws, [*pytest_argv(exam.test_path), "-rA"],
-                timeout_s=EXAM_TIMEOUT_S, allowed=RUN_PREFIXES,
+                src.env.image, ws, [*argv, "-rA"], timeout_s=EXAM_TIMEOUT_S,
+                allowed=RUN_PREFIXES,
             )
         finally:
             await self.tester.sandbox.remove_workspace(ws)

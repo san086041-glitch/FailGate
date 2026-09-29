@@ -122,6 +122,12 @@ class GitHubRest:
         data: dict[str, Any] = body.get("data") or {}
         return data
 
+    async def issue(self, full_name: str, number: int) -> dict[str, Any]:
+        """issue 的标题和正文（出隐藏题时用）。"""
+        r = await self._http.get(f"/repos/{full_name}/issues/{number}")
+        r.raise_for_status()
+        return dict(r.json())
+
     async def pull(self, full_name: str, number: int) -> dict[str, Any]:
         """PR 的信息：title、body、base.sha、head.sha、head.repo.full_name ……"""
         r = await self._http.get(f"/repos/{full_name}/pulls/{number}")

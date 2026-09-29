@@ -28,6 +28,7 @@ from failgate.repro.judge import same_failure
 from failgate.repro.l2 import PYTEST_INVALID
 from failgate.repro.sandbox import ExecResult
 
+from .hidden import HiddenExam, HiddenResult, run_hidden
 from .receipt import receipt_digest
 from .related import failed_nodes, outcomes, select_related_tests
 from .strength import MAX_MUTANTS, StrengthEvaluator, StrengthReport, is_source_file
@@ -60,6 +61,7 @@ class Exam(BaseModel):
     version: str | None = None  # 伪版本号：base 和 head 用同一个，只让代码这一个变量变化
     signature: TraceSignature | None = None
     receipt: dict[str, Any] = {}  # 原始收据：重新封存时在它的基础上生成新收据
+    hidden: HiddenExam | None = None  # 隐藏考卷（ADR 0021），没有就不跑
 
 
 class PullRequest(BaseModel):
@@ -135,6 +137,8 @@ class ClaimResult(BaseModel):
     layer3: Layer3 | None = None
     # 考卷强度（W5）：只在第一层通过、没有高危篡改时计算；不影响 verdict
     strength: StrengthReport | None = None
+    # 隐藏考卷（W5 第二步）：同样只在第一层通过时跑；只有题数和哈希，不含题目
+    hidden: HiddenResult | None = None
 
 
 class Verification(BaseModel):
@@ -293,14 +297,17 @@ class ClaimVerifier:
             layer1 = await self._layer1(base_env, head_env, exam)
             layer3 = await self._layer3(pr, base_env, head_env, exam)
         verdict, reasons = combine(layer1, layer2, layer3)
-        strength = None
-        if self.strength is not None and layer1.status == "pass" and not layer2.high:
-            strength = await self._strength(pr, base_env, head_env, exam)
+        strength = hidden = None
+        if layer1.status == "pass" and not layer2.high:
+            if exam.hidden is not None:
+                hidden = await run_hidden(self.bench, head_env, exam, exam.hidden)
+            if self.strength is not None:
+                strength = await self._strength(pr, base_env, head_env, exam)
         return ClaimResult(
             issue=issue, verdict=verdict, reasons=reasons, evidence_id=exam.evidence_id,
             exam_receipt_sha256=exam.receipt_sha256, test_path=exam.test_path,
             test_sha256=exam.test_sha256, layer1=layer1, layer2=layer2, layer3=layer3,
-            strength=strength,
+            strength=strength, hidden=hidden,
         )
 
     async def _strength(self, pr: PullRequest, base_env: Any, head_env: Any, exam: Exam

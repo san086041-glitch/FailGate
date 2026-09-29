@@ -7,10 +7,11 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from failgate.db import Case, Evidence, Repo
+from failgate.db import Case, Evidence, HiddenExamRecord, Repo
 from failgate.index.trace import TraceSignature
 
 from .engine import Exam
+from .hidden import HiddenExam
 from .receipt import check_receipt
 
 MIN_PREFIX = 6
@@ -66,13 +67,33 @@ async def latest_exam(s: AsyncSession, repo: str, issue: int) -> Exam | None:
     ev, import_name = row
     r = ev.receipt
     sig = r.get("signature")
-    return Exam(
+    hidden = await latest_hidden(s, ev.id)
+    return Exam(hidden=hidden,
         evidence_id=ev.id, issue=issue, test_path=ev.test_path, code=ev.test_code,
         test_sha256=ev.test_sha256, receipt_sha256=ev.receipt_sha256, package=r["package"],
         module=import_name or r["package"].replace("-", "_").lower(), python=ev.python,
         pytest=ev.pytest, version=r.get("version"),
         signature=TraceSignature.model_validate(sig) if sig else None, receipt=r,
     )
+
+
+async def latest_hidden(s: AsyncSession, evidence_id: str) -> HiddenExam | None:
+    """这份公开考卷最新的隐藏考卷（ADR 0021）；没有就是 None。"""
+    row = (await s.execute(
+        select(HiddenExamRecord).where(HiddenExamRecord.evidence_id == evidence_id)
+        .order_by(HiddenExamRecord.created_at.desc()).limit(1)
+    )).scalar_one_or_none()
+    if row is None:
+        return None
+    return HiddenExam(hidden_id=row.id, evidence_id=row.evidence_id, test_path=row.test_path,
+                      code=row.test_code, test_sha256=row.test_sha256, tests=list(row.tests),
+                      receipt=row.receipt)
+
+
+def hidden_row(h: HiddenExam) -> HiddenExamRecord:
+    return HiddenExamRecord(id=h.hidden_id, evidence_id=h.evidence_id, test_path=h.test_path,
+                            test_code=h.code, test_sha256=h.test_sha256, tests=h.tests,
+                            receipt=h.receipt, receipt_sha256=h.receipt["receipt_sha256"])
 
 
 def audit(ref: EvidenceRef) -> list[str]:

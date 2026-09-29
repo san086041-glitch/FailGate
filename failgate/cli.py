@@ -936,6 +936,120 @@ def verify_pr(
     raise typer.Exit(asyncio.run(run()))
 
 
+hidden_app = typer.Typer(help="隐藏考卷：只根据 issue 出的变体题，封存不公开（ADR 0021）",
+                         no_args_is_help=True)
+app.add_typer(hidden_app, name="hidden")
+
+
+def _issue_target(target: str) -> tuple[str, int]:
+    m = re.fullmatch(r"([\w.-]+/[\w.-]+)#(\d+)", target)
+    if m is None:
+        raise typer.BadParameter("要写成 owner/name#issue编号")
+    return m.group(1), int(m.group(2))
+
+
+@hidden_app.command("seal")
+def hidden_seal(
+    target: Annotated[str, typer.Argument(help="owner/name#issue 编号（要已经有封存的 L2 考卷）")],
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库 URL，默认读配置")] = None,
+) -> None:
+    """给 #N 当前的考卷出隐藏题：LLM 只看 issue 和公开考卷出题，在 issue 时的代码上挑出按预期
+    失败的题，封存进 hidden_exams 表。需要 Docker、GITHUB_TOKEN 和 LLM；约 $0.001–0.01。"""
+    from failgate.app import build_llm
+    from failgate.platforms.github_rest import GitHubRest
+    from failgate.repro.l2 import TestReproducer
+    from failgate.repro.pypi import PyPIClient
+    from failgate.verify.hidden import HiddenWriter, seal_hidden
+    from failgate.verify.store import hidden_row, latest_exam
+    from failgate.verify.workbench import SandboxWorkbench
+
+    repo, number = _issue_target(target)
+    settings = Settings()
+
+    async def run() -> int:
+        llm = build_llm(settings)
+        if llm is None:
+            typer.echo("没有配置 LLM（LLM_API_KEY）", err=True)
+            return 2
+        gh = GitHubRest(settings.github_token)
+        pypi = PyPIClient(settings.pypi_url)
+        db = Database(db_url or settings.failgate_db_url)
+        await db.create_all()
+        try:
+            async with db.session() as s:
+                exam = await latest_exam(s, repo, number)
+            if exam is None:
+                typer.echo(f"{repo}#{number} 没有封存的 L2 考卷", err=True)
+                return 2
+            source_sha = exam.receipt.get("source_sha")
+            if not source_sha:
+                typer.echo("考卷收据里没有 source_sha（不是 source 模式的 L2），出不了隐藏题",
+                           err=True)
+                return 2
+            issue = await gh.issue(repo, number)
+            sandbox = build_sandbox(settings)
+            tester = TestReproducer(sandbox, _env_cache(settings, sandbox), pypi,
+                                    run_timeout_s=settings.sandbox_run_timeout_seconds)
+            writer = HiddenWriter(llm, settings.llm_model_large)
+            out = await seal_hidden(
+                SandboxWorkbench.for_github(gh, tester), writer, exam, repo=repo,
+                title=issue.get("title") or "", body=issue.get("body") or "",
+                source_repo=exam.receipt.get("source_repo"), source_sha=source_sha,
+            )
+            typer.echo(f"归纳的规律：{out.rule}")
+            typer.echo(f"出题 {len(out.generated)} 道；丢掉 {len(out.dropped)} 道"
+                       + (f"：{out.dropped}" if out.dropped else "") + f"；${out.cost_usd:.4f}")
+            if out.hidden is None:
+                typer.echo(f"❌ 没有封存（{out.reason}）")
+                return 1
+            async with db.session() as s, s.begin():
+                s.add(hidden_row(out.hidden))
+            typer.echo(f"✅ 封存 {len(out.hidden.tests)} 道隐藏题：{out.hidden.test_path}，"
+                       f"sha256 {out.hidden.test_sha256[:12]}（只公布这个哈希，不公布题目）")
+            return 0
+        finally:
+            await db.dispose()
+            await gh.aclose()
+            await pypi.aclose()
+            await llm.aclose()
+
+    raise typer.Exit(asyncio.run(run()))
+
+
+@hidden_app.command("show")
+def hidden_show(
+    target: Annotated[str, typer.Argument(help="owner/name#issue 编号")],
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库 URL，默认读配置")] = None,
+) -> None:
+    """（维护者本地查看）打印 #N 当前考卷的隐藏题和收据，并核对哈希。不要贴到公开的地方。"""
+    from failgate.verify.receipt import check_receipt
+    from failgate.verify.store import latest_exam
+
+    repo, number = _issue_target(target)
+    settings = Settings()
+
+    async def run() -> int:
+        db = Database(db_url or settings.failgate_db_url)
+        try:
+            async with db.session() as s:
+                exam = await latest_exam(s, repo, number)
+        finally:
+            await db.dispose()
+        if exam is None or exam.hidden is None:
+            typer.echo(f"{repo}#{number} 没有隐藏考卷", err=True)
+            return 2
+        h = exam.hidden
+        typer.echo(json.dumps(h.receipt, ensure_ascii=False, indent=2, sort_keys=True))
+        typer.echo(f"\n# {h.test_path}（{len(h.tests)} 道）\n")
+        typer.echo(h.code)
+        problems = check_receipt(h.receipt, h.code)
+        for p in problems:
+            typer.echo(f"❌ {p}")
+        return 1 if problems else 0
+
+    raise typer.Exit(asyncio.run(run()))
+
+
 sandbox_app = typer.Typer(help="复现沙箱：自检、清理", no_args_is_help=True)
 app.add_typer(sandbox_app, name="sandbox")
 
@@ -1781,6 +1895,81 @@ def replay_verify(
             await pypi.aclose()
         s = ve.summarize(results)
         typer.echo(f"\n准确率 {s['correct']}/{s['n']}；报告：{report_path}")
+
+    asyncio.run(run_all())
+
+
+@replay_app.command("hidden")
+def replay_hidden(
+    repo: Annotated[str, typer.Argument(help="owner/name")],
+    source: Annotated[Path, typer.Option("--from", help="replay l2 的运行记录（JSON）")],
+    db_url: Annotated[str, typer.Option("--db", help="回放语料库（取 issue 正文）")] = REPLAY_DB,
+    only: Annotated[str | None, typer.Option(help="逗号分隔的 issue 编号（调试用）")] = None,
+) -> None:
+    """隐藏考卷误报评测（ADR 0021）：在修复的父提交上出题挑题，再在上游修复上跑。
+
+    需要 Docker、GITHUB_TOKEN 和 LLM；每个案例一次出题（约 $0.01）和三次环境。"""
+    from failgate.app import build_llm
+    from failgate.platforms.github_rest import GitHubRest
+    from failgate.replay import hidden_eval as he
+    from failgate.replay import verify_eval as ve
+    from failgate.repro.l2 import TestReproducer
+    from failgate.repro.pypi import PyPIClient
+    from failgate.verify.hidden import HiddenWriter
+    from failgate.verify.workbench import SandboxWorkbench
+
+    settings = Settings()
+    cases = ve.load_cases(json.loads(source.read_text(encoding="utf-8")))
+    if only:
+        wanted = {int(x) for x in only.split(",")}
+        cases = [c for c in cases if c.number in wanted]
+    started = datetime.now()
+    stem = f"{repo.replace('/', '__')}__hidden__{started:%Y%m%d-%H%M}"
+    jsonl = Path("eval/runs") / f"{stem}.jsonl"
+    report_path = Path("eval/reports") / f"{stem}.md"
+    meta = {"repo": repo, "started": started.isoformat(timespec="seconds"),
+            "source": source.as_posix(), "model": settings.llm_model_large}
+
+    async def run_all() -> None:
+        llm = build_llm(settings)
+        if llm is None:
+            raise typer.BadParameter("没有配置 LLM（LLM_API_KEY）")
+        docs = {d.number: d for d in await _load_issue_docs(db_url, repo,
+                                                             [c.number for c in cases])}
+        gh = GitHubRest(settings.github_token)
+        pypi = PyPIClient(settings.pypi_url)
+        sandbox = build_sandbox(settings)
+        tester = TestReproducer(sandbox, _env_cache(settings, sandbox), pypi,
+                                run_timeout_s=settings.sandbox_run_timeout_seconds)
+        bench = SandboxWorkbench.for_github(gh, tester)
+        writer = HiddenWriter(llm, settings.llm_model_large)
+        rows: list[dict[str, Any]] = []
+        jsonl.parent.mkdir(parents=True, exist_ok=True)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            for case in cases:
+                doc = docs.get(case.number)
+                if doc is None:
+                    typer.echo(f"#{case.number}：回放库里没有这个 issue，跳过", err=True)
+                    continue
+                typer.echo(f"#{case.number} …")
+                row = await he.run_case(repo, case, title=doc.title, body=doc.body,
+                                        bench=bench, writer=writer)
+                rows.append(row)
+                with jsonl.open("a", encoding="utf-8") as fh:
+                    fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+                on_fix = row.get("on_fix") or {}
+                typer.echo(f"  → 出题 {row['generated']}、留下 {row['kept']}"
+                           + (f"；上游修复 {on_fix.get('passed')}/{on_fix.get('total')} 通过"
+                              if on_fix else f"（{row['reason']}）")
+                           + f" · ${row['cost_usd']} · {row['seconds']}s")
+                report_path.write_text(he.render(rows, meta), encoding="utf-8")
+        finally:
+            await gh.aclose()
+            await pypi.aclose()
+            await llm.aclose()
+        s = he.summarize(rows)
+        typer.echo(f"\n误报 {s['false_alarm']}/{s['ran']}；报告：{report_path}")
 
     asyncio.run(run_all())
 

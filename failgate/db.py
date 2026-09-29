@@ -222,7 +222,26 @@ class VerificationRecord(Base):
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 
+class HiddenExamRecord(Base):
+    """隐藏考卷（ADR 0021）：只根据 issue 出的变体题，封存但不公开。只加不改。
+
+    一份公开考卷（evidence）可以有多份隐藏考卷（重新出题），核验时用最新的一份。"""
+
+    __tablename__ = "hidden_exams"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)  # = 收据的 hidden_id
+    evidence_id: Mapped[str] = mapped_column(ForeignKey("evidence.id"), index=True)
+    test_path: Mapped[str] = mapped_column(String(512))
+    test_code: Mapped[str] = mapped_column(Text)
+    test_sha256: Mapped[str] = mapped_column(String(64))
+    tests: Mapped[list[str]] = mapped_column(JSON)
+    receipt: Mapped[dict[str, Any]] = mapped_column(JSON)
+    receipt_sha256: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
 SEALED_MUTABLE = frozenset({"superseded_by"})
+SEALED_TYPES = (Evidence, VerificationRecord, HiddenExamRecord)
 
 
 class SealedEvidenceError(RuntimeError):
@@ -236,7 +255,7 @@ def _guard_sealed_evidence(session: Session, _ctx: Any, _instances: Any) -> None
     在 ORM 这一层拦，挡住的是"代码里不小心改了"；直接写 SQL 挡不住，那要靠数据库权限。
     """
     for obj in session.dirty:
-        if not isinstance(obj, Evidence | VerificationRecord):
+        if not isinstance(obj, SEALED_TYPES):
             continue
         state: InstanceState[Any] = sa_inspect(obj)
         changed = {a.key for a in state.attrs if a.history.has_changes()}
@@ -246,7 +265,7 @@ def _guard_sealed_evidence(session: Session, _ctx: Any, _instances: Any) -> None
                 f"{obj.__tablename__} {obj.id} 已封存，不能修改：{sorted(changed)}"
             )
     for obj in session.deleted:
-        if isinstance(obj, Evidence | VerificationRecord):
+        if isinstance(obj, SEALED_TYPES):
             raise SealedEvidenceError(f"{obj.__tablename__} {obj.id} 已封存，不能删除")
 
 
