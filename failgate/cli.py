@@ -74,7 +74,7 @@ def worker(
 
 @app.command("db-init")
 def db_init() -> None:
-    """创建数据库表。"""
+    """创建数据库表（PostgreSQL 上是升级到最新迁移；等同 `failgate db upgrade`）。"""
 
     async def run() -> None:
         db = Database(Settings().failgate_db_url)
@@ -83,6 +83,62 @@ def db_init() -> None:
 
     asyncio.run(run())
     typer.echo("数据库已初始化")
+
+
+db_app = typer.Typer(help="数据库：迁移、查看版本、搬库（ADR 0024）", no_args_is_help=True)
+app.add_typer(db_app, name="db")
+
+
+@db_app.command("upgrade")
+def db_upgrade(
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库连接串，默认用配置")] = None,
+) -> None:
+    """升级到最新迁移（PostgreSQL）；SQLite 上是建表 + 补列。服务启动时也会自动做。"""
+    from failgate.migrations import current, head
+
+    async def run() -> str | None:
+        db = Database(db_url or Settings().failgate_db_url)
+        try:
+            await db.create_all()
+            if db.is_sqlite:
+                return None
+            async with db.engine.connect() as conn:
+                return await conn.run_sync(current)
+        finally:
+            await db.dispose()
+
+    rev = asyncio.run(run())
+    typer.echo("SQLite：已建表并补齐列" if rev is None else f"已升级到 {rev}（最新 {head()}）")
+
+
+@db_app.command("current")
+def db_current(
+    db_url: Annotated[str | None, typer.Option("--db", help="数据库连接串，默认用配置")] = None,
+) -> None:
+    """查看库的迁移版本和代码里的最新版本。"""
+    from failgate.migrations import current, head
+
+    async def run() -> str | None:
+        db = Database(db_url or Settings().failgate_db_url)
+        try:
+            async with db.engine.connect() as conn:
+                return await conn.run_sync(current)
+        finally:
+            await db.dispose()
+
+    typer.echo(f"库：{asyncio.run(run()) or '（没有迁移记录）'}；代码最新：{head()}")
+
+
+@db_app.command("copy")
+def db_copy(
+    src: Annotated[str, typer.Option("--from", help="源库连接串（例如本机的 SQLite）")],
+    dst: Annotated[str, typer.Option("--to", help="目标库（必须是空库，会先升级）")],
+) -> None:
+    """把整个库复制到另一个空库（例如 SQLite → PostgreSQL），不经过 ORM、原样搬运。"""
+    from failgate.db_copy import copy_database
+
+    counts = asyncio.run(copy_database(src, dst, echo=typer.echo))
+    typer.echo(f"完成：{len(counts)} 张表，共 {sum(counts.values())} 行")
 
 
 @app.command()

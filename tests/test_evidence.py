@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 
 import pytest
 from conftest import REPO
-from sqlalchemy import select
+from sqlalchemy import select, update
 from test_repro_fixtures import TEST_CODE, l2_report, run_source_issue
 from test_repro_pipeline import (
     FakeRunner,
@@ -201,8 +201,9 @@ async def test_audit_catches_a_row_edited_behind_the_orm(tmp_path):
         db = h.failgate.db
         ev = await _only_evidence(db)
         async with db.engine.begin() as conn:  # 绕过 ORM 直接改库：守卫挡不住，核对能查出来
-            await conn.exec_driver_sql(
-                "UPDATE evidence SET test_code = ? WHERE id = ?", ("def test_x(): pass\n", ev.id)
+            table = Evidence.__table__
+            await conn.execute(
+                update(table).where(table.c.id == ev.id).values(test_code="def test_x(): pass\n")
             )
         async with db.session() as s:
             ref = await find_evidence(s, ev.id)

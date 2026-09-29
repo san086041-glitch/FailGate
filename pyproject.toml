@@ -23,6 +23,9 @@ dependencies = [
   "cosmic-ray==8.7.0",
   # 队列与 worker（W6，ADR 0023）：arq 带来 redis-py，Case 锁用 redis-py 的 Lock
   "arq==0.26.3",
+  # PostgreSQL 驱动与迁移（ADR 0024）；开发和测试仍可用 SQLite
+  "asyncpg==0.30.0",
+  "alembic==1.16.5",
 ]
 
 [project.optional-dependencies]
@@ -46,13 +49,14 @@ testpaths = ["tests"]
 markers = [
   "docker: 真的起容器的沙箱集成测试（没有 Docker 时自动跳过）",
   "redis: 连真实 Redis 的队列集成测试（连不上时自动跳过）",
+  "postgres: 连真实 PostgreSQL 的迁移测试（连不上时自动跳过）",
 ]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 # fixture 仓库是"待复现的外部项目"，bug 是故意的，风格也按 3.9 写，不参与本项目的 lint
-extend-exclude = ["fixtures/repos"]
+extend-exclude = ["fixtures/repos", "failgate/migrations/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC"]

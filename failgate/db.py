@@ -1,4 +1,4 @@
-"""持久化模型。M0 用 SQLite，表结构与技术方案第 14 节一致，之后可平移到 PostgreSQL。"""
+"""持久化模型。开发和测试用 SQLite，部署用 PostgreSQL（ADR 0024，Alembic 迁移）。"""
 
 import logging
 from datetime import UTC, datetime
@@ -8,9 +8,13 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     Connection,
+    DateTime,
+    Dialect,
+    Float,
     ForeignKey,
     String,
     Text,
+    TypeDecorator,
     UniqueConstraint,
     event,
 )
@@ -25,8 +29,26 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+class UTCDateTime(TypeDecorator[datetime]):
+    """库里一律存"不带时区的 UTC"，读出来也是不带时区的 UTC。
+
+    代码里写入的时间都带时区（datetime.now(UTC)）。SQLite 会悄悄丢掉时区；
+    asyncpg 往 TIMESTAMP 列写带时区的值会直接报错。在这里统一换算，两种库行为一致，
+    查询条件里传带时区或不带时区的值都行（不带时区的按 UTC 理解）。
+    """
+
+    impl = DateTime(timezone=False)
+    cache_ok = True
+
+    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:
+        if value is not None and value.tzinfo is not None:
+            return value.astimezone(UTC).replace(tzinfo=None)
+        return value
+
+
 class Base(DeclarativeBase):
-    pass
+    # float 显式映射成 Float：SQLAlchemy 2.1 起默认是 Double，和 2.0 下生成的迁移对不上
+    type_annotation_map = {datetime: UTCDateTime, float: Float}
 
 
 class Repo(Base):
@@ -57,7 +79,7 @@ class Delivery(Base):
     delivery_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     platform: Mapped[str] = mapped_column(String(32))
     event: Mapped[str] = mapped_column(String(64))
-    received_at: Mapped[datetime] = mapped_column(default=_now)
+    received_at: Mapped[datetime] = mapped_column(default=_now, index=True)
     # 排队延迟测量（W6）：worker 开始 / 处理完（含写回平台）的时间，和这次事件落到的 Case
     started_at: Mapped[datetime | None] = mapped_column(default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
@@ -88,7 +110,7 @@ class TransitionLog(Base):
     __tablename__ = "transitions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"))
+    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"), index=True)
     from_state: Mapped[str] = mapped_column(String(32))
     to_state: Mapped[str] = mapped_column(String(32))
     event: Mapped[str] = mapped_column(String(64))
@@ -145,7 +167,7 @@ class Run(Base):
     __tablename__ = "runs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"))
+    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"), index=True)
     skill: Mapped[str] = mapped_column(String(32))
     skill_version: Mapped[str] = mapped_column(String(16))
     model: Mapped[str | None] = mapped_column(String(64), default=None)
@@ -168,13 +190,13 @@ class Effect(Base):
     __tablename__ = "effects"
 
     effect_key: Mapped[str] = mapped_column(String(64), primary_key=True)
-    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"))
+    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"), index=True)
     action: Mapped[str] = mapped_column(String(32))
     payload: Mapped[dict[str, Any]] = mapped_column(JSON)
     mode: Mapped[str] = mapped_column(String(16))
     # shadowed：影子模式只记录 · pending：等待执行器执行 · executed：已执行
     # failed：多次失败或不可重试的错误 · blocked：发出前被拦下（例如疑似含密钥）· skipped
-    status: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(16), index=True)
     attempts: Mapped[int] = mapped_column(default=0, server_default="0")
     error: Mapped[str | None] = mapped_column(Text, default=None)
     created_at: Mapped[datetime] = mapped_column(default=_now)
@@ -310,10 +332,25 @@ class Database:
         self.engine = create_async_engine(url)
         self.sessionmaker = async_sessionmaker(self.engine, expire_on_commit=False)
 
+    @property
+    def is_sqlite(self) -> bool:
+        return self.engine.dialect.name == "sqlite"
+
     async def create_all(self) -> None:
+        """准备好表结构。所有入口（serve、worker、CLI）启动时都调用它。
+
+        - SQLite（开发、测试、回放库）：create_all + 补可空列，和以前一样；
+        - 其他（PostgreSQL）：Alembic 升级到最新版本（ADR 0024），多个进程同时启动时
+          用 advisory lock 串行。
+        """
         async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-            await conn.run_sync(add_missing_columns)
+            if self.is_sqlite:
+                await conn.run_sync(Base.metadata.create_all)
+                await conn.run_sync(add_missing_columns)
+            else:
+                from failgate.migrations import upgrade_to_head
+
+                await conn.run_sync(upgrade_to_head)
 
     def session(self) -> AsyncSession:
         return self.sessionmaker()

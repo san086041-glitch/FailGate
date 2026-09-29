@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
@@ -41,9 +42,15 @@ class Harness:
         )
 
 
+# 设了 TEST_DATABASE_URL（postgresql+asyncpg://…）时，走 harness 的测试改用这个库（ADR 0024）：
+# CI 里有一个专门的任务用 PostgreSQL 把整套测试再跑一遍。每个测试开始前清空整个 schema
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "")
+
+
 def make_settings(tmp_path, **overrides: Any) -> Settings:
     values: dict[str, Any] = {
-        "failgate_db_url": f"sqlite+aiosqlite:///{(tmp_path / 'failgate.db').as_posix()}",
+        "failgate_db_url": TEST_DATABASE_URL
+        or f"sqlite+aiosqlite:///{(tmp_path / 'failgate.db').as_posix()}",
         "github_webhook_secret": SECRET,
         "default_repo_mode": "shadow",
         "llm_api_key": "test-key",
@@ -71,11 +78,24 @@ def _public_rest(request: httpx.Request) -> httpx.Response:
     return httpx.Response(404, json={"message": "not stubbed"})
 
 
+async def reset_postgres(url: str) -> None:
+    from sqlalchemy import text
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    engine = create_async_engine(url)
+    async with engine.begin() as conn:
+        await conn.execute(text("DROP SCHEMA public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
+    await engine.dispose()
+
+
 async def _harness(
     settings: Settings, github_app: Any = None, repro_runner: Any = None,
     verify_runner: Any = None,
 ) -> AsyncIterator[Harness]:
     llm = FakeLLM()
+    if settings.failgate_db_url.startswith("postgresql"):
+        await reset_postgres(settings.failgate_db_url)
     PUBLIC_COMMENTS.clear()
     GONE_ISSUES.clear()
     app = create_app(
