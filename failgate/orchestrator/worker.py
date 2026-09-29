@@ -1,7 +1,8 @@
-"""事件队列与 worker。
+"""进程内的队列后端（QUEUE_BACKEND=local，默认；测试也用它）。
 
-M0/M1 用进程内 asyncio.Queue：进程重启会丢失未处理的事件（deliveries 表里仍有记录）。
-之后换成 Redis 队列（arq），并加上 Case 级分布式锁。
+两个 asyncio.Queue：events（并发 EVENTS_CONCURRENCY）和 sandbox（并发 SANDBOX_CONCURRENCY），
+调度逻辑在 dispatch.Dispatcher。进程重启会丢掉还没处理的事件（deliveries 表里仍有记录）
+和排队中的沙箱任务；要持久化和多进程部署用 Redis 后端（redis_queue.RedisQueues）。
 """
 
 from __future__ import annotations
@@ -9,72 +10,70 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from failgate.db import Database
-from failgate.ingress.dedupe import mark_delivery, now
 from failgate.platforms.base import DomainEvent
-from failgate.policy.executor import EffectExecutor
 
-from .machine import CaseMachine
-from .pipeline import Pipeline
+from .dispatch import Dispatcher, LocalCaseLocks
 
 log = logging.getLogger(__name__)
 
-EventQueue = asyncio.Queue[DomainEvent]
-
 
 class Worker:
-    def __init__(
-        self,
-        queue: EventQueue,
-        machine: CaseMachine,
-        pipeline: Pipeline | None = None,
-        executor: EffectExecutor | None = None,
-        db: Database | None = None,
-    ) -> None:
-        self.queue = queue
-        self.machine = machine
-        self.pipeline = pipeline
-        self.executor = executor
-        # 给了 db 就在 deliveries 表上记开始 / 结束时间（W6 排队延迟测量）
-        self.db = db
+    def __init__(self, *, events_concurrency: int = 4, sandbox_concurrency: int = 1) -> None:
+        self.events: asyncio.Queue[DomainEvent] = asyncio.Queue()
+        self.sandbox: asyncio.Queue[tuple[int, int]] = asyncio.Queue()
+        self.events_concurrency = max(1, events_concurrency)
+        self.sandbox_concurrency = max(1, sandbox_concurrency)
+        self.locks = LocalCaseLocks()
+        self.dispatcher: Dispatcher | None = None
+
+    def bind(self, dispatcher: Dispatcher) -> None:
+        self.dispatcher = dispatcher
+
+    async def enqueue_event(self, event: DomainEvent) -> None:
+        await self.events.put(event)
+
+    async def enqueue_sandbox(self, case_id: int, version: int) -> None:
+        await self.sandbox.put((case_id, version))
 
     async def run_forever(self) -> None:
+        loops = [self._events_loop() for _ in range(self.events_concurrency)]
+        loops += [self._sandbox_loop() for _ in range(self.sandbox_concurrency)]
+        await asyncio.gather(*loops)
+
+    async def _events_loop(self) -> None:
+        assert self.dispatcher is not None
         while True:
-            event = await self.queue.get()
-            await self._process(event)
+            event = await self.events.get()
+            try:
+                await self.dispatcher.handle_event(event)
+            finally:
+                self.events.task_done()
+
+    async def _sandbox_loop(self) -> None:
+        assert self.dispatcher is not None
+        while True:
+            case_id, version = await self.sandbox.get()
+            try:
+                await self.dispatcher.run_sandbox(case_id, version)
+            finally:
+                self.sandbox.task_done()
 
     async def drain(self) -> int:
-        """处理完队列里当前所有事件，返回处理条数（测试和 CLI 调试用）。"""
+        """按顺序处理完两个队列里当前（以及处理中新产生）的全部任务，返回处理的事件数。
+
+        测试和 CLI 调试用：不并发，结果确定。
+        """
+        assert self.dispatcher is not None
         n = 0
-        while not self.queue.empty():
-            await self._process(self.queue.get_nowait())
-            n += 1
+        while not (self.events.empty() and self.sandbox.empty()):
+            while not self.events.empty():
+                await self.dispatcher.handle_event(self.events.get_nowait())
+                self.events.task_done()
+                n += 1
+            while not self.sandbox.empty():
+                await self.dispatcher.run_sandbox(*self.sandbox.get_nowait())
+                self.sandbox.task_done()
         return n
 
-    async def _process(self, event: DomainEvent) -> None:
-        case_id: int | None = None
-        await self._mark(event, started_at=now())
-        try:
-            outcome = await self.machine.handle(event)
-            if outcome is None:
-                return
-            case_id = outcome.case_id
-            if self.pipeline is not None:
-                await self.pipeline.advance(outcome.case_id)
-            # 本轮各阶段提出的写操作（打标签、汇总评论）在这里统一发出
-            if self.executor is not None:
-                await self.executor.flush(outcome.case_id)
-        except Exception:
-            log.exception("failed to handle event %s (%s)", event.delivery_id, event.name)
-        finally:
-            await self._mark(event, finished_at=now(), case_id=case_id)
-            self.queue.task_done()
-
-    async def _mark(self, event: DomainEvent, **fields: object) -> None:
-        if self.db is None:
-            return
-        try:
-            await mark_delivery(self.db, event.delivery_id, **fields)
-        except Exception:
-            # 计时失败不能影响事件处理
-            log.exception("failed to record timing for %s", event.delivery_id)
+    async def close(self) -> None:
+        return None

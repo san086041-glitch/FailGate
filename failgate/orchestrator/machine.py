@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from failgate.db import Case, Database, Repo, TransitionLog
@@ -132,8 +133,20 @@ class CaseMachine:
                 mode=self.default_mode,
                 installation_id=event.installation_id,
             )
-            s.add(repo)
-            await s.flush()
+            try:
+                # 新仓库的头几个事件可能在快车道里同时处理（不同 Case、不同的锁，ADR 0023）：
+                # 在保存点里插入，撞上唯一约束说明别的任务刚建好，读它的那一行
+                async with s.begin_nested():
+                    s.add(repo)
+            except IntegrityError:
+                found = await s.scalar(
+                    select(Repo).where(
+                        Repo.platform == event.repo.platform,
+                        Repo.full_name == event.repo.full_name,
+                    )
+                )
+                assert found is not None
+                repo = found
         elif event.installation_id and repo.installation_id != event.installation_id:
             # App 被卸载后重新安装，安装 ID 会变
             repo.installation_id = event.installation_id
@@ -146,7 +159,7 @@ class CaseMachine:
                 Case.repo_id == repo.id,
                 Case.kind == event.case.kind,
                 Case.number == event.case.number,
-            )
+            ).with_for_update()
         )
         opened = event.name.endswith(".opened")
         if case is None:

@@ -32,5 +32,5 @@ async def receive(platform: str, request: Request) -> JSONResponse:
     if not await first_seen(failgate.db, platform, event.delivery_id, event.name):
         return JSONResponse({"status": "duplicate"})
 
-    await failgate.queue.put(event)
+    await failgate.enqueue(event)
     return JSONResponse({"status": "queued"}, status_code=202)

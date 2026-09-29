@@ -23,9 +23,10 @@ from typing import Any
 
 from sqlalchemy import select
 
-from failgate.db import Case, Database, Delivery, Repo, TransitionLog
+from failgate.db import Case, Database, Delivery, Repo, Run, TransitionLog
 
 SANDBOX_STATES = frozenset({"REPRODUCING", "VERIFYING", "RESEALING"})
+SANDBOX_SKILLS = ("repro", "verify", "reseal")
 
 
 def _utc(dt: datetime | None) -> datetime | None:
@@ -48,6 +49,9 @@ class EventTiming:
     # GitHub 侧：触发时间（issue 创建 / 命令评论）和 bot 评论出现的时间
     gh_trigger: datetime | None = None
     gh_reply: datetime | None = None
+    # 沙箱阶段出结果的时间（那次复现 / 核验 Run 的结束时间）。拆车道以后（ADR 0023），
+    # 事件在快车道上几秒就处理完、只投一个沙箱任务，结果要看沙箱车道什么时候跑完
+    result_at: datetime | None = None
 
     @property
     def sandbox(self) -> bool:
@@ -63,7 +67,9 @@ class EventTiming:
 
     @property
     def total(self) -> float | None:
-        return _secs(self.received_at, self.finished_at)
+        """收到 → 这个事件的结果全部写回（沙箱事件算到沙箱阶段结束）。"""
+        ends = [t for t in (self.finished_at, self.result_at) if t is not None]
+        return _secs(self.received_at, max(ends)) if ends else None
 
     @property
     def gh_latency(self) -> float | None:
@@ -107,6 +113,14 @@ async def load_timings(db: Database, repo: str, since: datetime,
                     .order_by(TransitionLog.id)
                 )
                 row.states = list((await s.execute(tq)).scalars())
+            if row.sandbox and row.started_at:
+                rq = (
+                    select(Run.ended_at)
+                    .where(Run.case_id == case.id, Run.skill.in_(SANDBOX_SKILLS),
+                           Run.started_at >= row.started_at.replace(tzinfo=None))
+                    .order_by(Run.started_at).limit(1)
+                )
+                row.result_at = _utc(await s.scalar(rq))
             out.append(row)
     return out
 
@@ -209,7 +223,7 @@ def render(rows: Sequence[EventTiming], summary: dict[str, Any], *, repo: str,
     lines += list(notes) + ([""] if notes else [])
     lines += ["## 汇总", "",
               "| 组 | n | 指标 | p50 | p95 | max |", "|---|---|---|---|---|---|"]
-    labels = {"queue_wait": "排队", "service": "处理", "total": "服务端合计",
+    labels = {"queue_wait": "排队", "service": "处理", "total": "服务端合计（到结果）",
               "github": "GitHub：触发 → bot 评论"}
     for group, g in summary.items():
         name = "快事件" if group == "fast" else "沙箱事件"

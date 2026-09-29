@@ -129,3 +129,22 @@ def test_mixed_scenario_and_signed_send():
     want = "sha256=" + hmac.new(b"s3cret", req.content, hashlib.sha256).hexdigest()
     assert req.headers["X-Hub-Signature-256"] == want
     assert len({r.headers["X-GitHub-Delivery"] for r in seen}) == 5
+
+
+async def test_sandbox_event_counts_until_the_sandbox_result(tmp_path):
+    from conftest import _harness, make_settings
+    from test_verify_pipeline import FakeVerifyRunner, pull_event, verification
+
+    from failgate.verify.engine import ClaimVerdict
+
+    runner = FakeVerifyRunner(verification(ClaimVerdict.VERIFIED))
+    async for h in _harness(make_settings(tmp_path), verify_runner=runner):
+        await h.send("pull_request", pull_event("opened"), "p-1")
+        await h.failgate.worker.drain()
+        rows = await lat.load_timings(h.failgate.db, REPO, T0.replace(year=2000, tzinfo=None))
+        assert len(rows) == 1 and rows[0].sandbox
+        row = rows[0]
+        # 快车道只把 Case 推到 VERIFYING、投沙箱任务；核验在沙箱车道跑完
+        assert row.result_at is not None and row.finished_at is not None
+        assert row.result_at >= row.finished_at
+        assert row.total == (row.result_at - row.received_at).total_seconds()

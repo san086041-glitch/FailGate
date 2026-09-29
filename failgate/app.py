@@ -19,10 +19,12 @@ from failgate.index.embed import Embedder
 from failgate.index.store import IssueIndex
 from failgate.ingress.webhooks import router as webhook_router
 from failgate.llm import LLMClient
+from failgate.orchestrator.dispatch import CaseLocks, Dispatcher
 from failgate.orchestrator.machine import CaseMachine
 from failgate.orchestrator.pipeline import Pipeline
+from failgate.orchestrator.redis_queue import LANES, RedisQueues
 from failgate.orchestrator.states import CaseState
-from failgate.orchestrator.worker import EventQueue, Worker
+from failgate.orchestrator.worker import Worker
 from failgate.platforms.base import (
     CaseKind,
     CaseRef,
@@ -109,7 +111,6 @@ class FailGate:
         self.platforms: dict[str, Platform] = {
             "github": GitHubPlatform(settings.github_webhook_secret),
         }
-        self.queue: EventQueue = asyncio.Queue()
         self.gate = PolicyGate()
         self.embedder = build_embedder(settings, embed_transport)
         self.index = IssueIndex(self.db, self.embedder)
@@ -161,7 +162,21 @@ class FailGate:
             else None
         )
         self.executor = EffectExecutor(self.db, self._writer)
-        self.worker = Worker(self.queue, self.machine, self.pipeline, self.executor, db=self.db)
+        self.worker: Worker | RedisQueues = (
+            RedisQueues(
+                settings.redis_url,
+                events_concurrency=settings.events_concurrency,
+                sandbox_concurrency=settings.sandbox_concurrency,
+                events_timeout_s=settings.events_job_timeout_seconds,
+                sandbox_timeout_s=settings.sandbox_job_timeout_seconds,
+            )
+            if settings.queue_backend == "redis"
+            else Worker(events_concurrency=settings.events_concurrency,
+                        sandbox_concurrency=settings.sandbox_concurrency)
+        )
+        self.dispatcher: Dispatcher | None = None
+        if isinstance(self.worker, Worker):
+            self._bind(self.worker.locks)
         self._tasks: list[asyncio.Task[None]] = []
 
     def _build_repro_runner(
@@ -230,8 +245,23 @@ class FailGate:
             return None
         return await client.get_permission(event.repo, event.actor.login)
 
+    def _bind(self, locks: CaseLocks) -> None:
+        self.dispatcher = Dispatcher(self.db, self.machine, self.pipeline, self.executor,
+                                     locks, self.worker.enqueue_sandbox)
+        self.worker.bind(self.dispatcher)
+
+    async def enqueue(self, event: DomainEvent) -> None:
+        await self.worker.enqueue_event(event)
+
+    def lanes(self) -> list[str]:
+        return [x.strip() for x in self.settings.worker_lanes.split(",") if x.strip() in LANES]
+
     async def start(self, *, run_worker: bool = True) -> None:
         await self.db.create_all()
+        if isinstance(self.worker, RedisQueues):
+            await self.worker.connect()
+            assert self.worker.locks is not None
+            self._bind(self.worker.locks)
         if not self.settings.github_webhook_secret:
             log.warning("GITHUB_WEBHOOK_SECRET 未设置：所有 GitHub webhook 都会被拒绝")
         if self.llm is None:
@@ -239,7 +269,15 @@ class FailGate:
         if self.github_app is None:
             log.warning("GitHub App 未配置：正常模式下的写操作会停在 pending，不会真正发出")
         if run_worker:
-            self._tasks.append(asyncio.create_task(self.worker.run_forever()))
+            lanes = self.lanes()
+            if isinstance(self.worker, RedisQueues):
+                if lanes:
+                    self._tasks.append(asyncio.create_task(self.worker.run_forever(lanes)))
+            else:
+                if set(lanes) != set(LANES):
+                    # 进程内队列没法把车道拆到别的进程：两条都在这里跑
+                    log.warning("QUEUE_BACKEND=local 时 WORKER_LANES 不生效，两条车道都在本进程跑")
+                self._tasks.append(asyncio.create_task(self.worker.run_forever()))
             self._tasks.append(
                 asyncio.create_task(
                     self.executor.run_forever(self.settings.effect_retry_interval_seconds)
@@ -251,6 +289,7 @@ class FailGate:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await task
+        await self.worker.close()
         if self.github_app is not None:
             await self.github_app.aclose()
         await self.rest.aclose()

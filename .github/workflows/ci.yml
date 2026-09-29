@@ -11,6 +11,13 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
+    # 队列集成测试（tests/test_redis_queue.py）连这个 Redis；连不上时那两个测试会跳过
+    services:
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 2s --health-retries 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7

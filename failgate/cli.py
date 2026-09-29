@@ -29,11 +29,47 @@ app = typer.Typer(help="FailGate：证据驱动的开源仓库值班 Agent", no_
 
 @app.command()
 def serve(host: str = "127.0.0.1", port: int = 8080, reload: bool = False) -> None:
-    """启动 API 服务（M0 中 worker 在同一进程内运行）。"""
+    """启动 API 服务；worker 默认也在这个进程里跑（WORKER_LANES，见 `failgate worker`）。"""
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
     uvicorn.run("failgate.app:create_app", factory=True, host=host, port=port, reload=reload)
+
+
+@app.command()
+def worker(
+    lanes: Annotated[str, typer.Option(help="跑哪几条车道：events、sandbox，逗号分隔")] = (
+        "events,sandbox"),
+) -> None:
+    """独立的 worker 进程（QUEUE_BACKEND=redis 才有意义，ADR 0023）。
+
+    例：serve 设 WORKER_LANES=events 只跑快车道，另起 `failgate worker --lanes sandbox`
+    专门跑复现 / 核验；沙箱 worker 要能访问 Docker。"""
+    from failgate.app import FailGate
+    from failgate.orchestrator.redis_queue import LANES, RedisQueues
+
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
+    settings = Settings()
+    if settings.queue_backend != "redis":
+        raise typer.BadParameter("独立 worker 需要 QUEUE_BACKEND=redis")
+    chosen = [x.strip() for x in lanes.split(",") if x.strip()]
+    unknown = [x for x in chosen if x not in LANES]
+    if unknown or not chosen:
+        raise typer.BadParameter(f"未知车道：{unknown or lanes}（可选 {', '.join(LANES)}）")
+
+    async def run() -> None:
+        fg = FailGate(settings)
+        await fg.start(run_worker=False)
+        assert isinstance(fg.worker, RedisQueues)
+        typer.echo(f"worker 启动：{', '.join(chosen)}（{settings.redis_url}）")
+        try:
+            await fg.worker.run_forever(chosen)
+        finally:
+            await fg.stop()
+
+    asyncio.run(run())
 
 
 @app.command("db-init")

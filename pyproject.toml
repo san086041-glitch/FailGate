@@ -21,6 +21,8 @@ dependencies = [
   "packaging>=23",
   # 考卷强度的变异算子（ADR 0020）；锁版本，只当库用（在宿主机生成变异体）
   "cosmic-ray==8.7.0",
+  # 队列与 worker（W6，ADR 0023）：arq 带来 redis-py，Case 锁用 redis-py 的 Lock
+  "arq==0.26.3",
 ]
 
 [project.optional-dependencies]
@@ -41,7 +43,10 @@ packages = ["failgate"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
-markers = ["docker: 真的起容器的沙箱集成测试（没有 Docker 时自动跳过）"]
+markers = [
+  "docker: 真的起容器的沙箱集成测试（没有 Docker 时自动跳过）",
+  "redis: 连真实 Redis 的队列集成测试（连不上时自动跳过）",
+]
 
 [tool.ruff]
 line-length = 100

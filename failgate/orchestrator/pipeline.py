@@ -76,14 +76,25 @@ class Pipeline:
         # 仓库 → 读评论的函数（需要该仓库的安装令牌，所以按仓库绑定）
         self.comments_for = comments
 
-    async def advance(self, case_id: int) -> CaseState:
+    def runs(self, state: CaseState) -> bool:
+        """这个阶段有没有能力模块（没配复现 / 核验时沙箱阶段就没有）。"""
+        return state in self.skills
+
+    async def advance(
+        self, case_id: int, *, stop_at: frozenset[CaseState] = frozenset()
+    ) -> CaseState:
+        """一直往下跑到没有可运行的模块；到了 stop_at 里的阶段就停下、不运行它。
+
+        快队列用 stop_at=沙箱阶段：复现 / 核验交给沙箱队列，不占快队列的 worker（W6）。
+        """
         while True:
             async with self.db.session() as s:
                 case = await s.get(Case, case_id)
                 assert case is not None
                 state = CaseState(case.state)
+                version = case.state_version
                 entry = self.skills.get(state)
-                if entry is None:
+                if entry is None or state in stop_at:
                     return state
                 if case.spent_usd >= self.case_budget_usd:
                     await self.machine.apply(s, case, "budget.exceeded")
@@ -107,11 +118,13 @@ class Pipeline:
                 return state
 
             async with self.db.session() as s, s.begin():
-                case = await s.get(Case, case_id)
+                # 行锁（PostgreSQL）：写结果和并发的事件处理互斥；SQLite 本来就串行写
+                case = await s.get(Case, case_id, with_for_update=True)
                 repo = await s.get(Repo, case.repo_id) if case else None
                 assert case is not None and repo is not None
-                if CaseState(case.state) is not state:
-                    # 运行期间 Case 被关闭或忽略，结果作废
+                if case.state_version != version:
+                    # 运行期间 Case 被关闭、忽略或重新触发（比如核验中又来一条 /failgate verify），
+                    # 这次的结果作废；新一轮由触发它的事件负责
                     return CaseState(case.state)
                 s.add(_run_row(case_id, skill, result, started))
                 # 和 Run 在同一个事务里：要么都落库，要么都不落

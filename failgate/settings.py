@@ -26,6 +26,19 @@ class Settings(BaseSettings):
     # 新接入的仓库默认进入影子模式：所有对外写操作只记录，不执行
     default_repo_mode: RepoMode = "shadow"
 
+    # 队列（W6，ADR 0023）：events 车道跑快阶段，sandbox 车道跑复现 / 核验
+    # local = 进程内 asyncio.Queue（重启丢任务，只能单进程）；redis = arq + Redis
+    queue_backend: Literal["local", "redis"] = "local"
+    redis_url: str = "redis://127.0.0.1:6379/0"
+    # 快阶段全是等 LLM / GitHub 的网络调用，几个并发就够；沙箱任务吃 CPU 和内存，默认 1 个
+    events_concurrency: int = 4
+    sandbox_concurrency: int = 1
+    # serve 进程里跑哪几条车道（逗号分隔；空 = 只收 webhook，worker 另起 `failgate worker`）
+    worker_lanes: str = "events,sandbox"
+    events_job_timeout_seconds: int = 600
+    # 也是 worker 崩溃后 arq 重投的等待时间（任务超时 + 10 秒）：别设太长
+    sandbox_job_timeout_seconds: int = 1200
+
     # LLM（任意 OpenAI 兼容接口）；未配置 API Key 时能力模块不运行，Case 停在 INTAKE
     llm_base_url: str = "https://api.deepseek.com"
     llm_api_key: str = ""
