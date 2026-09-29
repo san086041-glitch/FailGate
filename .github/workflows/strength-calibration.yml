@@ -1,0 +1,105 @@
+# 考卷强度的外部校准（ADR 0022）：在 SWE-bench 镜像里对官方考卷和 UTBoost 考卷算强度。
+# 镜像在 GitHub 的机器上下载（每个题 1–2 GB，用完即销毁），不走本机网络。
+# 只在两种情况下运行：推送 calib-run/ 开头的分支；手动触发（workflow_dispatch）。
+name: strength-calibration
+
+on:
+  push:
+    branches: ["calib-run/**"]
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "逗号分隔的 instance_id（留空 = 全部 52 个）"
+        required: false
+        default: ""
+      max_mutants:
+        description: "每个题最多多少个变异体"
+        required: false
+        default: "30"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      ids: ${{ steps.ids.outputs.ids }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: ids
+        env:
+          ONLY: ${{ github.event.inputs.only }}
+          REF: ${{ github.ref_name }}
+        run: |
+          python - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, os
+          d = json.load(open("eval/datasets/swebench_utboost/instances.json", encoding="utf-8"))
+          ids = [r["instance_id"] for g in ("utboost", "control") for r in d[g]]
+          only = [x.strip() for x in os.environ.get("ONLY", "").split(",") if x.strip()]
+          if os.environ.get("REF") == "calib-run/pilot":
+              only = d["pilot"]  # 试跑：只跑几个，先在云端调通
+          if only:
+              ids = [i for i in ids if i in only]
+          print("ids=" + json.dumps(ids))
+          EOF
+
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        id: ${{ fromJson(needs.plan.outputs.ids) }}
+    steps:
+      - name: 腾出磁盘空间（matplotlib 的镜像解压后接近 10 GB）
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -e . "swebench==4.1.0"
+      - name: 拉镜像
+        run: |
+          for i in 1 2 3; do
+            docker pull "ghcr.io/epoch-research/swe-bench.eval.x86_64.${{ matrix.id }}:latest" && break
+            sleep 30
+          done
+          docker image ls
+      - name: 算强度
+        run: |
+          python -m failgate replay calib-run --only "${{ matrix.id }}" --out calib-out \
+            --max-mutants "${{ github.event.inputs.max_mutants || '30' }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calib-${{ matrix.id }}
+          path: calib-out/
+          if-no-files-found: warn
+
+  report:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: calib-*
+          path: calib-all/
+      - run: |
+          python -m failgate replay calib-report calib-all --out calib-report.md \
+            --run "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          cat calib-report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: calib-report
+          path: |
+            calib-report.md
+            calib-all/

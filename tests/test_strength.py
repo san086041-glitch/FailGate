@@ -388,3 +388,12 @@ def test_real_strength_on_fixture_fix(sandbox: DockerSandbox, tmp_path: Path):
     assert s is not None and s.status == "ok", s
     assert s.executed_lines > 0 and s.killed > 0
     assert s.invalid < len(s.mutants)
+
+
+def test_executed_lines_are_expanded_to_whole_statements():
+    from failgate.verify.strength import expand_executed
+
+    src = "x = f(\n    1,\n    2)\nif (a and\n        b):\n    y = 1\nz = 3\n"
+    # coverage 只记第一行（1、4）：多行语句的后几行也算执行到，但不展开到 if 的语句体
+    assert expand_executed(src, {1, 4}) == {1, 2, 3, 4, 5}
+    assert expand_executed("def (:", {1}) == {1}

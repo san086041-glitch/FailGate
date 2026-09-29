@@ -24,6 +24,7 @@
 
 from __future__ import annotations
 
+import ast
 import difflib
 import hashlib
 import json
@@ -191,6 +192,27 @@ def is_source_file(path: str) -> bool:
 def import_root(path: str) -> str:
     """源文件所在的导入根目录（相对仓库根）：src 布局是 src，否则是仓库根。"""
     return "src" if path.startswith("src/") else ""
+
+
+def expand_executed(source: str, executed: set[int]) -> set[int]:
+    """coverage 只把一条语句记在它的第一行：多行语句（跨行的调用、条件）的后几行不会出现在
+    执行行里。按语句展开：第一行执行到了，这条语句的每一行都算执行到（复合语句只展开到
+    冒号那一行，不包括语句体）。解析不了就原样返回。"""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return set(executed)
+    out = set(executed)
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.stmt) or node.lineno not in executed:
+            continue
+        body = getattr(node, "body", None)
+        if isinstance(body, list) and body and isinstance(body[0], ast.stmt):
+            end = body[0].lineno - 1  # 复合语句：只到语句体之前
+        else:
+            end = node.end_lineno or node.lineno
+        out.update(range(node.lineno, max(end, node.lineno) + 1))
+    return out
 
 
 def changed_lines(base: str | None, head: str) -> set[int]:
@@ -457,7 +479,7 @@ class StrengthEvaluator:
             if ran is None:
                 return StrengthReport(status="n/a", reason="shadow", changed_lines=n_changed,
                                       detail=path)
-            targets[path] = lines & ran
+            targets[path] = lines & expand_executed(sources[path][1], ran)
             unexecuted += [f"{path}:{n}" for n in sorted(lines - ran)]
         n_exec = sum(len(v) for v in targets.values())
         kw: dict[str, Any] = {"changed_lines": n_changed, "executed_lines": n_exec,

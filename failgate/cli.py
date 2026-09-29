@@ -1899,6 +1899,59 @@ def replay_verify(
     asyncio.run(run_all())
 
 
+CALIB_INSTANCES = Path("eval/datasets/swebench_utboost/instances.json")
+
+
+@replay_app.command("calib-run")
+def replay_calib_run(
+    only: Annotated[str, typer.Option(help="逗号分隔的 instance_id")],
+    out: Annotated[Path, typer.Option(help="每个题一个 JSON 写到这个目录")] = Path("calib-out"),
+    instances: Annotated[Path, typer.Option(help="题目数据")] = CALIB_INSTANCES,
+    max_mutants: Annotated[int, typer.Option(help="每个题最多多少个变异体")] = 30,
+) -> None:
+    """考卷强度的外部校准（ADR 0022）：在 SWE-bench 镜像里对官方考卷和 UTBoost 考卷算强度。
+
+    设计为在 GitHub Actions 里运行（需要 Docker、`pip install swebench==4.1.0`、能拉镜像）。"""
+    from failgate.replay import swebench_strength as ss
+
+    wanted = [x.strip() for x in only.split(",") if x.strip()]
+    todo = [i for i in ss.load_instances(instances) if i.instance_id in wanted]
+    missing = set(wanted) - {i.instance_id for i in todo}
+    if missing:
+        raise typer.BadParameter(f"数据里没有：{sorted(missing)}")
+    sweb = ss.SweBench.load()
+    out.mkdir(parents=True, exist_ok=True)
+    for inst in todo:
+        typer.echo(f"{inst.instance_id}（{inst.group}）…")
+        row = ss.run_instance(inst, sweb, max_mutants=max_mutants)
+        (out / f"{inst.instance_id}.json").write_text(
+            json.dumps(row, ensure_ascii=False, indent=1), encoding="utf-8")
+        conds = row.get("conditions", {})
+        rates = "、".join(f"{k} {v.get('kill_rate')}" for k, v in conds.items())
+        typer.echo(f"  → {row['status']} · {rates} · {row.get('seconds')}s")
+
+
+@replay_app.command("calib-report")
+def replay_calib_report(
+    results: Annotated[Path, typer.Argument(help="calib-run 输出的 JSON 所在目录（可以有子目录）")],
+    out: Annotated[Path | None, typer.Option(help="报告写到这里，默认 eval/reports/")] = None,
+    run: Annotated[str, typer.Option(help="GitHub Actions 运行编号或链接")] = "",
+) -> None:
+    """汇总 calib-run 的结果，写报告。"""
+    from failgate.replay import swebench_strength as ss
+
+    rows = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(results.rglob("*.json"))]
+    rows = [r for r in rows if "instance_id" in r]
+    started = datetime.now()
+    meta = {"started": started.isoformat(timespec="seconds"), "run": run or "—"}
+    path = out or Path("eval/reports") / f"swebench__strength_calib__{started:%Y%m%d-%H%M}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(ss.render(rows, meta), encoding="utf-8")
+    s = ss.summarize(rows)
+    typer.echo(f"{s['ok']}/{s['n']} 个题算出来了；成对：上升 {s['up']}、下降 {s['down']}、"
+               f"不变 {s['tie']}（p={s['sign_p']:.3g}）；报告：{path}")
+
+
 @replay_app.command("hidden")
 def replay_hidden(
     repo: Annotated[str, typer.Argument(help="owner/name")],
