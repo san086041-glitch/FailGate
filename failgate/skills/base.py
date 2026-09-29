@@ -19,6 +19,7 @@ from failgate.llm.pricing import cost_usd
 from failgate.platforms.base import Comment
 
 if TYPE_CHECKING:
+    from failgate.verify.engine import Verification
     from failgate.verify.receipt import SealedTest
 
 # GitHub 新仓库的默认标签；拿不到仓库真实标签表时使用（M1 后半段改为从平台 API 读取）
@@ -82,6 +83,8 @@ class SkillContext:
     repo_config: dict[str, Any] = field(default_factory=dict)
     # 这个 Case 还剩多少模型预算（美元）；None = 不限。长流程（复现）用它给自己设上限
     budget_left_usd: float | None = None
+    # 触发进入当前阶段的人（比如发 /failgate reseal 的维护者）；内部事件触发时为 None
+    actor: str | None = None
 
 
 @dataclass
@@ -93,8 +96,11 @@ class SkillResult:
     cost_usd: float
     # 提供给状态机守卫的事实，例如 {"type": "bug"}
     facts: dict[str, Any] = field(default_factory=dict)
-    # 复现成功时要封存的证据（收据 + 完整代码）；由流水线写进 evidence 表，模块自己不落库
-    evidence: SealedTest | None = None
+    # 要封存的证据（收据 + 完整代码）：复现成功、或维护者重新封存时产生。
+    # 由流水线写进 evidence 表（挂在对应 issue 的 Case 下），模块自己不落库
+    evidence: list[SealedTest] = field(default_factory=list)
+    # PR 核验的结果；由流水线写进 verifications 表
+    verification: Verification | None = None
 
 
 class Skill(Protocol):

@@ -16,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+from sqlalchemy.orm import DeclarativeBase, InstanceState, Mapped, Session, mapped_column
 
 log = logging.getLogger(__name__)
 
@@ -88,6 +88,9 @@ class TransitionLog(Base):
     from_state: Mapped[str] = mapped_column(String(32))
     to_state: Mapped[str] = mapped_column(String(32))
     event: Mapped[str] = mapped_column(String(64))
+    # 触发这次转换的人（外部事件的发起人）；能力模块完成等内部事件为空。
+    # 重新封存考卷时要记下是哪位维护者做的决定
+    actor: Mapped[str | None] = mapped_column(String(255), default=None)
     at: Mapped[datetime] = mapped_column(default=_now)
 
 
@@ -203,6 +206,22 @@ class Evidence(Base):
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 
+class VerificationRecord(Base):
+    """一次 PR 核验（ADR 0018）：核验收据原样存下，只加不改。"""
+
+    __tablename__ = "verifications"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"), index=True)
+    pr_number: Mapped[int]
+    base_sha: Mapped[str] = mapped_column(String(64))
+    head_sha: Mapped[str] = mapped_column(String(64))
+    verdict: Mapped[str | None] = mapped_column(String(16), default=None)  # None：没有声明
+    receipt: Mapped[dict[str, Any]] = mapped_column(JSON)
+    receipt_sha256: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
 SEALED_MUTABLE = frozenset({"superseded_by"})
 
 
@@ -217,15 +236,18 @@ def _guard_sealed_evidence(session: Session, _ctx: Any, _instances: Any) -> None
     在 ORM 这一层拦，挡住的是"代码里不小心改了"；直接写 SQL 挡不住，那要靠数据库权限。
     """
     for obj in session.dirty:
-        if not isinstance(obj, Evidence):
+        if not isinstance(obj, Evidence | VerificationRecord):
             continue
-        state = sa_inspect(obj)
+        state: InstanceState[Any] = sa_inspect(obj)
         changed = {a.key for a in state.attrs if a.history.has_changes()}
-        if changed - SEALED_MUTABLE:
-            raise SealedEvidenceError(f"证据 {obj.id} 已封存，不能修改：{sorted(changed)}")
+        allowed = SEALED_MUTABLE if isinstance(obj, Evidence) else frozenset()
+        if changed - allowed:
+            raise SealedEvidenceError(
+                f"{obj.__tablename__} {obj.id} 已封存，不能修改：{sorted(changed)}"
+            )
     for obj in session.deleted:
-        if isinstance(obj, Evidence):
-            raise SealedEvidenceError(f"证据 {obj.id} 已封存，不能删除")
+        if isinstance(obj, Evidence | VerificationRecord):
+            raise SealedEvidenceError(f"{obj.__tablename__} {obj.id} 已封存，不能删除")
 
 
 def add_missing_columns(conn: Connection) -> list[str]:

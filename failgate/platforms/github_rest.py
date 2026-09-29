@@ -135,6 +135,15 @@ class GitHubRest:
         url = f"/repos/{full_name}/pulls/{number}/files"
         return [f async for f in self._paginate(url, {"per_page": 100})]
 
+    async def file_at(self, full_name: str, path: str, ref: str) -> str | None:
+        """某个提交上一个文件的内容；文件不存在返回 None。"""
+        r = await self._http.get(f"/repos/{full_name}/contents/{path}", params={"ref": ref},
+                                 headers={"Accept": "application/vnd.github.raw"})
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        return r.text
+
     async def merge_base(self, full_name: str, base: str, head: str) -> str:
         """两个提交的合并基点：PR 的 diff 就是相对它算的。"""
         r = await self._http.get(f"/repos/{full_name}/compare/{base}...{head}")

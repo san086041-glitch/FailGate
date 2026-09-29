@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 
-VERBS = frozenset({"fix", "retry", "ignore", "learn", "budget"})
+VERBS = frozenset({"fix", "retry", "ignore", "learn", "budget", "verify", "reseal"})
 # /warden 是改名前的写法，维护者可能还习惯用，照样认
 _COMMAND = re.compile(r"^/(?:failgate|warden)\s+(\w+)(?:\s+(.*))?$")
 

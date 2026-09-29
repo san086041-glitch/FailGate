@@ -28,6 +28,8 @@ from failgate.index.trace import TraceSignature
 from failgate.repro.judge import RunRecord, Verdict
 
 SCHEMA: Literal["failgate.receipt/v1"] = "failgate.receipt/v1"
+OPTIONAL_KEYS = ("supersedes", "sealed_by")
+RESEALED = "RESEALED"
 
 
 def normalize_code(code: str) -> str:
@@ -66,9 +68,17 @@ class EvidenceReceipt(BaseModel):
     score_method: str | None = None  # signature（签名比对）/ llm（没有堆栈时的 LLM 评委）
     failgate_version: str
     created_at: str  # UTC，ISO 8601，以 Z 结尾
+    # 维护者重新封存时才有（ADR 0018）：取代了哪份证据、谁做的决定
+    supersedes: str | None = None
+    sealed_by: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return self.model_dump(mode="json", by_alias=True)
+        data = self.model_dump(mode="json", by_alias=True)
+        # 可选字段为空时不写出：之前生成的收据重新计算哈希时结果不变
+        for key in OPTIONAL_KEYS:
+            if data.get(key) is None:
+                data.pop(key, None)
+        return data
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> EvidenceReceipt:
@@ -92,6 +102,27 @@ class SealedTest(BaseModel):
 
     def signed(self) -> dict[str, Any]:
         return self.receipt.signed_dict()
+
+
+def reseal_receipt(
+    old: dict[str, Any], code: str, *, sealed_by: str, source_sha: str,
+    now: datetime | None = None,
+) -> EvidenceReceipt:
+    """维护者用 PR 里的版本重新封存考卷（/failgate reseal）。
+
+    新考卷没有经过判定器，是维护者担保的，所以：判定写 RESEALED，打分方式写 maintainer，
+    不带运行记录和失败签名（核验时 base 上出现任何失败都算"封存的失败"）；环境（Python、
+    pytest、伪版本号）沿用旧收据，source_sha 记成 PR 的 head。旧证据由流水线标成被取代。
+    """
+    base = {k: v for k, v in old.items() if k != "receipt_sha256"}
+    created = (now or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
+    base.update(
+        evidence_id=uuid.uuid4().hex, test_sha256=code_sha256(code), source_sha=source_sha,
+        signature=None, runs=[], verdict=RESEALED, score=None, score_method="maintainer",
+        failgate_version=__version__, created_at=created.isoformat().replace("+00:00", "Z"),
+        supersedes=old["evidence_id"], sealed_by=sealed_by,
+    )
+    return EvidenceReceipt.model_validate(base)
 
 
 def canonical_json(data: dict[str, Any]) -> str:

@@ -35,9 +35,11 @@ class PullFile(BaseModel):
 
 class Signal(BaseModel):
     level: Level
+    # exam_removed / exam_renamed / exam_modified / conftest / pytest_config / test_removed /
+    # skip_added；说明文字在报告里按语言渲染
     kind: str
     path: str
-    detail: str
+    note: str = ""  # exam_renamed：改成了什么名字
 
 
 def is_test_file(path: str) -> bool:
@@ -69,33 +71,26 @@ def tamper_signals(
         if f.filename == test_path or f.previous_filename == test_path:
             touched = True
             if f.status == "removed":
-                out.append(Signal(level="high", kind="exam_removed", path=test_path,
-                                  detail="PR 删除了封存的考卷"))
+                out.append(Signal(level="high", kind="exam_removed", path=test_path))
             elif f.status == "renamed" and f.filename != test_path:
                 out.append(Signal(level="high", kind="exam_renamed", path=test_path,
-                                  detail=f"PR 把考卷改名为 {f.filename}"))
+                                  note=f.filename))
             continue
         name = f.filename.rsplit("/", 1)[-1]
         if name == "conftest.py":
-            out.append(Signal(level="medium", kind="conftest", path=f.filename,
-                              detail="改动了 conftest.py（可能影响测试的收集和运行）"))
+            out.append(Signal(level="medium", kind="conftest", path=f.filename))
         elif name in PYTEST_CONFIGS or (
             name == "pyproject.toml" and any("pytest" in ln for ln in _changed_lines(f.patch))
         ):
-            out.append(Signal(level="medium", kind="pytest_config", path=f.filename,
-                              detail="改动了 pytest 配置"))
+            out.append(Signal(level="medium", kind="pytest_config", path=f.filename))
         elif is_test_file(f.filename):
             if f.status == "removed":
-                out.append(Signal(level="medium", kind="test_removed", path=f.filename,
-                                  detail="删除了测试文件"))
+                out.append(Signal(level="medium", kind="test_removed", path=f.filename))
             elif any(_SKIP.search(ln) for ln in _added_lines(f.patch)):
-                out.append(Signal(level="medium", kind="skip_added", path=f.filename,
-                                  detail="给测试加了 skip / xfail"))
+                out.append(Signal(level="medium", kind="skip_added", path=f.filename))
     # PR 把考卷原样加进仓库是好事；内容和封存的不一样才是篡改（换行符不算）
     if head_code is not None and code_sha256(head_code) != sealed_sha256:
-        out.append(Signal(level="high", kind="exam_modified", path=test_path,
-                          detail="head 上的考卷和封存的版本不一致"))
+        out.append(Signal(level="high", kind="exam_modified", path=test_path))
     elif head_code is None and touched and not any(s.kind.startswith("exam_") for s in out):
-        out.append(Signal(level="high", kind="exam_removed", path=test_path,
-                          detail="PR 改动了考卷，head 上已经没有这个文件"))
+        out.append(Signal(level="high", kind="exam_removed", path=test_path))
     return out

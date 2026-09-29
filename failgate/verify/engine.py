@@ -58,6 +58,7 @@ class Exam(BaseModel):
     pytest: str | None = None
     version: str | None = None  # 伪版本号：base 和 head 用同一个，只让代码这一个变量变化
     signature: TraceSignature | None = None
+    receipt: dict[str, Any] = {}  # 原始收据：重新封存时在它的基础上生成新收据
 
 
 class PullRequest(BaseModel):
@@ -92,9 +93,15 @@ class ExamRun(BaseModel):
     outcome: Outcome
 
 
+# 理由都用代码（语言无关，写进收据）；报告渲染时再翻译成中文或英文（report.py）
+
+
 class Layer1(BaseModel):
     status: Literal["pass", "fail", "inconclusive"]
+    # pass / head_failed / head_invalid / head_skipped / head_flaky / base_passed / base_other /
+    # base_invalid / base_mixed / infra / setup
     reason: str
+    detail: str = ""  # setup：哪一边、什么错误
     base: list[ExamRun] = []
     head: list[ExamRun] = []
 
@@ -109,7 +116,7 @@ class Layer2(BaseModel):
 
 class Layer3(BaseModel):
     status: Literal["pass", "fail", "inconclusive", "none"]
-    reason: str
+    reason: str  # pass / new_failures / none / base_infra / head_infra / setup
     files: list[str] = []
     new_failures: list[str] = []
 
@@ -117,7 +124,7 @@ class Layer3(BaseModel):
 class ClaimResult(BaseModel):
     issue: int
     verdict: ClaimVerdict
-    reasons: list[str]
+    reasons: list[str]  # no_exam / tamper:<种类> / layer1:<代码> / layer3:<代码>
     evidence_id: str | None = None
     exam_receipt_sha256: str | None = None
     test_path: str | None = None
@@ -182,47 +189,45 @@ def judge_layer1(base: list[ExamRun], head: list[ExamRun]) -> Layer1:
     """两组运行 → 第一层结论。先看有没有被跳过（篡改），再看 base，最后看 head。"""
     kw: dict[str, Any] = {"base": base, "head": head}
     if any(r.outcome == "infra" for r in [*base, *head]):
-        return Layer1(status="inconclusive", reason="有运行超时或内存超限，不能作为证据", **kw)
+        return Layer1(status="inconclusive", reason="infra", **kw)
     if any(r.outcome == "skipped" for r in head):
-        return Layer1(status="fail", reason="考卷在 PR 的代码上被跳过或标成了 xfail，没有真正执行",
-                      **kw)
+        return Layer1(status="fail", reason="head_skipped", **kw)
     b = {r.outcome for r in base}
     if b != {"failed_same"}:
         reason = {
-            frozenset({"passed"}): "考卷在合并基点上就通过了：可能已经在主分支上修好，或者代码变了",
-            frozenset({"failed_other"}): "考卷在合并基点上失败了，但不是封存时的那个失败",
-            frozenset({"invalid"}): "考卷在合并基点上跑不起来（收集出错）",
-        }.get(frozenset(b), "考卷在合并基点上的结果不一致")
+            frozenset({"passed"}): "base_passed",
+            frozenset({"failed_other"}): "base_other",
+            frozenset({"invalid"}): "base_invalid",
+        }.get(frozenset(b), "base_mixed")
         return Layer1(status="inconclusive", reason=reason, **kw)
     h = {r.outcome for r in head}
     if h == {"passed"}:
-        return Layer1(status="pass", reason=f"合并基点上 {len(base)}/{len(base)} 次出现封存的失败，"
-                      f"PR 上 {len(head)}/{len(head)} 次通过", **kw)
+        return Layer1(status="pass", reason="pass", **kw)
     if "passed" in h:
-        return Layer1(status="inconclusive", reason="考卷在 PR 的代码上时过时不过", **kw)
+        return Layer1(status="inconclusive", reason="head_flaky", **kw)
     if h == {"invalid"}:
-        return Layer1(status="fail", reason="考卷在 PR 的代码上跑不起来（收集出错）", **kw)
-    return Layer1(status="fail", reason="考卷在 PR 的代码上仍然失败", **kw)
+        return Layer1(status="fail", reason="head_invalid", **kw)
+    return Layer1(status="fail", reason="head_failed", **kw)
 
 
 def combine(layer1: Layer1, layer2: Layer2, layer3: Layer3) -> tuple[ClaimVerdict, list[str]]:
     refuted: list[str] = []
     unsure: list[str] = []
     if layer2.high:
-        refuted += [f"篡改：{s.detail}" for s in layer2.high]
+        refuted += [f"tamper:{s.kind}" for s in layer2.high]
     if layer1.status == "fail":
-        refuted.append(layer1.reason)
+        refuted.append(f"layer1:{layer1.reason}")
     elif layer1.status == "inconclusive":
-        unsure.append(layer1.reason)
+        unsure.append(f"layer1:{layer1.reason}")
     if layer3.status == "fail":
-        refuted.append(layer3.reason)
+        refuted.append(f"layer3:{layer3.reason}")
     elif layer3.status == "inconclusive":
-        unsure.append(layer3.reason)
+        unsure.append(f"layer3:{layer3.reason}")
     if refuted:
         return ClaimVerdict.REFUTED, refuted + unsure
     if unsure:
         return ClaimVerdict.INCONCLUSIVE, unsure
-    return ClaimVerdict.VERIFIED, [layer1.reason, layer3.reason]
+    return ClaimVerdict.VERIFIED, []
 
 
 def overall(claims: list[ClaimResult]) -> ClaimVerdict | None:
@@ -255,21 +260,18 @@ class ClaimVerifier:
 
     async def verify_claim(self, pr: PullRequest, issue: int, exam: Exam | None) -> ClaimResult:
         if exam is None:
-            return ClaimResult(
-                issue=issue, verdict=ClaimVerdict.INCONCLUSIVE,
-                reasons=[f"#{issue} 没有封存的考卷（L2 测试），无法核验；可以先在 #{issue} 上复现"],
-            )
+            return ClaimResult(issue=issue, verdict=ClaimVerdict.INCONCLUSIVE, reasons=["no_exam"])
         base_env = head_env = None
         setup: list[str] = []
         try:
             base_env = await self.bench.prepare(pr.repo, pr.base_sha, exam)
         except SetupFailed as e:
-            setup.append(f"合并基点上环境搭不起来：{e}")
+            setup.append(f"base: {e}")
         try:
             # fork 的提交也从 base 仓库取：GitHub 为每个 PR 保留 refs/pull/N/head
             head_env = await self.bench.prepare(pr.repo, pr.head_sha, exam)
         except SetupFailed as e:
-            setup.append(f"PR 的代码上环境搭不起来：{e}")
+            setup.append(f"head: {e}")
 
         head_code = None
         if head_env is not None:
@@ -279,8 +281,8 @@ class ClaimVerifier:
             head_code=head_code,
         ))
         if base_env is None or head_env is None:
-            layer1 = Layer1(status="inconclusive", reason="；".join(setup))
-            layer3 = Layer3(status="inconclusive", reason="环境搭不起来，没有跑相关测试")
+            layer1 = Layer1(status="inconclusive", reason="setup", detail="; ".join(setup))
+            layer3 = Layer3(status="inconclusive", reason="setup")
         else:
             layer1 = await self._layer1(base_env, head_env, exam)
             layer3 = await self._layer3(pr, base_env, head_env, exam)
@@ -303,7 +305,7 @@ class ClaimVerifier:
         tests = {p: s for p, s in tests.items() if is_test_file(p)}
         files = select_related_tests(pr.files, tests, exclude=exam.test_path)
         if not files:
-            return Layer3(status="none", reason="没找到和改动相关的已有测试")
+            return Layer3(status="none", reason="none")
         on_base = set(self.bench.read_files(base_env, set(files)))
         head_run = await self.bench.run_tests(head_env, files, RELATED_TIMEOUT_S)
         base_targets = [f for f in files if f in on_base]
@@ -311,20 +313,16 @@ class ClaimVerifier:
         if base_targets:
             base_run = await self.bench.run_tests(base_env, base_targets, RELATED_TIMEOUT_S)
             if base_run.infra_failure:
-                return Layer3(status="inconclusive", files=files,
-                              reason="相关测试在合并基点上超时或内存超限")
+                return Layer3(status="inconclusive", files=files, reason="base_infra")
             base_failed = failed_nodes(base_run.stdout + "\n" + base_run.stderr)
         if head_run.infra_failure:
-            return Layer3(status="inconclusive", files=files,
-                          reason="相关测试在 PR 的代码上超时或内存超限")
+            return Layer3(status="inconclusive", files=files, reason="head_infra")
         new = failed_nodes(head_run.stdout + "\n" + head_run.stderr) - base_failed
         if new:
             # 重跑一次，排除偶发失败
             again = await self.bench.run_tests(head_env, sorted(new), RELATED_TIMEOUT_S)
             new &= failed_nodes(again.stdout + "\n" + again.stderr)
-        n = len(files)
         if new:
             return Layer3(status="fail", files=files, new_failures=sorted(new),
-                          reason=f"相关测试里有 {len(new)} 个在 PR 的代码上新出现失败")
-        return Layer3(status="pass", files=files,
-                      reason=f"{n} 个相关测试文件在 PR 的代码上没有新增失败")
+                          reason="new_failures")
+        return Layer3(status="pass", files=files, reason="pass")

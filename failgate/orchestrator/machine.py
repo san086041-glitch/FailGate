@@ -112,7 +112,8 @@ class CaseMachine:
         if t is None:
             log.debug("no transition: case=%s state=%s event=%s", case.id, current, name)
             return None
-        s.add(TransitionLog(case_id=case.id, from_state=current, to_state=t.to, event=name))
+        s.add(TransitionLog(case_id=case.id, from_state=current, to_state=t.to, event=name,
+                            actor=actor.login if actor is not None else None))
         case.state = t.to
         case.state_version += 1
         log.info("case %s: %s --%s--> %s", case.id, current, name, t.to)

@@ -45,6 +45,12 @@ from failgate.skills.dedup import DedupSkill
 from failgate.skills.intake import IntakeSkill
 from failgate.skills.repro import ReproRunner, ReproSkill, SandboxReproRunner
 from failgate.skills.triage import TriageSkill
+from failgate.skills.verify import (
+    ResealSkill,
+    SandboxVerifyRunner,
+    VerifyRunner,
+    VerifySkill,
+)
 
 log = logging.getLogger(__name__)
 
@@ -95,6 +101,7 @@ class FailGate:
         github_app: GitHubApp | None = None,
         rest_transport: httpx.AsyncBaseTransport | None = None,
         repro_runner: ReproRunner | None = None,
+        verify_runner: VerifyRunner | None = None,
     ) -> None:
         self.settings = settings
         self.github_app = github_app or build_github_app(settings)
@@ -119,6 +126,10 @@ class FailGate:
         )
         self.llm = build_llm(settings, llm_transport)
         self.repro_runner = self._build_repro_runner(settings, repro_runner)
+        # PR 核验和复现用同一个开关：都要 Docker，也都依赖复现产出的考卷
+        self.verify_runner: VerifyRunner | None = verify_runner or (
+            SandboxVerifyRunner(settings, self.db) if settings.repro_enabled else None
+        )
         self.pipeline = (
             Pipeline(
                 self.db,
@@ -138,6 +149,7 @@ class FailGate:
                     ),
                     CaseState.ANSWERING: (AnswerSkill(), settings.llm_model_large),
                     **self._repro_stage(settings),
+                    **self._verify_stage(),
                 },
                 case_budget_usd=settings.case_budget_usd,
                 index=self.index,
@@ -167,6 +179,14 @@ class FailGate:
             return {}
         skill = ReproSkill(self.repro_runner, max_budget_usd=settings.repro_budget_usd)
         return {CaseState.REPRODUCING: (skill, settings.llm_model_large)}
+
+    def _verify_stage(self) -> dict[CaseState, tuple[Skill, str]]:
+        if self.verify_runner is None:
+            return {}
+        return {
+            CaseState.VERIFYING: (VerifySkill(self.verify_runner), "-"),
+            CaseState.RESEALING: (ResealSkill(self.verify_runner), "-"),
+        }
 
     # ---- 平台读写的装配：只有 GitHub 且拿到了安装 ID 才能调用 ----
 
@@ -235,6 +255,8 @@ class FailGate:
         await self.rest.aclose()
         if isinstance(self.repro_runner, SandboxReproRunner):
             await self.repro_runner.aclose()
+        if isinstance(self.verify_runner, SandboxVerifyRunner):
+            await self.verify_runner.aclose()
         if self.llm is not None:
             await self.llm.aclose()
         if self.embedder is not None:
@@ -251,6 +273,7 @@ def create_app(
     github_app: GitHubApp | None = None,
     rest_transport: httpx.AsyncBaseTransport | None = None,
     repro_runner: ReproRunner | None = None,
+    verify_runner: VerifyRunner | None = None,
 ) -> FastAPI:
     failgate = FailGate(
         settings or Settings(),
@@ -259,6 +282,7 @@ def create_app(
         github_app=github_app,
         rest_transport=rest_transport,
         repro_runner=repro_runner,
+        verify_runner=verify_runner,
     )
 
     @asynccontextmanager

@@ -11,7 +11,7 @@ from typing import Any
 from .base import CaseKind, CaseRef, DomainEvent, RepoRef, User
 
 _ISSUE_ACTIONS = frozenset({"opened", "reopened", "closed", "edited"})
-_PULL_ACTIONS = frozenset({"opened", "reopened", "synchronize", "closed"})
+_PULL_ACTIONS = frozenset({"opened", "reopened", "synchronize", "closed", "edited"})
 
 
 def verify_signature(secret: str, body: bytes, signature_header: str | None) -> bool:

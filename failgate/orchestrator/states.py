@@ -17,6 +17,14 @@ class CaseState(StrEnum):
     NEED_INFO = "NEED_INFO"
     TRIAGE_ONLY = "TRIAGE_ONLY"
     FIXING = "FIXING"
+    # PR Case（ADR 0018）：核验中 → 通过验收 / 驳回 / 无法判定 / 没有声明；
+    # 维护者 /failgate reseal 时先重新封存考卷，再回到核验中
+    VERIFYING = "VERIFYING"
+    RESEALING = "RESEALING"
+    VERIFIED = "VERIFIED"
+    REFUTED = "REFUTED"
+    INCONCLUSIVE = "INCONCLUSIVE"
+    NO_CLAIM = "NO_CLAIM"
     PR_OPENED = "PR_OPENED"
     CLOSED = "CLOSED"
     IGNORED = "IGNORED"

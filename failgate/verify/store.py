@@ -71,7 +71,7 @@ async def latest_exam(s: AsyncSession, repo: str, issue: int) -> Exam | None:
         test_sha256=ev.test_sha256, receipt_sha256=ev.receipt_sha256, package=r["package"],
         module=import_name or r["package"].replace("-", "_").lower(), python=ev.python,
         pytest=ev.pytest, version=r.get("version"),
-        signature=TraceSignature.model_validate(sig) if sig else None,
+        signature=TraceSignature.model_validate(sig) if sig else None, receipt=r,
     )
 
 

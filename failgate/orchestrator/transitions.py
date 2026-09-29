@@ -52,6 +52,7 @@ def _all(*guards: Guard) -> Guard:
 
 
 _budget_ok = _fact("budget_ok", lambda v: v is not False)
+PR_RESULTS = frozenset({S.VERIFIED, S.REFUTED, S.INCONCLUSIVE, S.NO_CLAIM})
 
 TABLE: tuple[Transition, ...] = (
     Transition(frozenset({S.NEW}), "issue.opened", S.INTAKE),
@@ -91,6 +92,23 @@ TABLE: tuple[Transition, ...] = (
         _fact("fbpa_passed", lambda v: v is True),
     ),
     Transition(frozenset({S.FIXING}), "skill.done", S.FAILED),
+    # PR Case：打开、推新提交、改描述（可能加了 fixes #N）、重新打开、维护者命令 → 核验
+    Transition(frozenset({S.NEW}), "pull.opened", S.VERIFYING),
+    Transition(frozenset({S.CLOSED}), "pull.reopened", S.VERIFYING),
+    Transition(PR_RESULTS, "pull.synchronize", S.VERIFYING),
+    Transition(PR_RESULTS, "pull.edited", S.VERIFYING),
+    # 核验中出错（比如 GitHub 暂时连不上）会停在 VERIFYING，维护者可以手动再触发一次
+    Transition(PR_RESULTS | {S.VERIFYING}, "cmd.verify", S.VERIFYING, _can_write),
+    # 重新封存由有写权限的维护者决定，谁也不能给自己改评分标准
+    Transition(PR_RESULTS, "cmd.reseal", S.RESEALING, _can_write),
+    Transition(frozenset({S.RESEALING}), "skill.done", S.VERIFYING),
+    Transition(frozenset({S.VERIFYING}), "skill.done", S.NO_CLAIM,
+               _fact("verdict", lambda v: v is None)),
+    Transition(frozenset({S.VERIFYING}), "skill.done", S.VERIFIED,
+               _fact("verdict", lambda v: v == "VERIFIED")),
+    Transition(frozenset({S.VERIFYING}), "skill.done", S.REFUTED,
+               _fact("verdict", lambda v: v == "REFUTED")),
+    Transition(frozenset({S.VERIFYING}), "skill.done", S.INCONCLUSIVE),
     # 任意活跃状态
     Transition(ACTIVE, "budget.exceeded", S.FAILED),
     Transition(ACTIVE, "issue.closed", S.CLOSED),

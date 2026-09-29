@@ -68,7 +68,8 @@ def _public_rest(request: httpx.Request) -> httpx.Response:
 
 
 async def _harness(
-    settings: Settings, github_app: Any = None, repro_runner: Any = None
+    settings: Settings, github_app: Any = None, repro_runner: Any = None,
+    verify_runner: Any = None,
 ) -> AsyncIterator[Harness]:
     llm = FakeLLM()
     PUBLIC_COMMENTS.clear()
@@ -79,6 +80,7 @@ async def _harness(
         github_app=github_app,
         rest_transport=httpx.MockTransport(_public_rest),
         repro_runner=repro_runner,
+        verify_runner=verify_runner,
     )
     failgate: FailGate = app.state.failgate
     await failgate.start(run_worker=False)

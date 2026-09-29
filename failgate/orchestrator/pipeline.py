@@ -15,7 +15,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from failgate.db import Case, Database, Evidence, Repo, Run
+from failgate.db import Case, Database, Evidence, Repo, Run, TransitionLog, VerificationRecord
 from failgate.index.store import IssueIndex
 from failgate.llm import LLMClient
 from failgate.platforms.base import Label
@@ -31,7 +31,9 @@ from failgate.skills.base import (
     SkillContext,
     SkillResult,
 )
+from failgate.verify.engine import Verification
 from failgate.verify.receipt import SealedTest
+from failgate.verify.report import language_of, render_verification
 
 from .machine import CaseMachine
 from .states import CaseState
@@ -111,9 +113,11 @@ class Pipeline:
                     # 运行期间 Case 被关闭或忽略，结果作废
                     return CaseState(case.state)
                 s.add(_run_row(case_id, skill, result, started))
-                if result.evidence is not None:
-                    # 和 Run 在同一个事务里：要么都落库，要么都不落
-                    s.add(_evidence_row(case_id, result.evidence))
+                # 和 Run 在同一个事务里：要么都落库，要么都不落
+                for sealed in result.evidence:
+                    await self._seal(s, repo, case, sealed)
+                if result.verification is not None:
+                    s.add(_verification_row(case_id, result.verification))
                 case.spent_usd += result.cost_usd
                 await self._effects(s, repo, case, skill.name, result)
                 facts = {**result.facts, **self._pipeline_facts(repo, case)}
@@ -143,6 +147,10 @@ class Pipeline:
             select(Run).where(Run.case_id == case.id, Run.status == "ok").order_by(Run.id)
         )
         prior = {r.skill: r.output or {} for r in runs}
+        last = await s.scalar(
+            select(TransitionLog).where(TransitionLog.case_id == case.id)
+            .order_by(TransitionLog.id.desc()).limit(1)
+        )
         return SkillContext(
             issue=IssueSnapshot(
                 repo=repo.full_name,
@@ -165,6 +173,7 @@ class Pipeline:
                 "repro_source": repo.repro_source,
             },
             budget_left_usd=max(self.case_budget_usd - case.spent_usd, 0.0),
+            actor=last.actor if last is not None else None,
         )
 
     async def _repo_labels(self, repo: Repo) -> list[Label]:
@@ -196,9 +205,37 @@ class Pipeline:
                     s, repo=repo, case=case, action="set_labels", payload={"add": output["labels"]}
                 )
 
+    async def _seal(self, s: AsyncSession, repo: Repo, case: Case, sealed: SealedTest) -> None:
+        """证据挂在它所属 issue 的 Case 下（重新封存是在 PR 上发起的）；取代旧证据时，
+        旧行的 superseded_by 指向新行——这是封存后唯一允许的修改。"""
+        r = sealed.receipt
+        owner = case
+        if case.kind != "issue" or case.number != r.issue:
+            found = await s.scalar(select(Case).where(
+                Case.repo_id == repo.id, Case.kind == "issue", Case.number == r.issue))
+            if found is None:
+                log.warning("no issue case for evidence %s (#%s)", r.evidence_id, r.issue)
+                return
+            owner = found
+        s.add(_evidence_row(owner.id, sealed))
+        if r.supersedes:
+            old = await s.get(Evidence, r.supersedes)
+            if old is not None:
+                old.superseded_by = r.evidence_id
+
     async def _summary(
         self, s: AsyncSession, repo: Repo, case: Case, outputs: dict[str, dict[str, Any]]
     ) -> None:
+        if case.kind == "pull":
+            data = (outputs.get("verify") or {}).get("verification")
+            if data is None:
+                return
+            v = Verification.model_validate(data)
+            body = render_verification(v, language_of(case.title, case.body))
+            await self.gate.propose(
+                s, repo=repo, case=case, action="upsert_summary", payload={"body": body}
+            )
+            return
         if "triage" not in outputs:
             return
         body = render_summary(
@@ -240,6 +277,15 @@ def _evidence_row(case_id: int, sealed: SealedTest) -> Evidence:
         source_repo=r.source_repo, source_sha=r.source_sha, python=r.python, pytest=r.pytest,
         verdict=r.verdict, fail_rate=_fail_rate(r.runs), receipt=signed,
         receipt_sha256=signed["receipt_sha256"],
+    )
+
+
+def _verification_row(case_id: int, v: Verification) -> VerificationRecord:
+    receipt = v.receipt()
+    return VerificationRecord(
+        case_id=case_id, pr_number=v.pr, base_sha=v.base_sha, head_sha=v.head_sha,
+        verdict=v.verdict.value if v.verdict else None, receipt=receipt,
+        receipt_sha256=receipt["receipt_sha256"],
     )
 
 

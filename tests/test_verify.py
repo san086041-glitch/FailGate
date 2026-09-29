@@ -185,20 +185,21 @@ def runs(*outcomes_: str) -> list[ExamRun]:
 
 
 @pytest.mark.parametrize(
-    ("base", "head", "status", "word"),
+    ("base", "head", "status", "code"),
     [
-        (("failed_same", "failed_same"), ("passed", "passed"), "pass", "2/2 次通过"),
-        (("failed_same", "failed_same"), ("failed_same", "failed_same"), "fail", "仍然失败"),
-        (("failed_same", "failed_same"), ("passed", "skipped"), "fail", "被跳过"),
-        (("passed", "passed"), ("passed", "passed"), "inconclusive", "就通过了"),
-        (("failed_other", "failed_other"), ("passed", "passed"), "inconclusive", "不是封存时"),
-        (("failed_same", "failed_same"), ("passed", "failed_same"), "inconclusive", "时过时不过"),
-        (("failed_same", "infra"), ("passed", "passed"), "inconclusive", "超时"),
+        (("failed_same", "failed_same"), ("passed", "passed"), "pass", "pass"),
+        (("failed_same", "failed_same"), ("failed_same", "failed_same"), "fail", "head_failed"),
+        (("failed_same", "failed_same"), ("passed", "skipped"), "fail", "head_skipped"),
+        (("passed", "passed"), ("passed", "passed"), "inconclusive", "base_passed"),
+        (("failed_other", "failed_other"), ("passed", "passed"), "inconclusive", "base_other"),
+        (("failed_same", "failed_same"), ("passed", "failed_same"), "inconclusive",
+         "head_flaky"),
+        (("failed_same", "infra"), ("passed", "passed"), "inconclusive", "infra"),
     ],
 )
-def test_judge_layer1(base, head, status, word):
+def test_judge_layer1(base, head, status, code):
     got = judge_layer1(runs(*base), runs(*head))
-    assert got.status == status and word in got.reason
+    assert (got.status, got.reason) == (status, code)
 
 
 # ---------------------------------------------------------------- 编排（假的 Workbench）
@@ -266,12 +267,14 @@ def test_good_fix_is_verified_and_receipt_is_self_consistent():
 
 def test_fix_that_does_not_make_the_exam_pass_is_refuted():
     v = verify(FakeBench(exam_runs={BASE: [FAIL, FAIL], HEAD: [FAIL, FAIL]}))
-    assert v.verdict == ClaimVerdict.REFUTED and "仍然失败" in v.claims[0].reasons[0]
+    assert v.verdict == ClaimVerdict.REFUTED and v.claims[0].reasons == ["layer1:head_failed"]
+    assert "考卷在 PR 的代码上仍然失败" in render_verification(v, "zh")
+    assert "the acceptance test still fails on the PR" in render_verification(v, "en")
 
 
 def test_skipping_the_exam_is_refuted_even_though_pytest_exits_zero():
     v = verify(FakeBench(exam_runs={BASE: [FAIL, FAIL], HEAD: [SKIP, SKIP]}))
-    assert v.verdict == ClaimVerdict.REFUTED and "被跳过" in v.claims[0].reasons[0]
+    assert v.verdict == ClaimVerdict.REFUTED and v.claims[0].reasons == ["layer1:head_skipped"]
 
 
 def test_editing_the_exam_is_refuted_even_if_it_would_pass():
@@ -279,7 +282,9 @@ def test_editing_the_exam_is_refuted_even_if_it_would_pass():
     v = verify(FakeBench(exam_runs=GOOD, files=files),
                pull([pf("mylib/core.py"), pf(EXAM_PATH, "added")]))
     assert v.verdict == ClaimVerdict.REFUTED
-    assert "篡改：head 上的考卷和封存的版本不一致" in v.claims[0].reasons
+    assert v.claims[0].reasons == ["tamper:exam_modified"]
+    body = render_verification(v, "en")
+    assert "differs from the sealed version" in body and "`/failgate reseal`" in body
 
 
 def test_conftest_change_is_flagged_but_not_refuted():
@@ -290,15 +295,18 @@ def test_conftest_change_is_flagged_but_not_refuted():
 
 def test_already_fixed_on_base_is_inconclusive():
     v = verify(FakeBench(exam_runs={BASE: [PASS, PASS], HEAD: [PASS, PASS]}))
-    assert v.verdict == ClaimVerdict.INCONCLUSIVE and "合并基点上就通过了" in v.claims[0].reasons[0]
+    assert v.verdict == ClaimVerdict.INCONCLUSIVE
+    assert v.claims[0].reasons == ["layer1:base_passed"]
 
 
 def test_no_sealed_exam_and_broken_environment_are_inconclusive():
     v = asyncio.run(ClaimVerifier(FakeBench(exam_runs={})).verify(pull(), [7], {7: None}))
-    assert v.verdict == ClaimVerdict.INCONCLUSIVE and "没有封存的考卷" in v.claims[0].reasons[0]
+    assert v.verdict == ClaimVerdict.INCONCLUSIVE and v.claims[0].reasons == ["no_exam"]
+    assert "#7 没有封存的考卷" in render_verification(v, "zh")
     v = verify(FakeBench(exam_runs={}, broken={HEAD}))
     assert v.verdict == ClaimVerdict.INCONCLUSIVE
-    assert "PR 的代码上环境搭不起来：pip install failed" in v.claims[0].reasons[0]
+    assert v.claims[0].reasons == ["layer1:setup", "layer3:setup"]
+    assert "环境搭不起来（head: pip install failed）" in render_verification(v, "zh")
 
 
 def test_pr_without_claims_has_no_verdict():

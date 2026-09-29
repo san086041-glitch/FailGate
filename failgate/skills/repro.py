@@ -200,7 +200,7 @@ class ReproSkill:
             usage=report.repro_usage(),
             cost_usd=report.total_cost_usd,
             facts={"evidence_level": out.level},
-            evidence=sealed,
+            evidence=[sealed] if sealed is not None else [],
         )
 
     @staticmethod
