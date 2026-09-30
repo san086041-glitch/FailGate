@@ -2286,3 +2286,81 @@ def trace_show(
 
     spans = [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x.strip()]
     typer.echo(render(spans, hide=tuple(h.strip() for h in hide.split(",") if h.strip())))
+
+
+fix_app = typer.Typer(help="修复 Agent：LangGraph 规划 → 修改 → 验收 → 反思（ADR 0027）",
+                      no_args_is_help=True)
+app.add_typer(fix_app, name="fix")
+
+
+@fix_app.command("run")
+def fix_run(
+    repo: Annotated[str, typer.Argument(help="owner/name，例如 psf/black")],
+    number: Annotated[int, typer.Argument(help="issue 编号（必须在 --from 的记录里）")],
+    source: Annotated[Path, typer.Option("--from", help="replay l2 的运行记录 JSON")],
+    control: Annotated[bool, typer.Option(
+        "--control", help="对照组：不给验收测试（提升实验用）")] = False,
+    budget: Annotated[float, typer.Option(help="花费上限（美元）")] = 0.5,
+    rounds: Annotated[int, typer.Option(help="最多几轮 规划→修改→验收")] = 3,
+    thinking: Annotated[str | None, typer.Option(
+        help="思考模式 disabled / low / high / max，不填用服务方默认")] = None,
+    db_url: Annotated[str, typer.Option("--db", help="回放语料库（取 issue 正文）")] = REPLAY_DB,
+    show_patch: Annotated[bool, typer.Option(help="打印补丁")] = True,
+) -> None:
+    """在某个 issue 的修复提交的父提交上跑修复 Agent（离线回放的最小单元）。会花钱。
+
+    验收测试就是回放里封存的那份 L2 测试；这里只看它在全新工作区里过没过。
+    真正的成功判定（上游金标准测试）在 fix-eval 里做。需要 GITHUB_TOKEN 和 Docker。
+    """
+    from failgate.fix.agent import FixTask
+    from failgate.fix.run import fix_tree
+    from failgate.replay import verify_eval as ve
+    from failgate.repro.config import PackageConfig
+    from failgate.repro.package import IssueContext
+    from failgate.repro.source import fetch_github_tree
+
+    settings = Settings()
+    run = json.loads(source.read_text(encoding="utf-8"))
+    cases = [c for c in ve.load_cases(run) if c.number == number]
+    if not cases:
+        raise typer.BadParameter(f"#{number} 不在记录里，或严格 FB/PA 不成立")
+    case = cases[0]
+
+    async def go() -> None:
+        docs = await _load_issue_docs(db_url, repo, [number])
+        if not docs:
+            raise typer.BadParameter(f"{repo}#{number} 不在回放库里")
+        rt = _L2Runtime(settings)
+        try:
+            tree = await fetch_github_tree(rt.gh, repo, case.parent)
+            cfg = PackageConfig(name=case.exam.package, import_name=case.exam.module)
+            task = FixTask(
+                repo=repo, number=number,
+                issue=IssueContext(title=docs[0].title, body=docs[0].body),
+                test_path=case.exam.test_path,
+                test_code=None if control else case.exam.code,
+            )
+            res = await fix_tree(
+                rt.llm, settings.llm_model_large, rt.tester, cfg, tree, task,
+                python=case.exam.python, version=case.exam.version, pytest=case.exam.pytest,
+                max_rounds=rounds, budget_usd=budget, thinking=thinking,
+                artifacts_dir=Path(settings.sandbox_artifacts_dir),
+            )
+        finally:
+            await rt.aclose()
+        typer.echo(f"#{number} {'对照组' if control else '实验组'} → {res.status}"
+                   f"（{len(res.attempts)} 轮，{res.steps} 步，{res.duration_s} 秒，"
+                   f"${res.cost_usd:.4f}，被拒写入 {res.denied} 次）")
+        typer.echo(f"  tokens：输入 {res.prompt_tokens}（缓存 {res.cached_tokens}）"
+                   f" 输出 {res.completion_tokens}（推理 {res.reasoning_tokens}）")
+        typer.echo(f"  改动文件：{', '.join(res.files) or '无'}")
+        if res.error:
+            typer.echo(f"  错误：{res.error}")
+        if res.give_up_reason:
+            typer.echo(f"  放弃：{res.give_up_reason}")
+        if res.transcript_path:
+            typer.echo(f"  记录：{res.transcript_path}")
+        if show_patch and res.patch:
+            typer.echo("\n" + res.patch)
+
+    asyncio.run(go())

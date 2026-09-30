@@ -30,6 +30,8 @@ dependencies = [
   "opentelemetry-api==1.45.0",
   "opentelemetry-sdk==1.45.0",
   "opentelemetry-exporter-otlp-proto-http==1.45.0",
+  # 修复 Agent 的图（M4，ADR 0027）：只用 StateGraph，不引入 langchain 的 Agent 抽象
+  "langgraph==1.2.12",
 ]
 
 [project.optional-dependencies]
