@@ -21,14 +21,15 @@ Case 的多条 trace 归成一个会话。
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import logging
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from typing import TYPE_CHECKING, Any
 
-from opentelemetry import context, propagate, trace
+from opentelemetry import baggage, context, propagate, trace
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace import Span, SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
@@ -45,6 +46,48 @@ tracer = trace.get_tracer("failgate")
 # 自己加的属性都放在 failgate.* 下；Langfuse 认的放在 langfuse.* 下
 CASE = "failgate.case"
 SESSION = "langfuse.session.id"
+TRACE_NAME = "langfuse.trace.name"
+# 这些键放在 Baggage 里随上下文传递（包括跨队列），每个 span 启动时抄成自己的属性：
+# Langfuse 要求会话 ID 出现在 trace 里的每一个 span 上，只写在一个 span 上不算
+PROPAGATED = (CASE, SESSION, TRACE_NAME)
+
+
+class BaggageAttributes(SpanProcessor):
+    """span 启动时把上下文 Baggage 里的 PROPAGATED 键抄成 span 属性（Langfuse 推荐的做法）。"""
+
+    def on_start(self, span: Span, parent_context: context.Context | None = None) -> None:
+        for key in PROPAGATED:
+            value = baggage.get_baggage(key, parent_context)
+            if value is not None:
+                span.set_attribute(key, str(value))
+
+
+def with_case(ctx: context.Context | None, case_key: str, trace_name: str) -> context.Context:
+    """在 ctx 上挂好这个 Case 的会话信息；之后在它下面开的 span（包括队列另一头的）都会带上。"""
+    ctx = baggage.set_baggage(CASE, case_key, context=ctx)
+    ctx = baggage.set_baggage(SESSION, case_key, context=ctx)
+    return baggage.set_baggage(TRACE_NAME, trace_name, context=ctx)
+
+
+@contextlib.contextmanager
+def attached(ctx: context.Context) -> Iterator[None]:
+    """把 ctx 设成当前上下文（从队列里恢复出来的 trace 和 Baggage）。
+
+    不能只把它传给 start_as_current_span(context=ctx)：那样 ctx 只用来找父 span，
+    新 span 变成"当前"时是在调用前的上下文上改的，ctx 里的 Baggage 到不了子 span。"""
+    token = context.attach(ctx)
+    try:
+        yield
+    finally:
+        context.detach(token)
+
+
+def trace_name(event_name: str, case_key: str) -> str:
+    """Langfuse 列表里显示的 trace 名：`issue.opened · failgate-demo#12`。
+
+    case_key 的格式是 `平台:owner/repo:kind:编号`（dispatch.case_key）。"""
+    _platform, repo, _kind, number = case_key.split(":", 3)
+    return f"{event_name} · {repo.rsplit('/', 1)[-1]}#{number}"
 
 
 def otlp_target(settings: Settings) -> tuple[str, dict[str, str]] | None:
@@ -59,7 +102,8 @@ def otlp_target(settings: Settings) -> tuple[str, dict[str, str]] | None:
             f"{settings.langfuse_public_key}:{settings.langfuse_secret_key}".encode()
         ).decode()
         endpoint = settings.langfuse_host.rstrip("/") + "/api/public/otel/v1/traces"
-        return endpoint, {"Authorization": f"Basic {token}"}
+        # 官方文档要求：带上这个头走 v4 的实时写入（不带会进旧的批处理管道）
+        return endpoint, {"Authorization": f"Basic {token}", "x-langfuse-ingestion-version": "4"}
     return None
 
 
@@ -89,6 +133,7 @@ def setup(settings: Settings) -> TracerProvider | None:
         return current
     resource = Resource.create({"service.name": settings.otel_service_name})
     provider = TracerProvider(resource=resource)
+    provider.add_span_processor(BaggageAttributes())
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
     log.info("tracing enabled: %s", settings.tracing_exporter)

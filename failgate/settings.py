@@ -42,7 +42,11 @@ class Settings(BaseSettings):
     # 显式的 OTLP traces 地址和请求头（"k=v,k2=v2"）；不填时按下面 Langfuse 的三项拼
     otlp_endpoint: str = ""
     otlp_headers: str = ""
-    langfuse_host: str = "https://cloud.langfuse.com"
+    # Langfuse 控制台给的配置片段里叫 LANGFUSE_BASE_URL（新版 SDK 的名字），两个都认
+    langfuse_host: str = Field(
+        "https://cloud.langfuse.com",
+        validation_alias=AliasChoices("langfuse_host", "langfuse_base_url"),
+    )
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
     # 是否把 prompt 和回答内容放进 span（默认不放：sandbox 仓库是私有的）

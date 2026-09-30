@@ -18,6 +18,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 from failgate.app import FailGate, create_app
 from failgate.settings import Settings
+from failgate.tracing import BaggageAttributes
 
 SECRET = "test-secret"
 REPO = "acme/widgets"
@@ -50,6 +51,7 @@ class Harness:
 # 测试里用 SPANS.get_finished_spans() 看生成了哪些 span，用 SPANS.clear() 清空
 SPANS = InMemorySpanExporter()
 _provider = TracerProvider()
+_provider.add_span_processor(BaggageAttributes())  # 和生产一样：会话信息抄到每个 span
 _provider.add_span_processor(SimpleSpanProcessor(SPANS))
 trace.set_tracer_provider(_provider)
 

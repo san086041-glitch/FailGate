@@ -59,6 +59,8 @@ async def test_events_and_sandbox_jobs_go_through_redis(tmp_path):
         root = next(s for s in spans if s.name == "webhook github/pull_request")
         job = next(s for s in spans if s.name == "sandbox job")
         assert job.context.trace_id == root.context.trace_id
+        # Baggage（Langfuse 会话）也跟着任务进了 Redis
+        assert job.attributes["langfuse.session.id"] == "github:acme/widgets:pull:12"
         assert runner.calls == [("verify", "acme/widgets", PR)]
         cases = (await h.client.get("/api/cases")).json()
         issue = next(c for c in cases if c["kind"] == "issue")

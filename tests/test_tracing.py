@@ -66,6 +66,14 @@ async def test_issue_event_is_one_trace_from_webhook_to_llm(harness: Harness):
     # 默认不记 prompt 和回答
     assert "langfuse.observation.input" not in attrs
 
+    # Langfuse 要求会话 ID 出现在每个 span 上：webhook 以下（包括 LLM 调用）全都带着
+    ours = [s for s in spans if s.context.trace_id == root.context.trace_id
+            and not s.name.startswith(("POST ", "fastapi."))]
+    missing = [s.name for s in ours if tracing.SESSION not in s.attributes]
+    assert ours and not missing, missing
+    assert {s.attributes[tracing.SESSION] for s in ours} == {"github:acme/widgets:issue:1"}
+    assert {s.attributes[tracing.TRACE_NAME] for s in ours} == {"issue.opened · widgets#1"}
+
     # 状态转换记成 span 事件
     moves = [e.attributes["to_state"] for s in spans for e in s.events if e.name == "transition"]
     assert moves[:4] == ["INTAKE", "TRIAGING", "DEDUPING", "TRIAGE_ONLY"]
@@ -84,6 +92,9 @@ async def test_sandbox_job_joins_the_trace_of_the_event_that_queued_it(tmp_path)
         assert job.context.trace_id == root.context.trace_id
         assert parent_of(job) == event.context.span_id
         assert parent_of(one(spans, "skill verify")) == job.context.span_id
+        # 会话信息放在 Baggage 里跟着任务过了队列：沙箱车道的 span 也带着
+        for name in ("sandbox job", "skill verify"):
+            assert one(spans, name).attributes[tracing.SESSION] == "github:acme/widgets:pull:12"
         assert [e.name for e in event.events].count("enqueue_sandbox") == 1
 
 
@@ -103,6 +114,7 @@ def test_langfuse_keys_become_an_otlp_endpoint_and_basic_auth(tmp_path):
     endpoint, headers = tracing.otlp_target(s) or ("", {})
     assert endpoint == "https://lf.example/api/public/otel/v1/traces"
     assert headers["Authorization"] == "Basic " + base64.b64encode(b"pk-lf-1:sk-lf-2").decode()
+    assert headers["x-langfuse-ingestion-version"] == "4"
     # 显式的 OTLP 地址优先
     s2 = make_settings(tmp_path, otlp_endpoint="http://collector:4318/v1/traces",
                        otlp_headers="x-a=1,x-b=2",
@@ -137,3 +149,12 @@ async def test_local_sink_decodes_real_otlp_payloads(harness: Harness):
     assert lines[i + 1].startswith(" " * (indent + 2) + "event issue.opened")
     assert any(ln.strip().startswith("skill triage") for ln in lines)
     assert "个 chat deepseek-flash" in tree and "→ ['INTAKE'" in tree
+
+
+def test_langfuse_base_url_from_the_console_snippet_is_accepted(tmp_path, monkeypatch):
+    # Langfuse 控制台复制出来的片段用 LANGFUSE_BASE_URL（带引号），和 LANGFUSE_HOST 等价
+    from failgate.settings import Settings
+
+    monkeypatch.setenv("LANGFUSE_BASE_URL", "https://jp.cloud.langfuse.com")
+    s = Settings(_env_file=None)  # type: ignore[call-arg]
+    assert s.langfuse_host == "https://jp.cloud.langfuse.com"

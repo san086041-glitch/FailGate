@@ -6,8 +6,10 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
+from opentelemetry import context
 
 from failgate import tracing
+from failgate.orchestrator.dispatch import case_key
 
 from .dedupe import first_seen
 
@@ -40,5 +42,16 @@ async def receive(platform: str, request: Request) -> JSONResponse:
             span.set_attribute("failgate.status", "duplicate")
             return JSONResponse({"status": "duplicate"})
         span.set_attribute("failgate.status", "queued")
-        await failgate.enqueue(event.model_copy(update={"trace": tracing.inject()}))
+        key = case_key(event)
+        if key is None:
+            await failgate.enqueue(event.model_copy(update={"trace": tracing.inject()}))
+        else:
+            # 会话信息放进 Baggage，跟 traceparent 一起注入：队列另一头的 span 都会带上
+            name = tracing.trace_name(event.name, key)
+            span.set_attributes({tracing.CASE: key, tracing.SESSION: key, tracing.TRACE_NAME: name})
+            token = context.attach(tracing.with_case(None, key, name))
+            try:
+                await failgate.enqueue(event.model_copy(update={"trace": tracing.inject()}))
+            finally:
+                context.detach(token)
     return JSONResponse({"status": "queued"}, status_code=202)

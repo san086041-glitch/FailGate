@@ -105,11 +105,13 @@ class Dispatcher:
         key = case_key(event)
         attrs: dict[str, str | int] = {"failgate.delivery_id": event.delivery_id,
                                        "failgate.event": event.name}
+        # 接在 webhook 入口的 span 下面（上下文跟着事件进了队列）；会话信息挂进 Baggage，
+        # 这个事件下面的每个 span（包括沙箱车道的）都会带上 Case 键（tracing.BaggageAttributes）
+        ctx = tracing.extract(event.trace)
         if key:
-            attrs |= {tracing.CASE: key, tracing.SESSION: key}
-        # 接在 webhook 入口的 span 下面（上下文跟着事件进了队列）
-        with tracing.tracer.start_as_current_span(
-            f"event {event.name}", context=tracing.extract(event.trace), attributes=attrs,
+            ctx = tracing.with_case(ctx, key, tracing.trace_name(event.name, key))
+        with tracing.attached(ctx), tracing.tracer.start_as_current_span(
+            f"event {event.name}", attributes=attrs,
         ) as span:
             await self._mark(event, started_at=now())
             try:
@@ -146,8 +148,8 @@ class Dispatcher:
         即使中间隔着 Redis、换了进程。"""
         if self.pipeline is None:
             return
-        with tracing.tracer.start_as_current_span(
-            "sandbox job", context=tracing.extract(trace),
+        with tracing.attached(tracing.extract(trace)), tracing.tracer.start_as_current_span(
+            "sandbox job",
             attributes={"failgate.case_id": case_id, "failgate.state_version": version},
         ) as span:
             current = await self._version(case_id)
