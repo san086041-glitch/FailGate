@@ -16,7 +16,10 @@ from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
 import httpx
+from opentelemetry.trace import SpanKind, StatusCode
 from pydantic import BaseModel, ValidationError
+
+from failgate import tracing
 
 log = logging.getLogger(__name__)
 
@@ -107,6 +110,7 @@ class LLMClient:
         timeout: float = 60.0,
         max_retries: int = 3,
         transport: httpx.AsyncBaseTransport | None = None,
+        capture_content: bool = False,
     ) -> None:
         self._http = httpx.AsyncClient(
             base_url=base_url.rstrip("/"),
@@ -115,6 +119,9 @@ class LLMClient:
             transport=transport,
         )
         self._max_retries = max_retries
+        # 链路里记不记 prompt 和回答（ADR 0025）；供应商名只用来标 span
+        self._capture_content = capture_content
+        self._provider = "deepseek" if "deepseek" in base_url else "openai"
 
     async def aclose(self) -> None:
         await self._http.aclose()
@@ -138,6 +145,47 @@ class LLMClient:
         if tools:
             body["tools"] = tools
 
+        # OTel GenAI 语义约定：Langfuse 按这些属性把 span 识别成一次模型调用（generation）
+        with tracing.tracer.start_as_current_span(
+            f"chat {model}", kind=SpanKind.CLIENT,
+            attributes={
+                "gen_ai.operation.name": "chat",
+                "gen_ai.system": self._provider,
+                "gen_ai.provider.name": self._provider,
+                "gen_ai.request.model": model,
+                "gen_ai.request.temperature": temperature,
+                **({"gen_ai.request.max_tokens": max_tokens} if max_tokens else {}),
+            },
+        ) as span:
+            if self._capture_content:
+                span.set_attribute("langfuse.observation.input",
+                                   json.dumps(messages, ensure_ascii=False))
+            try:
+                resp = await self._chat(body, model)
+            except LLMError as e:
+                span.record_exception(e)
+                span.set_status(StatusCode.ERROR)
+                raise
+            from .pricing import cost_usd  # pricing 反过来依赖本模块的 Usage
+
+            cost = cost_usd(resp.model, resp.usage)
+            span.set_attributes({
+                "gen_ai.response.model": resp.model,
+                "gen_ai.usage.input_tokens": resp.usage.prompt_tokens,
+                "gen_ai.usage.output_tokens": resp.usage.completion_tokens,
+                "gen_ai.usage.cache_read.input_tokens": resp.usage.cached_tokens,
+                "failgate.cost_usd": cost,
+                "langfuse.observation.cost_details": json.dumps({"total": cost}),
+                "failgate.llm.attempts": resp.attempts,
+                "failgate.llm.tool_calls": len(resp.tool_calls),
+            })
+            if self._capture_content:
+                out = resp.text or json.dumps([tc.as_message() for tc in resp.tool_calls],
+                                              ensure_ascii=False)
+                span.set_attribute("langfuse.observation.output", out)
+            return resp
+
+    async def _chat(self, body: dict[str, Any], model: str) -> LLMResponse:
         started = time.monotonic()
         last_error = ""
         for attempt in range(1, self._max_retries + 1):

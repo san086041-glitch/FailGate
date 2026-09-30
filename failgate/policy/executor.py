@@ -21,8 +21,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from opentelemetry.trace import StatusCode
 from sqlalchemy import select
 
+from failgate import tracing
 from failgate.db import Case, Database, Effect, Repo
 from failgate.platforms.base import CaseKind, CaseRef, PlatformError, PlatformWriter, RepoRef
 
@@ -118,6 +120,26 @@ class EffectExecutor:
         return counts
 
     async def _execute(
+        self,
+        writer: PlatformWriter,
+        ref: CaseRef,
+        effect: Effect,
+        summary_id: str | None,
+        attempt: int,
+    ) -> _Outcome:
+        with tracing.tracer.start_as_current_span(
+            f"effect {effect.action}",
+            attributes={"failgate.effect.action": effect.action,
+                        "failgate.effect.key": effect.effect_key[:12],
+                        "failgate.effect.attempt": attempt},
+        ) as span:
+            outcome = await self._execute_inner(writer, ref, effect, summary_id, attempt)
+            span.set_attribute("failgate.effect.status", outcome.status)
+            if outcome.status in ("failed", "blocked"):
+                span.set_status(StatusCode.ERROR, outcome.error or outcome.status)
+            return outcome
+
+    async def _execute_inner(
         self,
         writer: PlatformWriter,
         ref: CaseRef,

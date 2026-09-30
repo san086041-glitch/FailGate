@@ -10,8 +10,9 @@ from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI
+from opentelemetry.sdk.trace import TracerProvider
 
-from failgate import __version__
+from failgate import __version__, tracing
 from failgate.api import router as api_router
 from failgate.db import Database, Repo
 from failgate.index.docs import DocIndex
@@ -67,6 +68,7 @@ def build_llm(
         settings.llm_api_key,
         timeout=settings.llm_timeout_seconds,
         transport=transport,
+        capture_content=settings.tracing_capture_content,
     )
 
 
@@ -178,6 +180,7 @@ class FailGate:
         if isinstance(self.worker, Worker):
             self._bind(self.worker.locks)
         self._tasks: list[asyncio.Task[None]] = []
+        self._tracer_provider: TracerProvider | None = None
 
     def _build_repro_runner(
         self, settings: Settings, injected: ReproRunner | None
@@ -257,6 +260,7 @@ class FailGate:
         return [x.strip() for x in self.settings.worker_lanes.split(",") if x.strip() in LANES]
 
     async def start(self, *, run_worker: bool = True) -> None:
+        self._tracer_provider = tracing.setup(self.settings)
         await self.db.create_all()
         if isinstance(self.worker, RedisQueues):
             await self.worker.connect()
@@ -302,6 +306,7 @@ class FailGate:
         if self.embedder is not None:
             await self.embedder.aclose()
         await self.db.dispose()
+        tracing.shutdown(self._tracer_provider)
 
 
 def create_app(

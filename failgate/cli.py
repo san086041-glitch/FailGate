@@ -2216,3 +2216,32 @@ def replay_load(
     typer.echo(f"已发出：{sum(c == 202 for c in codes)}/{len(codes)} 入队。"
                f"处理完后运行：failgate replay latency {repo} --since "
                f"{started.isoformat(timespec='seconds')} --no-github --db <同一个库>")
+
+
+trace_app = typer.Typer(help="链路追踪：本地收 OTLP、打成树（ADR 0025）", no_args_is_help=True)
+app.add_typer(trace_app, name="trace")
+
+
+@trace_app.command("sink")
+def trace_sink(
+    out: Annotated[Path, typer.Argument(help="收到的 span 按 JSON 行追加到这个文件")],
+    port: Annotated[int, typer.Option(help="监听端口（OTLP/HTTP 默认 4318）")] = 4318,
+) -> None:
+    """本地 OTLP/HTTP 接收器：服务端设 TRACING_EXPORTER=otlp、OTLP_ENDPOINT=http://127.0.0.1:4318/v1/traces。"""
+    from failgate.tracing.sink import serve
+
+    typer.echo(f"监听 127.0.0.1:{port}，写入 {out}（Ctrl+C 退出）")
+    serve(out, port=port)
+
+
+@trace_app.command("show")
+def trace_show(
+    path: Annotated[Path, typer.Argument(help="trace sink 写的 JSON 行文件")],
+    hide: Annotated[str, typer.Option(help="只计数、不逐行显示的 span 名（逗号分隔）")] = (
+        "sandbox run"),
+) -> None:
+    """把收到的 span 按 trace 打成树。"""
+    from failgate.tracing.sink import render
+
+    spans = [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x.strip()]
+    typer.echo(render(spans, hide=tuple(h.strip() for h in hide.split(",") if h.strip())))

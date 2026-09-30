@@ -36,6 +36,17 @@ class Settings(BaseSettings):
     # serve 进程里跑哪几条车道（逗号分隔；空 = 只收 webhook，worker 另起 `failgate worker`）
     worker_lanes: str = "events,sandbox"
     events_job_timeout_seconds: int = 600
+    # 链路追踪（ADR 0025）：none 不导出；console 打到标准输出；otlp 发到 OTLP/HTTP 后端
+    tracing_exporter: Literal["none", "console", "otlp"] = "none"
+    otel_service_name: str = "failgate"
+    # 显式的 OTLP traces 地址和请求头（"k=v,k2=v2"）；不填时按下面 Langfuse 的三项拼
+    otlp_endpoint: str = ""
+    otlp_headers: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    # 是否把 prompt 和回答内容放进 span（默认不放：sandbox 仓库是私有的）
+    tracing_capture_content: bool = False
     # 也是 worker 崩溃后 arq 重投的等待时间（任务超时 + 10 秒）：别设太长
     sandbox_job_timeout_seconds: int = 1200
 

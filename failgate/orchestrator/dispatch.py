@@ -26,8 +26,10 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
 from typing import Protocol
 
+from opentelemetry.trace import StatusCode
 from sqlalchemy import select
 
+from failgate import tracing
 from failgate.db import Case, Database, Delivery
 from failgate.ingress.dedupe import mark_delivery, now
 from failgate.platforms.base import DomainEvent
@@ -41,8 +43,8 @@ log = logging.getLogger(__name__)
 
 SANDBOX_STATES = frozenset({CaseState.REPRODUCING, CaseState.VERIFYING, CaseState.RESEALING})
 
-# 投沙箱任务：(case_id, 投递时的 state_version)
-SandboxEnqueue = Callable[[int, int], Awaitable[None]]
+# 投沙箱任务：(case_id, 投递时的 state_version, trace 上下文)
+SandboxEnqueue = Callable[[int, int, dict[str, str]], Awaitable[None]]
 
 
 class CaseLocks(Protocol):
@@ -100,43 +102,70 @@ class Dispatcher:
             log.info("delivery %s already handled, skipped", event.delivery_id)
             return
         case_id: int | None = None
-        await self._mark(event, started_at=now())
-        try:
-            key = case_key(event)
-            async with self.locks.hold(key) if key else contextlib.nullcontext():
-                outcome = await self.machine.handle(event)
-                if outcome is None:
-                    return
-                case_id = outcome.case_id
-                state = outcome.state
-                if self.pipeline is not None:
-                    state = await self.pipeline.advance(case_id, stop_at=SANDBOX_STATES)
-                # 本轮快阶段提出的写操作（标签、汇总评论）在这里统一发出
-                if self.executor is not None:
-                    await self.executor.flush(case_id)
-                if (state in SANDBOX_STATES and self.pipeline is not None
-                        and self.pipeline.runs(state)):
-                    await self.enqueue_sandbox(case_id, await self._version(case_id))
-        except Exception:
-            log.exception("failed to handle event %s (%s)", event.delivery_id, event.name)
-        finally:
-            await self._mark(event, finished_at=now(), case_id=case_id)
+        key = case_key(event)
+        attrs: dict[str, str | int] = {"failgate.delivery_id": event.delivery_id,
+                                       "failgate.event": event.name}
+        if key:
+            attrs |= {tracing.CASE: key, tracing.SESSION: key}
+        # 接在 webhook 入口的 span 下面（上下文跟着事件进了队列）
+        with tracing.tracer.start_as_current_span(
+            f"event {event.name}", context=tracing.extract(event.trace), attributes=attrs,
+        ) as span:
+            await self._mark(event, started_at=now())
+            try:
+                async with self.locks.hold(key) if key else contextlib.nullcontext():
+                    outcome = await self.machine.handle(event)
+                    if outcome is None:
+                        return
+                    case_id = outcome.case_id
+                    span.set_attribute("failgate.case_id", case_id)
+                    state = outcome.state
+                    if self.pipeline is not None:
+                        state = await self.pipeline.advance(case_id, stop_at=SANDBOX_STATES)
+                    # 本轮快阶段提出的写操作（标签、汇总评论）在这里统一发出
+                    if self.executor is not None:
+                        await self.executor.flush(case_id)
+                    span.set_attribute("failgate.state", str(state))
+                    if (state in SANDBOX_STATES and self.pipeline is not None
+                            and self.pipeline.runs(state)):
+                        version = await self._version(case_id)
+                        tracing.event("enqueue_sandbox", state=str(state), version=version)
+                        await self.enqueue_sandbox(case_id, version, tracing.inject())
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(StatusCode.ERROR)
+                log.exception("failed to handle event %s (%s)", event.delivery_id, event.name)
+            finally:
+                await self._mark(event, finished_at=now(), case_id=case_id)
 
-    async def run_sandbox(self, case_id: int, version: int) -> None:
-        """sandbox 车道的一个任务：从沙箱阶段一直跑到流水线停下。"""
+    async def run_sandbox(self, case_id: int, version: int,
+                          trace: dict[str, str] | None = None) -> None:
+        """sandbox 车道的一个任务：从沙箱阶段一直跑到流水线停下。
+
+        trace 是投任务时的上下文：沙箱任务的 span 接在触发它的那个事件下面，
+        即使中间隔着 Redis、换了进程。"""
         if self.pipeline is None:
             return
-        current = await self._version(case_id)
-        if current != version:
-            # 投递之后 Case 又被改过（关闭、重新触发）：由后来的任务负责
-            log.info("sandbox job for case %s is stale (v%s, now v%s)", case_id, version, current)
-            return
-        try:
-            await self.pipeline.advance(case_id)
-            if self.executor is not None:
-                await self.executor.flush(case_id)
-        except Exception:
-            log.exception("sandbox job failed on case %s", case_id)
+        with tracing.tracer.start_as_current_span(
+            "sandbox job", context=tracing.extract(trace),
+            attributes={"failgate.case_id": case_id, "failgate.state_version": version},
+        ) as span:
+            current = await self._version(case_id)
+            if current != version:
+                # 投递之后 Case 又被改过（关闭、重新触发）：由后来的任务负责
+                span.set_attribute("failgate.status", "stale")
+                log.info("sandbox job for case %s is stale (v%s, now v%s)",
+                         case_id, version, current)
+                return
+            try:
+                state = await self.pipeline.advance(case_id)
+                span.set_attribute("failgate.state", str(state))
+                if self.executor is not None:
+                    await self.executor.flush(case_id)
+            except Exception as e:
+                span.record_exception(e)
+                span.set_status(StatusCode.ERROR)
+                log.exception("sandbox job failed on case %s", case_id)
 
     async def _version(self, case_id: int) -> int:
         async with self.db.session() as s:

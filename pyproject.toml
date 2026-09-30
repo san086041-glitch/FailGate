@@ -26,6 +26,10 @@ dependencies = [
   # PostgreSQL 驱动与迁移（ADR 0024）；开发和测试仍可用 SQLite
   "asyncpg==0.30.0",
   "alembic==1.16.5",
+  # 链路追踪（ADR 0025）：OTel SDK + OTLP/HTTP 导出（Langfuse 或任何 OTel 后端）
+  "opentelemetry-api==1.45.0",
+  "opentelemetry-sdk==1.45.0",
+  "opentelemetry-exporter-otlp-proto-http==1.45.0",
 ]
 
 [project.optional-dependencies]

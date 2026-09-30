@@ -12,9 +12,11 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 
+from opentelemetry.trace import StatusCode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from failgate import tracing
 from failgate.db import Case, Database, Evidence, Repo, Run, TransitionLog, VerificationRecord
 from failgate.index.store import IssueIndex
 from failgate.llm import LLMClient
@@ -110,12 +112,22 @@ class Pipeline:
 
             skill, model = entry
             started = datetime.now(UTC)
-            try:
-                result = await skill.run(ctx)
-            except Exception as e:
-                log.exception("skill %s failed on case %s", skill.name, case_id)
-                await self._record_error(case_id, skill, model, started, e)
-                return state
+            # 一次能力模块执行一个 span；里面的 LLM 调用、沙箱执行都是它的子 span
+            with tracing.tracer.start_as_current_span(
+                f"skill {skill.name}",
+                attributes={"failgate.skill": skill.name, "failgate.skill_version": skill.version,
+                            "failgate.case_id": case_id, "failgate.state": str(state)},
+            ) as span:
+                try:
+                    result = await skill.run(ctx)
+                except Exception as e:
+                    span.record_exception(e)
+                    span.set_status(StatusCode.ERROR)
+                    log.exception("skill %s failed on case %s", skill.name, case_id)
+                    await self._record_error(case_id, skill, model, started, e)
+                    return state
+                span.set_attribute("failgate.cost_usd", result.cost_usd)
+                span.set_attribute("failgate.confidence", result.confidence)
 
             async with self.db.session() as s, s.begin():
                 # 行锁（PostgreSQL）：写结果和并发的事件处理互斥；SQLite 本来就串行写

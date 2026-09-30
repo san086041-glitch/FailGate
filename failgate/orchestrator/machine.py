@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from failgate import tracing
 from failgate.db import Case, Database, Repo, TransitionLog
 from failgate.platforms.base import DomainEvent, User
 
@@ -118,6 +119,8 @@ class CaseMachine:
         case.state = t.to
         case.state_version += 1
         log.info("case %s: %s --%s--> %s", case.id, current, name, t.to)
+        tracing.event("transition", case_id=case.id, event=name,
+                      from_state=str(current), to_state=str(t.to))
         return t.to
 
     async def _repo(self, s: AsyncSession, event: DomainEvent) -> Repo:

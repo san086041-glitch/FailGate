@@ -11,6 +11,10 @@ from typing import Any
 import httpx
 import pytest
 from fake_llm import FakeLLM
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from failgate.app import FailGate, create_app
 from failgate.settings import Settings
@@ -41,6 +45,13 @@ class Harness:
             },
         )
 
+
+# 链路追踪（ADR 0025）：整个测试进程共用一个内存导出器（OTel 的全局 provider 只能设一次）。
+# 测试里用 SPANS.get_finished_spans() 看生成了哪些 span，用 SPANS.clear() 清空
+SPANS = InMemorySpanExporter()
+_provider = TracerProvider()
+_provider.add_span_processor(SimpleSpanProcessor(SPANS))
+trace.set_tracer_provider(_provider)
 
 # 设了 TEST_DATABASE_URL（postgresql+asyncpg://…）时，走 harness 的测试改用这个库（ADR 0024）：
 # CI 里有一个专门的任务用 PostgreSQL 把整套测试再跑一遍。每个测试开始前清空整个 schema

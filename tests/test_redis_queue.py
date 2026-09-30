@@ -11,7 +11,7 @@ import json
 import os
 
 import pytest
-from conftest import _harness, issue_event, make_settings
+from conftest import SPANS, _harness, issue_event, make_settings
 from test_verify_pipeline import PR, FakeVerifyRunner, pr_case, pull_event, verification
 
 from failgate.orchestrator.redis_queue import RedisCaseLocks, RedisQueues
@@ -42,6 +42,7 @@ async def test_events_and_sandbox_jobs_go_through_redis(tmp_path):
     settings = make_settings(tmp_path, queue_backend="redis", redis_url=REDIS_URL)
     async for h in _harness(settings, verify_runner=runner):
         assert isinstance(h.failgate.worker, RedisQueues)
+        SPANS.clear()
         r = await h.send("pull_request", pull_event("opened"), "p-1")
         assert r.status_code == 202
         await h.send("issues", issue_event("opened", 1), "d-1")
@@ -53,6 +54,11 @@ async def test_events_and_sandbox_jobs_go_through_redis(tmp_path):
         await h.failgate.worker.enqueue_event(again)
         await h.failgate.worker.drain()
         assert (await pr_case(h)).state == CaseState.VERIFIED
+        # trace 上下文跟着任务参数进了 Redis：沙箱任务仍在触发它的那条 trace 里（ADR 0025）
+        spans = SPANS.get_finished_spans()
+        root = next(s for s in spans if s.name == "webhook github/pull_request")
+        job = next(s for s in spans if s.name == "sandbox job")
+        assert job.context.trace_id == root.context.trace_id
         assert runner.calls == [("verify", "acme/widgets", PR)]
         cases = (await h.client.get("/api/cases")).json()
         issue = next(c for c in cases if c["kind"] == "issue")

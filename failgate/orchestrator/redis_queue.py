@@ -38,9 +38,10 @@ async def _handle_event(ctx: dict[str, Any], payload: dict[str, Any]) -> None:
     await dispatcher.handle_event(DomainEvent.model_validate(payload))
 
 
-async def _run_sandbox(ctx: dict[str, Any], case_id: int, version: int) -> None:
+async def _run_sandbox(ctx: dict[str, Any], case_id: int, version: int,
+                       trace: dict[str, str] | None = None) -> None:
     dispatcher: Dispatcher = ctx["dispatcher"]
-    await dispatcher.run_sandbox(case_id, version)
+    await dispatcher.run_sandbox(case_id, version, trace)
 
 
 class RedisCaseLocks:
@@ -105,9 +106,11 @@ class RedisQueues:
                                     _job_id=f"event:{event.delivery_id}",
                                     _queue_name=EVENTS_QUEUE)
 
-    async def enqueue_sandbox(self, case_id: int, version: int) -> None:
+    async def enqueue_sandbox(self, case_id: int, version: int,
+                              trace: dict[str, str] | None = None) -> None:
         assert self.pool is not None, "call connect() first"
-        await self.pool.enqueue_job("run_sandbox", case_id, version,
+        # trace 上下文跟着任务参数进 Redis：沙箱任务的 span 接在触发它的事件下面
+        await self.pool.enqueue_job("run_sandbox", case_id, version, trace or {},
                                     _job_id=f"sandbox:{case_id}:{version}",
                                     _queue_name=SANDBOX_QUEUE)
 

@@ -22,7 +22,7 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
 
-from failgate import __version__
+from failgate import __version__, tracing
 from failgate.index.trace import TraceSignature
 from failgate.repro.judge import same_failure
 from failgate.repro.l2 import PYTEST_INVALID
@@ -274,12 +274,16 @@ class ClaimVerifier:
         base_env = head_env = None
         setup: list[str] = []
         try:
-            base_env = await self.bench.prepare(pr.repo, pr.base_sha, exam)
+            with tracing.tracer.start_as_current_span("verify prepare base",
+                                                      attributes={"failgate.sha": pr.base_sha}):
+                base_env = await self.bench.prepare(pr.repo, pr.base_sha, exam)
         except SetupFailed as e:
             setup.append(f"base: {e}")
         try:
             # fork 的提交也从 base 仓库取：GitHub 为每个 PR 保留 refs/pull/N/head
-            head_env = await self.bench.prepare(pr.repo, pr.head_sha, exam)
+            with tracing.tracer.start_as_current_span("verify prepare head",
+                                                      attributes={"failgate.sha": pr.head_sha}):
+                head_env = await self.bench.prepare(pr.repo, pr.head_sha, exam)
         except SetupFailed as e:
             setup.append(f"head: {e}")
 
@@ -294,15 +298,21 @@ class ClaimVerifier:
             layer1 = Layer1(status="inconclusive", reason="setup", detail="; ".join(setup))
             layer3 = Layer3(status="inconclusive", reason="setup")
         else:
-            layer1 = await self._layer1(base_env, head_env, exam)
-            layer3 = await self._layer3(pr, base_env, head_env, exam)
+            with tracing.tracer.start_as_current_span("verify layer1") as span:
+                layer1 = await self._layer1(base_env, head_env, exam)
+                span.set_attribute("failgate.layer.status", layer1.status)
+            with tracing.tracer.start_as_current_span("verify layer3") as span:
+                layer3 = await self._layer3(pr, base_env, head_env, exam)
+                span.set_attribute("failgate.layer.status", layer3.status)
         verdict, reasons = combine(layer1, layer2, layer3)
         strength = hidden = None
         if layer1.status == "pass" and not layer2.high:
             if exam.hidden is not None:
-                hidden = await run_hidden(self.bench, head_env, exam, exam.hidden)
+                with tracing.tracer.start_as_current_span("verify hidden exam"):
+                    hidden = await run_hidden(self.bench, head_env, exam, exam.hidden)
             if self.strength is not None:
-                strength = await self._strength(pr, base_env, head_env, exam)
+                with tracing.tracer.start_as_current_span("verify strength"):
+                    strength = await self._strength(pr, base_env, head_env, exam)
         return ClaimResult(
             issue=issue, verdict=verdict, reasons=reasons, evidence_id=exam.evidence_id,
             exam_receipt_sha256=exam.receipt_sha256, test_path=exam.test_path,

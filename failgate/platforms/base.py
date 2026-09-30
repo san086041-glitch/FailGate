@@ -72,6 +72,8 @@ class DomainEvent(BaseModel, frozen=True):
     title: str = ""
     body: str = ""
     installation_id: int | None = None
+    # W3C trace context（traceparent）：webhook 入口注入，跟着事件进队列（ADR 0025）
+    trace: dict[str, str] = {}
 
 
 class Label(BaseModel):

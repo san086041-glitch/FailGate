@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 class Worker:
     def __init__(self, *, events_concurrency: int = 4, sandbox_concurrency: int = 1) -> None:
         self.events: asyncio.Queue[DomainEvent] = asyncio.Queue()
-        self.sandbox: asyncio.Queue[tuple[int, int]] = asyncio.Queue()
+        self.sandbox: asyncio.Queue[tuple[int, int, dict[str, str]]] = asyncio.Queue()
         self.events_concurrency = max(1, events_concurrency)
         self.sandbox_concurrency = max(1, sandbox_concurrency)
         self.locks = LocalCaseLocks()
@@ -32,8 +32,9 @@ class Worker:
     async def enqueue_event(self, event: DomainEvent) -> None:
         await self.events.put(event)
 
-    async def enqueue_sandbox(self, case_id: int, version: int) -> None:
-        await self.sandbox.put((case_id, version))
+    async def enqueue_sandbox(self, case_id: int, version: int,
+                              trace: dict[str, str] | None = None) -> None:
+        await self.sandbox.put((case_id, version, trace or {}))
 
     async def run_forever(self) -> None:
         loops = [self._events_loop() for _ in range(self.events_concurrency)]
@@ -52,9 +53,9 @@ class Worker:
     async def _sandbox_loop(self) -> None:
         assert self.dispatcher is not None
         while True:
-            case_id, version = await self.sandbox.get()
+            case_id, version, trace = await self.sandbox.get()
             try:
-                await self.dispatcher.run_sandbox(case_id, version)
+                await self.dispatcher.run_sandbox(case_id, version, trace)
             finally:
                 self.sandbox.task_done()
 

@@ -12,6 +12,9 @@ import math
 from collections.abc import Awaitable, Callable, Sequence
 
 import httpx
+from opentelemetry.trace import SpanKind
+
+from failgate import tracing
 
 
 class Embedder:
@@ -36,6 +39,15 @@ class Embedder:
         )
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
+        # 向量调用也是一次模型调用：GenAI 语义约定里 operation 是 embeddings（ADR 0025）
+        with tracing.tracer.start_as_current_span(
+            f"embeddings {self.model}", kind=SpanKind.CLIENT,
+            attributes={"gen_ai.operation.name": "embeddings", "gen_ai.request.model": self.model,
+                        "failgate.embed.inputs": len(texts)},
+        ):
+            return await self._embed(texts)
+
+    async def _embed(self, texts: Sequence[str]) -> list[list[float]]:
         # 批量建索引时容易碰到服务方的每分钟请求数 / token 数上限：429 和 5xx 退避重试
         for attempt in range(self.retries + 1):
             r = await self._http.post(

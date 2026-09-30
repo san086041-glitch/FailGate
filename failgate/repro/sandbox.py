@@ -31,6 +31,8 @@ from typing import IO, Literal
 
 from pydantic import BaseModel
 
+from failgate import tracing
+
 Phase = Literal["install", "run"]
 
 WORKDIR = "/workspace"
@@ -459,6 +461,34 @@ class DockerSandbox:
         return await self._exec("run", image, volume, argv, timeout_s, env=env)
 
     async def _exec(
+        self,
+        phase: Phase,
+        image: str,
+        volume: str,
+        argv: Sequence[str],
+        timeout_s: int,
+        *,
+        env: Sequence[str] = (),
+        commit_to: str | None = None,
+    ) -> ExecResult:
+        # 一次容器执行一个 span（ADR 0025）：命令只记前几段，不记脚本内容
+        with tracing.tracer.start_as_current_span(
+            f"sandbox {phase}",
+            attributes={"failgate.sandbox.phase": phase, "failgate.sandbox.image": image,
+                        "failgate.sandbox.argv": shlex.join(argv[:4])[:200],
+                        "failgate.sandbox.timeout_s": timeout_s},
+        ) as span:
+            result = await self._exec_inner(phase, image, volume, argv, timeout_s,
+                                            env=env, commit_to=commit_to)
+            span.set_attributes({
+                "failgate.sandbox.exit_code": result.exit_code,
+                "failgate.sandbox.duration_s": result.duration_s,
+                "failgate.sandbox.timed_out": result.timed_out,
+                "failgate.sandbox.oom_killed": bool(result.oom_killed),
+            })
+            return result
+
+    async def _exec_inner(
         self,
         phase: Phase,
         image: str,
