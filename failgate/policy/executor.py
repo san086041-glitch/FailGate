@@ -133,6 +133,7 @@ class EffectExecutor:
                         "failgate.effect.key": effect.effect_key[:12],
                         "failgate.effect.attempt": attempt},
         ) as span:
+            tracing.set_io(span, input=effect.payload)  # 标签 / 评论正文：本来就要公开发出去的
             outcome = await self._execute_inner(writer, ref, effect, summary_id, attempt)
             span.set_attribute("failgate.effect.status", outcome.status)
             if outcome.status in ("failed", "blocked"):

@@ -249,8 +249,11 @@ class FailGate:
         return await client.get_permission(event.repo, event.actor.login)
 
     def _bind(self, locks: CaseLocks) -> None:
-        self.dispatcher = Dispatcher(self.db, self.machine, self.pipeline, self.executor,
-                                     locks, self.worker.enqueue_sandbox)
+        self.dispatcher = Dispatcher(
+            self.db, self.machine, self.pipeline, self.executor, locks,
+            self.worker.enqueue_sandbox,
+            capture_for=lambda repo: tracing.capture_enabled(self.settings, repo),
+        )
         self.worker.bind(self.dispatcher)
 
     async def enqueue(self, event: DomainEvent) -> None:

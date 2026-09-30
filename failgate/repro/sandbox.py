@@ -486,6 +486,11 @@ class DockerSandbox:
                 "failgate.sandbox.timed_out": result.timed_out,
                 "failgate.sandbox.oom_killed": bool(result.oom_killed),
             })
+            # 允许记内容时：完整命令 + 输出的结尾（pytest 的结论和堆栈都在最后）
+            tracing.set_io(span, input=shlex.join(argv), output={
+                "exit_code": result.exit_code,
+                "stdout_tail": result.stdout[-2000:], "stderr_tail": result.stderr[-2000:],
+            })
             return result
 
     async def _exec_inner(

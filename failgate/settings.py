@@ -49,8 +49,11 @@ class Settings(BaseSettings):
     )
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
-    # 是否把 prompt 和回答内容放进 span（默认不放：sandbox 仓库是私有的）
+    # 是否把 prompt、回答、skill 输入输出、容器输出放进 span。默认不放（sandbox 仓库是私有的）；
+    # TRACING_CAPTURE_CONTENT=true 对所有仓库打开，TRACING_CAPTURE_REPOS 只对列出的仓库打开
+    # （逗号分隔的 owner/name，* = 全部），比如只对公开的演示仓库打开
     tracing_capture_content: bool = False
+    tracing_capture_repos: str = ""
     # 也是 worker 崩溃后 arq 重投的等待时间（任务超时 + 10 秒）：别设太长
     sandbox_job_timeout_seconds: int = 1200
 

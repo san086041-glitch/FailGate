@@ -118,6 +118,10 @@ class Pipeline:
                 attributes={"failgate.skill": skill.name, "failgate.skill_version": skill.version,
                             "failgate.case_id": case_id, "failgate.state": str(state)},
             ) as span:
+                # 允许记内容时：输入是 issue 本身，输出是这一步的结构化结果（分诊的类型和标签、
+                # 查重的结论……），Langfuse 里点开任何一层都有东西看
+                tracing.set_io(span, input={"repo": ctx.issue.repo, "number": ctx.issue.number,
+                                            "title": ctx.issue.title, "body": ctx.issue.body})
                 try:
                     result = await skill.run(ctx)
                 except Exception as e:
@@ -128,6 +132,7 @@ class Pipeline:
                     return state
                 span.set_attribute("failgate.cost_usd", result.cost_usd)
                 span.set_attribute("failgate.confidence", result.confidence)
+                tracing.set_io(span, output=result.output.model_dump(mode="json"))
 
             async with self.db.session() as s, s.begin():
                 # 行锁（PostgreSQL）：写结果和并发的事件处理互斥；SQLite 本来就串行写

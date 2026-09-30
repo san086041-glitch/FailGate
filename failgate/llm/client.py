@@ -157,9 +157,10 @@ class LLMClient:
                 **({"gen_ai.request.max_tokens": max_tokens} if max_tokens else {}),
             },
         ) as span:
-            if self._capture_content:
-                span.set_attribute("langfuse.observation.input",
-                                   json.dumps(messages, ensure_ascii=False))
+            # 记不记内容：全局开关，或者这条 trace 所属的仓库在白名单里（Baggage 带过来的标记）
+            capture = self._capture_content or tracing.capturing()
+            if capture:
+                span.set_attribute("langfuse.observation.input", tracing.content(messages))
             try:
                 resp = await self._chat(body, model)
             except LLMError as e:
@@ -179,10 +180,9 @@ class LLMClient:
                 "failgate.llm.attempts": resp.attempts,
                 "failgate.llm.tool_calls": len(resp.tool_calls),
             })
-            if self._capture_content:
-                out = resp.text or json.dumps([tc.as_message() for tc in resp.tool_calls],
-                                              ensure_ascii=False)
-                span.set_attribute("langfuse.observation.output", out)
+            if capture:
+                out = resp.text or [tc.as_message() for tc in resp.tool_calls]
+                span.set_attribute("langfuse.observation.output", tracing.content(out))
             return resp
 
     async def _chat(self, body: dict[str, Any], model: str) -> LLMResponse:

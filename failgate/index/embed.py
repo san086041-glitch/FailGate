@@ -44,8 +44,15 @@ class Embedder:
             f"embeddings {self.model}", kind=SpanKind.CLIENT,
             attributes={"gen_ai.operation.name": "embeddings", "gen_ai.request.model": self.model,
                         "failgate.embed.inputs": len(texts)},
-        ):
-            return await self._embed(texts)
+        ) as span:
+            vectors = await self._embed(texts)
+            # 只记"算了几段、多长、几维"，不记文本和向量本身（向量是一大串数字，没有阅读价值）
+            tracing.set_io(
+                span,
+                input={"texts": len(texts), "chars": [len(t) for t in texts][:20]},
+                output={"vectors": len(vectors), "dims": len(vectors[0]) if vectors else 0},
+            )
+            return vectors
 
     async def _embed(self, texts: Sequence[str]) -> list[list[float]]:
         # 批量建索引时容易碰到服务方的每分钟请求数 / token 数上限：429 和 5xx 退避重试

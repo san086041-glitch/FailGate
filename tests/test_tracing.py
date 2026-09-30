@@ -158,3 +158,49 @@ def test_langfuse_base_url_from_the_console_snippet_is_accepted(tmp_path, monkey
     monkeypatch.setenv("LANGFUSE_BASE_URL", "https://jp.cloud.langfuse.com")
     s = Settings(_env_file=None)  # type: ignore[call-arg]
     assert s.langfuse_host == "https://jp.cloud.langfuse.com"
+
+
+async def _issue_spans(tmp_path, **settings) -> list[ReadableSpan]:
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    async for h in _harness(make_settings(tmp_path, **settings)):
+        SPANS.clear()
+        await h.send("issues", issue_event("opened", 1), "d-1")
+        await h.failgate.worker.drain()
+        return list(SPANS.get_finished_spans())
+    raise AssertionError("unreachable")
+
+
+async def test_content_is_recorded_only_for_allowlisted_repos(tmp_path):
+    # 白名单里的仓库：skill 有输入（issue）和输出（结构化结果），LLM 有 prompt 和回答
+    spans = await _issue_spans(tmp_path / "a", tracing_capture_repos="other/repo, ACME/Widgets")
+    triage = one(spans, "skill triage")
+    assert "KeyError when reading parquet" in triage.attributes["langfuse.observation.input"]
+    assert '"type"' in triage.attributes["langfuse.observation.output"]
+    chat = next(s for s in spans if s.name.startswith("chat "))
+    assert "langfuse.observation.input" in chat.attributes
+
+    # 不在白名单：一个 span 都不带内容（只有耗时、token、花费）
+    spans = await _issue_spans(tmp_path / "b", tracing_capture_repos="other/repo")
+    leaked = [s.name for s in spans if "langfuse.observation.input" in (s.attributes or {})]
+    assert leaked == []
+
+
+async def test_capture_flag_crosses_the_sandbox_queue(tmp_path):
+    runner = FakeVerifyRunner(verification(ClaimVerdict.VERIFIED))
+    settings = make_settings(tmp_path, tracing_capture_repos="*")
+    async for h in _harness(settings, verify_runner=runner):
+        SPANS.clear()
+        await h.send("pull_request", pull_event("opened"), "p-1")
+        await h.failgate.worker.drain()
+        verify = one(SPANS.get_finished_spans(), "skill verify")
+        # 沙箱车道没见过 webhook，靠 Baggage 里的标记知道要记内容
+        assert '"verification"' in verify.attributes["langfuse.observation.output"]
+
+
+def test_content_hides_secret_like_text_and_truncates():
+    token = "ghp_" + "a" * 36
+    assert tracing.content(f"my token is {token}") == "[已隐去：疑似含密钥（github_token）]"
+    assert token not in tracing.content({"messages": [{"content": token}]})
+    long = tracing.content("x" * (tracing.MAX_CONTENT + 50))
+    assert long.endswith(f"（截断，共 {tracing.MAX_CONTENT + 50} 字符）")
+    assert len(long) < tracing.MAX_CONTENT + 40

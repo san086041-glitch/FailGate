@@ -88,6 +88,7 @@ class Dispatcher:
         executor: EffectExecutor | None,
         locks: CaseLocks,
         enqueue_sandbox: SandboxEnqueue,
+        capture_for: Callable[[str], bool] | None = None,
     ) -> None:
         self.db = db
         self.machine = machine
@@ -95,6 +96,9 @@ class Dispatcher:
         self.executor = executor
         self.locks = locks
         self.enqueue_sandbox = enqueue_sandbox
+        # 仓库 → 这个仓库的 trace 记不记内容（ADR 0025）；webhook 入口已经决定过一次，
+        # 这里再判断一次，给没经过 webhook 的事件（测试、重放）用
+        self.capture_for = capture_for
 
     async def handle_event(self, event: DomainEvent) -> None:
         """events 车道的一个任务。异常都在这里吞掉并记日志，不让队列重试一个坏事件。"""
@@ -109,7 +113,9 @@ class Dispatcher:
         # 这个事件下面的每个 span（包括沙箱车道的）都会带上 Case 键（tracing.BaggageAttributes）
         ctx = tracing.extract(event.trace)
         if key:
-            ctx = tracing.with_case(ctx, key, tracing.trace_name(event.name, key))
+            capture = bool(self.capture_for and self.capture_for(event.repo.full_name))
+            ctx = tracing.with_case(ctx, key, tracing.trace_name(event.name, key),
+                                    capture=capture)
         with tracing.attached(ctx), tracing.tracer.start_as_current_span(
             f"event {event.name}", attributes=attrs,
         ) as span:

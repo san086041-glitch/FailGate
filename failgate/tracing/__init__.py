@@ -36,6 +36,8 @@ from opentelemetry.sdk.trace.export import (
     SpanExporter,
 )
 
+from failgate.policy.secrets_scan import find_secrets
+
 if TYPE_CHECKING:
     from failgate.settings import Settings
 
@@ -62,11 +64,57 @@ class BaggageAttributes(SpanProcessor):
                 span.set_attribute(key, str(value))
 
 
-def with_case(ctx: context.Context | None, case_key: str, trace_name: str) -> context.Context:
-    """在 ctx 上挂好这个 Case 的会话信息；之后在它下面开的 span（包括队列另一头的）都会带上。"""
+def with_case(ctx: context.Context | None, case_key: str, trace_name: str, *,
+              capture: bool = False) -> context.Context:
+    """在 ctx 上挂好这个 Case 的会话信息；之后在它下面开的 span（包括队列另一头的）都会带上。
+
+    capture=True 时顺带挂上"记内容"的标记（只加不撤：已经挂上的不会被清掉）。"""
     ctx = baggage.set_baggage(CASE, case_key, context=ctx)
     ctx = baggage.set_baggage(SESSION, case_key, context=ctx)
+    if capture:
+        ctx = baggage.set_baggage(CAPTURE, "1", context=ctx)
     return baggage.set_baggage(TRACE_NAME, trace_name, context=ctx)
+
+
+# ---- 记不记内容（prompt、回答、skill 的输入输出、容器输出）
+
+# Baggage 里的标记：webhook 入口按仓库决定，跟着上下文传到所有子 span（包括沙箱车道）。
+# 这样 LLM 客户端、skill、沙箱都不用知道是哪个仓库
+CAPTURE = "failgate.capture_content"
+MAX_CONTENT = 8000  # 每个属性最多保留的字符数
+
+
+def capture_enabled(settings: Settings, repo: str) -> bool:
+    """这个仓库的 trace 要不要记内容：全局开关，或在 TRACING_CAPTURE_REPOS 白名单里（* = 全部）。"""
+    if settings.tracing_capture_content:
+        return True
+    allowed = {r.strip().lower() for r in settings.tracing_capture_repos.split(",") if r.strip()}
+    return "*" in allowed or repo.lower() in allowed
+
+
+def capturing() -> bool:
+    return baggage.get_baggage(CAPTURE) == "1"
+
+
+def content(value: Any) -> str:
+    """要放进 span 的内容：先过密钥扫描（疑似密钥整段隐去），再截断。"""
+    text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, default=str)
+    hits = find_secrets(text)
+    if hits:
+        return f"[已隐去：疑似含密钥（{', '.join(hits)}）]"
+    if len(text) > MAX_CONTENT:
+        return f"{text[:MAX_CONTENT]}…（截断，共 {len(text)} 字符）"
+    return text
+
+
+def set_io(span: trace.Span, *, input: Any = None, output: Any = None) -> None:  # noqa: A002
+    """只在当前 trace 允许记内容时，把输入 / 输出写成 Langfuse 认的属性。"""
+    if not capturing():
+        return
+    if input is not None:
+        span.set_attribute("langfuse.observation.input", content(input))
+    if output is not None:
+        span.set_attribute("langfuse.observation.output", content(output))
 
 
 @contextlib.contextmanager
