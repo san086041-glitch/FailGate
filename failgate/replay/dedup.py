@@ -14,6 +14,7 @@ import asyncio
 import hashlib
 import json
 import random
+import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -53,6 +54,8 @@ class RunConfig(BaseModel):
     # 对照样本至少要有这么多更早的 issue 可比较，否则"没找到重复"没有意义
     min_history: int = 50
     concurrency: int = 6
+    # 评委的思考模式（ADR 0026）：None = 服务方默认。设了就写进缓存键，各模式的结果分开存
+    thinking: str | None = None
 
 
 class RecallSummary(BaseModel):
@@ -199,7 +202,8 @@ async def run_dedup_replay(
     cache = SkillCache(cache_root / repo_slug(cfg.repo))
     intake_skill = IntakeSkill()
     dedup_skill = DedupSkill(
-        recall_k=cfg.recall_k, high=cfg.high, low=cfg.low, prompt_version=cfg.prompt_version
+        recall_k=cfg.recall_k, high=cfg.high, low=cfg.low, prompt_version=cfg.prompt_version,
+        thinking=cfg.thinking,
     )
     sem = asyncio.Semaphore(cfg.concurrency)
     done = 0
@@ -236,16 +240,28 @@ async def run_dedup_replay(
                     # 候选列表变了，不能复用只用词法召回时的判断；只在开启时追加，
                     # 保证已有的词法评测缓存仍然有效
                     dkey += (f"sem:{embedder.model if embedder else ''}",)
+                if cfg.thinking:
+                    # 同上：只在指定了思考模式时追加，默认模式仍命中已有缓存
+                    dkey += (f"think:{cfg.thinking}",)
                 hit = cache.get(*dkey)
                 if hit is None:
+                    started = time.monotonic()
                     r = await dedup_skill.run(ctx)
-                    hit = {"output": r.output.model_dump(mode="json"), "cost": r.cost_usd}
+                    hit = {"output": r.output.model_dump(mode="json"), "cost": r.cost_usd,
+                           "latency_s": round(time.monotonic() - started, 3),
+                           "out_tokens": r.usage.completion_tokens,
+                           "reasoning_tokens": r.usage.reasoning_tokens}
                     cache.put(hit, *dkey)
                     result.model_calls += 1
                     rec.cost_usd += r.cost_usd
                 else:
                     result.cached_calls += 1
                     rec.cached = True
+                # 旧缓存没有这几项（2026-09-30 之前）
+                rec.latency_s = hit.get("latency_s")
+                rec.out_tokens = hit.get("out_tokens")
+                rec.reasoning_tokens = hit.get("reasoning_tokens")
+                rec.judge_cost_usd = hit.get("cost")
                 out = DedupOutput.model_validate(hit["output"])
                 rec.candidates = [
                     JudgedCandidate(

@@ -65,6 +65,11 @@ class Record(BaseModel):
     error: str | None = None
     cost_usd: float = 0.0
     cached: bool = False
+    # 查重评委这一次调用（ADR 0026）：耗时、输出 token（含推理）、推理 token、花费
+    latency_s: float | None = None
+    out_tokens: int | None = None
+    reasoning_tokens: int | None = None
+    judge_cost_usd: float | None = None
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:

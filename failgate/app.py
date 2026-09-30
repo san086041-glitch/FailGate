@@ -147,6 +147,7 @@ class FailGate:
                             recall_k=settings.dedup_recall_k,
                             high=settings.dedup_high,
                             low=settings.dedup_low,
+                            thinking=settings.dedup_thinking,
                         ),
                         settings.llm_model_small,
                     ),

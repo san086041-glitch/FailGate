@@ -13,7 +13,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 import httpx
 from opentelemetry.trace import SpanKind, StatusCode
@@ -55,12 +55,15 @@ class Usage:
     prompt_tokens: int = 0
     completion_tokens: int = 0
     cached_tokens: int = 0
+    # 推理模型的思考 token：已经算在 completion_tokens 里（按输出计费），单独记一份看占比
+    reasoning_tokens: int = 0
 
     def __add__(self, other: Usage) -> Usage:
         return Usage(
             self.prompt_tokens + other.prompt_tokens,
             self.completion_tokens + other.completion_tokens,
             self.cached_tokens + other.cached_tokens,
+            self.reasoning_tokens + other.reasoning_tokens,
         )
 
     @classmethod
@@ -69,11 +72,28 @@ class Usage:
         cached = data.get("prompt_cache_hit_tokens")
         if cached is None:
             cached = (data.get("prompt_tokens_details") or {}).get("cached_tokens", 0)
+        reasoning = (data.get("completion_tokens_details") or {}).get("reasoning_tokens", 0)
         return cls(
             prompt_tokens=data.get("prompt_tokens", 0),
             completion_tokens=data.get("completion_tokens", 0),
             cached_tokens=cached or 0,
+            reasoning_tokens=reasoning or 0,
         )
+
+
+# 思考模式（DeepSeek：默认开启、强度 high）。None = 不传参数，用服务方的默认
+Thinking = Literal["disabled", "low", "high", "max"]
+
+
+def thinking_params(thinking: str | None) -> dict[str, Any]:
+    """思考模式 → 请求体里的字段。disabled 关掉思考；low / high / max 是开启时的强度。"""
+    if not thinking:
+        return {}
+    if thinking == "disabled":
+        return {"thinking": {"type": "disabled"}}
+    if thinking in ("low", "high", "max"):
+        return {"thinking": {"type": "enabled"}, "reasoning_effort": thinking}
+    raise ValueError(f"未知的思考模式：{thinking}（可选 disabled / low / high / max）")
 
 
 @dataclass
@@ -135,8 +155,11 @@ class LLMClient:
         json_mode: bool = False,
         max_tokens: int | None = None,
         tools: list[dict[str, Any]] | None = None,
+        thinking: str | None = None,
     ) -> LLMResponse:
-        """tools：OpenAI 格式的函数定义。模型要调用工具时，结果在 LLMResponse.tool_calls。"""
+        """tools：OpenAI 格式的函数定义。模型要调用工具时，结果在 LLMResponse.tool_calls。
+
+        thinking：推理模型的思考模式（disabled / low / high / max），None 用服务方默认。"""
         body: dict[str, Any] = {"model": model, "messages": messages, "temperature": temperature}
         if json_mode:
             body["response_format"] = {"type": "json_object"}
@@ -144,6 +167,7 @@ class LLMClient:
             body["max_tokens"] = max_tokens
         if tools:
             body["tools"] = tools
+        body.update(thinking_params(thinking))
 
         # OTel GenAI 语义约定：Langfuse 按这些属性把 span 识别成一次模型调用（generation）
         with tracing.tracer.start_as_current_span(
@@ -154,6 +178,7 @@ class LLMClient:
                 "gen_ai.provider.name": self._provider,
                 "gen_ai.request.model": model,
                 "gen_ai.request.temperature": temperature,
+                "failgate.llm.thinking": thinking or "default",
                 **({"gen_ai.request.max_tokens": max_tokens} if max_tokens else {}),
             },
         ) as span:
@@ -175,6 +200,7 @@ class LLMClient:
                 "gen_ai.usage.input_tokens": resp.usage.prompt_tokens,
                 "gen_ai.usage.output_tokens": resp.usage.completion_tokens,
                 "gen_ai.usage.cache_read.input_tokens": resp.usage.cached_tokens,
+                "gen_ai.usage.reasoning.output_tokens": resp.usage.reasoning_tokens,
                 "failgate.cost_usd": cost,
                 "langfuse.observation.cost_details": json.dumps({"total": cost}),
                 "failgate.llm.attempts": resp.attempts,

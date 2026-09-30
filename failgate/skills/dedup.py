@@ -130,10 +130,14 @@ class DedupSkill:
         high: float = DEFAULT_HIGH,
         low: float = DEFAULT_LOW,
         prompt_version: str = "2",
+        thinking: str | None = None,
     ) -> None:
         self.recall_k, self.high, self.low = recall_k, high, low
         # 版本号写进 runs 表，回放评测时可以按提示词版本对比
         self.version = prompt_version
+        # 评委的思考模式（DEDUP_THINKING）：None = 服务方默认（DeepSeek 默认开、强度 high）。
+        # 评委只输出一段 JSON 结论，却会先"想"几千 token（链路实测，ADR 0026）
+        self.thinking = thinking or None
 
     async def run(self, ctx: SkillContext) -> SkillResult:
         issue = ctx.issue
@@ -181,7 +185,9 @@ class DedupSkill:
             },
             {"role": "user", "content": "\n\n".join([*blocks, "按 system 中的格式输出 JSON。"])},
         ]
-        parsed, usage, resp = await ctx.llm.complete_json(messages, Judgements, model=ctx.model)
+        parsed, usage, resp = await ctx.llm.complete_json(
+            messages, Judgements, model=ctx.model, thinking=self.thinking
+        )
 
         new_text = f"{issue.title}\n{issue.body}"
         candidates: list[DedupCandidate] = []

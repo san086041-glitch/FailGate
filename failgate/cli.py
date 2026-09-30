@@ -368,6 +368,8 @@ def replay_dedup(
     recall_k: Annotated[int | None, typer.Option(help="交给模型判断的候选数，默认用配置")] = None,
     min_precision: Annotated[float, typer.Option(help="推荐阈值时的精确率目标")] = 0.9,
     db_url: Annotated[str, typer.Option("--db", help="语料数据库")] = REPLAY_DB,
+    thinking: Annotated[str | None, typer.Option(
+        help="评委的思考模式：disabled / low / high / max（默认不传，用服务方默认）")] = None,
 ) -> None:
     """查重回放评测：召回（全部配对）+ 判断（抽样，调用模型）+ 阈值扫描，输出报告。"""
     from failgate.app import build_embedder, build_llm
@@ -383,7 +385,7 @@ def replay_dedup(
         prompt_version=prompt_version, model=settings.llm_model_small, judge=judge,
         semantic=semantic,
         high=settings.dedup_high, low=settings.dedup_low,
-        recall_k=recall_k or settings.dedup_recall_k,
+        recall_k=recall_k or settings.dedup_recall_k, thinking=thinking,
     )
 
     embedder = build_embedder(settings) if semantic else None
@@ -406,6 +408,7 @@ def replay_dedup(
         run_id = (
             f"{repo_slug(repo)}__dedup__{result.started_at:%Y%m%d-%H%M}"
             f"__v{prompt_version}{'__sem' if semantic else ''}{'' if judge else '__recall'}"
+            f"{f'__think-{thinking}' if thinking else ''}"
         )
         run_path, _ = _run_paths(run_id)
         run_path.parent.mkdir(parents=True, exist_ok=True)
@@ -417,6 +420,44 @@ def replay_dedup(
         return run_path
 
     _write_report(asyncio.run(run()), min_precision)
+
+
+@replay_app.command("dedup-compare")
+def replay_dedup_compare(
+    runs: Annotated[list[str], typer.Argument(
+        help="标签=运行记录（JSON），第一个是成对比较的基准，如 high=eval/runs/a.json")],
+    cascade: Annotated[str | None, typer.Option(
+        help="离线模拟级联：便宜的标签,贵的标签（如 disabled,high）")] = None,
+) -> None:
+    """查重评委的思考模式对比（ADR 0026）：质量、每次调用的开销、逐样本成对比较。"""
+    from failgate.replay.dataset import load_labels, repo_slug
+    from failgate.replay.dedup import RunResult
+    from failgate.replay.dedup_compare import cascade as simulate_cascade
+    from failgate.replay.dedup_compare import render
+
+    loaded: list[tuple[str, RunResult]] = []
+    sources: list[str] = []
+    for item in runs:
+        label, sep, path = item.partition("=")
+        if not sep:
+            raise typer.BadParameter(f"要写成 标签=路径：{item}")
+        loaded.append((label, RunResult.model_validate_json(Path(path).read_text("utf-8"))))
+        sources.append(f"{label}=`{Path(path).name}`")
+    repo = loaded[0][1].config.repo
+    labels = load_labels(repo)
+    text = render(loaded, labels, notes=[f"- 运行记录：{', '.join(sources)}"])
+    if cascade:
+        by_label = dict(loaded)
+        cheap, _, expensive = cascade.partition(",")
+        if cheap not in by_label or expensive not in by_label:
+            raise typer.BadParameter(f"--cascade 的标签不在运行记录里：{cascade}")
+        text += "\n" + simulate_cascade(by_label[cheap], by_label[expensive], labels)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M")
+    out = Path("eval/reports") / f"{repo_slug(repo)}__dedup-thinking__{stamp}.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, "utf-8")
+    typer.echo(text)
+    typer.echo(f"报告：{out.as_posix()}")
 
 
 @replay_app.command("triage")

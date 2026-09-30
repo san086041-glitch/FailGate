@@ -62,13 +62,17 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model_small: str = "deepseek-flash"
     llm_model_large: str = "deepseek-flash"
-    llm_timeout_seconds: float = 60.0
+    # 推理模型想得久：查重评委（思考 high）146 次里 4 次连续 3 次超过 60 秒而失败，
+    # 每次超时重试都要从头再想一遍（ADR 0026）
+    llm_timeout_seconds: float = 180.0
 
     # 单个 Case 的模型花费上限（美元），超过后进入 FAILED
     case_budget_usd: float = 0.5
 
     # 查重：召回候选数；LLM 分数 ≥ high 建议关闭为重复，≥ low 列为相关 issue
     dedup_recall_k: int = 20  # 从 8 改为 20：向量召回下前 20 名覆盖 79% 的真实重复，见 ADR 0007
+    # 查重评委的思考模式（ADR 0026）：空 = 服务方默认；disabled / low / high / max
+    dedup_thinking: Literal["", "disabled", "low", "high", "max"] = ""
     dedup_high: float = 0.95  # 依据见 ADR 0003
     dedup_low: float = 0.5
     # 可选的向量通道（任意 OpenAI 兼容 /embeddings 接口），不配置则只用词法和堆栈通道
