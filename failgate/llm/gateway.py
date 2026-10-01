@@ -74,12 +74,16 @@ def bare_model(spec: str) -> str:
     return spec.split(":", 1)[1] if ":" in spec else spec
 
 
-def key_env(env_file: str | os.PathLike[str] | None = ".env") -> dict[str, str]:
+def key_env(env_file: str | os.PathLike[str] | None = None) -> dict[str, str]:
     """查各厂商 key 用的环境：.env 文件 + 进程环境变量（后者优先）。
 
-    pydantic-settings 只把认识的字段读进 Settings，厂商的 key 是任意名字，所以单独读一遍 .env。"""
+    pydantic-settings 只把认识的字段读进 Settings，厂商的 key 是任意名字，所以单独读一遍 .env。
+    不传 env_file = 和 Settings 读同一个（CLI 可能找的是项目目录的 .env）。"""
     from dotenv import dotenv_values
 
+    from failgate.settings import active_env_file
+
+    env_file = env_file if env_file is not None else active_env_file()
     out: dict[str, str] = {}
     if env_file and Path(env_file).is_file():
         out.update({k: v for k, v in dotenv_values(env_file).items() if v is not None})

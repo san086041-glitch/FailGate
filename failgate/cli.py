@@ -3,7 +3,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import re
+import sys
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
@@ -24,7 +27,121 @@ if TYPE_CHECKING:
 
 _CJK = re.compile(r"[\u4e00-\u9fff]")
 
-app = typer.Typer(help="FailGate：证据驱动的开源仓库值班 Agent", no_args_is_help=True)
+app = typer.Typer(help="FailGate：bug 的验收层。修复谁都能写，FailGate 负责证明它修对了。")
+
+# --help 里的分组（ADR 0036）；没列出的命令落在默认的 Commands 组里
+PANELS = {
+    "出题 · 答题 · 阅卷": ("repro", "hidden", "evidence", "fix", "verify"),
+    "服务与集成": ("serve", "worker", "console", "mcp", "github", "fixer", "repo"),
+    "评测与回放": ("replay", "try", "answer", "memory", "llm"),
+    "运维": ("doctor", "db", "db-init", "cases", "effects", "sandbox", "trace", "index"),
+}
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    env_file: Annotated[Path | None, typer.Option(
+        "--env-file",
+        help="配置文件；不给时依次找 $FAILGATE_ENV_FILE、当前目录、项目目录")] = None,
+    quiet: Annotated[bool, typer.Option(
+        "--quiet", "-q", help="首页不显示 logo（也可以设 FAILGATE_NO_BANNER=1）")] = False,
+    shell: Annotated[bool, typer.Option(
+        "--shell/--no-shell", help="显示首页后进入交互模式（只在终端里生效）")] = True,
+) -> None:
+    """找到 .env 并让之后所有 Settings() 都读它；不带子命令时显示首页，在终端里再进入交互模式。"""
+    from failgate.settings import find_env_file, use_env_file
+
+    try:
+        choice = find_env_file(env_file)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--env-file") from exc
+    use_env_file(choice.path)
+    ctx.obj = choice
+    if ctx.invoked_subcommand is not None or _SHELL_ACTIVE:
+        return
+    from failgate import home
+
+    settings = Settings()
+    out = home.make_console()
+
+    def show_home(banner: bool) -> None:
+        report = asyncio.run(home.collect(Settings(), choice, full=False))
+        home.render_home(report, out, banner=banner)
+
+    show_home(home.banner_enabled(out, quiet or settings.failgate_no_banner))
+    if shell and out.is_terminal and sys.stdin.isatty():
+        _run_shell(choice.path, lambda: show_home(False))
+
+
+_SHELL_ACTIVE = False  # 交互模式里每条命令都会再走一遍根回调：别再嵌套进一个交互模式
+
+
+def _run_shell(env_file: Path | None, show_home: Callable[[], None]) -> None:
+    global _SHELL_ACTIVE
+    from failgate import shell as sh
+
+    command = typer.main.get_command(app)
+    # 启动时用的 .env 固定下来：之后每条命令都带上，不会因为找的顺序变了而换文件
+    base = ["--env-file", str(env_file)] if env_file is not None else []
+    _SHELL_ACTIVE = True
+    try:
+        sh.loop(sh.Shell(command, base_args=base, show_home=show_home), sh.make_session(command))
+    finally:
+        _SHELL_ACTIVE = False
+
+
+@app.command()
+def doctor(ctx: typer.Context) -> None:
+    """逐项检查运行环境，失败的给出修复办法（有失败时退出码 1）。"""
+    from failgate import home
+    from failgate.settings import find_env_file
+
+    choice = ctx.obj or find_env_file()
+    report = asyncio.run(home.collect(Settings(), choice, full=True))
+    home.render_doctor(report, home.make_console())
+    if report.failed:
+        raise typer.Exit(1)
+
+
+@app.command()
+def console(
+    host: str = "127.0.0.1",
+    port: int = 8080,
+    open_browser: Annotated[bool, typer.Option("--open/--no-open", help="打开浏览器")] = True,
+) -> None:
+    """在浏览器打开工作台（先确认 `failgate serve` 在跑）。"""
+    import webbrowser
+
+    import httpx
+
+    base = f"http://{host}:{port}"
+    try:
+        health = httpx.get(f"{base}/healthz", timeout=2.0)
+        page = httpx.get(f"{base}/console", timeout=2.0, follow_redirects=False)
+    except httpx.HTTPError:
+        typer.echo(f"{base} 上没有服务在跑：先另开一个终端运行 failgate serve", err=True)
+        raise typer.Exit(1) from None
+    if health.status_code != 200:
+        typer.echo(f"{base}/healthz 返回 {health.status_code}，不像是 FailGate 服务", err=True)
+        raise typer.Exit(1)
+    if page.status_code == 404:
+        stop = (f"Get-NetTCPConnection -LocalPort {port} -State Listen | "
+                "ForEach-Object { Stop-Process -Id $_.OwningProcess }" if os.name == "nt"
+                else f"kill $(lsof -t -i :{port} -sTCP:LISTEN)")
+        typer.echo(f"{base} 上跑的是旧版本的 failgate serve（没有工作台）。\n"
+                   f"  1. 停掉它：{stop}\n"
+                   "  2. 用新代码重新启动：failgate serve\n"
+                   "  或者另起一个端口：failgate serve --port 8081，"
+                   "再 failgate console --port 8081",
+                   err=True)
+        raise typer.Exit(1)
+    url = f"{base}/console"
+    typer.echo(f"工作台：{url}")
+    if Settings().console_token:
+        typer.echo("配置了 CONSOLE_TOKEN：第一次访问用 /console?token=<令牌>，之后存在 cookie 里")
+    if open_browser:
+        webbrowser.open(url)
 
 
 @app.command()
@@ -2300,6 +2417,44 @@ def trace_show(
     typer.echo(render(spans, hide=tuple(h.strip() for h in hide.split(",") if h.strip())))
 
 
+@trace_app.command("open")
+def trace_open(
+    open_browser: Annotated[bool, typer.Option("--open/--no-open", help="打开浏览器")] = True,
+) -> None:
+    """在浏览器打开 Langfuse 的链路页面（按 .env 里的 LANGFUSE_*）；没配时说明怎么在本地看。"""
+    import webbrowser
+
+    import httpx
+
+    s = Settings()
+    local = ("用本地接收器看：另开终端 failgate trace sink spans.jsonl，服务端设 "
+             "TRACING_EXPORTER=otlp、OTLP_ENDPOINT=http://127.0.0.1:4318/v1/traces，"
+             "之后 failgate trace show spans.jsonl")
+    if s.tracing_exporter == "none":
+        typer.echo("提示：TRACING_EXPORTER=none，服务现在不发链路（要看新的链路先改成 otlp）")
+    host = s.langfuse_host.rstrip("/")
+    if s.otlp_endpoint and not s.otlp_endpoint.startswith(host):
+        typer.echo(f"链路发到 {s.otlp_endpoint}（不是 Langfuse）。{local}")
+        raise typer.Exit(1)
+    if not (s.langfuse_public_key and s.langfuse_secret_key):
+        typer.echo(f"没有配置 Langfuse（LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY）。{local}")
+        raise typer.Exit(1)
+    url = host
+    try:  # 用 key 查项目 id，直接打开这个项目的链路列表；查不到就打开首页
+        resp = httpx.get(f"{host}/api/public/projects", timeout=5.0,
+                         auth=(s.langfuse_public_key, s.langfuse_secret_key))
+        resp.raise_for_status()
+        projects = resp.json().get("data") or []
+        if projects:
+            url = f"{host}/project/{projects[0]['id']}/traces"
+            typer.echo(f"Langfuse 项目：{projects[0].get('name', projects[0]['id'])}")
+    except (httpx.HTTPError, ValueError, KeyError) as exc:
+        typer.echo(f"没查到项目（{type(exc).__name__}），打开 Langfuse 首页")
+    typer.echo(f"链路：{url}")
+    if open_browser:
+        webbrowser.open(url)
+
+
 llm_app = typer.Typer(help="多模型网关（ADR 0034）", no_args_is_help=True)
 app.add_typer(llm_app, name="llm")
 
@@ -2367,6 +2522,11 @@ def mcp_serve(
     from failgate.mcp_server.server import build_server
     from failgate.mcp_server.store import EvidenceStore
 
+    if _stdin_is_terminal():
+        # 人在终端里直接敲的（或在交互模式里）：stdio 服务会一直等协议输入，看起来像卡住了。
+        # 客户端启动时 stdin 是管道，不会走到这里
+        _mcp_how_to_register(env_file)
+        raise typer.Exit(1)
     logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
     if env_file is not None:
         env_file = env_file.expanduser().resolve()
@@ -2377,6 +2537,25 @@ def mcp_serve(
     store = EvidenceStore(home.expanduser() if home else None)
     engine = FailGateEngine(Runtime.from_settings(settings), store)
     build_server(engine, store).run("stdio")
+
+
+def _stdin_is_terminal() -> bool:
+    return sys.stdin.isatty()
+
+
+def _mcp_how_to_register(env_file: Path | None) -> None:
+    from failgate.settings import active_env_file
+
+    env = (env_file or Path(active_env_file())).expanduser().resolve().as_posix()
+    python = Path(sys.executable).as_posix()
+    typer.echo("failgate mcp 是给 Claude Code / Cursor 这类客户端启动的 stdio 服务，"
+               "不用手动运行（在终端里运行会一直等协议输入）。\n")
+    typer.echo("注册到 Claude Code（在你要修的仓库目录里运行）：")
+    typer.echo(f"  claude mcp add failgate -- {python} -m failgate mcp --env-file {env}\n")
+    typer.echo("Cursor 等客户端：command 填上面的 python 路径，"
+               f'args 填 ["-m", "failgate", "mcp", "--env-file", "{env}"]')
+    typer.echo("提供的工具：reproduce_issue、run_acceptance_test、verify_fix、get_fix_task、"
+               "get_job、list_evidence（ADR 0033）")
 
 
 memory_app = typer.Typer(help="Agent 的长期记忆：情景记忆（ADR 0032）", no_args_is_help=True)
@@ -3104,3 +3283,15 @@ def fixer_check(
             await fixer.aclose()
 
     asyncio.run(run())
+
+
+def _group_commands() -> None:
+    panel_of = {name: panel for panel, names in PANELS.items() for name in names}
+    for cmd in app.registered_commands:
+        name = cmd.name or (cmd.callback.__name__.replace("_", "-") if cmd.callback else "")
+        cmd.rich_help_panel = panel_of.get(name, cmd.rich_help_panel)
+    for group in app.registered_groups:
+        group.rich_help_panel = panel_of.get(group.name or "", group.rich_help_panel)
+
+
+_group_commands()

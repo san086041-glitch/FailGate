@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "failgate"
 version = "0.0.1"
-description = "证据驱动的开源仓库值班 Agent"
+description = "bug 的验收层：修复谁都能写，FailGate 负责证明它修对了"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -34,6 +34,8 @@ dependencies = [
   "langgraph==1.2.12",
   # 本地 stdio MCP 服务（W10，ADR 0033）：官方 Python SDK 2.x（FastMCP 已改名 MCPServer）
   "mcp==2.2.0",
+  # 命令行交互模式（ADR 0036）：补全、历史、底部提示栏
+  "prompt_toolkit==3.0.53",
 ]
 
 [project.optional-dependencies]

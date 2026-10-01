@@ -130,6 +130,15 @@ async def _harness(
     await failgate.stop()
 
 
+@pytest.fixture(autouse=True)
+def _env_file_isolation(monkeypatch):
+    """CLI 入口会改 Settings 读哪个 .env（ADR 0036）：每个测试结束后恢复，
+    也不让测试顺着项目目录读到开发者本机的 .env。"""
+    monkeypatch.setitem(Settings.model_config, "env_file", ".env")
+    monkeypatch.setattr("failgate.settings.project_root", lambda: None)
+    monkeypatch.delenv("FAILGATE_ENV_FILE", raising=False)
+
+
 @pytest.fixture
 async def harness(tmp_path) -> AsyncIterator[Harness]:
     async for h in _harness(make_settings(tmp_path)):

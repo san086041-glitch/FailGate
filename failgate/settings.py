@@ -1,3 +1,6 @@
+import os
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 from pydantic import AliasChoices, Field
@@ -73,6 +76,8 @@ class Settings(BaseSettings):
     llm_model_judge: str = ""
     # 工作台和只读 API 的访问令牌（ADR 0035）。空 = 只允许本机访问
     console_token: str = ""
+    # 命令行首页不显示 logo（ADR 0036；等同 failgate -q）
+    failgate_no_banner: bool = False
 
     # 单个 Case 的模型花费上限（美元），超过后进入 FAILED
     case_budget_usd: float = 0.5
@@ -131,3 +136,56 @@ class Settings(BaseSettings):
     fix_budget_usd: float = 0.15  # 每次修复（含按驳回理由重修）的模型花费上限
     fix_agent_rounds: int = 2  # 修复 Agent 内部 规划→修改→验收 的轮数
     fix_max_refix: int = 2  # 被驳回后自动重修的最多轮数
+
+
+# ---------------------------------------------------------------- 找 .env（CLI 用）
+
+# 不叫 FAILGATE_HOME：那个名字已经是 MCP 的考卷目录（ADR 0033）
+ENV_FILE = "FAILGATE_ENV_FILE"
+
+
+def project_root() -> Path | None:
+    """源码检出（editable 安装）时的项目根：failgate 包的上一级，旁边有 pyproject.toml。"""
+    root = Path(__file__).resolve().parent.parent
+    return root if (root / "pyproject.toml").is_file() else None
+
+
+@dataclass(frozen=True)
+class EnvChoice:
+    path: Path | None  # None = 没找到，只用环境变量和默认值
+    source: str  # 参数 / FAILGATE_ENV_FILE / 当前目录 / 项目目录 / 未找到
+    note: str = ""  # 给 doctor 的提示（例如 FAILGATE_ENV_FILE 指向的文件不存在）
+
+
+def find_env_file(explicit: Path | None = None, *, cwd: Path | None = None) -> EnvChoice:
+    """按顺序找 .env：--env-file → $FAILGATE_ENV_FILE → 当前目录 → 项目目录。
+
+    不逐级往上找：别的项目目录里的 .env 可能带着同名的 key（extra="ignore" 不会报错）。"""
+    if explicit is not None:
+        path = explicit.expanduser().resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f"{path} 不存在")
+        return EnvChoice(path, "参数")
+    note = ""
+    configured = os.environ.get(ENV_FILE, "").strip()
+    if configured:
+        path = Path(configured).expanduser().resolve()
+        if path.is_file():
+            return EnvChoice(path, ENV_FILE)
+        note = f"{ENV_FILE}={configured} 不存在"
+    path = (cwd or Path.cwd()).resolve() / ".env"
+    if path.is_file():
+        return EnvChoice(path, "当前目录", note)
+    root = project_root()
+    if root is not None and (root / ".env").is_file():
+        return EnvChoice(root / ".env", "项目目录", note)
+    return EnvChoice(None, "未找到", note)
+
+
+def use_env_file(path: Path | None) -> None:
+    """之后所有 Settings() 都读这个 .env（CLI 入口调用一次）。None = 恢复默认的 ./.env。"""
+    Settings.model_config["env_file"] = str(path) if path is not None else ".env"
+
+
+def active_env_file() -> str:
+    return str(Settings.model_config.get("env_file") or ".env")

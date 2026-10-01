@@ -28,6 +28,7 @@ from failgate.db import (
     TransitionLog,
     VerificationRecord,
 )
+from failgate.overview import collect_stats
 from failgate.verify.receipt import check_receipt
 
 if TYPE_CHECKING:
@@ -98,24 +99,7 @@ async def list_cases(request: Request, state: str | None = None, repo: str | Non
 @router.get("/stats")
 async def stats(request: Request) -> dict[str, Any]:
     async with _failgate(request).db.session() as s:
-        states = (await s.execute(select(Case.state, func.count()).group_by(Case.state))).all()
-        kinds = (await s.execute(select(Case.kind, func.count()).group_by(Case.kind))).all()
-        spent = await s.scalar(select(func.coalesce(func.sum(Case.spent_usd), 0.0)))
-        verdicts = (await s.execute(select(VerificationRecord.verdict, func.count())
-                                    .group_by(VerificationRecord.verdict))).all()
-        evidence = (await s.execute(select(Evidence.level, func.count())
-                                    .where(Evidence.superseded_by.is_(None))
-                                    .group_by(Evidence.level))).all()
-        repos = (await s.execute(select(Repo.full_name, Repo.mode).order_by(Repo.full_name))).all()
-    return {
-        "cases": sum(n for _, n in states),
-        "by_state": dict(states),
-        "by_kind": dict(kinds),
-        "spent_usd": round(float(spent or 0.0), 4),
-        "verifications": {str(v): n for v, n in verdicts},
-        "evidence": dict(evidence),
-        "repos": [{"repo": r, "mode": m} for r, m in repos],
-    }
+        return await collect_stats(s)
 
 
 # ---------------------------------------------------------------- 单个 Case
