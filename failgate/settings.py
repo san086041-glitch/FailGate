@@ -71,6 +71,8 @@ class Settings(BaseSettings):
     # 复现评委（SemanticJudge）用的模型；空 = 和 LLM_MODEL_LARGE 一样。
     # 计划换成另一个模型家族，避免"同一个模型自己出题自己判"
     llm_model_judge: str = ""
+    # 工作台和只读 API 的访问令牌（ADR 0035）。空 = 只允许本机访问
+    console_token: str = ""
 
     # 单个 Case 的模型花费上限（美元），超过后进入 FAILED
     case_budget_usd: float = 0.5

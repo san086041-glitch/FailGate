@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from opentelemetry.sdk.trace import TracerProvider
 
 from failgate import __version__, tracing
+from failgate.api import console_router
 from failgate.api import router as api_router
 from failgate.db import Database, Repo
 from failgate.index.docs import DocIndex
@@ -396,6 +397,7 @@ def create_app(
     app.state.failgate = failgate
     app.include_router(webhook_router)
     app.include_router(api_router)
+    app.include_router(console_router)
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
