@@ -2317,19 +2317,23 @@ def fix_run(
         help="思考模式 disabled / low / high / max，不填用服务方默认")] = None,
     db_url: Annotated[str, typer.Option("--db", help="回放语料库（取 issue 正文）")] = REPLAY_DB,
     show_patch: Annotated[bool, typer.Option(help="打印补丁")] = True,
+    handoff: Annotated[str, typer.Option(
+        help="规划 → 修改的交接：reset / notes / continue（ADR 0030）")] = "reset",
 ) -> None:
     """在某个 issue 的修复提交的父提交上跑修复 Agent（离线回放的最小单元）。会花钱。
 
     验收测试就是回放里封存的那份 L2 测试；这里只看它在全新工作区里过没过。
     真正的成功判定（上游金标准测试）在 fix-eval 里做。需要 GITHUB_TOKEN 和 Docker。
     """
-    from failgate.fix.agent import FixTask
+    from failgate.fix.agent import HANDOFFS, FixTask
     from failgate.fix.run import fix_tree
     from failgate.replay import verify_eval as ve
     from failgate.repro.config import PackageConfig
     from failgate.repro.package import IssueContext
     from failgate.repro.source import fetch_github_tree
 
+    if handoff not in HANDOFFS:
+        raise typer.BadParameter(f"未知的交接方式：{handoff}，可选 {HANDOFFS}")
     settings = Settings()
     run = json.loads(source.read_text(encoding="utf-8"))
     cases = [c for c in ve.load_cases(run) if c.number == number]
@@ -2356,6 +2360,7 @@ def fix_run(
                 python=case.exam.python, version=case.exam.version, pytest=case.exam.pytest,
                 max_rounds=rounds, budget_usd=budget, thinking=thinking,
                 artifacts_dir=Path(settings.sandbox_artifacts_dir),
+                handoff=handoff,  # type: ignore[arg-type]
             )
         finally:
             await rt.aclose()
@@ -2365,6 +2370,8 @@ def fix_run(
         typer.echo(f"  tokens：输入 {res.prompt_tokens}（缓存 {res.cached_tokens}）"
                    f" 输出 {res.completion_tokens}（推理 {res.reasoning_tokens}）")
         typer.echo(f"  改动文件：{', '.join(res.files) or '无'}")
+        typer.echo(f"  交接 {res.handoff}：修改阶段读 {res.edit_reads} 次，其中重读 {res.rereads}；"
+                   f"第一次编辑在第 {res.first_edit_step} 步")
         if res.error:
             typer.echo(f"  错误：{res.error}")
         if res.give_up_reason:
@@ -2386,7 +2393,8 @@ def replay_fix(
         "eval/runs/psf__black__hidden__20260929-1721.jsonl"),
     reps: Annotated[int, typer.Option(help="每题每组重复几次")] = 3,
     arms: Annotated[str, typer.Option(
-        help="逗号分隔：exam（给考卷）/ control（不给）")] = "exam,control",
+        help="逗号分隔：exam（给考卷）/ control（不给），可加 :交接方式，"
+             "如 exam:notes、exam:continue（ADR 0030）")] = "exam,control",
     only: Annotated[str | None, typer.Option(help="逗号分隔的 issue 编号")] = None,
     resume: Annotated[Path | None, typer.Option(
         help="接着一份没跑完的结果（.jsonl）继续")] = None,
@@ -2418,8 +2426,9 @@ def replay_fix(
 
     settings = Settings()
     arm_list = [a.strip() for a in arms.split(",") if a.strip()]
-    if bad := [a for a in arm_list if a not in fe.ARMS]:
-        raise typer.BadParameter(f"未知的组：{bad}，可选 {fe.ARMS}")
+    if bad := [a for a in arm_list if not fe.valid_arm(a)]:
+        raise typer.BadParameter(
+            f"未知的组：{bad}，可选 {fe.ARMS}，可加 :reset / :notes / :continue")
     cases = ve.load_cases(json.loads(source.read_text(encoding="utf-8")))
     if only:
         wanted = {int(x) for x in only.split(",")}
@@ -2520,14 +2529,15 @@ def replay_fix(
                         repo=repo, number=case.number,
                         issue=IssueContext(title=doc.title, body=doc.body),
                         test_path=case.exam.test_path,
-                        test_code=case.exam.code if arm == "exam" else None)
+                        test_code=case.exam.code if fe.arm_base(arm) == "exam" else None)
                     try:
                         res = await fix_tree(
                             rt.llm, settings.llm_model_large, rt.tester, st["cfg"],
                             st["parent"], task, python=case.exam.python,
                             version=case.exam.version, pytest=case.exam.pytest,
                             max_rounds=rounds, budget_usd=budget, thinking=thinking,
-                            artifacts_dir=Path(settings.sandbox_artifacts_dir))
+                            artifacts_dir=Path(settings.sandbox_artifacts_dir),
+                            handoff=fe.arm_handoff(arm))
                         spent += res.cost_usd
                         bench, gold = st["bench"], golds[case.number]
                         # 测试文件以上游为准（Agent 本来也改不了测试）

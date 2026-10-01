@@ -9,7 +9,7 @@ import dataclasses
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from failgate.fix.agent import FixAgent, FixResult, FixTask
+from failgate.fix.agent import FixAgent, FixResult, FixTask, Handoff
 from failgate.fix.guard import WriteGuard
 from failgate.fix.workspace import FixWorkspace
 from failgate.llm import LLMClient
@@ -37,6 +37,7 @@ async def fix_tree(
     thinking: str | None = None,
     artifacts_dir: Path | None = None,
     initial_edits: Mapping[str, str] | None = None,
+    handoff: Handoff = "reset",
 ) -> FixResult:
     """在 tree（修复前的代码）上修复。task.test_code 为 None 就是对照组（没有考卷）。
 
@@ -54,7 +55,7 @@ async def fix_tree(
         agent = FixAgent(
             llm, model, ws, task, max_rounds=max_rounds, plan_steps=plan_steps,
             edit_steps=edit_steps, budget_usd=budget_usd, thinking=thinking,
-            artifacts_dir=artifacts_dir,
+            artifacts_dir=artifacts_dir, handoff=handoff,
         )
         return await agent.run()
     finally:

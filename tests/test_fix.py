@@ -11,7 +11,15 @@ from typing import Any
 import httpx
 import pytest
 
-from failgate.fix.agent import FixAgent, FixTask, clip
+from failgate.fix.agent import (
+    PIN_MAX_LINES,
+    FixAgent,
+    FixTask,
+    clip,
+    merge_ranges,
+    overlaps,
+    pin_ranges,
+)
 from failgate.fix.guard import GuardError, WriteGuard
 from failgate.fix.workspace import FixWorkspace, count_changed
 from failgate.llm import LLMClient
@@ -614,3 +622,97 @@ async def test_feedback_and_must_pass_reach_the_agent_and_the_verify_node():
     first = llm.requests[0]["messages"][1]["content"]
     assert "被驳回了" in first and "tests/test_parser.py::test_basic" in first
     assert any("src/tests/test_parser.py::test_basic" in r[1] for r in sb.runs)
+
+
+# ---------------------------------------------------------------- 规划 → 修改的交接（ADR 0030）
+
+
+def test_pin_ranges_caps_ranges_and_lines():
+    raw = [{"path": "./src/a.py", "start": 10, "end": 20},
+           {"path": "b.py", "start": 5, "end": 3},  # 倒着的：丢掉
+           {"path": "c.py", "start": "x", "end": 9},  # 不是数字：丢掉
+           "not a dict",
+           {"path": "d.py", "start": 1, "end": 10_000}]  # 超过总行数：截断
+    pins = pin_ranges(raw)
+    assert pins[0] == ("src/a.py", 10, 20)
+    assert pins[1] == ("d.py", 1, PIN_MAX_LINES - 11)
+    assert sum(e - s + 1 for _, s, e in pins) == PIN_MAX_LINES
+    assert pin_ranges(None) == [] and pin_ranges("x") == []
+    assert len(pin_ranges([{"path": f"f{i}.py", "start": 1, "end": 2} for i in range(9)])) == 6
+
+
+def test_merge_ranges_and_overlaps():
+    seen = [("a.py", 10, 20), ("a.py", 21, 30), ("a.py", 50, 60), ("b.py", 1, 5)]
+    assert merge_ranges(seen) == {"a.py": [(10, 30), (50, 60)], "b.py": [(1, 5)]}
+    assert overlaps(("a.py", 25, 40), seen) and overlaps(("a.py", 1, 10), seen)
+    assert not overlaps(("a.py", 31, 49), seen) and not overlaps(("c.py", 1, 5), seen)
+
+
+def _read(start: int, end: int) -> dict[str, Any]:
+    return {"tool_calls": [call("read_file", {"path": PARSER, "start": start, "end": end})]}
+
+
+async def test_reset_counts_rereads_and_first_edit_step():
+    sb = FakeSandbox()
+    ws = make_workspace(sb)
+    await ws.open("k")
+    sb.pytest_exits = [0]
+    llm = ScriptedLLM([_read(20, 40), plan(), _read(20, 40), _read(100, 120), FIX_EDIT, FINISH])
+    res = await agent_for(sb, llm, ws, task()).run()
+    assert res.status == "passed" and res.handoff == "reset"
+    # 假沙箱每次只回一行：规划读了 20，修改阶段读 20（重读）和 100（新的）
+    assert res.edit_reads == 2 and res.rereads == 1
+    assert res.first_edit_step == 5
+    assert len(llm.requests[2]["messages"]) == 2  # 修改阶段从空白开始
+
+
+async def test_notes_pins_current_code_and_lists_plan_reads():
+    sb = FakeSandbox()
+    ws = make_workspace(sb)
+    await ws.open("k")
+    sb.pytest_exits = [0]
+    llm = ScriptedLLM([
+        _read(20, 40),
+        plan(key_code=[{"path": f"./{PARSER}", "start": 30, "end": 40}]),
+        FIX_EDIT, FINISH,
+    ])
+    res = await agent_for(sb, llm, ws, task(), handoff="notes").run()
+    assert res.status == "passed" and res.handoff == "notes"
+    submit = next(t for t in llm.requests[0]["tools"] if t["function"]["name"] == "submit_plan")
+    assert "key_code" in submit["function"]["parameters"]["required"]
+    edit_msgs = llm.requests[2]["messages"]
+    assert len(edit_msgs) == 2  # 仍然是新的上下文，只是多了交接笔记
+    notes = edit_msgs[1]["content"]
+    assert "规划阶段的交接笔记" in notes and f"`{PARSER}` 第 30–40 行" in notes
+    assert "sections[section]" in notes  # 钉进来的是工作区里的当前内容
+    assert f"- {PARSER}: 20–20" in notes
+    assert any(r[1][3] == "read" and r[1][-2:] == ["30", "40"] for r in sb.runs)
+
+
+async def test_continue_keeps_plan_context_within_a_round_and_resets_between_rounds():
+    sb = FakeSandbox()
+    ws = make_workspace(sb)
+    await ws.open("k")
+    sb.pytest_exits = [1, 0]
+    llm = ScriptedLLM([
+        _read(20, 40), plan(), FIX_EDIT, FINISH,
+        {"content": json.dumps({"analysis": "KeyError: None 还在", "next": "replan"})},
+        plan(hypothesis="再看看"), FINISH,
+    ])
+    agent = agent_for(sb, llm, ws, task(), handoff="continue", max_rounds=2)
+    res = await agent.run()
+    assert res.status == "passed" and res.handoff == "continue"
+    edit1 = llm.requests[2]
+    msgs = edit1["messages"]
+    # 规划阶段的 6 条（system、任务、读文件、结果、交计划、已记录）原样接着，再加修改阶段的指示
+    assert len(msgs) == 7 and msgs[2]["tool_calls"][0]["function"]["name"] == "read_file"
+    assert msgs[-1]["role"] == "user" and "不用重读" in msgs[-1]["content"]
+    assert "edit_file" in {t["function"]["name"] for t in edit1["tools"]}
+    # 第二轮的规划从空白开始，只带上一轮的小结
+    replan = llm.requests[5]["messages"]
+    assert len(replan) == 2 and "此前的尝试" in replan[1]["content"]
+    edit2 = llm.requests[6]["messages"]
+    assert not any(tc["function"]["name"] == "read_file"
+                   for m in edit2 for tc in m.get("tool_calls") or [])
+    edits = [e for e in agent.log if e["phase"] == "edit"]
+    assert [e.get("prefix") for e in edits] == [6, 4]

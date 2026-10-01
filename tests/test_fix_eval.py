@@ -168,6 +168,38 @@ def test_summarize_pairs_and_cross_tab():
     text = fe.render(rows, {"repo": "psf/black", "started": "t", "source": "s"})
     assert "差值 +33 个百分点" in text and "被隐藏考卷抓到 1" in text
     assert "无效（timeout）" in text
+    assert "## 规划 → 修改的交接" not in text  # 没有交接组就不出这一节
+
+
+def test_arm_names_with_handoff():
+    assert fe.valid_arm("exam") and fe.valid_arm("exam:notes") and fe.valid_arm("control:continue")
+    assert not fe.valid_arm("exam:magic") and not fe.valid_arm("other")
+    assert fe.arm_base("exam:notes") == "exam" and fe.arm_handoff("exam:notes") == "notes"
+    assert fe.arm_handoff("exam") == "reset"
+
+
+def test_summarize_handoff_arms_against_reset():
+    def with_reads(row: dict[str, Any], reads: int, rereads: int, first: int) -> dict[str, Any]:
+        row["fix"].update(edit_reads=reads, rereads=rereads, first_edit_step=first)
+        return row
+
+    rows = [
+        with_reads(_row(1, 1, "exam", resolved=False, passed=True), 10, 7, 50),
+        with_reads(_row(1, 1, "exam:notes", resolved=True, passed=True), 4, 1, 30),
+        with_reads(_row(1, 2, "exam", resolved=True, passed=True), 8, 5, 40),
+        with_reads(_row(1, 2, "exam:notes", resolved=True, passed=True), 6, 1, 20),
+    ]
+    s = fe.summarize(rows)
+    assert list(s["arms"]) == ["exam", "exam:notes"]
+    assert s["diff"] is None and s["paired"] is None  # 没有对照组
+    assert s["handoff_pairs"]["exam:notes"] == {"gained": 1, "lost": 0, "same": 1, "p": 1.0}
+    assert s["arms"]["exam"]["rereads"] == 12 and s["arms"]["exam"]["edit_reads"] == 18
+    assert s["arms"]["exam:notes"]["first_edit"] == 25
+    text = fe.render(rows, {"repo": "psf/black", "started": "t", "source": "s"})
+    assert "## 规划 → 修改的交接" in text
+    assert "| exam | reset（从空白开始） | 18 | 12 | 67% | 45 |" in text
+    assert "1 / 0 / 1，p = 1.00" in text
+    assert "实验组（给封存考卷），交接 notes" in text
 
 
 def test_patch_edits_reads_the_transcript(tmp_path: Path):

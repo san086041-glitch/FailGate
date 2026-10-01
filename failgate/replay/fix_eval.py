@@ -44,6 +44,8 @@ from .metrics import wilson
 
 ARMS = ("exam", "control")
 ARM_NAME = {"exam": "实验组（给封存考卷）", "control": "对照组（不给考卷）"}
+HANDOFF_NAME = {"reset": "从空白开始", "notes": "钉代码 + 读过的范围",
+                "continue": "接着规划阶段的对话"}
 GOLD_TIMEOUT_S = 900
 GOLD_ARGS = ["-q", "--tb=no", "-p", "no:cacheprovider", f"--rootdir={WORK_SRC}", "-rfE",
              "--continue-on-collection-errors"]
@@ -51,6 +53,25 @@ _COUNT = re.compile(r"(\d+) (passed|failed|errors?|skipped|xfailed|xpassed|desel
 
 
 # ---------------------------------------------------------------- 纯函数
+
+
+def arm_base(arm: str) -> str:
+    """组名可以带交接方式（ADR 0030）：exam:notes → exam。"""
+    return arm.split(":", 1)[0]
+
+
+def arm_handoff(arm: str) -> Any:
+    return arm.split(":", 1)[1] if ":" in arm else "reset"
+
+
+def valid_arm(arm: str) -> bool:
+    from failgate.fix.agent import HANDOFFS
+    return arm_base(arm) in ARMS and arm_handoff(arm) in HANDOFFS
+
+
+def arm_name(arm: str) -> str:
+    base = ARM_NAME.get(arm_base(arm), arm)
+    return base if ":" not in arm else f"{base}，交接 {arm_handoff(arm)}"
 
 
 def is_test_change(path: str, test_dir: str) -> bool:
@@ -328,10 +349,43 @@ def _runs(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     return [r for r in rows if r.get("type") == "run"]
 
 
+def arm_order(rows: Sequence[dict[str, Any]]) -> list[str]:
+    seen = {r["arm"] for r in _runs(rows)}
+    return [a for a in ARMS if a in seen] + sorted(seen - set(ARMS))
+
+
+def paired(runs: Sequence[dict[str, Any]], arm: str, base: str) -> dict[str, Any] | None:
+    """同题同重复编号成对比较 arm 和 base；没有成对的就返回 None。"""
+    by = {(r["number"], r["rep"], r["arm"]): r["gold"]["resolved"] for r in runs}
+    gained = lost = same = 0
+    for (num, rep, a), ok in by.items():
+        if a != arm or (num, rep, base) not in by:
+            continue
+        other = by[(num, rep, base)]
+        if ok and not other:
+            gained += 1
+        elif other and not ok:
+            lost += 1
+        else:
+            same += 1
+    if not gained + lost + same:
+        return None
+    return {"gained": gained, "lost": lost, "same": same,
+            "p": binom_two_sided(gained, gained + lost)}
+
+
+def _median(xs: Sequence[float]) -> float | None:
+    ys = sorted(xs)
+    if not ys:
+        return None
+    m = len(ys) // 2
+    return float(ys[m]) if len(ys) % 2 else (ys[m - 1] + ys[m]) / 2
+
+
 def summarize(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
     runs = [r for r in _runs(rows) if r["gold"]["valid"]]
     arms: dict[str, dict[str, Any]] = {}
-    for arm in ARMS:
+    for arm in arm_order(rows):
         rs = [r for r in runs if r["arm"] == arm]
         k, n = sum(r["gold"]["resolved"] for r in rs), len(rs)
         arms[arm] = {
@@ -345,20 +399,15 @@ def summarize(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
             "no_patch": sum(not r["fix"]["files"] for r in rs),
             "broke": sum(r["gold"].get("broken_n", 0) > 0 for r in rs),
             "denied": sum(r["fix"]["denied"] for r in rs),
+            # 交接（ADR 0030；旧记录没有这些字段）
+            "edit_reads": sum(r["fix"].get("edit_reads", 0) for r in rs),
+            "rereads": sum(r["fix"].get("rereads", 0) for r in rs),
+            "first_edit": _median([r["fix"]["first_edit_step"] for r in rs
+                                   if r["fix"].get("first_edit_step") is not None]),
+            "passed": sum(r["fix"]["passed"] for r in rs),
         }
-    # 成对：同一题、同一次重复编号
-    by = {(r["number"], r["rep"], r["arm"]): r["gold"]["resolved"] for r in runs}
-    gained = lost = same = 0
-    for (num, rep, arm), ok in by.items():
-        if arm != "exam" or (num, rep, "control") not in by:
-            continue
-        ctl = by[(num, rep, "control")]
-        if ok and not ctl:
-            gained += 1
-        elif ctl and not ok:
-            lost += 1
-        else:
-            same += 1
+    base_pair = paired(runs, "exam", "control")
+    handoff_pairs = {a: paired(runs, a, "exam") for a in arms if ":" in a}
     # 实验组：封存考卷 × 金标准 × 隐藏考卷
     exam_runs = [r for r in runs if r["arm"] == "exam"]
     cross = Counter((r["fix"]["passed"], r["gold"]["resolved"]) for r in exam_runs)
@@ -368,10 +417,10 @@ def summarize(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
     missed = [r for r in with_hidden if not r["gold"]["resolved"] and not r["hidden"]["flagged"]]
     alarms = [r for r in with_hidden if r["gold"]["resolved"] and r["hidden"]["flagged"]]
     good = [r for r in with_hidden if r["gold"]["resolved"]]
+    diff = (arms["exam"]["rate"] - arms["control"]["rate"]
+            if "exam" in arms and "control" in arms else None)
     return {
-        "arms": arms, "diff": arms["exam"]["rate"] - arms["control"]["rate"],
-        "paired": {"gained": gained, "lost": lost, "same": same,
-                   "p": binom_two_sided(gained, gained + lost)},
+        "arms": arms, "diff": diff, "paired": base_pair, "handoff_pairs": handoff_pairs,
         "exam_cross": {f"{'过' if p else '没过'}考卷/{'修好' if g else '没修好'}": n
                        for (p, g), n in sorted(cross.items(), reverse=True)},
         "false_pass": len(false_pass), "exam_passed": sum(r["fix"]["passed"] for r in exam_runs),
@@ -384,6 +433,31 @@ def summarize(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
 
 def _pct(k: int, n: int) -> str:
     return f"{k}/{n}（{k / n * 100:.0f}%）" if n else "—"
+
+
+def _render_handoff(s: dict[str, Any]) -> list[str]:
+    """交接对照（ADR 0030）：重读率、第一次编辑的步数、成对比较（以 exam 即 reset 为基准）。"""
+    lines = ["", "## 规划 → 修改的交接", "",
+             "| 组 | 交接 | 修改阶段读取 | 其中重读 | 重读率 | 第一次编辑（中位步） | "
+             "过考卷 | 修好 | 成对 vs reset（多修好 / 少修好 / 相同，p） |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    for arm, a in s["arms"].items():
+        if arm_base(arm) != "exam":
+            continue
+        h = arm_handoff(arm)
+        pr = s["handoff_pairs"].get(arm)
+        if ":" not in arm:
+            pair = "基准"
+        elif pr is None:
+            pair = "—"
+        else:
+            pair = f"{pr['gained']} / {pr['lost']} / {pr['same']}，p = {pr['p']:.2f}"
+        rate = f"{a['rereads'] / a['edit_reads']:.0%}" if a["edit_reads"] else "—"
+        fe = "—" if a["first_edit"] is None else f"{a['first_edit']:g}"
+        lines.append(f"| {arm} | {h}（{HANDOFF_NAME[h]}） | {a['edit_reads']} | {a['rereads']} | "
+                     f"{rate} | {fe} | {_pct(a['passed'], a['n'])} | "
+                     f"{_pct(a['resolved'], a['n'])} | {pair} |")
+    return lines
 
 
 def render(rows: Sequence[dict[str, Any]], meta: dict[str, Any]) -> str:
@@ -411,19 +485,23 @@ def render(rows: Sequence[dict[str, Any]], meta: dict[str, Any]) -> str:
     lines += ["", "## 结果", "",
               "| 组 | 次数 | 修好 | Wilson 95% | 平均花费 | 平均步数 | 平均用时 | "
               "没交补丁 | 弄坏别的测试 | 状态分布 |", "|---|---|---|---|---|---|---|---|---|---|"]
-    for arm in ARMS:
-        a = s["arms"][arm]
+    for arm, a in s["arms"].items():
         lo, hi = a["ci"]
         dist = "、".join(f"{k} {v}" for k, v in sorted(a["status"].items()))
-        lines.append(f"| {ARM_NAME[arm]} | {a['n']} | {_pct(a['resolved'], a['n'])} | "
+        lines.append(f"| {arm_name(arm)} | {a['n']} | {_pct(a['resolved'], a['n'])} | "
                      f"{lo:.0%}–{hi:.0%} | ${a['mean_cost']} | {a['mean_steps']} | "
                      f"{a['mean_seconds']} s | {a['no_patch']} | {a['broke']} | {dist} |")
     p = s["paired"]
+    if p is not None and s["diff"] is not None:
+        lines += [
+            "",
+            f"**差值 {s['diff'] * 100:+.0f} 个百分点**；成对（同题同重复编号）："
+            f"实验组修好而对照组没修好 {p['gained']}、反过来 {p['lost']}、结论相同 {p['same']}，"
+            f"精确二项检验 p = {p['p']:.3f}",
+        ]
+    if s["handoff_pairs"]:
+        lines += _render_handoff(s)
     lines += [
-        "",
-        f"**差值 {s['diff'] * 100:+.0f} 个百分点**；成对（同题同重复编号）："
-        f"实验组修好而对照组没修好 {p['gained']}、反过来 {p['lost']}、结论相同 {p['same']}，"
-        f"精确二项检验 p = {p['p']:.3f}",
         "",
         f"- 无效运行（金标准测试没跑起来）：{s['invalid_runs']}；总花费 ${s['cost']}",
         "",
@@ -446,7 +524,7 @@ def render(rows: Sequence[dict[str, Any]], meta: dict[str, Any]) -> str:
     ]
     for r in sorted(_runs(rows), key=lambda r: (-r["number"], r["arm"], r["rep"])):
         g, f = r["gold"], r["fix"]
-        exam = "—" if r["arm"] == "control" else ("✅" if f["passed"] else "❌")
+        exam = "—" if arm_base(r["arm"]) == "control" else ("✅" if f["passed"] else "❌")
         gold = ("✅" if g["resolved"] else "❌") if g["valid"] else f"无效（{g['reason']}）"
         hid = "—" if r.get("hidden") is None else (
             f"{len(r['hidden']['failed'])}/{r['hidden']['total']} 失败" if r["hidden"]["flagged"]

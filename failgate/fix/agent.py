@@ -15,6 +15,12 @@
 
 权限（差异点 E）：写只有 edit_file，先过 WriteGuard，只能改被测源码；最终验收在全新工作区里
 用宿主机上的改动清单重跑封存的考卷（workspace.py）。对照组没有考卷，verify 直接结束。
+
+规划 → 修改的交接（handoff，ADR 0030）。W9 先量发现修改阶段 64% 的读取是规划阶段读过的：
+- reset：修改阶段从空白开始，只拿 3 行计划（原来的做法）；
+- notes：交计划时指定要改 / 要参照的代码范围，系统把这些行的当前内容钉进修改阶段，再附上读过的范围；
+- continue：同一轮里修改阶段接着规划阶段的对话继续。
+三种都在轮与轮之间重置（只带小结、补丁、验收输出和反思），不让失败的探索一路累积。
 """
 
 from __future__ import annotations
@@ -64,6 +70,21 @@ SUBMIT_PLAN = _fn(
      "files": {"type": "array", "items": {"type": "string"}, "description": "打算改的文件"},
      "approach": {"type": "string", "description": "打算怎么改（一两句）"}},
     ["hypothesis", "approach"])
+PIN_MAX_LINES = 300  # notes 交接最多钉进多少行代码
+PIN_MAX_RANGES = 6
+SUBMIT_PLAN_NOTES = _fn(
+    "submit_plan", "交出修复计划，进入修改阶段。",
+    {**SUBMIT_PLAN["function"]["parameters"]["properties"],
+     "key_code": {
+         "type": "array",
+         "description": (f"修改阶段要改、要对照的代码范围（最多 {PIN_MAX_RANGES} 段、"
+                         f"共 {PIN_MAX_LINES} 行）。系统会把这些行的当前内容直接交给修改阶段，"
+                         "不用再读。"),
+         "items": {"type": "object",
+                   "properties": {"path": {"type": "string"}, "start": {"type": "integer"},
+                                  "end": {"type": "integer"}},
+                   "required": ["path", "start", "end"]}}},
+    ["hypothesis", "approach", "key_code"])
 EDIT_TOOLS = [
     *EXPLORE,
     _fn("edit_file",
@@ -80,6 +101,8 @@ EDIT_TOOLS = [
 ]
 
 Status = Literal["passed", "done", "failed", "gave_up", "budget", "error"]
+Handoff = Literal["reset", "notes", "continue"]
+HANDOFFS: tuple[str, ...] = ("reset", "notes", "continue")
 
 
 class FixTask(BaseModel):
@@ -120,6 +143,12 @@ class FixResult(BaseModel):
     reasoning_tokens: int = 0
     cached_tokens: int = 0
     denied: int = 0  # 被工具层拒绝的写入次数（角色隔离实验用）
+    # 交接实验（ADR 0030）：修改阶段的 read_file 次数、其中和之前阶段读过的范围重叠的次数、
+    # 第一次 edit_file 在第几步（全程计数）
+    handoff: str = "reset"
+    edit_reads: int = 0
+    rereads: int = 0
+    first_edit_step: int | None = None
     error: str | None = None
     give_up_reason: str | None = None
     duration_s: float = 0.0
@@ -152,6 +181,54 @@ def clip(text: str, head: int = 25, tail: int = 45, max_chars: int = 7000) -> st
     return out
 
 
+Range = tuple[str, int, int]
+
+
+def _norm_path(path: str) -> str:
+    p = path.replace("\\", "/").strip()
+    while p.startswith("./"):
+        p = p[2:]
+    return p.lstrip("/")
+
+
+def overlaps(r: Range, seen: list[Range]) -> bool:
+    p, s, e = r
+    return any(p == q and s <= qe and qs <= e for q, qs, qe in seen)
+
+
+def merge_ranges(ranges: list[Range]) -> dict[str, list[tuple[int, int]]]:
+    """按文件合并重叠或相邻的行范围。"""
+    out: dict[str, list[tuple[int, int]]] = {}
+    for p, s, e in sorted(ranges):
+        spans = out.setdefault(p, [])
+        if spans and s <= spans[-1][1] + 1:
+            spans[-1] = (spans[-1][0], max(spans[-1][1], e))
+        else:
+            spans.append((s, e))
+    return out
+
+
+def pin_ranges(raw: Any) -> list[Range]:
+    """submit_plan 的 key_code → 有效范围，按上限截断（段数、总行数）。"""
+    out: list[Range] = []
+    budget = PIN_MAX_LINES
+    for item in raw if isinstance(raw, list) else []:
+        if len(out) >= PIN_MAX_RANGES or budget <= 0 or not isinstance(item, dict):
+            continue
+        try:
+            path = _norm_path(str(item["path"]))
+            start = max(int(item["start"]), 1)
+            end = int(item["end"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if not path or end < start:
+            continue
+        end = min(end, start + budget - 1)
+        out.append((path, start, end))
+        budget -= end - start + 1
+    return out
+
+
 def _exec_text(res: ExecResult) -> str:
     head = f"exit={res.exit_code}" + ("（超时）" if res.timed_out else "") \
         + ("（内存超限）" if res.oom_killed else "")
@@ -181,14 +258,26 @@ class FixAgent:
         budget_usd: float = 0.5,
         thinking: str | None = None,
         artifacts_dir: Path | None = None,
+        handoff: Handoff = "reset",
     ) -> None:
+        if handoff not in HANDOFFS:
+            raise ValueError(f"未知的交接方式：{handoff}")
         self.llm, self.model, self.ws, self.task = llm, model, ws, task
         self.max_rounds, self.plan_steps, self.edit_steps = max_rounds, plan_steps, edit_steps
         self.budget_usd, self.thinking, self.artifacts_dir = budget_usd, thinking, artifacts_dir
+        self.handoff: Handoff = handoff
         self.usage = Usage()
-        self.result = FixResult(status="failed")
+        self.result = FixResult(status="failed", handoff=handoff)
         self.log: list[dict[str, Any]] = []  # 每个阶段的完整消息，写进 transcript
         self.exhausted = ""  # budget / error / steps
+        # 读取记录：之前各阶段读过的范围、当前阶段读的范围（交接和重读统计用）
+        self._phase = ""
+        self._seen: list[Range] = []
+        self._phase_reads: list[Range] = []
+        # 本轮规划阶段留给修改阶段的东西（图按轮顺序执行，放实例上即可）
+        self._plan_msgs: list[dict[str, Any]] = []
+        self._plan_reads: list[Range] = []
+        self._pins: list[Range] = []
 
 
     # ---------------------------------------------------------------- 图
@@ -248,10 +337,13 @@ class FixAgent:
     async def plan_node(self, state: FixState) -> dict[str, Any]:
         msgs = [{"role": "system", "content": load_prompt(f"fix_agent_v{PROMPT_VERSION}")},
                 {"role": "user", "content": self._task_message(state, "plan")}]
-        tools = [*EXPLORE, SUBMIT_PLAN,
+        submit = SUBMIT_PLAN_NOTES if self.handoff == "notes" else SUBMIT_PLAN
+        tools = [*EXPLORE, submit,
                  _fn("give_up", "确认无法在这份代码里修复时调用。", {"reason": {"type": "string"}},
                      ["reason"])]
+        self._pins = []
         got = await self._loop("plan", msgs, tools, ("submit_plan", "give_up"), self.plan_steps)
+        self._plan_msgs, self._plan_reads = msgs, list(self._phase_reads)
         if got is None:
             if self.exhausted:
                 return {"ended": self.exhausted}
@@ -264,12 +356,24 @@ class FixAgent:
         files = args.get("files") or []
         plan = (f"根因假设：{args.get('hypothesis', '')}\n打算改：{', '.join(map(str, files))}\n"
                 f"做法：{args.get('approach', '')}")
+        if self.handoff == "notes":
+            self._pins = pin_ranges(args.get("key_code"))
         return {"plan": plan}
 
     async def edit_node(self, state: FixState) -> dict[str, Any]:
-        msgs = [{"role": "system", "content": load_prompt(f"fix_agent_v{PROMPT_VERSION}")},
-                {"role": "user", "content": self._task_message(state, "edit")}]
-        got = await self._loop("edit", msgs, EDIT_TOOLS, ("finish_edit",), self.edit_steps)
+        prefix = 0
+        if self.handoff == "continue" and self._plan_msgs:
+            # 接着规划阶段的对话：读过的代码都还在上下文里（换了工具列表，这一次缓存会失效）
+            prefix = len(self._plan_msgs)
+            msgs = [*self._plan_msgs,
+                    {"role": "user", "content": self._edit_instruction(state)}]
+        else:
+            msgs = [{"role": "system", "content": load_prompt(f"fix_agent_v{PROMPT_VERSION}")},
+                    {"role": "user", "content": self._task_message(state, "edit")}]
+            if self.handoff == "notes":
+                msgs[-1]["content"] += "\n\n" + await self._notes()
+        got = await self._loop("edit", msgs, EDIT_TOOLS, ("finish_edit",), self.edit_steps,
+                               prefix=prefix)
         summary = str(got[1].get("summary", "")) if got else "（没有正常结束修改阶段）"
         att = FixAttempt(n=state["round"] + 1, summary=summary[:600], patch=self.ws.patch(),
                          hypothesis=state["plan"][:800])
@@ -360,15 +464,38 @@ class FixAgent:
             parts.append(f"现在是规划阶段：{first}然后调用 submit_plan。"
                          f"最多 {self.plan_steps} 次工具调用。")
         elif phase == "edit":
-            parts.append(f"当前计划：\n{state['plan']}\n\n现在是修改阶段：按计划改代码、跑测试确认，"
-                         f"改完调用 finish_edit。最多 {self.edit_steps} 次工具调用。"
-                         + (f"\n当前累计补丁：\n{clip(self.ws.patch(), 60, 60)}" if atts else ""))
+            parts.append(self._edit_instruction(state))
         else:
             parts.append(
                 "现在是反思阶段。上面最后一次尝试没有通过验收。请对照它的**实际输出**分析原因，"
                 "必须引用输出里的具体内容（异常、断言、行号）。只输出一个 JSON 对象："
                 '{"analysis": "...", "next": "replan" 或 "give_up"}。'
                 "next=replan 表示换一个思路再试；确认无法修复才用 give_up。")
+        return "\n\n".join(parts)
+
+    def _edit_instruction(self, state: FixState) -> str:
+        cont = "（上面规划阶段读过的代码都还在，不用重读）" if self.handoff == "continue" else ""
+        patch = f"\n当前累计补丁：\n{clip(self.ws.patch(), 60, 60)}" if state["attempts"] else ""
+        return (f"当前计划：\n{state['plan']}\n\n现在是修改阶段{cont}：按计划改代码、跑测试确认，"
+                f"改完调用 finish_edit。最多 {self.edit_steps} 次工具调用。" + patch)
+
+    async def _notes(self) -> str:
+        """notes 交接：钉进去的代码（当前内容，含已有改动）+ 规划阶段读过的范围。"""
+        parts = ["## 规划阶段的交接笔记"]
+        for path, start, end in self._pins:
+            r = await self.ws.read(path, start, end)
+            if "error" in r:
+                parts.append(f"`{path}` {start}–{end}：{r['error']}")
+                continue
+            parts.append(f"`{path}` 第 {start}–{end} 行（当前内容，行号只是标注，edit_file 的 old "
+                         f"不要带行号）：\n```\n" + "\n".join(r["lines"]) + "\n```")
+        if not self._pins:
+            parts.append("（规划阶段没有指定要钉进来的代码）")
+        merged = merge_ranges(self._plan_reads)
+        if merged:
+            parts.append("规划阶段读过的范围（需要时可以再读）：\n" + "\n".join(
+                f"- {p}: " + ", ".join(f"{s}–{e}" for s, e in spans)
+                for p, spans in merged.items()))
         return "\n\n".join(parts)
 
     @staticmethod
@@ -398,11 +525,16 @@ class FixAgent:
         r.reasoning_tokens, r.cached_tokens = u.reasoning_tokens, u.cached_tokens
 
     async def _loop(self, phase: str, msgs: list[dict[str, Any]], tools: list[dict[str, Any]],
-                    terminal: tuple[str, ...], max_steps: int) -> tuple[str, dict[str, Any]] | None:
-        """有边界的工具调用循环：调到终止工具就返回它的参数；步数、预算、模型出错时返回 None。"""
+                    terminal: tuple[str, ...], max_steps: int,
+                    prefix: int = 0) -> tuple[str, dict[str, Any]] | None:
+        """有边界的工具调用循环：调到终止工具就返回它的参数；步数、预算、模型出错时返回 None。
+
+        prefix：msgs 开头有几条是接着上一阶段的（continue 交接），transcript 里标出来，
+        统计时跳过。"""
         steps = nudges = 0
         warned = False
         found: tuple[str, dict[str, Any]] | None = None
+        self._phase, self._phase_reads = phase, []
         try:
             while steps < max_steps:
                 if self._cost() >= self.budget_usd:
@@ -450,7 +582,11 @@ class FixAgent:
                         f"\n\n[提醒] 这个阶段只剩 {left} 次工具调用。请尽快调用 {terminal[0]}。")
             return None
         finally:
-            self.log.append({"phase": phase, "messages": msgs})
+            self._seen += self._phase_reads
+            entry: dict[str, Any] = {"phase": phase, "messages": list(msgs)}
+            if prefix:
+                entry["prefix"] = prefix
+            self.log.append(entry)
 
     async def _dispatch(self, call: ToolCall, terminal: tuple[str, ...]) -> str:
         try:
@@ -494,9 +630,21 @@ class FixAgent:
         r = await self.ws.read(path, int(start), int(end) if end else None)
         if "error" in r:
             return str(r["error"])
+        if r["lines"]:
+            s = max(int(start), 1)
+            self._note_read((_norm_path(path), s, s + len(r["lines"]) - 1))
         return "\n".join(r["lines"]) + f"\n（文件共 {r['total_lines']} 行）"
 
+    def _note_read(self, rng: Range) -> None:
+        if self._phase == "edit":
+            self.result.edit_reads += 1
+            if overlaps(rng, self._seen):
+                self.result.rereads += 1
+        self._phase_reads.append(rng)
+
     async def _tool_edit_file(self, path: str, old: str, new: str) -> str:
+        if self.result.first_edit_step is None:
+            self.result.first_edit_step = self.result.steps
         return self.ws.edit(path, old, new)
 
     async def _tool_run_tests(self, targets: list[str]) -> str:
