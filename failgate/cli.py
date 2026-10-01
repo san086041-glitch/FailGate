@@ -2299,6 +2299,38 @@ def trace_show(
     typer.echo(render(spans, hide=tuple(h.strip() for h in hide.split(",") if h.strip())))
 
 
+@app.command("mcp")
+def mcp_serve(
+    env_file: Annotated[Path | None, typer.Option(
+        help="FailGate 的 .env（LLM、沙箱配置）。客户端会在任意目录启动本命令，"
+             "所以要指定；相对路径（artifacts、环境缓存）以它所在的目录为准")] = None,
+    home: Annotated[Path | None, typer.Option(
+        help="证据存放目录，默认 ~/.failgate（也可用 FAILGATE_HOME）")] = None,
+) -> None:
+    """本地 stdio MCP 服务（ADR 0033）：给 Claude Code / Cursor 用的出题、跑考卷、核验工具。
+
+    标准输出是协议通道：这个命令不往 stdout 打印任何东西，日志走 stderr。
+    """
+    import logging
+    import os
+    import sys
+
+    from failgate.mcp_server.engine import FailGateEngine, Runtime
+    from failgate.mcp_server.server import build_server
+    from failgate.mcp_server.store import EvidenceStore
+
+    logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
+    if env_file is not None:
+        env_file = env_file.expanduser().resolve()
+        if not env_file.is_file():
+            raise typer.BadParameter(f"{env_file} 不存在")
+        os.chdir(env_file.parent)
+    settings = Settings(_env_file=env_file) if env_file else Settings()  # type: ignore[call-arg]
+    store = EvidenceStore(home.expanduser() if home else None)
+    engine = FailGateEngine(Runtime.from_settings(settings), store)
+    build_server(engine, store).run("stdio")
+
+
 memory_app = typer.Typer(help="Agent 的长期记忆：情景记忆（ADR 0032）", no_args_is_help=True)
 app.add_typer(memory_app, name="memory")
 

@@ -32,6 +32,8 @@ dependencies = [
   "opentelemetry-exporter-otlp-proto-http==1.45.0",
   # 修复 Agent 的图（M4，ADR 0027）：只用 StateGraph，不引入 langchain 的 Agent 抽象
   "langgraph==1.2.12",
+  # 本地 stdio MCP 服务（W10，ADR 0033）：官方 Python SDK 2.x（FastMCP 已改名 MCPServer）
+  "mcp==2.2.0",
 ]
 
 [project.optional-dependencies]
