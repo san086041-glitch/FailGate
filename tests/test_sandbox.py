@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import time
 from pathlib import Path
 
 import pytest
@@ -14,6 +16,7 @@ from failgate.repro.sandbox import (
     SandboxError,
     SandboxLimits,
     _Capture,
+    _docker_time,
     build_run_args,
     check_command,
     classify_exit,
@@ -111,6 +114,104 @@ def test_classify_exit(exit_code, oom_reported, duration, host, want):
 
 def test_find_docker_configured_missing():
     assert find_docker("Z:/definitely/not/docker.exe") is None
+
+
+# ---------------------------------------------------------------- prune（假 docker）
+
+
+def _iso(ts: float) -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(ts)) + ".123456789Z"
+
+
+class FakeDocker:
+    """按命令前缀回放 docker 管理命令，并记下所有调用。"""
+
+    def __init__(self, containers: list[dict], volumes: list[dict], in_use: set[str]) -> None:
+        self.containers = containers
+        self.volumes = volumes
+        self.in_use = in_use
+        self.calls: list[tuple[str, ...]] = []
+
+    async def __call__(self, *args: str, **_: object) -> tuple[int, str, str]:
+        self.calls.append(args)
+        if args[:2] == ("ps", "-a"):
+            ids = [c["Id"] for c in self.containers if c["State"]["Status"] in ("exited", "dead")]
+            return 0, " ".join(ids), ""
+        if args[:2] == ("container", "inspect"):
+            return 0, json.dumps([c for c in self.containers if c["Id"] in args[2:]]), ""
+        if args[0] == "rm":
+            return 0, args[1], ""
+        if args[:2] == ("volume", "ls"):
+            return 0, " ".join(v["Name"] for v in self.volumes), ""
+        if args[:2] == ("volume", "inspect"):
+            return 0, json.dumps([v for v in self.volumes if v["Name"] in args[2:]]), ""
+        if args[:2] == ("volume", "rm"):
+            name = args[-1]
+            if name in self.in_use:
+                return 1, "", f"Error response from daemon: remove {name}: volume is in use - [abc]"
+            return 0, name, ""
+        raise AssertionError(f"意料之外的 docker 调用：{args}")
+
+
+def _container(cid: str, name: str, status: str, finished: float) -> dict:
+    return {
+        "Id": cid, "Name": f"/{name}",
+        "State": {"Status": status, "Running": status == "running", "FinishedAt": _iso(finished)},
+    }
+
+
+def _volume(name: str, created: float) -> dict:
+    labels = {"failgate.sandbox": "workspace", "failgate.created": str(int(created))}
+    return {"Name": name, "Labels": labels}
+
+
+async def test_prune_removes_old_exited_containers_then_volumes_and_reports_in_use():
+    now = time.time()
+    old, recent = now - 48 * 3600, now - 60
+    fake = FakeDocker(
+        containers=[
+            _container("c1", "failgate-run-aaa", "exited", old),
+            _container("c2", "failgate-install-bbb", "dead", old),
+            _container("c3", "failgate-run-ccc", "exited", recent),   # 没过 TTL
+            _container("c4", "failgate-run-ddd", "running", old),     # 运行中：绝不动
+        ],
+        volumes=[
+            _volume("failgate-ws-old", old),
+            _volume("failgate-ws-busy", old),
+            _volume("failgate-ws-new", recent),
+        ],
+        in_use={"failgate-ws-busy"},
+    )
+    sb = DockerSandbox()
+    sb._docker = fake  # type: ignore[method-assign]
+
+    result = await sb.prune_workspaces(24 * 3600)
+
+    assert result.containers == ["failgate-run-aaa", "failgate-install-bbb"]
+    assert result.volumes == ["failgate-ws-old"]
+    assert [n for n, _ in result.failed] == ["failgate-ws-busy"]
+    assert "volume is in use" in result.failed[0][1]
+    removed = [c[1] for c in fake.calls if c[0] == "rm"]
+    assert removed == ["c1", "c2"]
+    assert all("-f" not in c for c in fake.calls if c[0] == "rm" or c[:2] == ("volume", "rm"))
+    # 容器先删，卷后删：否则卷还被占着
+    first_volume_rm = next(i for i, c in enumerate(fake.calls) if c[:2] == ("volume", "rm"))
+    assert all(i < first_volume_rm for i, c in enumerate(fake.calls) if c[0] == "rm")
+
+
+async def test_prune_with_nothing_to_do():
+    fake = FakeDocker(containers=[], volumes=[], in_use=set())
+    sb = DockerSandbox()
+    sb._docker = fake  # type: ignore[method-assign]
+    result = await sb.prune_workspaces(3600)
+    assert (result.containers, result.volumes, result.failed) == ([], [], [])
+
+
+def test_docker_time_parses_nanoseconds_and_zero_value():
+    assert _docker_time("2026-09-30T12:00:00.123456789Z") == pytest.approx(1790769600.0)
+    assert _docker_time("2026-09-30T21:00:00+09:00") == pytest.approx(1790769600.0)
+    assert _docker_time("0001-01-01T00:00:00Z") < 0
+    assert _docker_time("garbage") == 0.0
 
 
 # ---------------------------------------------------------------- 真实容器

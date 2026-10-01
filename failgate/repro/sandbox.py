@@ -25,7 +25,8 @@ import time
 import uuid
 from collections import deque
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import IO, Literal
 
@@ -70,6 +71,15 @@ class SandboxLimits:
     pids_install: int = 512
     pids_run: int = 256
     tmpfs_size: str = "512m"
+
+
+@dataclass
+class PruneResult:
+    """prune_workspaces 的结果：只统计真的删掉的，失败的单独列出（名字, 原因）。"""
+
+    containers: list[str] = field(default_factory=list)
+    volumes: list[str] = field(default_factory=list)
+    failed: list[tuple[str, str]] = field(default_factory=list)
 
 
 class ExecResult(BaseModel):
@@ -399,25 +409,62 @@ class DockerSandbox:
     async def remove_workspace(self, volume: str) -> None:
         await self._docker("volume", "rm", "-f", volume)
 
-    async def prune_workspaces(self, older_than_s: float) -> list[str]:
-        """删除创建时间早于 older_than_s 秒之前的工作区卷（TTL 兜底，正常应在 Case 结束时删）。"""
+    async def prune_workspaces(self, older_than_s: float) -> PruneResult:
+        """TTL 兜底清理（正常应在 Case 结束时删）。
+
+        先删结束时间早于 TTL 的已退出沙箱容器（进程被硬杀时会留下，它们一直占着卷），
+        再删创建时间早于 TTL 的工作区卷。运行中的容器一律不动；卷仍被占用时删不掉，
+        记进 failed 而不是算作已删除。
+        """
+        result = PruneResult()
+        cutoff = time.time() - older_than_s
+        await self._prune_exec_containers(cutoff, result)
+
         code, out, _ = await self._docker(
             "volume", "ls", "--filter", f"label={LABEL}=workspace", "--format", "{{.Name}}"
         )
         if code != 0:
-            return []
+            return result
         names = [n for n in out.split() if n]
         if not names:
-            return []
+            return result
         _, info, _ = await self._docker("volume", "inspect", *names)
-        cutoff = time.time() - older_than_s
         stale = [
             v["Name"] for v in json.loads(info or "[]")
             if int((v.get("Labels") or {}).get("failgate.created", "0")) < cutoff
         ]
         for name in stale:
-            await self.remove_workspace(name)
-        return stale
+            code, _, err = await self._docker("volume", "rm", name)
+            if code == 0:
+                result.volumes.append(name)
+            else:
+                result.failed.append((name, err.strip() or f"exit {code}"))
+        return result
+
+    async def _prune_exec_containers(self, cutoff: float, result: PruneResult) -> None:
+        code, out, _ = await self._docker(
+            "ps", "-a", "--filter", f"label={LABEL}=exec",
+            "--filter", "status=exited", "--filter", "status=dead",
+            "--format", "{{.ID}}",
+        )
+        ids = [i for i in out.split() if i] if code == 0 else []
+        if not ids:
+            return
+        _, info, _ = await self._docker("container", "inspect", *ids)
+        for c in json.loads(info or "[]"):
+            state = c.get("State") or {}
+            # 两次调用之间可能又被启动了：只认非运行状态
+            if state.get("Running") or state.get("Status") not in ("exited", "dead"):
+                continue
+            if _docker_time(state.get("FinishedAt", "")) >= cutoff:
+                continue
+            name = str(c.get("Name", "")).lstrip("/") or c["Id"][:12]
+            # 不加 -f：万一此刻容器在运行，docker 会拒绝删除
+            code, _, err = await self._docker("rm", c["Id"])
+            if code == 0:
+                result.containers.append(name)
+            else:
+                result.failed.append((name, err.strip() or f"exit {code}"))
 
     # ---- 执行
 
@@ -592,6 +639,22 @@ class DockerSandbox:
         if code != 0:
             return None
         return out.strip() == "true"
+
+
+def _docker_time(value: str) -> float:
+    """解析 docker 的 RFC3339 时间（纳秒精度，如 2026-09-30T12:00:00.123456789Z）为时间戳。
+
+    解析不了（或是零值 0001-01-01）时返回 0，即视为很久以前。
+    """
+    m = re.match(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2})?$", value)
+    if not m:
+        return 0.0
+    tz = m.group(2) or "Z"
+    try:
+        dt = datetime.fromisoformat(m.group(1) + ("+00:00" if tz == "Z" else tz))
+        return dt.timestamp()
+    except (ValueError, OverflowError, OSError):
+        return 0.0
 
 
 def _open_logs(

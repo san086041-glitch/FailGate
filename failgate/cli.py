@@ -1215,11 +1215,22 @@ def sandbox_check(
 
 @sandbox_app.command("prune")
 def sandbox_prune(
-    hours: Annotated[float, typer.Option(help="删除创建超过多少小时的工作区卷")] = 24.0,
+    hours: Annotated[
+        float, typer.Option(help="删除超过多少小时的已退出沙箱容器和工作区卷")
+    ] = 24.0,
 ) -> None:
-    """按 TTL 清理残留的工作区卷（正常情况下 Case 结束时就会删除）。"""
-    removed = asyncio.run(build_sandbox(Settings()).prune_workspaces(hours * 3600))
-    typer.echo(f"删除了 {len(removed)} 个工作区卷")
+    """按 TTL 清理残留的沙箱容器和工作区卷（正常情况下 Case 结束时就会删除）。
+
+    先删已退出的 exec 容器（运行中的不动），再删卷；仍被占用而删不掉的卷单独列出。
+    """
+    result = asyncio.run(build_sandbox(Settings()).prune_workspaces(hours * 3600))
+    typer.echo(f"删除了 {len(result.containers)} 个已退出的沙箱容器")
+    typer.echo(f"删除了 {len(result.volumes)} 个工作区卷")
+    if result.failed:
+        typer.echo(f"{len(result.failed)} 项删除失败：")
+        for name, reason in result.failed:
+            typer.echo(f"  {name}: {reason}")
+        raise typer.Exit(1)
 
 
 repro_app = typer.Typer(help="复现：在沙箱里跑复现脚本并判定", no_args_is_help=True)
