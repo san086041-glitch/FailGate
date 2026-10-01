@@ -25,6 +25,9 @@ class CaseState(StrEnum):
     REFUTED = "REFUTED"
     INCONCLUSIVE = "INCONCLUSIVE"
     NO_CLAIM = "NO_CLAIM"
+    # 闭环（ADR 0029）：Fixer 开的 PR 被驳回 → 按理由重修 → 推了新提交、等 synchronize 再核验
+    REFIXING = "REFIXING"
+    REFIXED = "REFIXED"
     PR_OPENED = "PR_OPENED"
     CLOSED = "CLOSED"
     IGNORED = "IGNORED"

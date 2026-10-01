@@ -270,6 +270,45 @@ async def claimverify_patch(case: Any, parent: SourceTree, edits: Mapping[str, s
             "layer3": c.layer3.model_dump(mode="json") if c.layer3 else None}
 
 
+def claim_from_row(row: dict[str, Any], test_path: str) -> Any:
+    """fix-verify 记下的一行（理由、第三层）→ ClaimResult，给 feedback_from_claim 用。"""
+    from failgate.verify.engine import ClaimResult, ClaimVerdict, Layer3
+
+    l3 = row.get("layer3")
+    return ClaimResult(issue=row["number"], verdict=ClaimVerdict(row["verdict"]),
+                       reasons=list(row.get("reasons") or []), test_path=test_path,
+                       layer3=Layer3.model_validate(l3) if l3 else None)
+
+
+def render_feedback(rows: Sequence[dict[str, Any]]) -> str:
+    """按驳回理由重修的离线实验（ADR 0029）。"""
+    finals = [r for r in rows if r.get("final")]
+    saved = [r for r in finals if r["gold"].get("resolved")]
+    lines = [
+        "# 按驳回理由重修：离线实验（ADR 0029）",
+        "",
+        "对象：提升实验（ADR 0028）实验组里过了封存考卷、但被 ClaimVerify 驳回的补丁。把驳回理由"
+        "（第三层新增失败的测试）交回修复 Agent，从原补丁接着改；新补丁要在全新工作区里通过考卷和"
+        "这些测试才算交出。每个最多 2 轮。成功判定仍然是上游修复自带的测试（金标准）。",
+        "",
+        f"**结果：{len(finals)} 个被驳回的补丁里，重修后金标准修好 {len(saved)} 个**；"
+        f"花费 ${sum(r['cost_usd'] for r in rows):.4f}",
+        "",
+        "| issue | 原补丁第几次 | 轮 | Agent 状态 | 交出 | 金标准 | F2P | 弄坏 | ClaimVerify | "
+        "花费 |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for r in rows:
+        g = r["gold"]
+        gold = ("✅" if g.get("resolved") else "❌") if g.get("valid") else "—"
+        lines.append(
+            f"| #{r['number']} | {r['rep']} | {r['round']} | {r['status']} | "
+            f"{'是' if r['passed'] else '否'} | {gold} | "
+            f"{g.get('f2p_passed', '—')}/{g.get('f2p_total', '—')} | {g.get('broken_n', '—')} | "
+            f"{r.get('verdict') or '—'} | ${r['cost_usd']:.4f} |")
+    return "\n".join(lines) + "\n"
+
+
 def summarize_verify(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
     good = [r for r in rows if r["gold_resolved"]]
     bad = [r for r in rows if not r["gold_resolved"]]

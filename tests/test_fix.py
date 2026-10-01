@@ -561,3 +561,56 @@ async def test_plan_step_limit_falls_through_to_edit_with_a_warning():
     reminders = [m["content"] for r in llm.requests for m in r["messages"]
                  if m["role"] == "tool" and "[提醒]" in m["content"]]
     assert len(set(reminders)) == 1 and "submit_plan" in reminders[0]
+
+
+# ---------------------------------------------------------------- 按驳回理由重修（ADR 0029）
+
+
+async def test_preload_keeps_source_edits_and_drops_protected_files():
+    sb = FakeSandbox()
+    ws = make_workspace(sb)
+    original = ws.original(PARSER)
+    assert original is not None
+    ws.preload({PARSER: original.replace("current = None", "current = DEFAULT"),
+                EXAM_PATH: "def test_x():\n    pass\n",  # 考卷：guard 拒绝，直接丢掉
+                "tests/test_parser.py": "x = 1\n"})
+    assert ws.changed_files() == [PARSER]
+    await ws.open("k")
+    await ws.sync()  # 第一次读文件 / 跑测试前会同步
+    # 上一版的改动同步进了工作区，Agent 读到的就是它
+    assert "current = DEFAULT" in sb.files[ws.volume][f"src/{PARSER}"]
+
+
+async def test_verify_also_runs_must_pass_tests_in_the_fresh_workspace():
+    sb = FakeSandbox()
+    ws = make_workspace(sb)
+    await ws.open("k")
+    ws.edit(PARSER, "    current = None\n", "    current = DEFAULT\n")
+    sb.pytest_exits = [0, 1]  # 考卷通过，上一轮被查出的测试仍然失败
+    res = await ws.verify_acceptance(["tests/test_parser.py::test_basic", "--deselect=x"])
+    assert res.exit_code == 1
+    exam_run, extra_run = sb.runs[-2], sb.runs[-1]
+    assert exam_run[0] == extra_run[0] != ws.volume  # 同一个全新工作区
+    assert "src/tests/test_parser.py::test_basic" in extra_run[1]
+    assert not any("deselect" in a for a in extra_run[1])  # 选项一律不收
+    # 考卷没过就不跑额外的测试
+    sb.pytest_exits = [1]
+    n = len(sb.runs)
+    await ws.verify_acceptance(["tests/test_parser.py::test_basic"])
+    assert len(sb.runs) - n == 1
+
+
+async def test_feedback_and_must_pass_reach_the_agent_and_the_verify_node():
+    sb = FakeSandbox()
+    ws = make_workspace(sb)
+    await ws.open("k")
+    sb.pytest_exits = [0, 0]
+    llm = ScriptedLLM([plan(), FIX_EDIT, FINISH])
+    t = task()
+    t.feedback = "- 相关测试里有 1 个在 PR 的代码上新出现失败（layer3:new_failures）"
+    t.must_pass = ["tests/test_parser.py::test_basic"]
+    res = await agent_for(sb, llm, ws, t).run()
+    assert res.status == "passed"
+    first = llm.requests[0]["messages"][1]["content"]
+    assert "被驳回了" in first and "tests/test_parser.py::test_basic" in first
+    assert any("src/tests/test_parser.py::test_basic" in r[1] for r in sb.runs)

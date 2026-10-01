@@ -86,19 +86,21 @@ TABLE: tuple[Transition, ...] = (
     Transition(frozenset({S.REPRODUCING}), "skill.done", S.NEED_INFO),
     # 提问者补充信息后重新复现
     Transition(frozenset({S.NEED_INFO}), "comment.created", S.REPRODUCING, _is_author),
-    Transition(frozenset({S.REPRODUCED}), "cmd.fix", S.FIXING, _all(_can_write, _budget_ok)),
-    Transition(
-        frozenset({S.FIXING}), "skill.done", S.PR_OPENED,
-        _fact("fbpa_passed", lambda v: v is True),
-    ),
-    Transition(frozenset({S.FIXING}), "skill.done", S.FAILED),
+    # 出题 → 答题（ADR 0029）：维护者 /failgate fix；补丁过了封存考卷才推送开 PR，
+    # 没过就回到 REPRODUCED（不是 FAILED），维护者可以再试
+    Transition(frozenset({S.REPRODUCED, S.PR_OPENED}), "cmd.fix", S.FIXING,
+               _all(_can_write, _budget_ok)),
+    Transition(frozenset({S.FIXING}), "skill.done", S.PR_OPENED,
+               _fact("fix_ok", lambda v: v is True)),
+    Transition(frozenset({S.FIXING}), "skill.done", S.REPRODUCED),
     # PR Case：打开、推新提交、改描述（可能加了 fixes #N）、重新打开、维护者命令 → 核验
     Transition(frozenset({S.NEW}), "pull.opened", S.VERIFYING),
     Transition(frozenset({S.CLOSED}), "pull.reopened", S.VERIFYING),
-    Transition(PR_RESULTS, "pull.synchronize", S.VERIFYING),
+    # REFIXED：Fixer 刚推了按驳回理由改的新提交，等它的 synchronize 事件回来再核验
+    Transition(PR_RESULTS | {S.REFIXED}, "pull.synchronize", S.VERIFYING),
     Transition(PR_RESULTS, "pull.edited", S.VERIFYING),
     # 核验中出错（比如 GitHub 暂时连不上）会停在 VERIFYING，维护者可以手动再触发一次
-    Transition(PR_RESULTS | {S.VERIFYING}, "cmd.verify", S.VERIFYING, _can_write),
+    Transition(PR_RESULTS | {S.VERIFYING, S.REFIXED}, "cmd.verify", S.VERIFYING, _can_write),
     # 重新封存由有写权限的维护者决定，谁也不能给自己改评分标准
     Transition(PR_RESULTS, "cmd.reseal", S.RESEALING, _can_write),
     Transition(frozenset({S.RESEALING}), "skill.done", S.VERIFYING),
@@ -106,9 +108,18 @@ TABLE: tuple[Transition, ...] = (
                _fact("verdict", lambda v: v is None)),
     Transition(frozenset({S.VERIFYING}), "skill.done", S.VERIFIED,
                _fact("verdict", lambda v: v == "VERIFIED")),
+    # 阅卷 → 答题的回传（ADR 0029）：Fixer 开的 PR 被驳回、重修轮数和预算都还有，就把理由交回
+    # 修复 Agent；别人的 PR 被驳回照旧停在 REFUTED
+    Transition(frozenset({S.VERIFYING}), "skill.done", S.REFIXING,
+               _all(_fact("verdict", lambda v: v == "REFUTED"),
+                    _fact("fixer_pr", lambda v: v is True),
+                    _fact("refix_left", lambda v: v is True), _budget_ok)),
     Transition(frozenset({S.VERIFYING}), "skill.done", S.REFUTED,
                _fact("verdict", lambda v: v == "REFUTED")),
     Transition(frozenset({S.VERIFYING}), "skill.done", S.INCONCLUSIVE),
+    Transition(frozenset({S.REFIXING}), "skill.done", S.REFIXED,
+               _fact("fix_ok", lambda v: v is True)),
+    Transition(frozenset({S.REFIXING}), "skill.done", S.REFUTED),
     # 任意活跃状态
     Transition(ACTIVE, "budget.exceeded", S.FAILED),
     Transition(ACTIVE, "issue.closed", S.CLOSED),

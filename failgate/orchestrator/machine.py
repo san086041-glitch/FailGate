@@ -54,17 +54,22 @@ class CaseMachine:
         default_mode: str = "shadow",
         index: IssueIndex | None = None,
         permissions: PermissionLookup | None = None,
+        trusted_bots: frozenset[str] = frozenset(),
     ) -> None:
         self.db = db
         self.default_mode = default_mode
         # 查重语料：每个经过的 issue 都写进索引，供之后的新 issue 比较
         self.index = index
         self.permissions = permissions
+        # 放行这些机器人的 PR 事件（ADR 0029：Fixer App 开的 PR 和它推的新提交要进入核验）
+        self.trusted_bots = trusted_bots
 
     async def handle(self, event: DomainEvent) -> Outcome | None:
         """应用一个外部事件；发生状态转换时返回新状态，否则返回 None。"""
-        # 过滤机器人（包括自己）触发的事件，避免自己触发自己
-        if event.actor.is_bot or event.case is None:
+        # 过滤机器人（包括自己）触发的事件，避免自己触发自己；Fixer 机器人只放行 PR 事件，
+        # 它的评论和命令照样忽略（不能给自己发 /failgate 命令）
+        trusted = event.actor.login in self.trusted_bots and event.name.startswith("pull.")
+        if (event.actor.is_bot and not trusted) or event.case is None:
             return None
         name = event_name(event)
         actor = event.actor

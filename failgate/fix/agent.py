@@ -89,6 +89,9 @@ class FixTask(BaseModel):
     reported_traceback: str | None = None
     test_path: str | None = None  # 验收测试在仓库里的路径（对照组为 None）
     test_code: str | None = None  # 验收测试的完整代码（对照组为 None）
+    # 按驳回理由重修（ADR 0029）：上一版补丁被 ClaimVerify 驳回的理由，以及必须一起通过的测试
+    feedback: str | None = None
+    must_pass: list[str] = Field(default_factory=list)
 
 
 class FixAttempt(BaseModel):
@@ -281,7 +284,7 @@ class FixAgent:
         if not self.ws.changed_files():
             last["output"] = "没有任何改动。"
             return {"status": "", "attempts": [last]}
-        res = await self.ws.verify_acceptance()
+        res = await self.ws.verify_acceptance(self.task.must_pass)
         last["exit_code"], last["output"] = res.exit_code, _exec_text(res)
         ok = res.exit_code == 0 and not res.timed_out and not res.oom_killed
         return {"status": "passed" if ok else "", "attempts": [last]}
@@ -340,6 +343,15 @@ class FixAgent:
         else:
             parts.append("这次没有现成的验收测试：请根据 issue 自己判断行为是否正确，"
                          "可以用 run_python 观察，用 run_tests 跑现有的相关测试防止回归。")
+        if t.feedback:
+            parts.append(
+                "上一版补丁已经交给独立的核验程序（ClaimVerify），被驳回了。驳回理由：\n"
+                + t.feedback
+                + "\n当前代码里已经带着上一版的改动（read_file 看到的就是）。请在它的基础上修改，"
+                "让验收测试和下面这些测试都通过；不要回退到原来的代码再重写。")
+            if t.must_pass:
+                parts.append("必须一起通过的测试（验收时会在全新工作区里重跑）：\n"
+                             + "\n".join(f"- {n}" for n in t.must_pass))
         atts = [FixAttempt(**a) for a in state["attempts"]]
         if atts and phase in ("plan", "reflect"):
             parts.append("此前的尝试：\n" + "\n\n".join(self._attempt_text(a) for a in atts))

@@ -90,6 +90,13 @@ class GitHubRest:
                 chunks.append(chunk)
         return sha, b"".join(chunks)
 
+    async def repo(self, full_name: str) -> dict[str, Any]:
+        """仓库信息：default_branch 等。"""
+        r = await self._http.get(f"/repos/{full_name}")
+        r.raise_for_status()
+        data: dict[str, Any] = r.json()
+        return data
+
     async def commit(self, full_name: str, ref: str) -> dict[str, Any]:
         """一个提交的信息：sha、commit.committer.date、parents[].sha ……"""
         r = await self._http.get(f"/repos/{full_name}/commits/{ref}")

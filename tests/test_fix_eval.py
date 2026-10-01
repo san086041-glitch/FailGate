@@ -192,3 +192,30 @@ def test_summarize_and_render_verify():
     text = fe.render_verify(rows)
     assert text.startswith(fe.VERIFY_HEADING) and "被驳回 1" in text
     assert "2（第三层 fail）" in text
+
+
+def test_claim_from_row_feeds_the_feedback():
+    from failgate.fix.feedback import feedback_from_claim
+
+    row = {"number": 4296, "verdict": "REFUTED", "reasons": ["layer3:new_failures"],
+           "layer3": {"status": "fail", "reason": "new_failures",
+                      "files": ["tests/test_format.py"],
+                      "new_failures": ["tests/test_format.py::test_simple_format[comments3]"]}}
+    fb = feedback_from_claim(fe.claim_from_row(row, "tests/test_failgate_issue_4296.py"))
+    assert fb.actionable and fb.must_pass == [
+        "tests/test_format.py::test_simple_format[comments3]"]
+
+
+def test_render_feedback():
+    rows = [
+        {"number": 4296, "rep": 1, "round": 1, "status": "passed", "passed": True,
+         "cost_usd": 0.04, "gold": {"valid": True, "resolved": False, "f2p_passed": 0,
+                                    "f2p_total": 1, "broken_n": 2},
+         "verdict": "REFUTED", "final": False},
+        {"number": 4296, "rep": 1, "round": 2, "status": "passed", "passed": True,
+         "cost_usd": 0.05, "gold": {"valid": True, "resolved": True, "f2p_passed": 1,
+                                    "f2p_total": 1, "broken_n": 0},
+         "verdict": "VERIFIED", "final": True},
+    ]
+    text = fe.render_feedback(rows)
+    assert "1 个被驳回的补丁里，重修后金标准修好 1 个" in text and "$0.0900" in text

@@ -38,13 +38,15 @@ from failgate.platforms.base import (
 )
 from failgate.platforms.github import GitHubPlatform
 from failgate.platforms.github_app import GitHubApp, InstallationClient, comment_from_api
+from failgate.platforms.github_fixer import FixerClient
 from failgate.platforms.github_rest import GitHubRest
-from failgate.policy.executor import EffectExecutor
+from failgate.policy.executor import EffectExecutor, FixPusher
 from failgate.policy.gate import PolicyGate
 from failgate.settings import Settings
 from failgate.skills.answer import AnswerSkill
 from failgate.skills.base import CommentSource, Skill
 from failgate.skills.dedup import DedupSkill
+from failgate.skills.fix import FixRunner, FixSkill, RefixSkill, SandboxFixRunner
 from failgate.skills.intake import IntakeSkill
 from failgate.skills.repro import ReproRunner, ReproSkill, SandboxReproRunner
 from failgate.skills.triage import TriageSkill
@@ -95,6 +97,17 @@ def build_github_app(
     )
 
 
+def build_fixer(
+    settings: Settings, transport: httpx.AsyncBaseTransport | None = None
+) -> FixerClient | None:
+    if not (settings.fixer_app_id and settings.fixer_app_private_key_path):
+        return None
+    return FixerClient(GitHubApp.from_key_file(
+        settings.fixer_app_id, settings.fixer_app_private_key_path,
+        base_url=settings.github_api_url, transport=transport,
+    ))
+
+
 class FailGate:
     def __init__(
         self,
@@ -106,6 +119,8 @@ class FailGate:
         rest_transport: httpx.AsyncBaseTransport | None = None,
         repro_runner: ReproRunner | None = None,
         verify_runner: VerifyRunner | None = None,
+        fix_runner: FixRunner | None = None,
+        fixer: FixPusher | None = None,
     ) -> None:
         self.settings = settings
         self.github_app = github_app or build_github_app(settings)
@@ -126,6 +141,8 @@ class FailGate:
             default_mode=settings.default_repo_mode,
             index=self.index,
             permissions=self._permission if self.github_app else None,
+            trusted_bots=frozenset({settings.fixer_bot_login} if settings.fixer_bot_login
+                                   else set()),
         )
         self.llm = build_llm(settings, llm_transport)
         self.repro_runner = self._build_repro_runner(settings, repro_runner)
@@ -133,6 +150,12 @@ class FailGate:
         self.verify_runner: VerifyRunner | None = verify_runner or (
             SandboxVerifyRunner(settings, self.db) if settings.repro_enabled else None
         )
+        # 闭环的答题者（ADR 0029）：同样跟着 REPRO_ENABLED；推送用单独的 Fixer App
+        self.fix_runner: FixRunner | None = fix_runner or (
+            SandboxFixRunner(settings, self.llm, self.db)
+            if settings.repro_enabled and self.llm is not None else None
+        )
+        self.fixer = fixer or build_fixer(settings)
         self.pipeline = (
             Pipeline(
                 self.db,
@@ -154,17 +177,20 @@ class FailGate:
                     CaseState.ANSWERING: (AnswerSkill(), settings.llm_model_large),
                     **self._repro_stage(settings),
                     **self._verify_stage(),
+                    **self._fix_stage(settings),
                 },
                 case_budget_usd=settings.case_budget_usd,
                 index=self.index,
                 labels=self._labels if self.github_app else None,
                 docs=self.docs,
                 comments=self._comments_for,
+                fixer_login=settings.fixer_bot_login or None,
+                max_refix=settings.fix_max_refix,
             )
             if self.llm is not None
             else None
         )
-        self.executor = EffectExecutor(self.db, self._writer)
+        self.executor = EffectExecutor(self.db, self._writer, self.fixer)
         self.worker: Worker | RedisQueues = (
             RedisQueues(
                 settings.redis_url,
@@ -206,6 +232,17 @@ class FailGate:
         return {
             CaseState.VERIFYING: (VerifySkill(self.verify_runner), "-"),
             CaseState.RESEALING: (ResealSkill(self.verify_runner), "-"),
+        }
+
+    def _fix_stage(self, settings: Settings) -> dict[CaseState, tuple[Skill, str]]:
+        if self.fix_runner is None:
+            return {}
+        budget = settings.fix_budget_usd
+        return {
+            CaseState.FIXING: (FixSkill(self.fix_runner, max_budget_usd=budget),
+                               settings.llm_model_large),
+            CaseState.REFIXING: (RefixSkill(self.fix_runner, max_budget_usd=budget),
+                                 settings.llm_model_large),
         }
 
     # ---- 平台读写的装配：只有 GitHub 且拿到了安装 ID 才能调用 ----
@@ -305,6 +342,10 @@ class FailGate:
             await self.repro_runner.aclose()
         if isinstance(self.verify_runner, SandboxVerifyRunner):
             await self.verify_runner.aclose()
+        if isinstance(self.fix_runner, SandboxFixRunner):
+            await self.fix_runner.aclose()
+        if isinstance(self.fixer, FixerClient):
+            await self.fixer.aclose()
         if self.llm is not None:
             await self.llm.aclose()
         if self.embedder is not None:
@@ -323,6 +364,8 @@ def create_app(
     rest_transport: httpx.AsyncBaseTransport | None = None,
     repro_runner: ReproRunner | None = None,
     verify_runner: VerifyRunner | None = None,
+    fix_runner: FixRunner | None = None,
+    fixer: FixPusher | None = None,
 ) -> FastAPI:
     failgate = FailGate(
         settings or Settings(),
@@ -332,6 +375,8 @@ def create_app(
         rest_transport=rest_transport,
         repro_runner=repro_runner,
         verify_runner=verify_runner,
+        fix_runner=fix_runner,
+        fixer=fixer,
     )
 
     @asynccontextmanager

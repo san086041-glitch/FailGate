@@ -33,6 +33,7 @@ from failgate.skills.base import (
     SkillContext,
     SkillResult,
 )
+from failgate.skills.fix import FixOutput, fix_comment
 from failgate.verify.engine import Verification
 from failgate.verify.receipt import SealedTest
 from failgate.verify.report import language_of, render_verification
@@ -64,6 +65,8 @@ class Pipeline:
         labels: LabelSource | None = None,
         docs: DocRetriever | None = None,
         comments: Callable[[Repo], CommentSource | None] | None = None,
+        fixer_login: str | None = None,
+        max_refix: int = 2,
     ) -> None:
         self.db = db
         self.machine = machine
@@ -77,6 +80,9 @@ class Pipeline:
         self.docs = docs
         # 仓库 → 读评论的函数（需要该仓库的安装令牌，所以按仓库绑定）
         self.comments_for = comments
+        # 闭环（ADR 0029）：Fixer 机器人开的 PR 被驳回时才自动重修，最多 max_refix 轮
+        self.fixer_login = fixer_login or None
+        self.max_refix = max_refix
 
     def runs(self, state: CaseState) -> bool:
         """这个阶段有没有能力模块（没配复现 / 核验时沙箱阶段就没有）。"""
@@ -153,10 +159,14 @@ class Pipeline:
                 if result.verification is not None:
                     s.add(_verification_row(case_id, result.verification))
                 case.spent_usd += result.cost_usd
-                await self._effects(s, repo, case, skill.name, result)
-                facts = {**result.facts, **self._pipeline_facts(repo, case)}
+                await self._effects(s, repo, case, skill.name, result, started)
+                facts = {**result.facts, **self._pipeline_facts(repo, case),
+                         **await self._loop_facts(s, case)}
                 new_state = await self.machine.apply(s, case, "skill.done", facts=facts)
-                if new_state is not None and new_state not in self.skills:
+                if new_state is not None and (new_state not in self.skills
+                                              or skill.name == "verify"):
+                    # 核验报告每一轮都发（被驳回后马上要重修，下一个阶段也有模块）：
+                    # PR 上能看到"驳回 → 重修 → 再核验"的每一步
                     # 流水线在这里停下（没有下一个自动阶段）：此时才生成汇总评论，
                     # 一次性包含前面所有阶段的结果，避免同一条评论在几秒内被反复编辑
                     outputs = {**ctx.prior, skill.name: result.output.model_dump(mode="json")}
@@ -172,6 +182,20 @@ class Pipeline:
         return {
             "repro_enabled": CaseState.REPRODUCING in self.skills and bool(repo.repro_package),
             "budget_ok": case.spent_usd < self.case_budget_usd,
+        }
+
+    async def _loop_facts(self, s: AsyncSession, case: Case) -> dict[str, Any]:
+        """闭环的事实（ADR 0029）：这个 PR 是不是 Fixer 开的、自动重修还剩不剩轮数。"""
+        if case.kind != "pull":
+            return {}
+        # 只数修复 Agent 真的动手修过的轮次：理由不可操作（例如维护者改了考卷、还没 reseal）
+        # 时 refix 直接返回，不占轮数
+        outputs: list[dict[str, Any] | None] = list((await s.scalars(select(Run.output).where(
+            Run.case_id == case.id, Run.skill == "refix", Run.status == "ok"))).all())
+        rounds = sum(1 for o in outputs if (o or {}).get("attempted"))
+        return {
+            "fixer_pr": self.fixer_login is not None and case.author_login == self.fixer_login,
+            "refix_left": rounds < self.max_refix,
         }
 
     async def _context(
@@ -231,6 +255,7 @@ class Pipeline:
         case: Case,
         skill_name: str,
         result: SkillResult,
+        started: datetime,
     ) -> None:
         output = result.output.model_dump(mode="json")
         if skill_name == "triage":
@@ -238,6 +263,16 @@ class Pipeline:
                 await self.gate.propose(
                     s, repo=repo, case=case, action="set_labels", payload={"add": output["labels"]}
                 )
+        if skill_name in ("fix", "refix"):
+            out = FixOutput.model_validate(output)
+            if out.push is not None:
+                # 推送由 Fixer App 执行（执行器按 action 选身份）；影子模式下只记录
+                await self.gate.propose(s, repo=repo, case=case, action="push_fix",
+                                        payload=out.push.model_dump(mode="json"))
+            body = fix_comment(out, language_of(case.title, case.body))
+            # 带上时间：同样的失败说明再出现一次也要发（维护者又试了一次）
+            await self.gate.propose(s, repo=repo, case=case, action="create_comment",
+                                    payload={"body": body, "at": started.isoformat()})
 
     async def _seal(self, s: AsyncSession, repo: Repo, case: Case, sealed: SealedTest) -> bool:
         """证据挂在它所属 issue 的 Case 下（重新封存是在 PR 上发起的）；取代旧证据时，

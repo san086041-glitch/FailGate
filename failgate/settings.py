@@ -111,3 +111,15 @@ class Settings(BaseSettings):
     # 隐藏考卷（ADR 0021）：封存 L2 考卷时自动出几道变体题（一次 LLM 调用 + 两次沙箱运行），
     # 核验时提示"疑似只迎合了公开考卷"；只公布题数和哈希
     hidden_exam_enabled: bool = True
+    # 出题 → 答题 → 阅卷闭环（ADR 0029）：维护者在已复现的 issue 上 /failgate fix，自带修复
+    # Agent 在默认分支上修，补丁过了封存考卷就由 Fixer App 推到 failgate/fix-N 并开 PR；PR 被
+    # ClaimVerify 驳回时，把理由交回修复 Agent 再改，最多 fix_max_refix 轮。跟着 REPRO_ENABLED 开。
+    # Fixer App 是单独的 GitHub App（Contents + Pull requests 写），核验 App 保持不能改代码
+    fixer_app_id: str = ""
+    fixer_app_private_key_path: str = ""
+    # Fixer 机器人的登录名（例如 failgate-fixer-xxx[bot]，`failgate fixer check` 会打印）：
+    # 核验 App 默认忽略所有机器人事件，只放行这个账号开的 PR 事件
+    fixer_bot_login: str = ""
+    fix_budget_usd: float = 0.15  # 每次修复（含按驳回理由重修）的模型花费上限
+    fix_agent_rounds: int = 2  # 修复 Agent 内部 规划→修改→验收 的轮数
+    fix_max_refix: int = 2  # 被驳回后自动重修的最多轮数

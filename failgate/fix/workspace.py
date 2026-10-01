@@ -18,6 +18,7 @@ import asyncio
 import difflib
 import re
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -142,6 +143,16 @@ class FixWorkspace:
         self.edits = trial
         return f"已修改 {norm}（累计改动 {files} 个文件、{lines} 行）"
 
+    def preload(self, edits: dict[str, str]) -> None:
+        """从上一版补丁接着改（按驳回理由重修，ADR 0029）：先过 guard，测试文件之类的直接丢掉。"""
+        for path, content in edits.items():
+            try:
+                norm = self.guard.check(path)
+            except GuardError:
+                continue
+            if content != self.original(norm):
+                self.edits[norm] = content
+
     async def revert(self) -> None:
         """撤销所有改动：宿主机清单清空，工作区里被改过的文件写回原文（新建的文件写成空文件）。"""
         touched = set(self.edits) | set(self._synced)
@@ -223,8 +234,11 @@ class FixWorkspace:
             env=self._env(),
         )
 
-    async def verify_acceptance(self) -> ExecResult:
-        """全新工作区 = 源码副本 + 改动清单 + 封存的考卷，跑一次考卷。"""
+    async def verify_acceptance(self, must_pass: Sequence[str] = ()) -> ExecResult:
+        """全新工作区 = 源码副本 + 改动清单 + 封存的考卷，跑一次考卷。
+
+        must_pass：考卷之外也必须通过的测试（上一版补丁被 ClaimVerify 第三层查出的新增失败，
+        ADR 0029）。考卷通过后在同一个全新工作区里再跑它们，失败就返回那次的结果。"""
         assert self.exam_code is not None
         p = self.prepared
         ws = await self.tester.open_workspace(p, f"fixverify-{p.env.key[:8]}")
@@ -234,8 +248,16 @@ class FixWorkspace:
                     await asyncio.to_thread(self._write_tree, Path(tmp), self.edits)
                     await self.tester.sandbox.copy_in(ws, Path(tmp), p.env.image)
             await self.tester.write_test(ws, p, self.exam_code)
-            return await self.tester.sandbox.run(
+            res = await self.tester.sandbox.run(
                 p.env.image, ws, [*pytest_argv(p.test_path), "-rA"],
+                timeout_s=RUN_TIMEOUT_S, allowed=RUN_PREFIXES, env=self._env(),
+            )
+            targets = [t for t in must_pass if TEST_TARGET.fullmatch(t) and not t.startswith("-")]
+            if res.exit_code != 0 or res.timed_out or res.oom_killed or not targets:
+                return res
+            return await self.tester.sandbox.run(
+                p.env.image, ws,
+                ["python", "-m", "pytest", *[f"{WORK_SRC}/{t}" for t in targets], *FIX_PYTEST_ARGS],
                 timeout_s=RUN_TIMEOUT_S, allowed=RUN_PREFIXES, env=self._env(),
             )
         finally:

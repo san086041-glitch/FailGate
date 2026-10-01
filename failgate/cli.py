@@ -2629,3 +2629,164 @@ def replay_fix_verify(
             typer.echo(f"报告：{report_path}")
 
     asyncio.run(run_all())
+
+
+@replay_app.command("fix-feedback")
+def replay_fix_feedback(
+    source: Annotated[Path, typer.Option("--from", help="replay fix 的结果（.jsonl）")],
+    l2: Annotated[Path, typer.Option("--l2", help="replay l2 的运行记录 JSON（取考卷）")] = Path(
+        "eval/runs/psf__black__l2__20260926-1551.json"),
+    repo: Annotated[str, typer.Option(help="owner/name")] = "psf/black",
+    rounds: Annotated[int, typer.Option(help="每个补丁最多按驳回理由重修几轮")] = 2,
+    budget: Annotated[float, typer.Option(help="每轮修复的花费上限（美元）")] = 0.15,
+    db_url: Annotated[str, typer.Option("--db", help="回放语料库（取 issue 正文）")] = REPLAY_DB,
+) -> None:
+    """按驳回理由重修的离线实验（ADR 0029）：被 ClaimVerify 驳回的补丁，把理由交回修复 Agent。
+
+    输入是 replay fix 和 replay fix-verify 的结果；对每个"过了考卷却被驳回"的补丁，从它接着改，
+    新补丁要在全新工作区里通过考卷和第三层查出的测试；再用金标准和 ClaimVerify 各判一次。
+    需要 Docker、GITHUB_TOKEN 和 LLM。结果写进 <来源>__feedback.jsonl，可以中断续跑。
+    """
+    from failgate.fix.agent import FixTask
+    from failgate.fix.feedback import feedback_from_claim
+    from failgate.fix.run import fix_tree
+    from failgate.replay import fix_eval as fe
+    from failgate.replay import verify_eval as ve
+    from failgate.repro.config import PackageConfig
+    from failgate.repro.package import IssueContext
+    from failgate.repro.source import fetch_github_tree
+    from failgate.verify.workbench import SandboxWorkbench
+
+    settings = Settings()
+    cases = {c.number: c for c in ve.load_cases(json.loads(l2.read_text(encoding="utf-8")))}
+    runs = {(r["number"], r["rep"]): r for r in fe.load_rows(source)
+            if r.get("type") == "run" and r["arm"] == "exam"}
+    overlays = {r["number"]: r["test_overlay"] for r in fe.load_rows(source)
+                if r.get("type") == "gold"}
+    golds = {r["number"]: fe.Gold(**r["gold"]) for r in fe.load_rows(source)
+             if r.get("type") == "gold"}
+    refuted = [r for r in fe.load_rows(source.with_name(f"{source.stem}__claimverify.jsonl"))
+               if r["verdict"] == "REFUTED"]
+    out = source.with_name(f"{source.stem}__feedback.jsonl")
+    report_path = Path("eval/reports") / f"{source.stem}__feedback.md"
+    done = {(r["number"], r["rep"]) for r in fe.load_rows(out) if r.get("final")}
+
+    def append(row: dict[str, Any]) -> None:
+        with out.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    async def run_all() -> None:
+        rt = _L2Runtime(settings)
+        docs = {d.number: d for d in await _load_issue_docs(
+            db_url, repo, sorted({r["number"] for r in refuted}))}
+        try:
+            for cv in refuted:
+                key = (cv["number"], cv["rep"])
+                if key in done:
+                    continue
+                case = cases[cv["number"]]
+                parent = await fetch_github_tree(rt.gh, repo, case.parent)
+                cfg = PackageConfig(name=case.exam.package, import_name=case.exam.module)
+                prepared = await rt.tester.prepare(
+                    cfg, parent, number=case.number, python=case.exam.python,
+                    version=case.exam.version, pytest=case.exam.pytest)
+                bench = fe.GoldBench(rt.tester, prepared)
+                edits = fe.patch_edits(runs[key])
+                claim = fe.claim_from_row(cv, case.exam.test_path)
+                doc = docs[case.number]
+                for round_ in range(1, rounds + 1):
+                    fb = feedback_from_claim(claim)
+                    task = FixTask(repo=repo, number=case.number,
+                                   issue=IssueContext(title=doc.title, body=doc.body),
+                                   test_path=case.exam.test_path, test_code=case.exam.code,
+                                   feedback=fb.text, must_pass=fb.must_pass)
+                    res = await fix_tree(
+                        rt.llm, settings.llm_model_large, rt.tester, cfg, parent, task,
+                        python=case.exam.python, version=case.exam.version,
+                        pytest=case.exam.pytest, max_rounds=2, budget_usd=budget,
+                        artifacts_dir=Path(settings.sandbox_artifacts_dir), initial_edits=edits)
+                    row: dict[str, Any] = {
+                        "number": case.number, "rep": cv["rep"], "round": round_,
+                        "status": res.status, "passed": res.passed, "files": res.files,
+                        "cost_usd": res.cost_usd, "steps": res.steps,
+                        "transcript_path": res.transcript_path, "feedback": fb.text,
+                        "must_pass": fb.must_pass, "gold": {}, "verdict": None, "final": False}
+                    changed = res.passed and res.edits and res.edits != edits
+                    if changed:
+                        edits = dict(res.edits)
+                        row["gold"] = fe.judge(await bench.gold_tests(
+                            {**edits, **overlays[case.number]},
+                            golds[case.number].targets), golds[case.number])
+                        cvr = await fe.claimverify_patch(
+                            case, parent, edits, label=f"{case.parent[:12]}+fb{cv['rep']}{round_}",
+                            bench_for=lambda f: SandboxWorkbench(f, rt.tester))
+                        row["verdict"] = cvr["verdict"]
+                        refuted_again = cvr["verdict"] == "REFUTED"
+                        if refuted_again:
+                            claim = fe.claim_from_row(
+                                {"number": case.number, **cvr}, case.exam.test_path)
+                    row["final"] = not changed or not refuted_again or round_ == rounds
+                    append(row)
+                    typer.echo(f"#{case.number} 第 {cv['rep']} 次的补丁，重修第 {round_} 轮 → "
+                               f"{res.status}，交出 {bool(changed)}，金标准 "
+                               f"{row['gold'].get('resolved')}，ClaimVerify {row['verdict']}，"
+                               f"${res.cost_usd:.4f}")
+                    if row["final"]:
+                        break
+        finally:
+            await rt.aclose()
+            rows = fe.load_rows(out)
+            if rows:
+                report_path.write_text(fe.render_feedback(rows), encoding="utf-8")
+                typer.echo(f"报告：{report_path}")
+
+    asyncio.run(run_all())
+
+
+fixer_app_cmd = typer.Typer(help="Fixer App：自带修复 Agent 推分支、开 PR 的身份（ADR 0029）",
+                            no_args_is_help=True)
+app.add_typer(fixer_app_cmd, name="fixer")
+
+
+@fixer_app_cmd.command("check")
+def fixer_check(
+    repo: Annotated[str, typer.Argument(
+        help="要开修复 PR 的仓库")] = "san086041-glitch/failgate-demo",
+) -> None:
+    """确认 Fixer App 配置：身份、权限（要 contents / pull_requests 写）、装没装到这个仓库。
+
+    打印的机器人登录名要写进 .env 的 FIXER_BOT_LOGIN：核验 App 只放行这个账号开的 PR 事件。
+    """
+    from failgate.app import build_fixer
+    from failgate.platforms.github_app import GitHubApiError
+
+    settings = Settings()
+    fixer = build_fixer(settings)
+    if fixer is None:
+        raise typer.BadParameter(
+            "请先在 .env 中设置 FIXER_APP_ID 和 FIXER_APP_PRIVATE_KEY_PATH")
+
+    async def run() -> None:
+        try:
+            info = await fixer.app.get_app()
+            perms = info.get("permissions", {})
+            typer.echo(f"App: {info['name']} (slug={info['slug']}, id={info['id']})")
+            typer.echo(f"权限: {', '.join(f'{k}:{v}' for k, v in sorted(perms.items()))}")
+            missing = [k for k in ("contents", "pull_requests") if perms.get(k) != "write"]
+            if missing:
+                typer.echo(f"❌ 缺少写权限：{', '.join(missing)}")
+            login = await fixer.bot_login()
+            typer.echo(f"机器人登录名：{login}")
+            if settings.fixer_bot_login != login:
+                typer.echo(f"⚠️ .env 里 FIXER_BOT_LOGIN={settings.fixer_bot_login!r}，"
+                           f"应设为 {login}")
+            try:
+                inst = await fixer.installation_id(repo)
+                token = await fixer.app.installation_token(inst)
+                typer.echo(f"✅ 已安装到 {repo}（安装 {inst}，令牌获取成功={bool(token)}）")
+            except GitHubApiError as e:
+                typer.echo(f"❌ 没有安装到 {repo}：{e}")
+        finally:
+            await fixer.aclose()
+
+    asyncio.run(run())

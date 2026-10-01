@@ -41,7 +41,8 @@ from .states import CaseState
 
 log = logging.getLogger(__name__)
 
-SANDBOX_STATES = frozenset({CaseState.REPRODUCING, CaseState.VERIFYING, CaseState.RESEALING})
+SANDBOX_STATES = frozenset({CaseState.REPRODUCING, CaseState.VERIFYING, CaseState.RESEALING,
+                            CaseState.FIXING, CaseState.REFIXING})
 
 # 投沙箱任务：(case_id, 投递时的 state_version, trace 上下文)
 SandboxEnqueue = Callable[[int, int, dict[str, str]], Awaitable[None]]

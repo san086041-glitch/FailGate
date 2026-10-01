@@ -20,6 +20,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any, Protocol
 
 from opentelemetry.trace import StatusCode
 from sqlalchemy import select
@@ -47,10 +48,20 @@ class _Outcome:
     comment_id: str | None = None
 
 
+class FixPusher(Protocol):
+    async def push_fix(
+        self, repo: str, *, base_sha: str, base_branch: str, branch: str,
+        files: dict[str, str], message: str, title: str, body: str,
+    ) -> Any: ...
+
+
 class EffectExecutor:
-    def __init__(self, db: Database, writer_for: WriterFor) -> None:
+    def __init__(self, db: Database, writer_for: WriterFor,
+                 fixer: FixPusher | None = None) -> None:
         self.db = db
         self.writer_for = writer_for
+        # 推修复分支用 Fixer App 的身份（ADR 0029）；核验 App 自己没有改代码的权限
+        self.fixer = fixer
         # 同一进程里 worker 和定时补偿可能同时 flush，加锁避免同一条评论被发两次。
         # 多进程部署时要换成 Case 级分布式锁（技术方案第 5 节）
         self._lock = asyncio.Lock()
@@ -161,6 +172,19 @@ class EffectExecutor:
             if effect.action == "upsert_summary":
                 cid = await self._upsert_summary(writer, ref, effect.payload["body"], summary_id)
                 return _Outcome("executed", comment_id=cid)
+            if effect.action == "create_comment":
+                await writer.create_comment(ref, effect.payload["body"])
+                return _Outcome("executed")
+            if effect.action == "push_fix":
+                if self.fixer is None:
+                    return _Outcome("failed", "Fixer App 未配置（FIXER_APP_ID / "
+                                              "FIXER_APP_PRIVATE_KEY_PATH）")
+                p = effect.payload
+                await self.fixer.push_fix(
+                    p["repo"], base_sha=p["base_sha"], base_branch=p["base_branch"],
+                    branch=p["branch"], files=p["files"], message=p["message"],
+                    title=p["title"], body=p["body"])
+                return _Outcome("executed")
             return _Outcome("failed", f"unknown action: {effect.action}")
         except PlatformError as e:
             retry = e.retryable and attempt < MAX_ATTEMPTS

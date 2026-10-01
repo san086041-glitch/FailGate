@@ -104,7 +104,7 @@ async def reset_postgres(url: str) -> None:
 
 async def _harness(
     settings: Settings, github_app: Any = None, repro_runner: Any = None,
-    verify_runner: Any = None,
+    verify_runner: Any = None, fix_runner: Any = None, fixer: Any = None,
 ) -> AsyncIterator[Harness]:
     llm = FakeLLM()
     if settings.failgate_db_url.startswith("postgresql"):
@@ -119,6 +119,8 @@ async def _harness(
         rest_transport=httpx.MockTransport(_public_rest),
         repro_runner=repro_runner,
         verify_runner=verify_runner,
+        fix_runner=fix_runner,
+        fixer=fixer,
     )
     failgate: FailGate = app.state.failgate
     await failgate.start(run_worker=False)
