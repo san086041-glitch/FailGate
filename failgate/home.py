@@ -45,7 +45,7 @@ COMMON = (
     ("failgate verify <仓库>#<PR>", "用封存考卷核验一个 PR"),
     ("failgate fix run <仓库> <N>", "修复 Agent 修一个 issue"),
     ("failgate mcp", "怎么接到 Claude Code / Cursor（由客户端启动）"),
-    ("failgate serve", "启动服务（webhook + 工作台）"),
+    ("failgate up", "一键上线：检查环境、起服务和 webhook 转发"),
     ("failgate console", "在浏览器打开工作台"),
 )
 

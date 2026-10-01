@@ -78,6 +78,9 @@ class Settings(BaseSettings):
     console_token: str = ""
     # 命令行首页不显示 logo（ADR 0036；等同 failgate -q）
     failgate_no_banner: bool = False
+    # failgate up 用的 webhook 转发通道（ADR 0037）。空 = 用 GitHub App 的 webhook 地址
+    # （GET /app/hook/config，是 smee.io 的才用）；都没有就只起服务
+    smee_url: str = ""
 
     # 单个 Case 的模型花费上限（美元），超过后进入 FAILED
     case_budget_usd: float = 0.5

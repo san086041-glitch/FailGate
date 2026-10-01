@@ -113,6 +113,10 @@ class GitHubApp:
     async def list_installations(self) -> list[dict[str, Any]]:
         return await self._app_request("GET", "/app/installations")
 
+    async def get_hook_config(self) -> dict[str, Any]:
+        """App 的 webhook 配置（url、content_type；secret 被 GitHub 打码）。"""
+        return await self._app_request("GET", "/app/hook/config")
+
     def _now(self) -> float:
         return time.time() + self._skew
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
 import re
 import sys
 from collections.abc import Callable
@@ -32,7 +31,7 @@ app = typer.Typer(help="FailGate：bug 的验收层。修复谁都能写，FailG
 # --help 里的分组（ADR 0036）；没列出的命令落在默认的 Commands 组里
 PANELS = {
     "出题 · 答题 · 阅卷": ("repro", "hidden", "evidence", "fix", "verify"),
-    "服务与集成": ("serve", "worker", "console", "mcp", "github", "fixer", "repo"),
+    "服务与集成": ("up", "serve", "worker", "console", "mcp", "github", "fixer", "repo"),
     "评测与回放": ("replay", "try", "answer", "memory", "llm"),
     "运维": ("doctor", "db", "db-init", "cases", "effects", "sandbox", "trace", "index"),
 }
@@ -105,6 +104,121 @@ def doctor(ctx: typer.Context) -> None:
 
 
 @app.command()
+def up(
+    ctx: typer.Context,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+    tunnel: Annotated[bool, typer.Option(
+        "--tunnel/--no-tunnel", help="用 smee 把 GitHub 的 webhook 转发到本机")] = True,
+    worker: Annotated[bool, typer.Option(
+        help="另起一个只跑沙箱车道的 worker（要 QUEUE_BACKEND=redis）")] = False,
+    allow_pending: Annotated[bool, typer.Option(
+        help="有待发的写操作也启动（服务一起来就会把它们发出去）")] = False,
+) -> None:
+    """本机一键上线：检查环境 → 起服务和 smee 转发 → Ctrl+C 一次全部停掉（ADR 0037）。"""
+    import time
+
+    from rich.text import Text
+
+    from failgate import home
+    from failgate import up as u
+    from failgate.settings import find_env_file
+
+    settings = Settings()
+    choice = ctx.obj or find_env_file()
+    out = home.make_console()
+
+    # 1. 环境：任何一项失败都不启动
+    report = asyncio.run(home.collect(settings, choice, full=True))
+    if report.failed:
+        home.render_doctor(report, out)
+        out.print(Text("环境有问题，没有启动。", style="red"))
+        raise typer.Exit(1)
+    if worker and settings.queue_backend != "redis":
+        raise typer.BadParameter("--worker 要 QUEUE_BACKEND=redis（进程内队列只能在服务进程里跑）")
+    out.print(Text("✓ 环境检查通过", style="green"))
+
+    # 2. 待发的写操作：默认不启动，先列出来
+    if report.stats is not None and report.stats.get("pending_effects"):
+        pending = asyncio.run(u.pending_effects(settings))
+        if not allow_pending:
+            out.print(Text(f"有 {report.stats['pending_effects']} 条待发的写操作，"
+                           "服务一启动就会把它们发出去：", style="yellow"))
+            for e in pending:
+                out.print(f"  {e['at']:%m-%d %H:%M}  {e['action']:<16} "
+                          f"{e['repo']}#{e['number']}（{e['mode']}，已试 {e['attempts']} 次）")
+            out.print("确认可以发出去：failgate up --allow-pending；"
+                      "先看清楚：failgate effects list")
+            raise typer.Exit(1)
+        out.print(Text(f"! 有 {len(pending)} 条待发的写操作，启动后会补发（--allow-pending）",
+                       style="yellow"))
+    # 3. 端口
+    if u.port_in_use(host, port):
+        out.print(Text(f"端口 {port} 已经被占用（可能是之前起的 failgate serve）。", style="red"))
+        out.print(f"  停掉它：{u.stop_port_hint(port)}\n"
+                  "  之前如果还手动起过 smee 转发，也一起关掉（同一个通道会转发给两个服务）；\n"
+                  "  或者换端口：failgate up --port 8081")
+        raise typer.Exit(1)
+    # 4. 转发通道
+    smee, npx = None, None
+    if tunnel:
+        smee, source = asyncio.run(u.resolve_smee(settings))
+        npx = u.find_npx()
+        if smee and not npx:
+            out.print(Text("! 没找到 npx（要装 Node.js）：只起服务，不转发", style="yellow"))
+            smee = None
+        elif smee:
+            out.print(Text(f"✓ 转发通道：{smee}（{source}）", style="green"))
+        else:
+            out.print(Text(f"! 不转发：{source}（可以在 .env 里设 SMEE_URL）", style="yellow"))
+    live = [r["repo"] for r in (report.stats or {}).get("repos", []) if r["mode"] == "live"]
+    if live:
+        out.print(Text(f"! live 模式的仓库会真的发评论、打标签：{', '.join(live)}",
+                       style="yellow"))
+
+    # 5. 起进程：先服务，等 /healthz，再 worker 和转发（转发早了事件会打到还没起来的服务上）
+    procs = u.plan(env_file=choice.path, host=host, port=port, smee=smee, npx=npx,
+                   worker=worker)
+    sup = u.Supervisor(out)
+    base = f"http://{host}:{port}"
+    code = 0
+    try:
+        serve_proc = procs[0]
+        sup.start(serve_proc)
+
+        def serving() -> bool:
+            return serve_proc.popen is not None and serve_proc.popen.poll() is None
+
+        if not u.wait_healthy(f"{base}/healthz", serving):
+            out.print(Text("服务没能启动（看上面 serve 的输出）", style="red"))
+            code = 1
+        else:
+            for proc in procs[1:]:
+                sup.start(proc)
+            out.print(Text(f"\n▶ 服务    {base}    工作台 {base}/console", style="bold green"))
+            if smee:
+                out.print(Text(f"▶ 转发    {smee} → {base}/webhooks/github",
+                               style="bold green"))
+            if worker:
+                out.print(Text("▶ worker  沙箱车道（复现 / 核验 / 修复）", style="bold green"))
+            out.print(Text("  Ctrl+C 停止全部\n", style="dim"))
+            while code == 0:
+                dead = sup.exited()
+                if dead is not None and dead.popen is not None:
+                    out.print(Text(f"{dead.name} 退出了（退出码 {dead.popen.returncode}），"
+                                   "停止全部", style="red"))
+                    code = 1
+                time.sleep(0.5)
+    except KeyboardInterrupt:
+        out.print(Text("\n正在停止…", style="yellow"))
+    finally:
+        sup.stop_all()
+    out.print(Text("已全部停止", style="dim"))
+    if code:
+        raise typer.Exit(code)
+
+
+@app.command()
 def console(
     host: str = "127.0.0.1",
     port: int = 8080,
@@ -126,9 +240,9 @@ def console(
         typer.echo(f"{base}/healthz 返回 {health.status_code}，不像是 FailGate 服务", err=True)
         raise typer.Exit(1)
     if page.status_code == 404:
-        stop = (f"Get-NetTCPConnection -LocalPort {port} -State Listen | "
-                "ForEach-Object { Stop-Process -Id $_.OwningProcess }" if os.name == "nt"
-                else f"kill $(lsof -t -i :{port} -sTCP:LISTEN)")
+        from failgate.up import stop_port_hint
+
+        stop = stop_port_hint(port)
         typer.echo(f"{base} 上跑的是旧版本的 failgate serve（没有工作台）。\n"
                    f"  1. 停掉它：{stop}\n"
                    "  2. 用新代码重新启动：failgate serve\n"
