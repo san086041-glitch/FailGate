@@ -2387,7 +2387,8 @@ def fix_run(
 @replay_app.command("fix")
 def replay_fix(
     repo: Annotated[str, typer.Argument(help="owner/name，例如 psf/black")],
-    source: Annotated[Path, typer.Option("--from", help="replay l2 的运行记录 JSON")],
+    source: Annotated[Path, typer.Option(
+        "--from", help="replay l2 的运行记录 JSON，或 replay fixset 生成的评测集")],
     hidden: Annotated[Path, typer.Option(
         help="replay hidden 的结果（.jsonl），没有就不查隐藏考卷")] = Path(
         "eval/runs/psf__black__hidden__20260929-1721.jsonl"),
@@ -2429,7 +2430,20 @@ def replay_fix(
     if bad := [a for a in arm_list if not fe.valid_arm(a)]:
         raise typer.BadParameter(
             f"未知的组：{bad}，可选 {fe.ARMS}，可加 :reset / :notes / :continue")
-    cases = ve.load_cases(json.loads(source.read_text(encoding="utf-8")))
+    from failgate.replay import fixset as fxs
+
+    source_data = json.loads(source.read_text(encoding="utf-8"))
+    preset_golds: list[dict[str, Any]] = []
+    if fxs.is_fixset(source_data):
+        # 评测集 v2（ADR 0031）：没有考卷，金标准已经算好
+        fs = fxs.Fixset.model_validate(source_data)
+        cases = fxs.eval_cases(fs)
+        preset_golds = fxs.gold_rows(fs)
+        if any(fe.arm_base(a) == "exam" for a in arm_list):
+            raise typer.BadParameter(
+                "评测集 v2 没有考卷，只能跑 control 组（如 control、control:notes）")
+    else:
+        cases = ve.load_cases(source_data)
     if only:
         wanted = {int(x) for x in only.split(",")}
         cases = [c for c in cases if c.number in wanted]
@@ -2461,6 +2475,12 @@ def replay_fix(
         rows = fe.load_rows(jsonl)
         jsonl.parent.mkdir(parents=True, exist_ok=True)
         report_path.parent.mkdir(parents=True, exist_ok=True)
+        have = {r["number"] for r in rows if r.get("type") == "gold"}
+        wanted_numbers = {c.number for c in cases}
+        for row in preset_golds:
+            if row["number"] in wanted_numbers and row["number"] not in have:
+                rows.append(row)
+                append(row)
         docs = {d.number: d for d in await _load_issue_docs(
             db_url, repo, [c.number for c in cases])}
         state: dict[int, dict[str, Any]] = {}
@@ -2480,23 +2500,8 @@ def replay_fix(
                 fix = await retrying(lambda c=case: fetch_github_tree(rt.gh, repo, c.fix))
                 files = ve._pull_files(await retrying(
                     lambda c=case: rt.gh.compare_files(repo, c.parent, c.fix)))
-                test_dir = parent.test_dir()
-                tests = [f for f in files if fe.is_test_change(f.filename, test_dir)]
-                targets = fe.gold_targets(tests, test_dir)
-                test_overlay = fe.overlay_of(fix, tests)
-                fix_overlay = fe.overlay_of(fix, files)
-                typer.echo(f"#{case.number} 金标准：{', '.join(targets)}")
-                removed = [f.filename for f in files if f.status == "removed"]
-                if deps := fe.deps_changed(files):
-                    # 父提交的环境装不了上游新增的依赖，F 在这里跑不起来：整题排除
-                    gold = fe.Gold(status="deps_changed", reason=",".join(deps),
-                                   targets=targets, test_files=sorted(test_overlay),
-                                   removed=removed)
-                else:
-                    on_parent = await bench.gold_tests(test_overlay, targets)
-                    on_fix = await bench.gold_tests(fix_overlay, targets)
-                    gold = fe.derive_gold(on_parent, on_fix, targets=targets,
-                                          test_files=sorted(test_overlay), removed=removed)
+                gold, test_overlay = await bench.gold_for(parent, fix, files)
+                typer.echo(f"#{case.number} 金标准：{', '.join(gold.targets)}")
                 golds[case.number] = gold
                 row = {"type": "gold", "number": case.number, "gold": gold.model_dump(),
                        "test_overlay": test_overlay}
@@ -2575,6 +2580,128 @@ def replay_fix(
                 typer.echo(f"报告：{report_path}")
 
     asyncio.run(run_all())
+
+
+@replay_app.command("fixset")
+def replay_fixset(
+    repo: Annotated[str, typer.Argument(help="owner/name，例如 psf/black")],
+    out: Annotated[Path, typer.Option(help="评测集 JSON（已存在就接着补）")] = Path(
+        "eval/datasets/psf__black/fixset_v1.json"),
+    since: Annotated[str, typer.Option(help="只收这一天之后创建的 issue")] = "2022-01-01",
+    target: Annotated[int, typer.Option(help="凑够多少题")] = 36,
+    exclude_from: Annotated[str, typer.Option(
+        help="逗号分隔的回放记录 JSON：里面用过的题都排除（开发集、留出集）")] = (
+        "eval/runs/psf__black__repro__20260925-1452.json,"
+        "eval/runs/psf__black__l2__20260926-1551.json"),
+    package: Annotated[str, typer.Option(help="包名")] = "black",
+    concurrency: Annotated[int, typer.Option(help="同时处理几题（每题一个沙箱）")] = 2,
+    max_candidates: Annotated[int, typer.Option(help="最多看多少个候选")] = 150,
+    db_url: Annotated[str, typer.Option("--db", help="回放语料库")] = REPLAY_DB,
+) -> None:
+    """生成修复评测集 v2（ADR 0031）：按时间从新到旧挑已修复的 bug，金标准能分出好坏的才收。
+
+    不调 LLM；需要 GITHUB_TOKEN 和 Docker。中途停下再跑会接着补（已看过的题不重看）。
+    """
+    import httpx
+
+    from failgate.platforms.base import PlatformError
+    from failgate.replay import fix_eval as fe
+    from failgate.replay import fixset as fxs
+    from failgate.replay import verify_eval as ve
+    from failgate.replay.fixes import find_fix
+    from failgate.repro.config import PackageConfig
+    from failgate.repro.source import SourceError, fetch_github_tree
+
+    settings = Settings()
+    exclude = fxs.exclude_from_runs(Path(p) for p in exclude_from.split(",") if p.strip())
+    if out.exists():
+        fs = fxs.load(out)
+        typer.echo(f"接着补：已收 {len(fs.cases)}、已跳过 {len(fs.skipped)}")
+    else:
+        fs = fxs.Fixset(repo=repo, since=since, target=target, exclude=sorted(exclude),
+                        started=datetime.now().isoformat(timespec="seconds"))
+    cfg = PackageConfig(name=package)
+
+    async def run() -> None:
+        db = Database(db_url)
+        await db.create_all()
+        async with db.session() as s:
+            repo_row = await s.scalar(select(Repo).where(Repo.full_name == repo))
+            if repo_row is None:
+                raise typer.BadParameter(f"{repo} 不在回放库里")
+            all_docs = (await s.scalars(
+                select(IssueDoc).where(IssueDoc.repo_id == repo_row.id))).all()
+        await db.dispose()
+        pool = fxs.candidates(all_docs, since=datetime.fromisoformat(since), exclude=exclude)
+        seen = fs.seen()
+        todo = [d for d in pool if d.number not in seen][:max_candidates]
+        typer.echo(f"候选 {len(pool)} 个（排除 {len(exclude)} 个），这次最多看 {len(todo)} 个")
+        rt = _L2Runtime(settings)
+        sem = asyncio.Semaphore(concurrency)
+
+        def ok_count() -> int:
+            return sum(c.gold.status == "ok" for c in fs.cases)
+
+        async def one(doc: Any) -> None:
+            async with sem:
+                if ok_count() >= target:
+                    return
+                n = doc.number
+
+                def skip(reason: str) -> None:
+                    fs.skipped.append(fxs.Skipped(number=n, reason=reason))
+                    fxs.save(fs, out)
+                    typer.echo(f"#{n} 跳过：{reason}")
+
+                try:  # GitHub 查询出错不记录，下次再看
+                    fix = await find_fix(rt.gh, repo, n)
+                    if fix is None:
+                        return skip("no_fix_commit")
+                    parent = await fetch_github_tree(rt.gh, repo, fix.parent)
+                    files = ve._pull_files(await rt.gh.compare_files(repo, fix.parent, fix.sha))
+                    if reason := fxs.skip_reason(files, parent.test_dir()):
+                        return skip(reason)
+                    fix_tree = await fetch_github_tree(rt.gh, repo, fix.sha)
+                except (httpx.HTTPError, PlatformError) as e:
+                    typer.echo(f"#{n} GitHub 出错，下次再看：{type(e).__name__}: {str(e)[:120]}",
+                               err=True)
+                    return
+                except SourceError as e:  # 源码包有问题（太大、结构不对）
+                    return skip(f"source:{str(e)[:120]}")
+                try:  # 环境装不上、预检不过：记下原因
+                    prepared = await rt.tester.prepare(cfg, parent, number=n)
+                    bench = fe.GoldBench(rt.tester, prepared)
+                    gold, overlay = await bench.gold_for(parent, fix_tree, files)
+                except Exception as e:
+                    return skip(f"env:{type(e).__name__}:{str(e)[:120]}")
+                if gold.status != "ok":
+                    return skip(f"gold_{gold.status}:{gold.reason}")
+                fs.cases.append(fxs.FixsetCase(
+                    number=n, title=doc.title, created_at=doc.created_at,
+                    labels=list(doc.labels or []), fix=fix,
+                    src_files=fxs.source_changes(files, parent.test_dir()),
+                    package=cfg.name, module=cfg.import_name or cfg.name,
+                    python=prepared.python, version=prepared.version, pytest=prepared.pytest,
+                    test_path=prepared.test_path, gold=gold, test_overlay=overlay))
+                fxs.save(fs, out)
+                typer.echo(f"#{n} 收下（第 {ok_count()} 题）：F2P {len(gold.f2p)}，"
+                           f"Python {prepared.python}")
+
+        try:
+            await asyncio.gather(*(one(d) for d in todo))
+        finally:
+            await rt.aclose()
+        # 并发时可能多收几题：只留最新的 target 题
+        ok = sorted((c for c in fs.cases if c.gold.status == "ok"), key=lambda c: -c.number)
+        for extra in ok[target:]:
+            fs.cases.remove(extra)
+            fs.skipped.append(fxs.Skipped(number=extra.number, reason="over_target"))
+        fxs.save(fs, out)
+        report = out.with_suffix(".md")
+        report.write_text(fxs.render(fs), encoding="utf-8")
+        typer.echo(f"收下 {ok_count()} 题 → {out}；说明 {report}")
+
+    asyncio.run(run())
 
 
 @replay_app.command("fix-verify")

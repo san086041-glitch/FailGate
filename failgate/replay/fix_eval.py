@@ -212,6 +212,23 @@ class GoldBench:
         argv = ["python", "-m", "pytest", *[f"{WORK_SRC}/{t}" for t in targets], *GOLD_ARGS]
         return await self.run(overlay, argv)
 
+    async def gold_for(self, parent: SourceTree, fix: SourceTree,
+                       files: Sequence[PullFile]) -> tuple[Gold, dict[str, str]]:
+        """金标准 + 上游改动的测试文件（判定补丁时覆盖在补丁之上）。改了依赖的直接排除。"""
+        test_dir = parent.test_dir()
+        tests = [f for f in files if is_test_change(f.filename, test_dir)]
+        targets = gold_targets(tests, test_dir)
+        test_overlay = overlay_of(fix, tests)
+        removed = [f.filename for f in files if f.status == "removed"]
+        if deps := deps_changed(files):
+            # 父提交的环境装不了上游新增的依赖，F 在这里跑不起来
+            return Gold(status="deps_changed", reason=",".join(deps), targets=targets,
+                        test_files=sorted(test_overlay), removed=removed), test_overlay
+        on_parent = await self.gold_tests(test_overlay, targets)
+        on_fix = await self.gold_tests(overlay_of(fix, files), targets)
+        return derive_gold(on_parent, on_fix, targets=targets, test_files=sorted(test_overlay),
+                           removed=removed), test_overlay
+
     async def hidden(self, overlay: Mapping[str, str], path: str, code: str) -> set[str] | None:
         """隐藏考卷：有题失败就整份再跑一次，两次都失败的才算（和 run_hidden 一致）。
         返回失败的题；运行无效返回 None。"""
