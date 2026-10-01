@@ -402,6 +402,7 @@ class SandboxReproRunner:
                 model=s.llm_model_large, tester=self._get_tester(),
                 max_steps=s.repro_max_steps, max_attempts=s.repro_max_attempts,
                 budget_usd=req.budget_usd, artifacts_dir=Path(s.sandbox_artifacts_dir),
+                judge_model=s.llm_model_judge or None,
             )
         return await reproduce_after_intake(
             repo=req.repo, number=req.number, title=req.title, body=req.body,
@@ -409,6 +410,7 @@ class SandboxReproRunner:
             model=s.llm_model_large, reproducer=self._get_reproducer(),
             max_steps=s.repro_max_steps, max_attempts=s.repro_max_attempts,
             budget_usd=req.budget_usd, artifacts_dir=Path(s.sandbox_artifacts_dir),
+            judge_model=s.llm_model_judge or None,
         )
 
     async def hidden(self, req: ReproRequest, sealed: SealedTest) -> HiddenSeal:

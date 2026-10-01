@@ -1356,6 +1356,7 @@ class _ReproRuntime:
             reproducer=self.reproducer, max_steps=max_steps or s.repro_max_steps,
             max_attempts=s.repro_max_attempts, budget_usd=s.repro_budget_usd,
             artifacts_dir=Path(s.sandbox_artifacts_dir), check_latest=check_latest,
+            judge_model=s.llm_model_judge or None,
         )
 
     async def __aenter__(self) -> _ReproRuntime:
@@ -1699,7 +1700,7 @@ class _L2Runtime:
             llm=self.llm, small_model=s.llm_model_small, large_model=s.llm_model_large,
             tester=self.tester, max_steps=max_steps or s.repro_max_steps,
             max_attempts=s.repro_max_attempts, budget_usd=s.repro_budget_usd,
-            artifacts_dir=Path(s.sandbox_artifacts_dir),
+            artifacts_dir=Path(s.sandbox_artifacts_dir), judge_model=s.llm_model_judge or None,
         )
 
     async def aclose(self) -> None:
@@ -2297,6 +2298,53 @@ def trace_show(
 
     spans = [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x.strip()]
     typer.echo(render(spans, hide=tuple(h.strip() for h in hide.split(",") if h.strip())))
+
+
+llm_app = typer.Typer(help="多模型网关（ADR 0034）", no_args_is_help=True)
+app.add_typer(llm_app, name="llm")
+
+
+@llm_app.command("routes")
+def llm_routes() -> None:
+    """各角色用哪个厂商的哪个模型、厂商配置和 key 在不在。不发任何请求、不打印 key。"""
+    from urllib.parse import urlparse
+
+    from failgate.llm.gateway import DEFAULT_PROVIDER, key_env, parse_providers, parse_spec
+
+    s = Settings()
+    env = key_env()
+    try:
+        providers = parse_providers(s.llm_providers)
+    except ValueError as e:
+        raise typer.BadParameter(str(e)) from e
+    host = urlparse(s.llm_base_url).netloc
+    typer.echo("厂商：")
+    typer.echo(f"  {DEFAULT_PROVIDER}（默认）  openai  {host}  "
+               f"key：{'有' if s.llm_api_key else '没有（LLM_API_KEY）'}")
+    for name, pc in sorted(providers.items()):
+        where = urlparse(pc.base_url).netloc if pc.base_url else "litellm 默认地址"
+        has = bool(env.get(pc.api_key_env))
+        typer.echo(f"  {name}  {pc.backend}  {where}  key：{'有' if has else '没有'}"
+                   f"（{pc.api_key_env}）  思考参数：{'传' if pc.thinking else '不传'}")
+    if not providers:
+        typer.echo("  （没有配置 LLM_PROVIDERS：直连默认厂商，不经过网关）")
+    typer.echo("角色：")
+    problems = []
+    for role, spec in (("small（Intake、分诊、查重）", s.llm_model_small),
+                       ("large（答疑、复现 / 修复 Agent、出题）", s.llm_model_large),
+                       ("judge（复现评委）", s.llm_model_judge or s.llm_model_large)):
+        ms = parse_spec(spec)
+        known = ms.provider == DEFAULT_PROVIDER or ms.provider in providers
+        if not known:
+            problems.append(f"{role} 用的厂商 {ms.provider} 没有配置")
+        typer.echo(f"  {role}：{ms.provider} / {ms.model}"
+                   + ("" if known else "  ← 没有配置这个厂商"))
+    if ":" in (s.llm_model_small + s.llm_model_large + s.llm_model_judge) and not providers:
+        problems.append("模型名带了 厂商: 前缀，但没有配置 LLM_PROVIDERS，网关不会启用")
+    for p in problems:
+        typer.echo(f"问题：{p}", err=True)
+    if problems:
+        raise typer.Exit(1)
 
 
 @app.command("mcp")

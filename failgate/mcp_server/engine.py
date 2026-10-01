@@ -106,7 +106,7 @@ class FailGateEngine:
             llm=self.rt.llm, model=s.llm_model_large, tester=self.rt.tester,
             max_steps=s.repro_max_steps, max_attempts=s.repro_max_attempts,
             budget_usd=s.repro_budget_usd, artifacts_dir=Path(s.sandbox_artifacts_dir),
-            python=python)
+            python=python, judge_model=s.llm_model_judge or None)
         a = report.agent
         cost = round(report.intake_cost_usd + report.judge_cost_usd
                      + (a.cost_usd if a else 0.0), 6)

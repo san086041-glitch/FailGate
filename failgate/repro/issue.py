@@ -79,6 +79,7 @@ async def reproduce_issue(
     budget_usd: float,
     artifacts_dir: Path | None,
     check_latest: bool = True,
+    judge_model: str | None = None,
 ) -> IssueReproReport:
     """CLI 和回放用：先跑 Intake，再复现。"""
     intake_res = await IntakeSkill().run(SkillContext(
@@ -91,7 +92,7 @@ async def reproduce_issue(
         repo=repo, number=number, title=title, body=body, created_at=created_at,
         intake=intake, cfg=cfg, llm=llm, model=large_model, reproducer=reproducer,
         max_steps=max_steps, max_attempts=max_attempts, budget_usd=budget_usd,
-        artifacts_dir=artifacts_dir, check_latest=check_latest,
+        artifacts_dir=artifacts_dir, check_latest=check_latest, judge_model=judge_model,
     )
     report.intake_cost_usd = intake_res.cost_usd
     return report
@@ -114,11 +115,14 @@ async def reproduce_after_intake(
     budget_usd: float,
     artifacts_dir: Path | None,
     check_latest: bool = True,
+    judge_model: str | None = None,
 ) -> IssueReproReport:
-    """流水线用：Intake 已经跑过（结果在 Run 里），直接复现。CLI / 回放也走这里。"""
+    """流水线用：Intake 已经跑过（结果在 Run 里），直接复现。CLI / 回放也走这里。
+
+    judge_model：没有堆栈时的 LLM 评委用的模型（ADR 0034），None 和复现 Agent 用同一个。"""
     # 每个 issue 一个独立的评委，花费分开统计；复制一个 reproducer 挂上它，
     # 不改共享的那一个（并发复现时互不干扰）
-    judge = SemanticJudge(llm, model)
+    judge = SemanticJudge(llm, judge_model or model)
     scoped = PackageReproducer(
         reproducer.sandbox, reproducer.cache, reproducer.pypi,
         run_timeout_s=reproducer.run_timeout_s, judge=judge,
@@ -203,6 +207,7 @@ async def reproduce_issue_l2(
     max_attempts: int,
     budget_usd: float,
     artifacts_dir: Path | None,
+    judge_model: str | None = None,
 ) -> L2IssueReport:
     """CLI 和回放用：Intake → issue 创建时的提交（时间旅行）→ 源码环境 + 预检 → Agent 写测试。"""
     intake_res = await IntakeSkill().run(SkillContext(
@@ -215,7 +220,7 @@ async def reproduce_issue_l2(
         repo=repo, number=number, title=title, body=body, created_at=created_at,
         intake=intake, cfg=cfg, source_repo=source_repo, gh=gh, llm=llm, model=large_model,
         tester=tester, max_steps=max_steps, max_attempts=max_attempts, budget_usd=budget_usd,
-        artifacts_dir=artifacts_dir,
+        artifacts_dir=artifacts_dir, judge_model=judge_model,
     )
     report.intake_cost_usd = intake_res.cost_usd
     return report
@@ -239,6 +244,7 @@ async def reproduce_l2_after_intake(
     max_attempts: int,
     budget_usd: float,
     artifacts_dir: Path | None,
+    judge_model: str | None = None,
 ) -> L2IssueReport:
     """流水线用：Intake 已经跑过。取 issue 创建时（没有创建时间就取现在）的源码，再写测试。"""
     report = new_l2_report(repo, number, title, body, intake, cfg, source_repo)
@@ -253,7 +259,7 @@ async def reproduce_l2_after_intake(
     return await reproduce_tree_l2(
         report, tree, title=title, body=body, created_at=created_at, intake=intake, cfg=cfg,
         llm=llm, model=model, tester=tester, max_steps=max_steps, max_attempts=max_attempts,
-        budget_usd=budget_usd, artifacts_dir=artifacts_dir,
+        budget_usd=budget_usd, artifacts_dir=artifacts_dir, judge_model=judge_model,
     )
 
 
@@ -288,10 +294,12 @@ async def reproduce_tree_l2(
     artifacts_dir: Path | None,
     python: str | None = None,
     version: str | None = None,
+    judge_model: str | None = None,
 ) -> L2IssueReport:
     """在给定的源码树上写测试（fixture 仓库直接从这里进来）。
 
     python / version：指定 Python 和伪版本号（fixture 的包不在 PyPI 上，不能按发布记录推算）。
+    judge_model：LLM 评委用的模型（ADR 0034），None 和复现 Agent 用同一个。
     """
     task = AgentTask(
         repo=report.repo, number=report.number,
@@ -300,7 +308,7 @@ async def reproduce_tree_l2(
         reported_version_text=intake.reported_version,
         created_at=created_at,
     )
-    judge = SemanticJudge(llm, model)
+    judge = SemanticJudge(llm, judge_model or model)
     agent = ReproAgent(
         llm, model, tester.scoped(judge), max_steps=max_steps,
         max_attempts=max_attempts, budget_usd=budget_usd, artifacts_dir=artifacts_dir,

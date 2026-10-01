@@ -142,6 +142,8 @@ class LLMClient:
         # 链路里记不记 prompt 和回答（ADR 0025）；供应商名只用来标 span
         self._capture_content = capture_content
         self._provider = "deepseek" if "deepseek" in base_url else "openai"
+        # 接不接受 DeepSeek 风格的思考参数。直连时保持原样；网关接别家厂商时按配置关掉（ADR 0034）
+        self._supports_thinking = True
 
     async def aclose(self) -> None:
         await self._http.aclose()
@@ -167,6 +169,9 @@ class LLMClient:
             body["max_tokens"] = max_tokens
         if tools:
             body["tools"] = tools
+        if thinking and not self._supports_thinking:
+            log.info("厂商 %s 不接受思考参数，忽略 thinking=%s", self._provider, thinking)
+            thinking = None
         body.update(thinking_params(thinking))
 
         # OTel GenAI 语义约定：Langfuse 按这些属性把 span 识别成一次模型调用（generation）

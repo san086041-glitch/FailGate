@@ -65,13 +65,20 @@ def build_llm(
 ) -> LLMClient | None:
     if not settings.llm_api_key:
         return None
-    return LLMClient(
+    client = LLMClient(
         settings.llm_base_url,
         settings.llm_api_key,
         timeout=settings.llm_timeout_seconds,
         transport=transport,
         capture_content=settings.tracing_capture_content,
     )
+    if not settings.llm_providers:
+        return client
+    from failgate.llm.gateway import LLMGateway, key_env, parse_providers
+
+    return LLMGateway(client, parse_providers(settings.llm_providers), env=key_env(),
+                      timeout=settings.llm_timeout_seconds,
+                      capture_content=settings.tracing_capture_content)
 
 
 def build_embedder(

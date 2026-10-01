@@ -38,6 +38,7 @@ def is_deepseek_peak(at: datetime) -> bool:
 
 
 def cost_usd(model: str, usage: Usage, at: datetime | None = None) -> float:
+    model = model.split(":", 1)[1] if ":" in model else model  # 网关的 厂商:模型（ADR 0034）
     price = PEAK_PRICES.get(model)
     if price is None:
         log.warning("未收录模型 %s 的价格，本次按 0 计价", model)

@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     # 推理模型想得久：查重评委（思考 high）146 次里 4 次连续 3 次超过 60 秒而失败，
     # 每次超时重试都要从头再想一遍（ADR 0026）
     llm_timeout_seconds: float = 180.0
+    # 多模型网关（ADR 0034）：JSON {名字: {base_url, api_key_env, backend, thinking, ...}}。
+    # 配了就启用网关，模型名可以写 厂商:模型；不配时和原来一样直连 LLM_BASE_URL
+    llm_providers: str = ""
+    # 复现评委（SemanticJudge）用的模型；空 = 和 LLM_MODEL_LARGE 一样。
+    # 计划换成另一个模型家族，避免"同一个模型自己出题自己判"
+    llm_model_judge: str = ""
 
     # 单个 Case 的模型花费上限（美元），超过后进入 FAILED
     case_budget_usd: float = 0.5
