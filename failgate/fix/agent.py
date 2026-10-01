@@ -107,6 +107,7 @@ class FixResult(BaseModel):
     passed: bool = False  # 封存的验收测试在全新工作区里通过
     patch: str = ""
     files: list[str] = Field(default_factory=list)
+    edits: dict[str, str] = Field(default_factory=dict)  # 改过的文件的完整内容（给金标准判定用）
     attempts: list[FixAttempt] = Field(default_factory=list)
     steps: int = 0
     tool_counts: dict[str, int] = Field(default_factory=dict)
@@ -221,6 +222,7 @@ class FixAgent:
         r.status = self._final_status(final)
         r.passed = r.status == "passed"
         r.patch, r.files = self.ws.patch(), self.ws.changed_files()
+        r.edits = {p: self.ws.edits[p] for p in r.files}
         self._sync_usage()
         r.duration_s = round(time.monotonic() - started, 1)
         r.transcript_path = self._save()

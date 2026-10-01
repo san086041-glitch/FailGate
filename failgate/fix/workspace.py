@@ -45,6 +45,13 @@ def unified(path: str, old: str | None, new: str) -> str:
     ))
 
 
+def workspace_pythonpath(prepared: SourcePrepared) -> str:
+    """让测试导入工作区里的源码副本（遮住 site-packages 里的安装版）；src 布局多一层 /src。"""
+    module = prepared.cfg.module
+    src_layout = bool(prepared.tree.read_files(lambda p: p.startswith(f"src/{module}/"), limit=1))
+    return f"/workspace/{WORK_SRC}" + ("/src" if src_layout else "")
+
+
 def count_changed(old: str | None, new: str) -> int:
     n = 0
     for ln in difflib.unified_diff([] if old is None else old.splitlines(), new.splitlines(),
@@ -65,10 +72,7 @@ class FixWorkspace:
         self.edits: dict[str, str] = {}
         self._synced: dict[str, str] = {}
         self._originals: dict[str, str | None] = {}
-        module = prepared.cfg.module
-        src_layout = bool(prepared.tree.read_files(lambda p: p.startswith(f"src/{module}/"),
-                                                   limit=1))
-        self.pythonpath = f"/workspace/{WORK_SRC}" + ("/src" if src_layout else "")
+        self.pythonpath = workspace_pythonpath(prepared)
 
     # ---------------------------------------------------------------- 生命周期
 

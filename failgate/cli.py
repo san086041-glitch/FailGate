@@ -2364,3 +2364,268 @@ def fix_run(
             typer.echo("\n" + res.patch)
 
     asyncio.run(go())
+
+
+@replay_app.command("fix")
+def replay_fix(
+    repo: Annotated[str, typer.Argument(help="owner/name，例如 psf/black")],
+    source: Annotated[Path, typer.Option("--from", help="replay l2 的运行记录 JSON")],
+    hidden: Annotated[Path, typer.Option(
+        help="replay hidden 的结果（.jsonl），没有就不查隐藏考卷")] = Path(
+        "eval/runs/psf__black__hidden__20260929-1721.jsonl"),
+    reps: Annotated[int, typer.Option(help="每题每组重复几次")] = 3,
+    arms: Annotated[str, typer.Option(
+        help="逗号分隔：exam（给考卷）/ control（不给）")] = "exam,control",
+    only: Annotated[str | None, typer.Option(help="逗号分隔的 issue 编号")] = None,
+    resume: Annotated[Path | None, typer.Option(
+        help="接着一份没跑完的结果（.jsonl）继续")] = None,
+    budget: Annotated[float, typer.Option(help="每次运行的花费上限（美元）")] = 0.15,
+    rounds: Annotated[int, typer.Option(help="每次运行最多几轮")] = 2,
+    max_cost: Annotated[float, typer.Option(
+        help="整个实验的花费上限（美元），到了就停")] = 3.0,
+    gold_only: Annotated[bool, typer.Option(
+        "--gold-only", help="只算金标准，不跑 Agent（$0）")] = False,
+    thinking: Annotated[str | None, typer.Option(help="思考模式，不填用服务方默认")] = None,
+    db_url: Annotated[str, typer.Option("--db", help="回放语料库（取 issue 正文）")] = REPLAY_DB,
+    concurrency: Annotated[int, typer.Option(help="同时跑几次（每次一个沙箱容器）")] = 3,
+) -> None:
+    """修复 Agent 的提升实验：给考卷 vs 不给考卷，用上游修复自带的测试判成败（ADR 0028）。
+
+    需要 Docker、GITHUB_TOKEN 和 LLM；先算每题的金标准（不花钱），再按 重复 → 题 → 组 的顺序跑，
+    中途停下也是两组均衡的。结果逐行写进 .jsonl，--resume 续跑。
+    """
+    import httpx
+
+    from failgate.fix.agent import FixTask
+    from failgate.fix.run import fix_tree
+    from failgate.replay import fix_eval as fe
+    from failgate.replay import verify_eval as ve
+    from failgate.repro.config import PackageConfig
+    from failgate.repro.package import IssueContext
+    from failgate.repro.source import fetch_github_tree
+    from failgate.verify.hidden import hidden_path
+
+    settings = Settings()
+    arm_list = [a.strip() for a in arms.split(",") if a.strip()]
+    if bad := [a for a in arm_list if a not in fe.ARMS]:
+        raise typer.BadParameter(f"未知的组：{bad}，可选 {fe.ARMS}")
+    cases = ve.load_cases(json.loads(source.read_text(encoding="utf-8")))
+    if only:
+        wanted = {int(x) for x in only.split(",")}
+        cases = [c for c in cases if c.number in wanted]
+    hidden_cases = fe.load_hidden(hidden)
+    started = datetime.now()
+    stem = resume.stem if resume else f"{repo.replace('/', '__')}__fix__{started:%Y%m%d-%H%M}"
+    jsonl = resume or Path("eval/runs") / f"{stem}.jsonl"
+    report_path = Path("eval/reports") / f"{stem}.md"
+    meta = {"repo": repo, "started": started.isoformat(timespec="seconds"),
+            "source": source.as_posix(), "hidden": hidden.as_posix() if hidden_cases else None,
+            "model": settings.llm_model_large, "budget": budget, "rounds": rounds, "reps": reps}
+
+    def append(row: dict[str, Any]) -> None:
+        with jsonl.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    async def retrying(make: Any) -> Any:
+        # 实验要跑几个小时，GitHub 偶尔连不上不该让整个实验退出
+        for attempt in range(3):
+            try:
+                return await make()
+            except httpx.TransportError:
+                if attempt == 2:
+                    raise
+                await asyncio.sleep(5 * (attempt + 1))
+
+    async def run_all() -> None:
+        rt = _L2Runtime(settings)
+        rows = fe.load_rows(jsonl)
+        jsonl.parent.mkdir(parents=True, exist_ok=True)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        docs = {d.number: d for d in await _load_issue_docs(
+            db_url, repo, [c.number for c in cases])}
+        state: dict[int, dict[str, Any]] = {}
+        try:
+            # 1. 金标准（不花钱）
+            golds = {r["number"]: fe.Gold(**r["gold"]) for r in rows if r.get("type") == "gold"}
+            for case in cases:
+                parent = await retrying(lambda c=case: fetch_github_tree(rt.gh, repo, c.parent))
+                cfg = PackageConfig(name=case.exam.package, import_name=case.exam.module)
+                prepared = await rt.tester.prepare(
+                    cfg, parent, number=case.number, python=case.exam.python,
+                    version=case.exam.version, pytest=case.exam.pytest)
+                bench = fe.GoldBench(rt.tester, prepared)
+                state[case.number] = {"parent": parent, "cfg": cfg, "bench": bench}
+                if case.number in golds:
+                    continue
+                fix = await retrying(lambda c=case: fetch_github_tree(rt.gh, repo, c.fix))
+                files = ve._pull_files(await retrying(
+                    lambda c=case: rt.gh.compare_files(repo, c.parent, c.fix)))
+                test_dir = parent.test_dir()
+                tests = [f for f in files if fe.is_test_change(f.filename, test_dir)]
+                targets = fe.gold_targets(tests, test_dir)
+                test_overlay = fe.overlay_of(fix, tests)
+                fix_overlay = fe.overlay_of(fix, files)
+                typer.echo(f"#{case.number} 金标准：{', '.join(targets)}")
+                removed = [f.filename for f in files if f.status == "removed"]
+                if deps := fe.deps_changed(files):
+                    # 父提交的环境装不了上游新增的依赖，F 在这里跑不起来：整题排除
+                    gold = fe.Gold(status="deps_changed", reason=",".join(deps),
+                                   targets=targets, test_files=sorted(test_overlay),
+                                   removed=removed)
+                else:
+                    on_parent = await bench.gold_tests(test_overlay, targets)
+                    on_fix = await bench.gold_tests(fix_overlay, targets)
+                    gold = fe.derive_gold(on_parent, on_fix, targets=targets,
+                                          test_files=sorted(test_overlay), removed=removed)
+                golds[case.number] = gold
+                row = {"type": "gold", "number": case.number, "gold": gold.model_dump(),
+                       "test_overlay": test_overlay}
+                rows.append(row)
+                append(row)
+                typer.echo(f"  P 上失败 {len(gold.fail_parent)}，F 上失败 {len(gold.fail_fix)}，"
+                           f"F2P {len(gold.f2p)} → {gold.status} {gold.reason}")
+            if gold_only:
+                return
+            overlays = {r["number"]: r["test_overlay"] for r in rows if r.get("type") == "gold"}
+            done = {(r["number"], r["rep"], r["arm"]) for r in rows if r.get("type") == "run"}
+            spent = sum(r["fix"]["cost_usd"] for r in rows if r.get("type") == "run")
+            # 2. Agent：按 重复 → 题 → 组 排队，最多 concurrency 个同时跑（每个都有自己的工作区卷）
+            todo = [(rep, case, arm) for rep in range(1, reps + 1) for case in cases
+                    if golds[case.number].status == "ok" for arm in arm_list
+                    if (case.number, rep, arm) not in done]
+            sem = asyncio.Semaphore(concurrency)
+            stopped = False
+
+            async def one(rep: int, case: Any, arm: str) -> None:
+                nonlocal spent, stopped
+                async with sem:
+                    if spent >= max_cost:
+                        if not stopped:
+                            stopped = True
+                            typer.echo(f"已花 ${spent:.3f}，到了上限 ${max_cost}，不再开新的运行。")
+                        return
+                    st, doc = state[case.number], docs[case.number]
+                    task = FixTask(
+                        repo=repo, number=case.number,
+                        issue=IssueContext(title=doc.title, body=doc.body),
+                        test_path=case.exam.test_path,
+                        test_code=case.exam.code if arm == "exam" else None)
+                    try:
+                        res = await fix_tree(
+                            rt.llm, settings.llm_model_large, rt.tester, st["cfg"],
+                            st["parent"], task, python=case.exam.python,
+                            version=case.exam.version, pytest=case.exam.pytest,
+                            max_rounds=rounds, budget_usd=budget, thinking=thinking,
+                            artifacts_dir=Path(settings.sandbox_artifacts_dir))
+                        spent += res.cost_usd
+                        bench, gold = st["bench"], golds[case.number]
+                        # 测试文件以上游为准（Agent 本来也改不了测试）
+                        overlay = {**res.edits, **overlays[case.number]}
+                        judged = fe.judge(await bench.gold_tests(overlay, gold.targets), gold)
+                        hid = None
+                        if res.edits and case.number in hidden_cases:
+                            hc = hidden_cases[case.number]
+                            failed = await bench.hidden(
+                                res.edits, hidden_path(case.exam.test_path), hc.code)
+                            if failed is not None:
+                                hid = {"total": len(hc.tests), "failed": sorted(failed),
+                                       "flagged": bool(failed)}
+                    except Exception as e:  # 一次运行出错不拖垮整个实验；没写记录，--resume 会重跑
+                        typer.echo(f"#{case.number} {arm} 第 {rep} 次出错：{type(e).__name__}: "
+                                   f"{str(e)[:200]}", err=True)
+                        return
+                    row = {"type": "run", "number": case.number, "rep": rep, "arm": arm,
+                           "fix": res.model_dump(mode="json", exclude={"edits"}),
+                           "gold": judged, "hidden": hid}
+                    rows.append(row)
+                    append(row)
+                    verdict = "修好" if judged["resolved"] else "没修好"
+                    if not judged["valid"]:
+                        verdict += f"（无效：{judged['reason']}）"
+                    typer.echo(f"#{case.number} {arm} 第 {rep} 次 → {res.status}，金标准 "
+                               f"{verdict}，${res.cost_usd:.4f}，累计 ${spent:.3f}")
+
+            typer.echo(f"待跑 {len(todo)} 次，并发 {concurrency}")
+            await asyncio.gather(*(one(*t) for t in todo))
+        finally:
+            await rt.aclose()
+            if rows:
+                report_path.write_text(fe.render(rows, meta), encoding="utf-8")
+                typer.echo(f"报告：{report_path}")
+
+    asyncio.run(run_all())
+
+
+@replay_app.command("fix-verify")
+def replay_fix_verify(
+    source: Annotated[Path, typer.Option("--from", help="replay fix 的结果（.jsonl）")],
+    l2: Annotated[Path, typer.Option("--l2", help="replay l2 的运行记录 JSON（取考卷）")] = Path(
+        "eval/runs/psf__black__l2__20260926-1551.json"),
+    repo: Annotated[str, typer.Option(help="owner/name")] = "psf/black",
+) -> None:
+    """把实验组里过了封存考卷的补丁当成 PR，走完整的 ClaimVerify 三层（ADR 0028）。
+
+    不花 LLM 的钱；每个补丁要建一个源码环境（约 1–2 分钟）。结果写进 <来源>__claimverify.jsonl，
+    可以中断续跑；跑完把汇总追加到 replay fix 的报告末尾。
+    """
+    import httpx
+
+    from failgate.replay import fix_eval as fe
+    from failgate.replay import verify_eval as ve
+    from failgate.repro.l2 import TestReproducer
+    from failgate.repro.pypi import PyPIClient
+    from failgate.repro.source import fetch_github_tree
+    from failgate.verify.workbench import SandboxWorkbench
+
+    settings = Settings()
+    cases = {c.number: c for c in ve.load_cases(json.loads(l2.read_text(encoding="utf-8")))}
+    rows = [r for r in fe.load_rows(source) if r.get("type") == "run"
+            and r["arm"] == "exam" and r["fix"]["passed"]]
+    out = source.with_name(f"{source.stem}__claimverify.jsonl")
+    report_path = Path("eval/reports") / f"{source.stem}.md"
+    done = {(r["number"], r["rep"]) for r in fe.load_rows(out)}
+
+    async def run_all() -> None:
+        from failgate.platforms.github_rest import GitHubRest
+
+        gh = GitHubRest(settings.github_token)
+        sandbox = build_sandbox(settings)
+        tester = TestReproducer(sandbox, _env_cache(settings, sandbox),
+                                PyPIClient(settings.pypi_url),
+                                run_timeout_s=settings.sandbox_run_timeout_seconds)
+        trees: dict[str, Any] = {}
+        try:
+            for r in rows:
+                if (r["number"], r["rep"]) in done:
+                    continue
+                case = cases[r["number"]]
+                if case.parent not in trees:
+                    for attempt in range(3):
+                        try:
+                            trees[case.parent] = await fetch_github_tree(gh, repo, case.parent)
+                            break
+                        except httpx.TransportError:
+                            if attempt == 2:
+                                raise
+                            await asyncio.sleep(5 * (attempt + 1))
+                res = await fe.claimverify_patch(
+                    case, trees[case.parent], fe.patch_edits(r),
+                    label=f"{case.parent[:12]}+agent{r['rep']}",
+                    bench_for=lambda f: SandboxWorkbench(f, tester))
+                row = {"number": r["number"], "rep": r["rep"],
+                       "gold_resolved": r["gold"]["resolved"],
+                       "broken_n": r["gold"].get("broken_n", 0), **res}
+                with out.open("a", encoding="utf-8") as fh:
+                    fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+                typer.echo(f"#{r['number']} 第 {r['rep']} 次：金标准 "
+                           f"{'修好' if r['gold']['resolved'] else '没修好'} → {res['verdict']}")
+        finally:
+            await gh.aclose()
+        verified = fe.load_rows(out)
+        if report_path.exists():
+            text = report_path.read_text(encoding="utf-8").split(fe.VERIFY_HEADING)[0]
+            report_path.write_text(text.rstrip("\n") + "\n\n" + fe.render_verify(verified),
+                                   encoding="utf-8")
+            typer.echo(f"报告：{report_path}")
+
+    asyncio.run(run_all())
