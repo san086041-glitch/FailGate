@@ -2299,6 +2299,58 @@ def trace_show(
     typer.echo(render(spans, hide=tuple(h.strip() for h in hide.split(",") if h.strip())))
 
 
+memory_app = typer.Typer(help="Agent 的长期记忆：情景记忆（ADR 0032）", no_args_is_help=True)
+app.add_typer(memory_app, name="memory")
+
+
+@memory_app.command("build")
+def memory_build(
+    repo: Annotated[str, typer.Argument(help="owner/name，例如 psf/black")],
+    out: Annotated[Path | None, typer.Option(help="输出 .jsonl")] = None,
+    concurrency: Annotated[int, typer.Option(help="同时取几个 PR 的 diff")] = 4,
+) -> None:
+    """从 GitHub 拉这个仓库合并过的、改了源码的 PR，存成情景记忆（不调 LLM，需要 GITHUB_TOKEN）。"""
+    from failgate.memory.build import fetch_episodes
+    from failgate.memory.episodic import EpisodicMemory
+    from failgate.platforms.github_rest import GitHubRest
+
+    settings = Settings()
+    path = out or Path("eval/cache/memory") / f"{repo.replace('/', '__')}.jsonl"
+
+    async def run() -> None:
+        gh = GitHubRest(settings.github_token)
+        try:
+            eps = await fetch_episodes(gh, repo, concurrency=concurrency, progress=typer.echo)
+        finally:
+            await gh.aclose()
+        EpisodicMemory.dump(eps, path)
+        with_issue = sum(bool(e.issues) for e in eps)
+        typer.echo(f"{len(eps)} 条情景（其中 {with_issue} 条关闭了 issue）→ {path}")
+
+    asyncio.run(run())
+
+
+@memory_app.command("show")
+def memory_show(
+    query: Annotated[str, typer.Argument(help="要找的修改（自然语言或函数名）")],
+    before: Annotated[str, typer.Option(help="只看这个时间之前合并的（ISO 日期）")],
+    path: Annotated[str | None, typer.Option(help="只看改过这个文件的")] = None,
+    k: Annotated[int, typer.Option(help="返回几条")] = 3,
+    memory: Annotated[Path, typer.Option(help="情景记忆 .jsonl")] = Path(
+        "eval/cache/memory/psf__black.jsonl"),
+    patch: Annotated[bool, typer.Option(help="带 diff")] = True,
+) -> None:
+    """按修复 Agent 看到的样子打印检索结果（检查记忆内容、调检索用）。"""
+    from failgate.memory.episodic import EpisodicMemory, render
+
+    mem = EpisodicMemory.load(memory)
+    cutoff = datetime.fromisoformat(before)
+    if cutoff.tzinfo is None:
+        cutoff = cutoff.replace(tzinfo=UTC)
+    typer.echo(f"{before} 之前可见 {mem.visible(cutoff)} / {len(mem)} 条")
+    typer.echo(render(mem.recall(query, before=cutoff, path=path, k=k), with_patch=patch))
+
+
 fix_app = typer.Typer(help="修复 Agent：LangGraph 规划 → 修改 → 验收 → 反思（ADR 0027）",
                       no_args_is_help=True)
 app.add_typer(fix_app, name="fix")
@@ -2319,6 +2371,8 @@ def fix_run(
     show_patch: Annotated[bool, typer.Option(help="打印补丁")] = True,
     handoff: Annotated[str, typer.Option(
         help="规划 → 修改的交接：reset / notes / continue（ADR 0030）")] = "reset",
+    memory: Annotated[Path | None, typer.Option(
+        help="带情景记忆（failgate memory build 的输出，ADR 0032）")] = None,
 ) -> None:
     """在某个 issue 的修复提交的父提交上跑修复 Agent（离线回放的最小单元）。会花钱。
 
@@ -2327,6 +2381,9 @@ def fix_run(
     """
     from failgate.fix.agent import HANDOFFS, FixTask
     from failgate.fix.run import fix_tree
+    from failgate.memory.episodic import EpisodicMemory
+    from failgate.replay import fix_eval as fe
+    from failgate.replay import fixset as fxs
     from failgate.replay import verify_eval as ve
     from failgate.repro.config import PackageConfig
     from failgate.repro.package import IssueContext
@@ -2336,10 +2393,18 @@ def fix_run(
         raise typer.BadParameter(f"未知的交接方式：{handoff}，可选 {HANDOFFS}")
     settings = Settings()
     run = json.loads(source.read_text(encoding="utf-8"))
-    cases = [c for c in ve.load_cases(run) if c.number == number]
+    if fxs.is_fixset(run):
+        if not control:
+            raise typer.BadParameter("评测集 v2 没有考卷，要加 --control")
+        all_cases = fxs.eval_cases(fxs.Fixset.model_validate(run))
+    else:
+        all_cases = ve.load_cases(run)
+    cases = [c for c in all_cases if c.number == number]
     if not cases:
         raise typer.BadParameter(f"#{number} 不在记录里，或严格 FB/PA 不成立")
     case = cases[0]
+    episodic = EpisodicMemory.load(memory) if memory else None
+    cutoff = fe.fix_cutoffs(run).get(number)
 
     async def go() -> None:
         docs = await _load_issue_docs(db_url, repo, [number])
@@ -2354,6 +2419,8 @@ def fix_run(
                 issue=IssueContext(title=docs[0].title, body=docs[0].body),
                 test_path=case.exam.test_path,
                 test_code=None if control else case.exam.code,
+                memory_before=cutoff,
+                exclude_prs=[case.upstream_pr] if case.upstream_pr else [],
             )
             res = await fix_tree(
                 rt.llm, settings.llm_model_large, rt.tester, cfg, tree, task,
@@ -2361,6 +2428,7 @@ def fix_run(
                 max_rounds=rounds, budget_usd=budget, thinking=thinking,
                 artifacts_dir=Path(settings.sandbox_artifacts_dir),
                 handoff=handoff,  # type: ignore[arg-type]
+                memory=episodic,
             )
         finally:
             await rt.aclose()
@@ -2394,8 +2462,8 @@ def replay_fix(
         "eval/runs/psf__black__hidden__20260929-1721.jsonl"),
     reps: Annotated[int, typer.Option(help="每题每组重复几次")] = 3,
     arms: Annotated[str, typer.Option(
-        help="逗号分隔：exam（给考卷）/ control（不给），可加 :交接方式，"
-             "如 exam:notes、exam:continue（ADR 0030）")] = "exam,control",
+        help="逗号分隔：exam（给考卷）/ control（不给），可加 :交接方式（ADR 0030）、"
+             "+mem 带情景记忆（ADR 0032），如 exam:notes、control+mem")] = "exam,control",
     only: Annotated[str | None, typer.Option(help="逗号分隔的 issue 编号")] = None,
     resume: Annotated[Path | None, typer.Option(
         help="接着一份没跑完的结果（.jsonl）继续")] = None,
@@ -2408,6 +2476,9 @@ def replay_fix(
     thinking: Annotated[str | None, typer.Option(help="思考模式，不填用服务方默认")] = None,
     db_url: Annotated[str, typer.Option("--db", help="回放语料库（取 issue 正文）")] = REPLAY_DB,
     concurrency: Annotated[int, typer.Option(help="同时跑几次（每次一个沙箱容器）")] = 3,
+    memory: Annotated[Path, typer.Option(
+        help="情景记忆（failgate memory build 的输出），+mem 的组才用")] = Path(
+        "eval/cache/memory/psf__black.jsonl"),
 ) -> None:
     """修复 Agent 的提升实验：给考卷 vs 不给考卷，用上游修复自带的测试判成败（ADR 0028）。
 
@@ -2444,10 +2515,20 @@ def replay_fix(
                 "评测集 v2 没有考卷，只能跑 control 组（如 control、control:notes）")
     else:
         cases = ve.load_cases(source_data)
+    # 情景记忆的时间截止（ADR 0032）：Agent 拿到的是修复提交的父提交，所以能看到的是
+    # 上游修复合并之前合并的 PR（修复 PR 本身另外排除）；查不到就退回 issue 创建时间
+    cutoffs = fe.fix_cutoffs(source_data)
     if only:
         wanted = {int(x) for x in only.split(",")}
         cases = [c for c in cases if c.number in wanted]
     hidden_cases = fe.load_hidden(hidden)
+    episodic = None
+    if any(fe.arm_memory(a) for a in arm_list):
+        from failgate.memory.episodic import EpisodicMemory
+
+        if not memory.exists():
+            raise typer.BadParameter(f"{memory} 不存在，先运行 failgate memory build")
+        episodic = EpisodicMemory.load(memory)
     started = datetime.now()
     stem = resume.stem if resume else f"{repo.replace('/', '__')}__fix__{started:%Y%m%d-%H%M}"
     jsonl = resume or Path("eval/runs") / f"{stem}.jsonl"
@@ -2534,7 +2615,11 @@ def replay_fix(
                         repo=repo, number=case.number,
                         issue=IssueContext(title=doc.title, body=doc.body),
                         test_path=case.exam.test_path,
-                        test_code=case.exam.code if fe.arm_base(arm) == "exam" else None)
+                        test_code=case.exam.code if fe.arm_base(arm) == "exam" else None,
+                        memory_before=cutoffs.get(case.number) or (
+                            doc.created_at.replace(tzinfo=UTC)
+                            if doc.created_at.tzinfo is None else doc.created_at),
+                        exclude_prs=[case.upstream_pr] if case.upstream_pr else [])
                     try:
                         res = await fix_tree(
                             rt.llm, settings.llm_model_large, rt.tester, st["cfg"],
@@ -2542,7 +2627,8 @@ def replay_fix(
                             version=case.exam.version, pytest=case.exam.pytest,
                             max_rounds=rounds, budget_usd=budget, thinking=thinking,
                             artifacts_dir=Path(settings.sandbox_artifacts_dir),
-                            handoff=fe.arm_handoff(arm))
+                            handoff=fe.arm_handoff(arm),
+                            memory=episodic if fe.arm_memory(arm) else None)
                         spent += res.cost_usd
                         bench, gold = st["bench"], golds[case.number]
                         # 测试文件以上游为准（Agent 本来也改不了测试）

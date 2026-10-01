@@ -716,3 +716,64 @@ async def test_continue_keeps_plan_context_within_a_round_and_resets_between_rou
                    for m in edit2 for tc in m.get("tool_calls") or [])
     edits = [e for e in agent.log if e["phase"] == "edit"]
     assert [e.get("prefix") for e in edits] == [6, 4]
+
+
+# ---------------------------------------------------------------- 情景记忆（ADR 0032）
+
+
+def _mem() -> Any:
+    from datetime import UTC, datetime
+
+    from failgate.memory.episodic import Episode, EpisodicMemory, FileChange, IssueRef
+
+    def e(pr: int, title: str, day: str) -> Episode:
+        merged = datetime.fromisoformat(day).replace(tzinfo=UTC)
+        return Episode(pr=pr, title=title, merged_at=merged,
+                       issues=[IssueRef(number=pr + 100, title=title)], files=[PARSER],
+                       changes=[FileChange(path=PARSER, functions=["_store"],
+                                           patch="@@ -1 +1 @@ def _store(x):\n-a\n+b")])
+
+    return EpisodicMemory([e(1, "Fix KeyError crash when section missing", "2023-01-01"),
+                           e(2, "Fix KeyError crash in parser again", "2025-01-01"),
+                           e(3, "Fix KeyError crash upstream fix", "2023-06-01")])
+
+
+async def test_memory_auto_recall_and_tool_respect_cutoff_and_exclusions():
+    from datetime import UTC, datetime
+
+    sb = FakeSandbox()
+    ws = make_workspace(sb)
+    await ws.open("k")
+    sb.pytest_exits = [0]
+    llm = ScriptedLLM([
+        {"tool_calls": [call("recall_fixes", {"query": "KeyError crash", "path": f"./{PARSER}"})]},
+        plan(), FIX_EDIT, FINISH,
+    ])
+    t = task()
+    t.memory_before = datetime(2024, 1, 1, tzinfo=UTC)
+    t.exclude_prs = [3]
+    res = await agent_for(sb, llm, ws, t, memory=_mem()).run()
+    assert res.status == "passed" and res.memory
+    first = llm.requests[0]
+    assert "recall_fixes" in {x["function"]["name"] for x in first["tools"]}
+    prompt = first["messages"][1]["content"]
+    assert "以前合并过的、可能相关的修改" in prompt and "PR #1（2023-01-01 合并）" in prompt
+    assert "PR #2" not in prompt and "PR #3" not in prompt  # 截止时间之后的、被排除的都看不到
+    assert "```diff" not in prompt  # 开头只列标题
+    tool_out = next(m["content"] for m in llm.requests[1]["messages"] if m["role"] == "tool")
+    assert "PR #1" in tool_out and "```diff" in tool_out and "PR #2" not in tool_out
+    assert res.recalled_prs == [1] and res.tool_counts["recall_fixes"] == 1
+    edit_tools = {x["function"]["name"] for x in llm.requests[2]["tools"]}
+    assert "recall_fixes" in edit_tools and "edit_file" in edit_tools
+
+
+async def test_without_memory_there_is_no_recall_tool():
+    sb = FakeSandbox()
+    ws = make_workspace(sb)
+    await ws.open("k")
+    sb.pytest_exits = [0]
+    llm = ScriptedLLM([plan(), FIX_EDIT, FINISH])
+    res = await agent_for(sb, llm, ws, task()).run()
+    assert not res.memory and res.recalled_prs == []
+    assert "recall_fixes" not in {x["function"]["name"] for x in llm.requests[0]["tools"]}
+    assert "以前合并过的" not in llm.requests[0]["messages"][1]["content"]

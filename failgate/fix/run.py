@@ -13,6 +13,7 @@ from failgate.fix.agent import FixAgent, FixResult, FixTask, Handoff
 from failgate.fix.guard import WriteGuard
 from failgate.fix.workspace import FixWorkspace
 from failgate.llm import LLMClient
+from failgate.memory.episodic import EpisodicMemory
 from failgate.repro.config import PackageConfig
 from failgate.repro.l2 import TestReproducer
 from failgate.repro.source import SourceTree
@@ -38,6 +39,7 @@ async def fix_tree(
     artifacts_dir: Path | None = None,
     initial_edits: Mapping[str, str] | None = None,
     handoff: Handoff = "reset",
+    memory: EpisodicMemory | None = None,
 ) -> FixResult:
     """在 tree（修复前的代码）上修复。task.test_code 为 None 就是对照组（没有考卷）。
 
@@ -55,7 +57,7 @@ async def fix_tree(
         agent = FixAgent(
             llm, model, ws, task, max_rounds=max_rounds, plan_steps=plan_steps,
             edit_steps=edit_steps, budget_usd=budget_usd, thinking=thinking,
-            artifacts_dir=artifacts_dir, handoff=handoff,
+            artifacts_dir=artifacts_dir, handoff=handoff, memory=memory,
         )
         return await agent.run()
     finally:

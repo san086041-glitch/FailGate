@@ -21,6 +21,9 @@
 - notes：交计划时指定要改 / 要参照的代码范围，系统把这些行的当前内容钉进修改阶段，再附上读过的范围；
 - continue：同一轮里修改阶段接着规划阶段的对话继续。
 三种都在轮与轮之间重置（只带小结、补丁、验收输出和反思），不让失败的探索一路累积。
+
+情景记忆（ADR 0032）：给了 memory 就多一个 recall_fixes 工具，查这个仓库以前合并的修改
+（只含 issue 创建之前合并的）；规划阶段开头还会自动列出几条最相关的（不带 diff）。
 """
 
 from __future__ import annotations
@@ -28,6 +31,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal, TypedDict
 
@@ -38,6 +42,8 @@ from pydantic import BaseModel, Field
 from failgate.fix.guard import Denied, GuardError
 from failgate.fix.workspace import FixWorkspace
 from failgate.llm import LLMClient, LLMError, ToolCall, Usage
+from failgate.memory.episodic import EpisodicMemory
+from failgate.memory.episodic import render as render_episodes
 from failgate.repro.package import IssueContext
 from failgate.repro.sandbox import ExecResult, SandboxError
 from failgate.skills.base import load_prompt, priced, untrusted
@@ -63,6 +69,15 @@ _READ = _fn("read_file", "读取仓库里的文件若干行（一次最多 250 �
             {"path": {"type": "string"}, "start": {"type": "integer"}, "end": {"type": "integer"}},
             ["path"])
 EXPLORE = [_LIST, _SEARCH, _READ]
+RECALL = _fn(
+    "recall_fixes",
+    "查这个仓库以前合并过的相关修改（维护者写的，只包含这个 issue 之前合并的）："
+    "PR 标题、关闭的 issue、改了哪些函数和 diff。可以按描述查，也可以加 path 只看改过某个文件的。",
+    {"query": {"type": "string", "description": "用自然语言或函数名描述要找的修改"},
+     "path": {"type": "string", "description": "只看改过这个文件的（可选）"}},
+    ["query"])
+RECALL_K = 3
+AUTO_RECALL_K = 3
 
 SUBMIT_PLAN = _fn(
     "submit_plan", "交出修复计划，进入修改阶段。",
@@ -115,6 +130,10 @@ class FixTask(BaseModel):
     # 按驳回理由重修（ADR 0029）：上一版补丁被 ClaimVerify 驳回的理由，以及必须一起通过的测试
     feedback: str | None = None
     must_pass: list[str] = Field(default_factory=list)
+    # 情景记忆（ADR 0032）：只能看到这个时间之前合并的修改（issue 的创建时间）；
+    # exclude_prs 是回放时额外排除的上游修复 PR（时间上本来就看不到，再保险一次）
+    memory_before: datetime | None = None
+    exclude_prs: list[int] = Field(default_factory=list)
 
 
 class FixAttempt(BaseModel):
@@ -146,6 +165,8 @@ class FixResult(BaseModel):
     # 交接实验（ADR 0030）：修改阶段的 read_file 次数、其中和之前阶段读过的范围重叠的次数、
     # 第一次 edit_file 在第几步（全程计数）
     handoff: str = "reset"
+    memory: bool = False
+    recalled_prs: list[int] = Field(default_factory=list)  # 给 Agent 看过的历史 PR（含自动列出的）
     edit_reads: int = 0
     rereads: int = 0
     first_edit_step: int | None = None
@@ -259,6 +280,7 @@ class FixAgent:
         thinking: str | None = None,
         artifacts_dir: Path | None = None,
         handoff: Handoff = "reset",
+        memory: EpisodicMemory | None = None,
     ) -> None:
         if handoff not in HANDOFFS:
             raise ValueError(f"未知的交接方式：{handoff}")
@@ -266,8 +288,9 @@ class FixAgent:
         self.max_rounds, self.plan_steps, self.edit_steps = max_rounds, plan_steps, edit_steps
         self.budget_usd, self.thinking, self.artifacts_dir = budget_usd, thinking, artifacts_dir
         self.handoff: Handoff = handoff
+        self.memory = memory
         self.usage = Usage()
-        self.result = FixResult(status="failed", handoff=handoff)
+        self.result = FixResult(status="failed", handoff=handoff, memory=memory is not None)
         self.log: list[dict[str, Any]] = []  # 每个阶段的完整消息，写进 transcript
         self.exhausted = ""  # budget / error / steps
         # 读取记录：之前各阶段读过的范围、当前阶段读的范围（交接和重读统计用）
@@ -338,7 +361,7 @@ class FixAgent:
         msgs = [{"role": "system", "content": load_prompt(f"fix_agent_v{PROMPT_VERSION}")},
                 {"role": "user", "content": self._task_message(state, "plan")}]
         submit = SUBMIT_PLAN_NOTES if self.handoff == "notes" else SUBMIT_PLAN
-        tools = [*EXPLORE, submit,
+        tools = [*self._explore(), submit,
                  _fn("give_up", "确认无法在这份代码里修复时调用。", {"reason": {"type": "string"}},
                      ["reason"])]
         self._pins = []
@@ -372,7 +395,8 @@ class FixAgent:
                     {"role": "user", "content": self._task_message(state, "edit")}]
             if self.handoff == "notes":
                 msgs[-1]["content"] += "\n\n" + await self._notes()
-        got = await self._loop("edit", msgs, EDIT_TOOLS, ("finish_edit",), self.edit_steps,
+        edit_tools = EDIT_TOOLS + ([RECALL] if self.memory is not None else [])
+        got = await self._loop("edit", msgs, edit_tools, ("finish_edit",), self.edit_steps,
                                prefix=prefix)
         summary = str(got[1].get("summary", "")) if got else "（没有正常结束修改阶段）"
         att = FixAttempt(n=state["round"] + 1, summary=summary[:600], patch=self.ws.patch(),
@@ -456,6 +480,8 @@ class FixAgent:
             if t.must_pass:
                 parts.append("必须一起通过的测试（验收时会在全新工作区里重跑）：\n"
                              + "\n".join(f"- {n}" for n in t.must_pass))
+        if self.memory is not None and phase == "plan":
+            parts.append(self._auto_recall())
         atts = [FixAttempt(**a) for a in state["attempts"]]
         if atts and phase in ("plan", "reflect"):
             parts.append("此前的尝试：\n" + "\n\n".join(self._attempt_text(a) for a in atts))
@@ -472,6 +498,31 @@ class FixAgent:
                 '{"analysis": "...", "next": "replan" 或 "give_up"}。'
                 "next=replan 表示换一个思路再试；确认无法修复才用 give_up。")
         return "\n\n".join(parts)
+
+    def _explore(self) -> list[dict[str, Any]]:
+        return [*EXPLORE, RECALL] if self.memory is not None else list(EXPLORE)
+
+    def _before(self) -> datetime:
+        return self.task.memory_before or datetime.now(UTC)
+
+    def _recall(self, query: str, path: str | None = None,
+                k: int = RECALL_K) -> list[Any]:
+        assert self.memory is not None
+        eps = self.memory.recall(query, before=self._before(), path=path, k=k,
+                                 exclude_prs=self.task.exclude_prs)
+        for e in eps:
+            if e.pr not in self.result.recalled_prs:
+                self.result.recalled_prs.append(e.pr)
+        return eps
+
+    def _auto_recall(self) -> str:
+        """规划阶段开头：按 issue 标题和正文找几条最相关的历史修改，只列标题和改了哪些函数。"""
+        t = self.task
+        eps = self._recall(f"{t.issue.title}\n{t.issue.body[:3000]}", k=AUTO_RECALL_K)
+        listing = render_episodes(eps, with_patch=False)
+        return ("这个仓库以前合并过的、可能相关的修改（维护者写的，只含这个 issue 之前合并的；"
+                "不一定相关，自己判断）：\n" + listing
+                + "\n需要看具体怎么改的，用 recall_fixes 查（可以加 path 只看改过某个文件的）。")
 
     def _edit_instruction(self, state: FixState) -> str:
         cont = "（上面规划阶段读过的代码都还在，不用重读）" if self.handoff == "continue" else ""
@@ -654,6 +705,12 @@ class FixAgent:
 
     async def _tool_run_python(self, code: str) -> str:
         return _exec_text(await self.ws.run_python(code))
+
+    async def _tool_recall_fixes(self, query: str, path: str | None = None) -> str:
+        if self.memory is None:
+            return "当前没有可用的历史修改记录。"
+        eps = self._recall(str(query), _norm_path(path) if path else None)
+        return clip(render_episodes(eps), 120, 120, 9000)
 
     async def _tool_reset_edits(self) -> str:
         await self.ws.revert()

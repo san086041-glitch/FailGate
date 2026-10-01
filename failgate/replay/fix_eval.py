@@ -27,6 +27,7 @@ import tempfile
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -55,13 +56,27 @@ _COUNT = re.compile(r"(\d+) (passed|failed|errors?|skipped|xfailed|xpassed|desel
 # ---------------------------------------------------------------- 纯函数
 
 
+MEMORY_SUFFIX = "+mem"
+
+
+def _arm_core(arm: str) -> str:
+    return arm.removesuffix(MEMORY_SUFFIX)
+
+
 def arm_base(arm: str) -> str:
-    """组名可以带交接方式（ADR 0030）：exam:notes → exam。"""
-    return arm.split(":", 1)[0]
+    """组名 = 基础组[:交接方式][+mem]（ADR 0030、0032）。
+
+    exam:notes → exam，control+mem → control。"""
+    return _arm_core(arm).split(":", 1)[0]
 
 
 def arm_handoff(arm: str) -> Any:
-    return arm.split(":", 1)[1] if ":" in arm else "reset"
+    core = _arm_core(arm)
+    return core.split(":", 1)[1] if ":" in core else "reset"
+
+
+def arm_memory(arm: str) -> bool:
+    return arm.endswith(MEMORY_SUFFIX)
 
 
 def valid_arm(arm: str) -> bool:
@@ -70,8 +85,12 @@ def valid_arm(arm: str) -> bool:
 
 
 def arm_name(arm: str) -> str:
-    base = ARM_NAME.get(arm_base(arm), arm)
-    return base if ":" not in arm else f"{base}，交接 {arm_handoff(arm)}"
+    name = ARM_NAME.get(arm_base(arm), arm)
+    if ":" in _arm_core(arm):
+        name += f"，交接 {arm_handoff(arm)}"
+    if arm_memory(arm):
+        name += "，带情景记忆"
+    return name
 
 
 def is_test_change(path: str, test_dir: str) -> bool:
@@ -366,6 +385,18 @@ def _runs(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     return [r for r in rows if r.get("type") == "run"]
 
 
+def fix_cutoffs(source: dict[str, Any]) -> dict[int, datetime]:
+    """每题上游修复提交的时间（评测集 v2 的 cases，或 L2 回放记录的 fbpa）。"""
+    entries = source.get("cases") or source.get("fbpa") or []
+    out: dict[int, datetime] = {}
+    for e in entries:
+        at = (e.get("fix") or {}).get("committed_at")
+        if at:
+            t = datetime.fromisoformat(str(at).replace("Z", "+00:00"))
+            out[int(e["number"])] = t if t.tzinfo else t.replace(tzinfo=UTC)
+    return out
+
+
 def arm_order(rows: Sequence[dict[str, Any]]) -> list[str]:
     seen = {r["arm"] for r in _runs(rows)}
     return [a for a in ARMS if a in seen] + sorted(seen - set(ARMS))
@@ -422,9 +453,14 @@ def summarize(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
             "first_edit": _median([r["fix"]["first_edit_step"] for r in rs
                                    if r["fix"].get("first_edit_step") is not None]),
             "passed": sum(r["fix"]["passed"] for r in rs),
+            "recall_calls": sum(r["fix"]["tool_counts"].get("recall_fixes", 0) for r in rs
+                                if "tool_counts" in r["fix"]),
         }
     base_pair = paired(runs, "exam", "control")
-    handoff_pairs = {a: paired(runs, a, "exam") for a in arms if ":" in a}
+    handoff_pairs = {a: paired(runs, a, arm_base(a)) for a in arms
+                     if ":" in _arm_core(a) and not arm_memory(a)}
+    memory_pairs = {a: paired(runs, a, a.removesuffix(MEMORY_SUFFIX)) for a in arms
+                    if arm_memory(a)}
     # 实验组：封存考卷 × 金标准 × 隐藏考卷
     exam_runs = [r for r in runs if r["arm"] == "exam"]
     cross = Counter((r["fix"]["passed"], r["gold"]["resolved"]) for r in exam_runs)
@@ -438,6 +474,7 @@ def summarize(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
             if "exam" in arms and "control" in arms else None)
     return {
         "arms": arms, "diff": diff, "paired": base_pair, "handoff_pairs": handoff_pairs,
+        "memory_pairs": memory_pairs,
         "exam_cross": {f"{'过' if p else '没过'}考卷/{'修好' if g else '没修好'}": n
                        for (p, g), n in sorted(cross.items(), reverse=True)},
         "false_pass": len(false_pass), "exam_passed": sum(r["fix"]["passed"] for r in exam_runs),
@@ -452,6 +489,26 @@ def _pct(k: int, n: int) -> str:
     return f"{k}/{n}（{k / n * 100:.0f}%）" if n else "—"
 
 
+def _render_memory(s: dict[str, Any]) -> list[str]:
+    """情景记忆对照（ADR 0032）：带记忆的组和同名不带记忆的组成对比较。"""
+    lines = ["", "## 情景记忆", "",
+             "| 组 | 次数 | 修好 | 平均步数 | 第一次编辑（中位步） | 平均花费 | "
+             "平均 recall_fixes | 成对 vs 不带记忆（多修好 / 少修好 / 相同，p） |",
+             "|---|---|---|---|---|---|---|---|"]
+    for arm, a in s["arms"].items():
+        pr = s["memory_pairs"].get(arm)
+        if arm_memory(arm):
+            pair = "—" if pr is None else (
+                f"{pr['gained']} / {pr['lost']} / {pr['same']}，p = {pr['p']:.2f}")
+        else:
+            pair = "基准"
+        fe_ = "—" if a["first_edit"] is None else f"{a['first_edit']:g}"
+        calls = f"{a['recall_calls'] / a['n']:.1f}" if a["n"] else "—"
+        lines.append(f"| {arm} | {a['n']} | {_pct(a['resolved'], a['n'])} | {a['mean_steps']} | "
+                     f"{fe_} | ${a['mean_cost']} | {calls} | {pair} |")
+    return lines
+
+
 def _render_handoff(s: dict[str, Any]) -> list[str]:
     """交接对照（ADR 0030）：重读率、第一次编辑的步数、成对比较（以 exam 即 reset 为基准）。"""
     lines = ["", "## 规划 → 修改的交接", "",
@@ -459,7 +516,7 @@ def _render_handoff(s: dict[str, Any]) -> list[str]:
              "过考卷 | 修好 | 成对 vs reset（多修好 / 少修好 / 相同，p） |",
              "|---|---|---|---|---|---|---|---|---|"]
     for arm, a in s["arms"].items():
-        if arm_base(arm) != "exam":
+        if arm_base(arm) != "exam" or arm_memory(arm):
             continue
         h = arm_handoff(arm)
         pr = s["handoff_pairs"].get(arm)
@@ -518,6 +575,8 @@ def render(rows: Sequence[dict[str, Any]], meta: dict[str, Any]) -> str:
         ]
     if s["handoff_pairs"]:
         lines += _render_handoff(s)
+    if s["memory_pairs"]:
+        lines += _render_memory(s)
     lines += [
         "",
         f"- 无效运行（金标准测试没跑起来）：{s['invalid_runs']}；总花费 ${s['cost']}",
