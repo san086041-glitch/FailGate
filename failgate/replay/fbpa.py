@@ -84,9 +84,10 @@ OUTCOME_LABELS = {
     "inconclusive": "超时或内存超限",
     "setup_failed": "源码环境没搭起来",
     "no_fix": "没有修复提交（手动关闭等），不参与统计",
+    "fix_not_code": "关闭它的提交没改源码（只改文档等），不参与统计",
     "no_script": "当初没有复现（没有脚本或测试），不参与统计",
 }
-ELIGIBLE_EXCLUDED = ("no_fix", "no_script")
+ELIGIBLE_EXCLUDED = ("no_fix", "fix_not_code", "no_script")
 
 
 def classify(before: Sequence[RunBrief], after: Sequence[RunBrief]) -> str:
@@ -157,8 +158,13 @@ async def evaluate_case(
     pretend: Callable[[FixCommit], Awaitable[str]],
     run_at: Callable[[str, str, str, str], Awaitable[list[ExecResult]]],
     setup_errors: tuple[type[BaseException], ...],
+    code_changed: Callable[[FixCommit], Awaitable[bool]] | None = None,
 ) -> FbpaCase:
-    """一个 issue 的严格 FB/PA。run_at(提交, Python, 伪版本号, 代码) 返回该提交上的各次运行。"""
+    """一个 issue 的严格 FB/PA。run_at(提交, Python, 伪版本号, 代码) 返回该提交上的各次运行。
+
+    code_changed(修复提交) 为假时（关闭 issue 的提交只改了文档等，ADR 0040 补充）不跑、不计入：
+    代码前后一样，"修复后通过"不可能成立，记成 fail_after 会冤枉考卷。
+    """
     case = FbpaCase(
         number=cand.number, title=cand.title, reported_version=cand.reported_version,
         python=cand.python, proxy=cand.proxy,
@@ -171,11 +177,15 @@ async def evaluate_case(
         if case.fix is None:
             case.outcome = "no_fix"
             return case
+        if code_changed is not None and not await code_changed(case.fix):
+            case.outcome = "fix_not_code"
+            return case
         case.pretend_version = await pretend(case.fix)
         before = await run_at(case.fix.parent, cand.python, case.pretend_version, cand.code)
         after = await run_at(case.fix.sha, cand.python, case.pretend_version, cand.code)
     except setup_errors as e:
-        case.outcome, case.error = "setup_failed", str(e)[:500]
+        # httpx 的超时等异常 str() 是空的：至少留下异常类型
+        case.outcome, case.error = "setup_failed", (str(e) or type(e).__name__)[:500]
         return case
     case.before = [brief(r, cand.observed, cand.module) for r in before]
     case.after = [brief(r, cand.observed, cand.module) for r in after]
@@ -282,6 +292,9 @@ def note_for(c: FbpaCase) -> str:
         return c.error
     if c.outcome == "no_fix":
         return "issue 不是被 PR 或提交关闭的（手动关闭），没有可对照的修复提交"
+    if c.outcome == "fix_not_code" and c.fix:
+        pr = f"PR #{c.fix.pr}" if c.fix.pr else f"提交 {c.fix.sha[:7]}"
+        return f"关闭它的 {pr} 没改源码（只改文档、更新日志等），没有可对照的代码修复"
     if c.outcome == "not_fail_before":
         return "脚本在父提交上正常退出：这个输入在修复 PR 之前已经不再触发 bug"
     if c.outcome == "fail_after":

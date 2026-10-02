@@ -40,6 +40,10 @@ from failgate.verify.tamper import PullFile
 
 KIND = "failgate.fixset/v1"
 DOC_FILES = ("CHANGES.md", "AUTHORS.md", "README.md")
+# 文档、更新日志片段、CI 配置：不算源码改动（pylint 用 doc/whatsnew/fragments/，
+# 很多项目用 changelog.d/ 或 news/；ADR 0040 补充）
+DOC_DIRS = ("docs/", "doc/", ".github/", "changelog.d/", "news/")
+DOC_SUFFIXES = (".md", ".rst")
 
 
 class FixsetCase(BaseModel):
@@ -89,11 +93,12 @@ def candidates(
 
 
 def source_changes(files: Sequence[PullFile], test_dir: str) -> list[str]:
-    """上游修复改动的非测试文件，去掉更新日志、作者名单这类文档。"""
+    """上游修复改动的非测试文件，去掉更新日志、作者名单、文档目录这类不是代码的改动。"""
     return [f.filename for f in files
             if not is_test_change(f.filename, test_dir)
             and f.filename not in DOC_FILES
-            and not f.filename.startswith(("docs/", ".github/"))]
+            and not f.filename.startswith(DOC_DIRS)
+            and not f.filename.endswith(DOC_SUFFIXES)]
 
 
 def skip_reason(files: Sequence[PullFile], test_dir: str) -> str | None:

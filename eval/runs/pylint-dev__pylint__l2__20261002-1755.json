@@ -1,0 +1,2347 @@
+{
+  "meta": {
+    "started": "2026-10-02T17:55:49",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "和 replay repro 相同的规则：2022-01-01 之后创建、以完成状态关闭，带 `Bug :beetle:` / `Crash 💥` / `False Positive 🦟` / `False Negative 🦋` / `Regression` 之一，类别为 `Crash 💥` / `False Positive 🦟` / `False Negative 🦋` 之一，排除 `Duplicate 🐫` / `Invalid` / `Won't fix/not planned` / `Cannot reproduce 🤷` / `Upstream Bug 🪲` / `Downstream Bug 🪲` / `Needs astroid update` / `Needs astroid Brain 🧠`，按编号从新到旧跳过 12 个、取 12 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.5,
+    "runs": 2,
+    "kind": "L2 测试"
+  },
+  "summary": {
+    "n": 12,
+    "outcomes": {
+      "l2": 10,
+      "not_reproduced": 2
+    },
+    "l2": 10,
+    "l2_rate": 0.8333333333333334,
+    "l2_ci": [
+      0.5519636426153274,
+      0.9530358523851776
+    ],
+    "with_traceback": 6,
+    "l2_with_traceback": 4,
+    "fbpa_eligible": 10,
+    "fb_pa": 10,
+    "fb_pa_ci": [
+      0.7224598312333834,
+      1.0
+    ],
+    "fbpa_outcomes": {
+      "fb_pa": 10,
+      "no_script": 2
+    },
+    "end_to_end_n": 12,
+    "total_cost_usd": 0.2401,
+    "mean_cost_usd": 0.02,
+    "mean_steps": 30.0,
+    "mean_submits": 0.83,
+    "mean_duration_s": 99.5
+  },
+  "reports": [
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11267,
+      "title": "Crash `AttributeError: 'For' object has no attribute 'value'` when `x.__class__` is a for-loop, `with`, or unpacking target",
+      "intake_version": "4.1.0-dev0",
+      "intake_python": "3.13.3",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "4be9585ecfe0f9922917905e7884710baa932886",
+        "committed_at": "2026-08-12T13:03:53Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.13",
+        "version": "4.0.8.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11267.py",
+        "run": {
+          "version": "4be9585ecf",
+          "python": "3.13",
+          "env_key": "743399675e9a061fa11e3deb5dcab53d1a95d8fcdfaf4a2da6fbd54cec1525cd",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'For' object has no attribute 'value'",
+              "frames": [
+                "pylint/utils/ast_walker.py:walk",
+                "pylint/checkers/classes/class_checker.py:visit_assignattr",
+                "pylint/checkers/classes/class_checker.py:_check_invalid_class_object"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'For' object has no attribute 'value'",
+              "frames": [
+                "pylint/utils/ast_walker.py:walk",
+                "pylint/checkers/classes/class_checker.py:visit_assignattr",
+                "pylint/checkers/classes/class_checker.py:_check_invalid_class_object"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-f77d44f865",
+          "output_tail": "    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11267.py\", line 36, in test_class_checker_does_not_crash_on_for_loop_class_target\n    walker.walk(astroid.parse(FOR_LOOP_TARGET))\n    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 90, in walk\n    self.walk(child)\n    ~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 90, in walk\n    self.walk(child)\n    ~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 90, in walk\n    self.walk(child)\n    ~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1735, in visit_assignattr\n    self._check_invalid_class_object(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1751, in _check_invalid_class_object\n    inferred = safe_infer(node.parent.value)\n                          ^^^^^^^^^^^^^^^^^\nAttributeError: 'For' object has no attribute 'value'\n----------------------------- Captured stderr call -----------------------------\nException on node <AssignAttr.__class__ l.7 at 0x76151077a660> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1735, in visit_assignattr\n    self._check_invalid_class_object(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1751, in _check_invalid_class_object\n    inferred = safe_infer(node.parent.value)\n                          ^^^^^^^^^^^^^^^^^\nAttributeError: 'For' object has no attribute 'value'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11267.py::test_class_checker_does_not_crash_on_for_loop_class_target\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11267.py",
+            "claim": "测试用 ASTWalker 驱动 ClassChecker 遍历含 `for foo.__class__ in [Foo]` 的模块，让被测代码自己抛出报告中的 AttributeError: 'For' object has no attribute 'value'（class_checker.py:1751，经 visit_assignattr:1735），当前代码失败，修复后不再抛异常即通过。",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11267.\n\nAssigning to ``x.__class__`` with a for-loop target made the class checker\nraise ``AttributeError: 'For' object has no attribute 'value'`` while walking\nthe module, which turned into a fatal ``astroid-error`` (F0002) and lost every\nother message for the file.  The loop target must simply stay quiet.\n\"\"\"\n\nimport astroid\n\nfrom pylint.checkers.classes.class_checker import ClassChecker\nfrom pylint.testutils import linter\nfrom pylint.utils import ASTWalker\n\nFOR_LOOP_TARGET = \"\"\"\nclass Foo:\n    pass\n\n\ndef f(foo):\n    for foo.__class__ in [Foo]:\n        pass\n\"\"\"\n\n\ndef test_class_checker_does_not_crash_on_for_loop_class_target() -> None:\n    \"\"\"``x.__class__`` as a ``for`` target must not crash the class checker.\"\"\"\n    checker = ClassChecker(linter)\n    checker.open()\n    walker = ASTWalker(linter)\n    walker.add_checker(checker)\n    walker.walk(astroid.parse(FOR_LOOP_TARGET))\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11267.\n\nAssigning to ``x.__class__`` with a for-loop target made the class checker\nraise ``AttributeError: 'For' object has no attribute 'value'`` while walking\nthe module, which turned into a fatal ``astroid-error`` (F0002) and lost every\nother message for the file.  The loop target must simply stay quiet.\n\"\"\"\n\nimport astroid\n\nfrom pylint.checkers.classes.class_checker import ClassChecker\nfrom pylint.testutils import linter\nfrom pylint.utils import ASTWalker\n\nFOR_LOOP_TARGET = \"\"\"\nclass Foo:\n    pass\n\n\ndef f(foo):\n    for foo.__class__ in [Foo]:\n        pass\n\"\"\"\n\n\ndef test_class_checker_does_not_crash_on_for_loop_class_target() -> None:\n    \"\"\"``x.__class__`` as a ``for`` target must not crash the class checker.\"\"\"\n    checker = ClassChecker(linter)\n    checker.open()\n    walker = ASTWalker(linter)\n    walker.add_checker(checker)\n    walker.walk(astroid.parse(FOR_LOOP_TARGET))\n",
+        "final_run": {
+          "version": "4be9585ecf",
+          "python": "3.13",
+          "env_key": "743399675e9a061fa11e3deb5dcab53d1a95d8fcdfaf4a2da6fbd54cec1525cd",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'For' object has no attribute 'value'",
+              "frames": [
+                "pylint/utils/ast_walker.py:walk",
+                "pylint/checkers/classes/class_checker.py:visit_assignattr",
+                "pylint/checkers/classes/class_checker.py:_check_invalid_class_object"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'For' object has no attribute 'value'",
+              "frames": [
+                "pylint/utils/ast_walker.py:walk",
+                "pylint/checkers/classes/class_checker.py:visit_assignattr",
+                "pylint/checkers/classes/class_checker.py:_check_invalid_class_object"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-f77d44f865",
+          "output_tail": "    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11267.py\", line 36, in test_class_checker_does_not_crash_on_for_loop_class_target\n    walker.walk(astroid.parse(FOR_LOOP_TARGET))\n    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 90, in walk\n    self.walk(child)\n    ~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 90, in walk\n    self.walk(child)\n    ~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 90, in walk\n    self.walk(child)\n    ~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1735, in visit_assignattr\n    self._check_invalid_class_object(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1751, in _check_invalid_class_object\n    inferred = safe_infer(node.parent.value)\n                          ^^^^^^^^^^^^^^^^^\nAttributeError: 'For' object has no attribute 'value'\n----------------------------- Captured stderr call -----------------------------\nException on node <AssignAttr.__class__ l.7 at 0x76151077a660> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1735, in visit_assignattr\n    self._check_invalid_class_object(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1751, in _check_invalid_class_object\n    inferred = safe_infer(node.parent.value)\n                          ^^^^^^^^^^^^^^^^^\nAttributeError: 'For' object has no attribute 'value'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11267.py::test_class_checker_does_not_crash_on_for_loop_class_target\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "steps": 38,
+        "tool_counts": {
+          "read_file": 12,
+          "list_files": 5,
+          "search_code": 7,
+          "run": 7,
+          "write_scratch": 4,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.019297,
+        "prompt_tokens": 524992,
+        "completion_tokens": 7827,
+        "cached_tokens": 502016,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11267-1790931495.json",
+        "duration_s": 106.3,
+        "test_path": "tests/test_failgate_issue_11267.py"
+      },
+      "intake_cost_usd": 0.000978,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11231,
+      "title": "False positive invalid-name (C0103) for module-level TypedDict instantiation, regression from PR #10673",
+      "intake_version": "4.0.6",
+      "intake_python": "3.14.6",
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "2704876d736917a36ba5674bed9c9251434d096f",
+        "committed_at": "2026-08-03T22:29:23Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11231.py",
+        "run": {
+          "version": "2704876d73",
+          "python": "3.14",
+          "env_key": "8ad07e7c3b3ef6b3b605cfc5a10d56f50d6bc757c9b3ef0c6f0a5881a97a87e5",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert [('C<N>', <N>,...aming style')] == []",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 pylint 对 issue 中的最小复现文件运行 --disable=all --enable=invalid-name，输出中确实出现 issue 描述的 C0103 \"Class name _DEFAULT_VALUE doesn't conform to PascalCase naming style\"，且断言检查的正是 issue 的预期行为（不应有 invalid-name）。失败来自被测包的真实行为，而非脚本自身错误。",
+            "quote": "Left contains one more item: ('C0103', 8, 'Class name \"_DEFAULT_VALUE\" doesn\\'t conform to PascalCase naming style')",
+            "quote_found": true,
+            "cost_usd": 0.001183
+          },
+          "log_dir": "artifacts\\failgate-run-e6cd5d2097",
+          "output_tail": "    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11231.py\", line 47, in test_no_invalid_name_for_module_level_typeddict_instance\n    assert messages == []\nAssertionError: assert [('C0103', 8,...aming style')] == []\n  \n  Left contains one more item: ('C0103', 8, 'Class name \"_DEFAULT_VALUE\" doesn\\'t conform to PascalCase naming style')\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11231.py::test_no_invalid_name_for_module_level_typeddict_instance\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.22s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11231.py",
+            "claim": "Runs pylint (via pylint.testutils._run._Run with CollectingReporter) on the issue's minimal reproducer (_DEFAULT_VALUE = Foo(value='0') where Foo(TypedDict)) with --disable=all --enable=invalid-name, and asserts no messages are reported; currently it fails because pylint emits C0103 \"Class name \\\"_DEFAULT_VALUE\\\" doesn't conform to PascalCase naming style\" (false positive from the TypedDict instance MRO check in NameChecker._should_check_class_regex).",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11231.\n\nInstantiating an already defined ``TypedDict`` subclass at module level produces\nan ordinary value, not a type definition, so the assignment must not be checked\nagainst ``class-rgx`` (which used to emit a false positive ``invalid-name``).\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nfrom pylint.reporters import CollectingReporter\nfrom pylint.testutils._run import _Run\n\n# Minimal reproducer from the issue report.\nREPRODUCER = '''\\\nfrom typing import TypedDict\n\n\nclass Foo(TypedDict):\n    value: str\n\n\n_DEFAULT_VALUE = Foo(value='0')\n'''\n\n\ndef test_no_invalid_name_for_module_level_typeddict_instance(\n    tmp_path: Path,\n) -> None:\n    \"\"\"A module-level constant holding a TypedDict instance is not a class name.\"\"\"\n    reproducer = tmp_path / \"repro_11231.py\"\n    reproducer.write_text(REPRODUCER, encoding=\"utf-8\")\n\n    reporter = CollectingReporter()\n    _Run(\n        [\"--disable=all\", \"--enable=invalid-name\", str(reproducer)],\n        reporter=reporter,\n        exit=False,\n    )\n\n    messages = [(message.msg_id, message.line, message.msg) for message in reporter.messages]\n    assert messages == []\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11231.\n\nInstantiating an already defined ``TypedDict`` subclass at module level produces\nan ordinary value, not a type definition, so the assignment must not be checked\nagainst ``class-rgx`` (which used to emit a false positive ``invalid-name``).\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nfrom pylint.reporters import CollectingReporter\nfrom pylint.testutils._run import _Run\n\n# Minimal reproducer from the issue report.\nREPRODUCER = '''\\\nfrom typing import TypedDict\n\n\nclass Foo(TypedDict):\n    value: str\n\n\n_DEFAULT_VALUE = Foo(value='0')\n'''\n\n\ndef test_no_invalid_name_for_module_level_typeddict_instance(\n    tmp_path: Path,\n) -> None:\n    \"\"\"A module-level constant holding a TypedDict instance is not a class name.\"\"\"\n    reproducer = tmp_path / \"repro_11231.py\"\n    reproducer.write_text(REPRODUCER, encoding=\"utf-8\")\n\n    reporter = CollectingReporter()\n    _Run(\n        [\"--disable=all\", \"--enable=invalid-name\", str(reproducer)],\n        reporter=reporter,\n        exit=False,\n    )\n\n    messages = [(message.msg_id, message.line, message.msg) for message in reporter.messages]\n    assert messages == []\n",
+        "final_run": {
+          "version": "2704876d73",
+          "python": "3.14",
+          "env_key": "8ad07e7c3b3ef6b3b605cfc5a10d56f50d6bc757c9b3ef0c6f0a5881a97a87e5",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert [('C<N>', <N>,...aming style')] == []",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 pylint 对 issue 中的最小复现文件运行 --disable=all --enable=invalid-name，输出中确实出现 issue 描述的 C0103 \"Class name _DEFAULT_VALUE doesn't conform to PascalCase naming style\"，且断言检查的正是 issue 的预期行为（不应有 invalid-name）。失败来自被测包的真实行为，而非脚本自身错误。",
+            "quote": "Left contains one more item: ('C0103', 8, 'Class name \"_DEFAULT_VALUE\" doesn\\'t conform to PascalCase naming style')",
+            "quote_found": true,
+            "cost_usd": 0.001183
+          },
+          "log_dir": "artifacts\\failgate-run-e6cd5d2097",
+          "output_tail": "    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11231.py\", line 47, in test_no_invalid_name_for_module_level_typeddict_instance\n    assert messages == []\nAssertionError: assert [('C0103', 8,...aming style')] == []\n  \n  Left contains one more item: ('C0103', 8, 'Class name \"_DEFAULT_VALUE\" doesn\\'t conform to PascalCase naming style')\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11231.py::test_no_invalid_name_for_module_level_typeddict_instance\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.22s"
+        },
+        "steps": 21,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 6,
+          "read_file": 7,
+          "run": 2,
+          "write_scratch": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.010342,
+        "prompt_tokens": 160292,
+        "completion_tokens": 4296,
+        "cached_tokens": 145920,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11231-1790931685.json",
+        "duration_s": 65.3,
+        "test_path": "tests/test_failgate_issue_11231.py"
+      },
+      "intake_cost_usd": 0.000875,
+      "judge_cost_usd": 0.001183,
+      "judge_prompt_tokens": 2821,
+      "judge_completion_tokens": 343,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11228,
+      "title": "`AttributeError: 'FunctionDef' object has no attribute 'ancestors'` in docparams checker",
+      "intake_version": "pylint-dev/pylint@a219ca322",
+      "intake_python": "3.14.6",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "2704876d736917a36ba5674bed9c9251434d096f",
+        "committed_at": "2026-08-03T22:29:23Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11228.py",
+        "run": null,
+        "level": "NONE",
+        "error": "Agent 没有提交测试（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 8,
+          "read_file": 13,
+          "write_scratch": 6,
+          "run": 9,
+          "write_test": 1
+        },
+        "cost_usd": 0.02818,
+        "prompt_tokens": 461624,
+        "completion_tokens": 16363,
+        "cached_tokens": 441984,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11228-1790931924.json",
+        "duration_s": 136.8,
+        "test_path": null
+      },
+      "intake_cost_usd": 0.000794,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11222,
+      "title": "AttributeError: 'UnaryOp' object has no attribute 'value'",
+      "intake_version": "pylint-dev/pylint@e95c41667",
+      "intake_python": "3.14.6",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "e95c416677f1e21864912d8a8504027b8a4b4b33",
+        "committed_at": "2026-08-02T21:07:15Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11222.py",
+        "run": {
+          "version": "e95c416677",
+          "python": "3.14",
+          "env_key": "6928aa6a66736ae33a16d186bdc1467e123f3c9de46cb0764382cd65e41c670a",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'UnaryOp' object has no attribute 'value'",
+              "frames": [
+                "pylint/checkers/stdlib.py:visit_call",
+                "pylint/checkers/stdlib.py:_check_shallow_copy_environ",
+                "pylint/checkers/utils.py:infer_kwarg_from_call"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'UnaryOp' object has no attribute 'value'",
+              "frames": [
+                "pylint/pylint/checkers/stdlib.py:visit_call",
+                "pylint/pylint/checkers/stdlib.py:_check_shallow_copy_environ",
+                "pylint/pylint/checkers/utils.py:infer_kwarg_from_call"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-5c111b3bc8",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 714, in visit_call\n    self._check_shallow_copy_environ(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 660, in _check_shallow_copy_environ\n    arg = utils.infer_kwarg_from_call(node, keyword=\"x\")\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/utils.py\", line 760, in infer_kwarg_from_call\n    if item[0].value == keyword:\n       ^^^^^^^^^^^^^\nAttributeError: 'UnaryOp' object has no attribute 'value'\n----------------------------- Captured stderr call -----------------------------\nException on node <Call l.3 at 0x7b8c6f70f8c0> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 658, in _check_shallow_copy_environ\n    arg = utils.get_argument_from_call(node, position=0, keyword=\"x\")\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/utils.py\", line 744, in get_argument_from_call\n    raise NoSuchArgumentError\npylint.checkers.utils.NoSuchArgumentError\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 714, in visit_call\n    self._check_shallow_copy_environ(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 660, in _check_shallow_copy_environ\n    arg = utils.infer_kwarg_from_call(node, keyword=\"x\")\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/utils.py\", line 760, in infer_kwarg_from_call\n    if item[0].value == keyword:\n       ^^^^^^^^^^^^^\nAttributeError: 'UnaryOp' object has no attribute 'value'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11222.py::TestShallowCopyEnvironWithNonConstantKeyword::test_copy_call_with_unaryop_dict_key_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11222.py",
+            "claim": "在 StdlibChecker 上遍历 `import copy; copy.copy(**{-1: 1})` 时，infer_kwarg_from_call 对非字面量字典键（UnaryOp -1）访问 .value，测试让被测代码自行抛出 AttributeError: 'UnaryOp' object has no attribute 'value'（修复前失败，修复后不崩溃即通过）。",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11222.\n\n``copy.copy(**{-1: 1})`` used to crash the stdlib checker: when looking for the\n``x`` keyword inside the unpacked mapping, ``infer_kwarg_from_call`` assumed\nevery dictionary key had a ``value`` attribute, which is not true for e.g. a\n``UnaryOp`` such as ``-1``.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\n\nfrom pylint.checkers import stdlib\nfrom pylint.testutils import CheckerTestCase\n\nCODE = \"\"\"import copy\n\ncopy.copy(**{-1: 1})\n\"\"\"\n\n\nclass TestShallowCopyEnvironWithNonConstantKeyword(CheckerTestCase):\n    CHECKER_CLASS = stdlib.StdlibChecker\n\n    def test_copy_call_with_unaryop_dict_key_does_not_crash(self) -> None:\n        \"\"\"Checking a ``copy.copy`` call must not raise on non-const dict keys.\"\"\"\n        module = astroid.parse(CODE)\n        self.walk(module)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11222.\n\n``copy.copy(**{-1: 1})`` used to crash the stdlib checker: when looking for the\n``x`` keyword inside the unpacked mapping, ``infer_kwarg_from_call`` assumed\nevery dictionary key had a ``value`` attribute, which is not true for e.g. a\n``UnaryOp`` such as ``-1``.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\n\nfrom pylint.checkers import stdlib\nfrom pylint.testutils import CheckerTestCase\n\nCODE = \"\"\"import copy\n\ncopy.copy(**{-1: 1})\n\"\"\"\n\n\nclass TestShallowCopyEnvironWithNonConstantKeyword(CheckerTestCase):\n    CHECKER_CLASS = stdlib.StdlibChecker\n\n    def test_copy_call_with_unaryop_dict_key_does_not_crash(self) -> None:\n        \"\"\"Checking a ``copy.copy`` call must not raise on non-const dict keys.\"\"\"\n        module = astroid.parse(CODE)\n        self.walk(module)\n",
+        "final_run": {
+          "version": "e95c416677",
+          "python": "3.14",
+          "env_key": "6928aa6a66736ae33a16d186bdc1467e123f3c9de46cb0764382cd65e41c670a",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'UnaryOp' object has no attribute 'value'",
+              "frames": [
+                "pylint/checkers/stdlib.py:visit_call",
+                "pylint/checkers/stdlib.py:_check_shallow_copy_environ",
+                "pylint/checkers/utils.py:infer_kwarg_from_call"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'UnaryOp' object has no attribute 'value'",
+              "frames": [
+                "pylint/pylint/checkers/stdlib.py:visit_call",
+                "pylint/pylint/checkers/stdlib.py:_check_shallow_copy_environ",
+                "pylint/pylint/checkers/utils.py:infer_kwarg_from_call"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-5c111b3bc8",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 714, in visit_call\n    self._check_shallow_copy_environ(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 660, in _check_shallow_copy_environ\n    arg = utils.infer_kwarg_from_call(node, keyword=\"x\")\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/utils.py\", line 760, in infer_kwarg_from_call\n    if item[0].value == keyword:\n       ^^^^^^^^^^^^^\nAttributeError: 'UnaryOp' object has no attribute 'value'\n----------------------------- Captured stderr call -----------------------------\nException on node <Call l.3 at 0x7b8c6f70f8c0> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 658, in _check_shallow_copy_environ\n    arg = utils.get_argument_from_call(node, position=0, keyword=\"x\")\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/utils.py\", line 744, in get_argument_from_call\n    raise NoSuchArgumentError\npylint.checkers.utils.NoSuchArgumentError\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 714, in visit_call\n    self._check_shallow_copy_environ(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 660, in _check_shallow_copy_environ\n    arg = utils.infer_kwarg_from_call(node, keyword=\"x\")\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/utils.py\", line 760, in infer_kwarg_from_call\n    if item[0].value == keyword:\n       ^^^^^^^^^^^^^\nAttributeError: 'UnaryOp' object has no attribute 'value'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11222.py::TestShallowCopyEnvironWithNonConstantKeyword::test_copy_call_with_unaryop_dict_key_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 25,
+        "tool_counts": {
+          "read_file": 6,
+          "list_files": 2,
+          "search_code": 5,
+          "write_scratch": 3,
+          "run": 6,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.01288,
+        "prompt_tokens": 229213,
+        "completion_tokens": 5613,
+        "cached_tokens": 212992,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11222-1790932032.json",
+        "duration_s": 74.0,
+        "test_path": "tests/test_failgate_issue_11222.py"
+      },
+      "intake_cost_usd": 0.001131,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11198,
+      "title": "Crash on using getattr on a classmethod",
+      "intake_version": "4.0.6",
+      "intake_python": "3.13.14",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "0c17662e17387123edeb4a47f39f6f575cc310a8",
+        "committed_at": "2026-07-27T17:08:01Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.13",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11198.py",
+        "run": null,
+        "level": "NONE",
+        "error": "Agent 没有提交测试（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 2,
+          "read_file": 5,
+          "run": 19,
+          "write_scratch": 7,
+          "search_code": 7
+        },
+        "cost_usd": 0.039904,
+        "prompt_tokens": 613710,
+        "completion_tokens": 25869,
+        "cached_tokens": 596096,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11198-1790932317.json",
+        "duration_s": 177.3,
+        "test_path": null
+      },
+      "intake_cost_usd": 0.000529,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11175,
+      "title": "Crash (astroid-error) in comparison-with-callable when comparing a lambda assigned as a class attribute",
+      "intake_version": "4.1.0-dev0",
+      "intake_python": "3.12.3",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "5f7e4013c004324f11eac6f310d932f505272e28",
+        "committed_at": "2026-07-14T08:17:38Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.12",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11175.py",
+        "run": {
+          "version": "5f7e4013c0",
+          "python": "3.12",
+          "env_key": "04ebefb7515a1e155ea828a0a04d2d78007c81c681fc1a59a426ae44af9dae31",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.8,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'Lambda' object has no attribute 'decoratornames'",
+              "frames": [
+                "pylint/utils/ast_walker.py:walk",
+                "pylint/checkers/base/comparison_checker.py:visit_compare",
+                "pylint/checkers/base/comparison_checker.py:_check_callable_comparison"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'Lambda' object has no attribute 'decoratornames'",
+              "frames": [
+                "pylint/checkers/base/comparison_checker.py:_check_callable_comparison"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-2c61178f71",
+          "output_tail": "    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11175.py\", line 50, in test_comparing_bound_lambda_does_not_crash\n    self.walk(comparison)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/testutils/checker_test_case.py\", line 114, in walk\n    walker.walk(node)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 304, in visit_compare\n    self._check_callable_comparison(node)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 287, in _check_callable_comparison\n    and \"typing._SpecialForm\" not in inferred.decoratornames()\n                                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'Lambda' object has no attribute 'decoratornames'\n----------------------------- Captured stderr call -----------------------------\nException on node <Compare l.6 at 0x769fcc3e9280> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 304, in visit_compare\n    self._check_callable_comparison(node)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 287, in _check_callable_comparison\n    and \"typing._SpecialForm\" not in inferred.decoratornames()\n                                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'Lambda' object has no attribute 'decoratornames'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11175.py::TestComparisonWithCallableOnBoundLambda::test_comparing_bound_lambda_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11175.py",
+            "claim": "tests/test_failgate_issue_11175.py walks a Compare node (self.lam == 1 and C().lam == 1 where lam is a lambda class attribute) through ComparisonChecker via CheckerTestCase; before the fix the checker's _check_callable_comparison calls decoratornames() on the inferred BoundMethod-of-Lambda and raises AttributeError: 'Lambda' object has no attribute 'decoratornames' (pylint/checkers/base/comparison_checker.py:287 -> astroid/bases.py:146), matching the issue traceback.",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11175.\n\n``comparison-with-callable`` used to crash when one side of a comparison\ninferred to a lambda assigned as a class attribute: astroid infers such an\naccess (``self.lam`` / ``C().lam``) as a ``BoundMethod`` proxying a ``Lambda``,\nand ``_check_callable_comparison`` called ``decoratornames()`` -- a method\ndefined on ``FunctionDef`` but not on ``Lambda`` -- on the proxy, raising\n``AttributeError: 'Lambda' object has no attribute 'decoratornames'``.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\nfrom astroid import nodes\n\nfrom pylint.checkers.base.comparison_checker import ComparisonChecker\nfrom pylint.testutils import CheckerTestCase\n\nCODE = \"\"\"\nclass C:\n    lam = lambda self: 1\n\n    def check(self):\n        return self.lam == 1\n\n\ndef check_instance():\n    return C().lam == 1\n\"\"\"\n\n\nclass TestComparisonWithCallableOnBoundLambda(CheckerTestCase):\n    CHECKER_CLASS = ComparisonChecker\n\n    def test_comparing_bound_lambda_does_not_crash(self) -> None:\n        \"\"\"Checking a comparison with a bound lambda must not raise.\n\n        Visiting the ``Compare`` node *is* the assertion: before the fix,\n        ``visit_compare`` crashed with the ``AttributeError`` reported in the\n        issue, and the exception propagated to the test.\n        \"\"\"\n        module = astroid.parse(CODE)\n        comparisons = list(module.nodes_of_class(nodes.Compare))\n        assert len(comparisons) == 2, comparisons\n        for comparison in comparisons:\n            self.walk(comparison)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.8
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11175.\n\n``comparison-with-callable`` used to crash when one side of a comparison\ninferred to a lambda assigned as a class attribute: astroid infers such an\naccess (``self.lam`` / ``C().lam``) as a ``BoundMethod`` proxying a ``Lambda``,\nand ``_check_callable_comparison`` called ``decoratornames()`` -- a method\ndefined on ``FunctionDef`` but not on ``Lambda`` -- on the proxy, raising\n``AttributeError: 'Lambda' object has no attribute 'decoratornames'``.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\nfrom astroid import nodes\n\nfrom pylint.checkers.base.comparison_checker import ComparisonChecker\nfrom pylint.testutils import CheckerTestCase\n\nCODE = \"\"\"\nclass C:\n    lam = lambda self: 1\n\n    def check(self):\n        return self.lam == 1\n\n\ndef check_instance():\n    return C().lam == 1\n\"\"\"\n\n\nclass TestComparisonWithCallableOnBoundLambda(CheckerTestCase):\n    CHECKER_CLASS = ComparisonChecker\n\n    def test_comparing_bound_lambda_does_not_crash(self) -> None:\n        \"\"\"Checking a comparison with a bound lambda must not raise.\n\n        Visiting the ``Compare`` node *is* the assertion: before the fix,\n        ``visit_compare`` crashed with the ``AttributeError`` reported in the\n        issue, and the exception propagated to the test.\n        \"\"\"\n        module = astroid.parse(CODE)\n        comparisons = list(module.nodes_of_class(nodes.Compare))\n        assert len(comparisons) == 2, comparisons\n        for comparison in comparisons:\n            self.walk(comparison)\n",
+        "final_run": {
+          "version": "5f7e4013c0",
+          "python": "3.12",
+          "env_key": "04ebefb7515a1e155ea828a0a04d2d78007c81c681fc1a59a426ae44af9dae31",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.8,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'Lambda' object has no attribute 'decoratornames'",
+              "frames": [
+                "pylint/utils/ast_walker.py:walk",
+                "pylint/checkers/base/comparison_checker.py:visit_compare",
+                "pylint/checkers/base/comparison_checker.py:_check_callable_comparison"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'Lambda' object has no attribute 'decoratornames'",
+              "frames": [
+                "pylint/checkers/base/comparison_checker.py:_check_callable_comparison"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-2c61178f71",
+          "output_tail": "    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11175.py\", line 50, in test_comparing_bound_lambda_does_not_crash\n    self.walk(comparison)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/testutils/checker_test_case.py\", line 114, in walk\n    walker.walk(node)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 304, in visit_compare\n    self._check_callable_comparison(node)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 287, in _check_callable_comparison\n    and \"typing._SpecialForm\" not in inferred.decoratornames()\n                                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'Lambda' object has no attribute 'decoratornames'\n----------------------------- Captured stderr call -----------------------------\nException on node <Compare l.6 at 0x769fcc3e9280> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 304, in visit_compare\n    self._check_callable_comparison(node)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 287, in _check_callable_comparison\n    and \"typing._SpecialForm\" not in inferred.decoratornames()\n                                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'Lambda' object has no attribute 'decoratornames'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11175.py::TestComparisonWithCallableOnBoundLambda::test_comparing_bound_lambda_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "steps": 25,
+        "tool_counts": {
+          "list_files": 2,
+          "read_file": 10,
+          "search_code": 6,
+          "write_scratch": 2,
+          "run": 2,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.01783,
+        "prompt_tokens": 258674,
+        "completion_tokens": 9523,
+        "cached_tokens": 242176,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11175-1790932437.json",
+        "duration_s": 87.2,
+        "test_path": "tests/test_failgate_issue_11175.py"
+      },
+      "intake_cost_usd": 0.000843,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11148,
+      "title": "`useless-parent-delegation` (W0246) false positive when an override changes a positional-only default",
+      "intake_version": "main (2bfab5f)",
+      "intake_python": "3.12",
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "2bfab5f2606ff62bed3af910a21371e573caee3a",
+        "committed_at": "2026-07-04T13:00:33Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.12",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11148.py",
+        "run": {
+          "version": "2bfab5f260",
+          "python": "3.12",
+          "env_key": "dc8946a6a0de4ef45ae929d35c6ecc02f3a0e59d8ab3c5b75aa43f67cec81c6c",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "Overriding a method while changing the default of a positional-only parameter must not be reported as useless-parent-delegation, but got: ['W<N>']",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 pylint API 对 issue 中的位置-only 默认值改写示例运行 useless-parent-delegation 检查，实际输出 W0246 而断言期望无消息，失败原因正是 issue 描述的误报行为，断言检查的也是 issue 的预期行为。",
+            "quote": "AssertionError: Overriding a method while changing the default of a positional-only parameter must not be reported as useless-parent-delegation, but got: ['W0246']",
+            "quote_found": true,
+            "cost_usd": 0.001016
+          },
+          "log_dir": "artifacts\\failgate-run-74ead19113",
+          "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11148.py\", line 52, in test_posonly_default_change_is_not_useless_parent_delegation\n    assert emitted == [], (\nAssertionError: Overriding a method while changing the default of a positional-only parameter must not be reported as useless-parent-delegation, but got: ['W0246']\nassert ['W0246'] == []\n  \n  Left contains one more item: 'W0246'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11148.py::test_posonly_default_change_is_not_useless_parent_delegation\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11148.py",
+            "claim": "Lint a Base/Child pair where the override changes a positional-only parameter's default (a=1 -> a=2) and assert no W0246 is emitted; on the current code pylint reports useless-parent-delegation (test fails), while a fix that includes posonlyargs in _has_different_parameters_default_value makes it pass.",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11148.\n\n``useless-parent-delegation`` (W0246) is a false positive when an override\nchanges the default value of a positional-only parameter, because\n``_has_different_parameters_default_value`` did not look at ``posonlyargs``.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nfrom pylint import checkers\nfrom pylint.lint import PyLinter\nfrom pylint.testutils import MinimalTestReporter\n\nPOSONLY_DEFAULT_CHANGED = \"\"\"\\\nclass Base:\n    def method(self, a=1, /):\n        return a\n\n\nclass Child(Base):\n    def method(self, a=2, /):\n        return super().method(a)\n\"\"\"\n\n\ndef _lint_source(tmp_path: Path, source: str) -> PyLinter:\n    module = tmp_path / \"posonly_default.py\"\n    module.write_text(source, encoding=\"utf-8\")\n\n    linter = PyLinter()\n    linter.set_reporter(MinimalTestReporter())\n    checkers.initialize(linter)\n    linter.disable(\"all\")\n    linter.enable(\"useless-parent-delegation\")\n    linter.check([str(module)])\n    return linter\n\n\ndef test_posonly_default_change_is_not_useless_parent_delegation(\n    tmp_path: Path,\n) -> None:\n    \"\"\"Changing a positional-only default makes the override meaningful.\"\"\"\n    linter = _lint_source(tmp_path, POSONLY_DEFAULT_CHANGED)\n\n    emitted = [msg.msg_id for msg in linter.reporter.messages]\n    assert emitted == [], (\n        \"Overriding a method while changing the default of a positional-only \"\n        \"parameter must not be reported as useless-parent-delegation, but got: \"\n        f\"{emitted}\"\n    )\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11148.\n\n``useless-parent-delegation`` (W0246) is a false positive when an override\nchanges the default value of a positional-only parameter, because\n``_has_different_parameters_default_value`` did not look at ``posonlyargs``.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nfrom pylint import checkers\nfrom pylint.lint import PyLinter\nfrom pylint.testutils import MinimalTestReporter\n\nPOSONLY_DEFAULT_CHANGED = \"\"\"\\\nclass Base:\n    def method(self, a=1, /):\n        return a\n\n\nclass Child(Base):\n    def method(self, a=2, /):\n        return super().method(a)\n\"\"\"\n\n\ndef _lint_source(tmp_path: Path, source: str) -> PyLinter:\n    module = tmp_path / \"posonly_default.py\"\n    module.write_text(source, encoding=\"utf-8\")\n\n    linter = PyLinter()\n    linter.set_reporter(MinimalTestReporter())\n    checkers.initialize(linter)\n    linter.disable(\"all\")\n    linter.enable(\"useless-parent-delegation\")\n    linter.check([str(module)])\n    return linter\n\n\ndef test_posonly_default_change_is_not_useless_parent_delegation(\n    tmp_path: Path,\n) -> None:\n    \"\"\"Changing a positional-only default makes the override meaningful.\"\"\"\n    linter = _lint_source(tmp_path, POSONLY_DEFAULT_CHANGED)\n\n    emitted = [msg.msg_id for msg in linter.reporter.messages]\n    assert emitted == [], (\n        \"Overriding a method while changing the default of a positional-only \"\n        \"parameter must not be reported as useless-parent-delegation, but got: \"\n        f\"{emitted}\"\n    )\n",
+        "final_run": {
+          "version": "2bfab5f260",
+          "python": "3.12",
+          "env_key": "dc8946a6a0de4ef45ae929d35c6ecc02f3a0e59d8ab3c5b75aa43f67cec81c6c",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "Overriding a method while changing the default of a positional-only parameter must not be reported as useless-parent-delegation, but got: ['W<N>']",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 pylint API 对 issue 中的位置-only 默认值改写示例运行 useless-parent-delegation 检查，实际输出 W0246 而断言期望无消息，失败原因正是 issue 描述的误报行为，断言检查的也是 issue 的预期行为。",
+            "quote": "AssertionError: Overriding a method while changing the default of a positional-only parameter must not be reported as useless-parent-delegation, but got: ['W0246']",
+            "quote_found": true,
+            "cost_usd": 0.001016
+          },
+          "log_dir": "artifacts\\failgate-run-74ead19113",
+          "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11148.py\", line 52, in test_posonly_default_change_is_not_useless_parent_delegation\n    assert emitted == [], (\nAssertionError: Overriding a method while changing the default of a positional-only parameter must not be reported as useless-parent-delegation, but got: ['W0246']\nassert ['W0246'] == []\n  \n  Left contains one more item: 'W0246'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11148.py::test_posonly_default_change_is_not_useless_parent_delegation\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "steps": 25,
+        "tool_counts": {
+          "list_files": 4,
+          "search_code": 6,
+          "read_file": 6,
+          "run": 4,
+          "write_scratch": 2,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.011521,
+        "prompt_tokens": 198527,
+        "completion_tokens": 4939,
+        "cached_tokens": 183552,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11148-1790932620.json",
+        "duration_s": 72.1,
+        "test_path": "tests/test_failgate_issue_11148.py"
+      },
+      "intake_cost_usd": 0.000576,
+      "judge_cost_usd": 0.001016,
+      "judge_prompt_tokens": 2584,
+      "judge_completion_tokens": 263,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11147,
+      "title": "`bad-string-format-type` (E1307) false positives for `%i`, `%u` and `%a`",
+      "intake_version": "main (2bfab5f)",
+      "intake_python": "3.12",
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "2bfab5f2606ff62bed3af910a21371e573caee3a",
+        "committed_at": "2026-07-04T13:00:33Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.12",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11147.py",
+        "run": {
+          "version": "2bfab5f260",
+          "python": "3.12",
+          "env_key": "dc8946a6a0de4ef45ae929d35c6ecc02f3a0e59d8ab3c5b75aa43f67cec81c6c",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert 'E<N>' not in '***********... <N>.<N><PATH>'",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 pylint 实际运行 issue 中的四行代码并断言不出现 E1307，输出中被测包确实对 %i/%u/%a 报出 E1307 误报，与 issue 描述的实际行为完全一致，失败由被测包行为导致而非脚本自身错误。",
+            "quote": "s.py:2:0: E1307: Argument 'builtins.float' does not match format type 'i' (bad-string-format-type)\n  ?           +++++\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:3:0: E1307: Argument 'builtins.float' does not match format type 'u' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:4:0: E1307: Argument 'builtins.float' does not match format type 'a' (bad-string-format-type)",
+            "quote_found": true,
+            "cost_usd": 0.001225
+          },
+          "log_dir": "artifacts\\failgate-run-51e90eb20e",
+          "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11147.py\", line 43, in test_i_u_a_percent_formats_are_not_flagged\n    assert \"E1307\" not in _lint(tmp_path, source)\nAssertionError: assert 'E1307' not in '***********... 0.00/10\\n\\n'\n  \n  'E1307' is contained here:\n    s.py:2:0: E1307: Argument 'builtins.float' does not match format type 'i' (bad-string-format-type)\n  ?           +++++\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:3:0: E1307: Argument 'builtins.float' does not match format type 'u' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:4:0: E1307: Argument 'builtins.float' does not match format type 'a' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:5:0: E1307: Argumen...\n  \n  ...Full output truncated (5 lines hidden), use '-vv' to show\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11147.py::test_i_u_a_percent_formats_are_not_flagged\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11147.py",
+            "claim": "Running pylint with only bad-string-format-type enabled over the issue's four snippets still emits E1307 for %i/%u on a float and %a on float/str (assertion fails on the buggy code); a second test guards that the genuine \"%x\" % 1.1 error is still reported.",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression tests for https://github.com/pylint-dev/pylint/issues/11147.\n\n``bad-string-format-type`` (E1307) used to be a false positive for ``%i``/``%u``\napplied to a float and for ``%a`` applied to any type, even though all of those\nare valid at runtime.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom io import StringIO\nfrom pathlib import Path\n\nfrom pylint.reporters.text import TextReporter\nfrom pylint.testutils._run import _Run as Run\n\n\ndef _lint(tmp_path: Path, source: str) -> str:\n    \"\"\"Run only ``bad-string-format-type`` over *source* and return the output.\"\"\"\n    test_file = tmp_path / \"format_types.py\"\n    test_file.write_text(source, encoding=\"utf-8\")\n    out = StringIO()\n    Run(\n        [str(test_file), \"--disable=all\", \"--enable=bad-string-format-type\"],\n        reporter=TextReporter(out),\n        exit=False,\n    )\n    return out.getvalue()\n\n\ndef test_i_u_a_percent_formats_are_not_flagged(tmp_path: Path) -> None:\n    \"\"\"%i, %u (float) and %a (any type) are valid and must not be reported.\"\"\"\n    source = (\n        \"FLOAT_VAL = 3.5\\n\"\n        '\"%i\" % FLOAT_VAL\\n'\n        '\"%u\" % FLOAT_VAL\\n'\n        '\"%a\" % FLOAT_VAL\\n'\n        '\"%a\" % \"hello\"\\n'\n    )\n    assert \"E1307\" not in _lint(tmp_path, source)\n\n\ndef test_x_percent_format_with_float_is_still_flagged(tmp_path: Path) -> None:\n    \"\"\"The genuine error \"%x\" % 1.1 must still be reported.\"\"\"\n    assert \"E1307\" in _lint(tmp_path, '\"%x\" % 1.1\\n')\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression tests for https://github.com/pylint-dev/pylint/issues/11147.\n\n``bad-string-format-type`` (E1307) used to be a false positive for ``%i``/``%u``\napplied to a float and for ``%a`` applied to any type, even though all of those\nare valid at runtime.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom io import StringIO\nfrom pathlib import Path\n\nfrom pylint.reporters.text import TextReporter\nfrom pylint.testutils._run import _Run as Run\n\n\ndef _lint(tmp_path: Path, source: str) -> str:\n    \"\"\"Run only ``bad-string-format-type`` over *source* and return the output.\"\"\"\n    test_file = tmp_path / \"format_types.py\"\n    test_file.write_text(source, encoding=\"utf-8\")\n    out = StringIO()\n    Run(\n        [str(test_file), \"--disable=all\", \"--enable=bad-string-format-type\"],\n        reporter=TextReporter(out),\n        exit=False,\n    )\n    return out.getvalue()\n\n\ndef test_i_u_a_percent_formats_are_not_flagged(tmp_path: Path) -> None:\n    \"\"\"%i, %u (float) and %a (any type) are valid and must not be reported.\"\"\"\n    source = (\n        \"FLOAT_VAL = 3.5\\n\"\n        '\"%i\" % FLOAT_VAL\\n'\n        '\"%u\" % FLOAT_VAL\\n'\n        '\"%a\" % FLOAT_VAL\\n'\n        '\"%a\" % \"hello\"\\n'\n    )\n    assert \"E1307\" not in _lint(tmp_path, source)\n\n\ndef test_x_percent_format_with_float_is_still_flagged(tmp_path: Path) -> None:\n    \"\"\"The genuine error \"%x\" % 1.1 must still be reported.\"\"\"\n    assert \"E1307\" in _lint(tmp_path, '\"%x\" % 1.1\\n')\n",
+        "final_run": {
+          "version": "2bfab5f260",
+          "python": "3.12",
+          "env_key": "dc8946a6a0de4ef45ae929d35c6ecc02f3a0e59d8ab3c5b75aa43f67cec81c6c",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert 'E<N>' not in '***********... <N>.<N><PATH>'",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 pylint 实际运行 issue 中的四行代码并断言不出现 E1307，输出中被测包确实对 %i/%u/%a 报出 E1307 误报，与 issue 描述的实际行为完全一致，失败由被测包行为导致而非脚本自身错误。",
+            "quote": "s.py:2:0: E1307: Argument 'builtins.float' does not match format type 'i' (bad-string-format-type)\n  ?           +++++\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:3:0: E1307: Argument 'builtins.float' does not match format type 'u' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:4:0: E1307: Argument 'builtins.float' does not match format type 'a' (bad-string-format-type)",
+            "quote_found": true,
+            "cost_usd": 0.001225
+          },
+          "log_dir": "artifacts\\failgate-run-51e90eb20e",
+          "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11147.py\", line 43, in test_i_u_a_percent_formats_are_not_flagged\n    assert \"E1307\" not in _lint(tmp_path, source)\nAssertionError: assert 'E1307' not in '***********... 0.00/10\\n\\n'\n  \n  'E1307' is contained here:\n    s.py:2:0: E1307: Argument 'builtins.float' does not match format type 'i' (bad-string-format-type)\n  ?           +++++\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:3:0: E1307: Argument 'builtins.float' does not match format type 'u' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:4:0: E1307: Argument 'builtins.float' does not match format type 'a' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:5:0: E1307: Argumen...\n  \n  ...Full output truncated (5 lines hidden), use '-vv' to show\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11147.py::test_i_u_a_percent_formats_are_not_flagged\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "steps": 32,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 6,
+          "run": 3,
+          "read_file": 16,
+          "write_test": 2,
+          "run_test": 1,
+          "write_scratch": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.018534,
+        "prompt_tokens": 339333,
+        "completion_tokens": 8698,
+        "cached_tokens": 318720,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11147-1790932800.json",
+        "duration_s": 90.5,
+        "test_path": "tests/test_failgate_issue_11147.py"
+      },
+      "intake_cost_usd": 0.000695,
+      "judge_cost_usd": 0.001225,
+      "judge_prompt_tokens": 2915,
+      "judge_completion_tokens": 355,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11140,
+      "title": "False negative: `unnecessary-negation` misses `not (a is not b)` and `not (a not in b)`",
+      "intake_version": "4.x (main branch)",
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "5ce1ffd4bf755f4e1622a59df94f4f11a5bea259",
+        "committed_at": "2026-07-04T06:58:32Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11140.py",
+        "run": {
+          "version": "5ce1ffd4bf",
+          "python": "3.14",
+          "env_key": "89c94e9eba504b2e07ac9d2dff6c47cb97181e9ff6177018abdf4ae25488f0f3",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert ['Consider ch...\"a is not b\"'] == ['Consider ch...a in values\"']",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 pylint 自身的 NotChecker 运行 issue 中的四个用例，实际只收到 `not a is b` / `not a in values` 两条消息，缺少 `not a is not b` 和 `not a not in values` 两条，与 issue 描述的 false negative 完全一致；断言检查的正是 issue 要求的预期行为，失败由被测包行为引起而非脚本自身。",
+            "quote": "Right contains 2 more items, first extra item: 'Consider changing \"not a is not b\" to \"a is b\"'",
+            "quote_found": true,
+            "cost_usd": 0.00122
+          },
+          "log_dir": "artifacts\\failgate-run-13d948d460",
+          "output_tail": "    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11140.py\", line 59, in test_unnecessary_negation_flags_negated_is_not_and_not_in\n    assert messages == [\n    ...<4 lines>...\n    ]\nAssertionError: assert ['Consider ch...\"a is not b\"'] == ['Consider ch...a in values\"']\n  \n  Right contains 2 more items, first extra item: 'Consider changing \"not a is not b\" to \"a is b\"'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11140.py::test_unnecessary_negation_flags_negated_is_not_and_not_in\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11140.py",
+            "claim": "A pytest test that lints `not a is not b` / `not a not in values` (plus the already-working `not a is b` / `not a in values` twins) with the NotChecker and asserts all four produce C0117 unnecessary-negation messages with the expected simplifications; on this commit only the two non-negated twins are emitted, so the test fails because `is not`/`not in` are missing from `reverse_op`.",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11140.\n\n``unnecessary-negation`` (C0117) flagged ``not (a is b)`` and ``not (a in b)``\nbut silently missed their negated siblings ``not (a is not b)`` and\n``not (a not in b)``, which are just as trivially simplifiable.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport textwrap\nfrom pathlib import Path\n\nfrom pylint import reporters\nfrom pylint.checkers.refactoring.not_checker import NotChecker\nfrom pylint.lint import PyLinter\n\nMODULE = textwrap.dedent(\n    \"\"\"\n    a = 1\n    b = 2\n    values = [1, 2]\n\n    def check():\n        if not a is not b:\n            pass\n        if not a not in values:\n            pass\n        if not a is b:\n            pass\n        if not a in values:\n            pass\n    \"\"\"\n)\n\n\ndef test_unnecessary_negation_flags_negated_is_not_and_not_in(\n    tmp_path: Path,\n) -> None:\n    \"\"\"The two missing operators must be simplified like their non-negated twins.\"\"\"\n    target = tmp_path / \"issue_11140.py\"\n    target.write_text(MODULE, encoding=\"utf-8\")\n\n    linter = PyLinter()\n    linter.register_checker(NotChecker(linter))\n    args = linter._arguments_manager._parse_command_line_configuration(\n        [str(target), \"--disable=all\", \"--enable=unnecessary-negation\"]\n    )\n    reporter = reporters.CollectingReporter()\n    linter.set_reporter(reporter)\n    linter.check(args)\n\n    messages = sorted(\n        m.msg for m in reporter.messages if m.symbol == \"unnecessary-negation\"\n    )\n    assert messages == [\n        'Consider changing \"not a in values\" to \"a not in values\"',\n        'Consider changing \"not a is b\" to \"a is not b\"',\n        'Consider changing \"not a is not b\" to \"a is b\"',\n        'Consider changing \"not a not in values\" to \"a in values\"',\n    ]\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11140.\n\n``unnecessary-negation`` (C0117) flagged ``not (a is b)`` and ``not (a in b)``\nbut silently missed their negated siblings ``not (a is not b)`` and\n``not (a not in b)``, which are just as trivially simplifiable.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport textwrap\nfrom pathlib import Path\n\nfrom pylint import reporters\nfrom pylint.checkers.refactoring.not_checker import NotChecker\nfrom pylint.lint import PyLinter\n\nMODULE = textwrap.dedent(\n    \"\"\"\n    a = 1\n    b = 2\n    values = [1, 2]\n\n    def check():\n        if not a is not b:\n            pass\n        if not a not in values:\n            pass\n        if not a is b:\n            pass\n        if not a in values:\n            pass\n    \"\"\"\n)\n\n\ndef test_unnecessary_negation_flags_negated_is_not_and_not_in(\n    tmp_path: Path,\n) -> None:\n    \"\"\"The two missing operators must be simplified like their non-negated twins.\"\"\"\n    target = tmp_path / \"issue_11140.py\"\n    target.write_text(MODULE, encoding=\"utf-8\")\n\n    linter = PyLinter()\n    linter.register_checker(NotChecker(linter))\n    args = linter._arguments_manager._parse_command_line_configuration(\n        [str(target), \"--disable=all\", \"--enable=unnecessary-negation\"]\n    )\n    reporter = reporters.CollectingReporter()\n    linter.set_reporter(reporter)\n    linter.check(args)\n\n    messages = sorted(\n        m.msg for m in reporter.messages if m.symbol == \"unnecessary-negation\"\n    )\n    assert messages == [\n        'Consider changing \"not a in values\" to \"a not in values\"',\n        'Consider changing \"not a is b\" to \"a is not b\"',\n        'Consider changing \"not a is not b\" to \"a is b\"',\n        'Consider changing \"not a not in values\" to \"a in values\"',\n    ]\n",
+        "final_run": {
+          "version": "5ce1ffd4bf",
+          "python": "3.14",
+          "env_key": "89c94e9eba504b2e07ac9d2dff6c47cb97181e9ff6177018abdf4ae25488f0f3",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert ['Consider ch...\"a is not b\"'] == ['Consider ch...a in values\"']",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 pylint 自身的 NotChecker 运行 issue 中的四个用例，实际只收到 `not a is b` / `not a in values` 两条消息，缺少 `not a is not b` 和 `not a not in values` 两条，与 issue 描述的 false negative 完全一致；断言检查的正是 issue 要求的预期行为，失败由被测包行为引起而非脚本自身。",
+            "quote": "Right contains 2 more items, first extra item: 'Consider changing \"not a is not b\" to \"a is b\"'",
+            "quote_found": true,
+            "cost_usd": 0.00122
+          },
+          "log_dir": "artifacts\\failgate-run-13d948d460",
+          "output_tail": "    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11140.py\", line 59, in test_unnecessary_negation_flags_negated_is_not_and_not_in\n    assert messages == [\n    ...<4 lines>...\n    ]\nAssertionError: assert ['Consider ch...\"a is not b\"'] == ['Consider ch...a in values\"']\n  \n  Right contains 2 more items, first extra item: 'Consider changing \"not a is not b\" to \"a is b\"'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11140.py::test_unnecessary_negation_flags_negated_is_not_and_not_in\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 34,
+        "tool_counts": {
+          "read_file": 8,
+          "search_code": 10,
+          "list_files": 1,
+          "write_scratch": 6,
+          "run": 6,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.020381,
+        "prompt_tokens": 395493,
+        "completion_tokens": 11313,
+        "cached_tokens": 380416,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11140-1790933028.json",
+        "duration_s": 118.0,
+        "test_path": "tests/test_failgate_issue_11140.py"
+      },
+      "intake_cost_usd": 0.000897,
+      "judge_cost_usd": 0.00122,
+      "judge_prompt_tokens": 2747,
+      "judge_completion_tokens": 393,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11136,
+      "title": "False positive: `too-many-locals` (R0914) counts PEP 695 type parameters as local variables",
+      "intake_version": "4.x (main branch)",
+      "intake_python": "3.12",
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "5153a7c08877a6c20f7a13e6604b892b0a5700ea",
+        "committed_at": "2026-07-04T05:42:24Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.12",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11136.py",
+        "run": {
+          "version": "5153a7c088",
+          "python": "3.12",
+          "env_key": "582d78c8d3c43fb85e4b727e9558d5a616115f2f92ff918f986c7a812ad26cc7",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "PEP <N> type parameters must not be counted as local variables, but pylint emitted: R<N> Too many local variables (<N><PATH>",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中的原始代码（16 个 PEP 695 类型参数 + 唯一真实局部变量 x）运行 pylint 的 too-many-locals 检查，实际输出正是 issue 描述的 R0914 Too many local variables (17/15)，断言检查的也正是 issue 的预期行为（不输出任何消息），失败由被测包行为导致而非脚本自身。",
+            "quote": "AssertionError: PEP 695 type parameters must not be counted as local variables, but pylint emitted: R0914 Too many local variables (17/15)",
+            "quote_found": true,
+            "cost_usd": 0.001078
+          },
+          "log_dir": "artifacts\\failgate-run-4b05cb583a",
+          "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11136.py\", line 49, in test_pep695_type_parameters_are_not_counted_as_locals\n    assert not reporter.messages, (\nAssertionError: PEP 695 type parameters must not be counted as local variables, but pylint emitted: R0914 Too many local variables (17/15)\nassert not [Message(msg_id='R0914', symbol='too-many-locals', msg='Too many local variables (17/15)', C='R', category='refactor',...ters_ar0/pep695_type_params.py', module='pep695_type_params', obj='build', line=1, column=0, end_line=1, end_column=9)]\n +  where [Message(msg_id='R0914', symbol='too-many-locals', msg='Too many local variables (17/15)', C='R', category='refactor',...ters_ar0/pep695_type_params.py', module='pep695_type_params', obj='build', line=1, column=0, end_line=1, end_column=9)] = <pylint.testutils.reporter_for_tests.GenericTestReporter object at 0x7965afffbb60>.messages\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11136.py::test_pep695_type_parameters_are_not_counted_as_locals\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.08s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11136.py",
+            "claim": "用 pylint 端到端运行 issue 里的代码（--disable=all --enable=too-many-locals），断言无任何消息；当前代码会报 R0914 Too many local variables (17/15)，把 16 个 PEP 695 类型参数当成局部变量，测试失败；修复后应为空通过。",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11136.\n\n``too-many-locals`` (R0914) used to count PEP 695 type parameters\n(``def f[T1, T2, ...]``) as runtime local variables, so a generic function\nwith many type parameters but almost no real locals falsely tripped the check.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nfrom pylint.testutils._run import _Run as Run\nfrom pylint.testutils.reporter_for_tests import GenericTestReporter\n\n# Exactly one real local variable (``x``) and 16 PEP 695 type parameters.\nGENERIC_FUNCTION = (\n    \"def build[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15,\"\n    \" T16](x: T1) -> T1:\\n\"\n    \"    return x\\n\"\n)\n\n\ndef test_pep695_type_parameters_are_not_counted_as_locals(tmp_path: Path) -> None:\n    \"\"\"No ``too-many-locals`` message for a function with 16 type parameters.\n\n    Type parameters are type-system constructs, not runtime local variables,\n    so pylint must not report ``R0914`` here (it previously reported\n    \"Too many local variables (17/15)\").\n    \"\"\"\n    module = tmp_path / \"pep695_type_params.py\"\n    module.write_text(GENERIC_FUNCTION, encoding=\"utf-8\")\n\n    reporter = GenericTestReporter()\n    Run(\n        [\n            str(module),\n            \"--disable=all\",\n            \"--enable=too-many-locals\",\n            \"--persistent=no\",\n        ],\n        reporter=reporter,\n        exit=False,\n    )\n\n    assert not reporter.messages, (\n        \"PEP 695 type parameters must not be counted as local variables, but \"\n        \"pylint emitted: \"\n        + \"; \".join(f\"{msg.msg_id} {msg.msg}\" for msg in reporter.messages)\n    )\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11136.\n\n``too-many-locals`` (R0914) used to count PEP 695 type parameters\n(``def f[T1, T2, ...]``) as runtime local variables, so a generic function\nwith many type parameters but almost no real locals falsely tripped the check.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nfrom pylint.testutils._run import _Run as Run\nfrom pylint.testutils.reporter_for_tests import GenericTestReporter\n\n# Exactly one real local variable (``x``) and 16 PEP 695 type parameters.\nGENERIC_FUNCTION = (\n    \"def build[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15,\"\n    \" T16](x: T1) -> T1:\\n\"\n    \"    return x\\n\"\n)\n\n\ndef test_pep695_type_parameters_are_not_counted_as_locals(tmp_path: Path) -> None:\n    \"\"\"No ``too-many-locals`` message for a function with 16 type parameters.\n\n    Type parameters are type-system constructs, not runtime local variables,\n    so pylint must not report ``R0914`` here (it previously reported\n    \"Too many local variables (17/15)\").\n    \"\"\"\n    module = tmp_path / \"pep695_type_params.py\"\n    module.write_text(GENERIC_FUNCTION, encoding=\"utf-8\")\n\n    reporter = GenericTestReporter()\n    Run(\n        [\n            str(module),\n            \"--disable=all\",\n            \"--enable=too-many-locals\",\n            \"--persistent=no\",\n        ],\n        reporter=reporter,\n        exit=False,\n    )\n\n    assert not reporter.messages, (\n        \"PEP 695 type parameters must not be counted as local variables, but \"\n        \"pylint emitted: \"\n        + \"; \".join(f\"{msg.msg_id} {msg.msg}\" for msg in reporter.messages)\n    )\n",
+        "final_run": {
+          "version": "5153a7c088",
+          "python": "3.12",
+          "env_key": "582d78c8d3c43fb85e4b727e9558d5a616115f2f92ff918f986c7a812ad26cc7",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "PEP <N> type parameters must not be counted as local variables, but pylint emitted: R<N> Too many local variables (<N><PATH>",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本用 issue 中的原始代码（16 个 PEP 695 类型参数 + 唯一真实局部变量 x）运行 pylint 的 too-many-locals 检查，实际输出正是 issue 描述的 R0914 Too many local variables (17/15)，断言检查的也正是 issue 的预期行为（不输出任何消息），失败由被测包行为导致而非脚本自身。",
+            "quote": "AssertionError: PEP 695 type parameters must not be counted as local variables, but pylint emitted: R0914 Too many local variables (17/15)",
+            "quote_found": true,
+            "cost_usd": 0.001078
+          },
+          "log_dir": "artifacts\\failgate-run-4b05cb583a",
+          "output_tail": "  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11136.py\", line 49, in test_pep695_type_parameters_are_not_counted_as_locals\n    assert not reporter.messages, (\nAssertionError: PEP 695 type parameters must not be counted as local variables, but pylint emitted: R0914 Too many local variables (17/15)\nassert not [Message(msg_id='R0914', symbol='too-many-locals', msg='Too many local variables (17/15)', C='R', category='refactor',...ters_ar0/pep695_type_params.py', module='pep695_type_params', obj='build', line=1, column=0, end_line=1, end_column=9)]\n +  where [Message(msg_id='R0914', symbol='too-many-locals', msg='Too many local variables (17/15)', C='R', category='refactor',...ters_ar0/pep695_type_params.py', module='pep695_type_params', obj='build', line=1, column=0, end_line=1, end_column=9)] = <pylint.testutils.reporter_for_tests.GenericTestReporter object at 0x7965afffbb60>.messages\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11136.py::test_pep695_type_parameters_are_not_counted_as_locals\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.08s"
+        },
+        "steps": 35,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 9,
+          "read_file": 11,
+          "write_scratch": 4,
+          "run": 4,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.019487,
+        "prompt_tokens": 398787,
+        "completion_tokens": 9525,
+        "cached_tokens": 379520,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11136-1790933241.json",
+        "duration_s": 105.8,
+        "test_path": "tests/test_failgate_issue_11136.py"
+      },
+      "intake_cost_usd": 0.001723,
+      "judge_cost_usd": 0.001078,
+      "judge_prompt_tokens": 2837,
+      "judge_completion_tokens": 252,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11130,
+      "title": "False positive: `nested-min-max` drops inner `key=`/`default=` and suggests a non-equivalent call",
+      "intake_version": "4.x (main branch)",
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "e91fca7d2839e260b3521b667c5fca86cfb56efa",
+        "committed_at": "2026-06-30T06:05:24Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11130.py",
+        "run": {
+          "version": "e91fca7d28",
+          "python": "3.14",
+          "env_key": "ba991287e0cfa1d163578082d313907dedf3afb221c43f8868e64ea3a073260f",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert 'nested-min-max' not in ['nested-min-max']",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 pylint 官方的 CheckerTestCase 直接驱动 NestedMinMaxChecker，输出显示对 `max(a, max(b, c, key=key))` 确实发出了 'nested-min-max' 消息（内层带 key= 仍被展平），这正是 issue 描述的误报行为；断言检查的也是 issue 的预期行为（内层带关键字时不应报告），失败原因来自被测包而非脚本自身。仅因只跑到第一个用例（default/splat/外层用例未执行）而未覆盖全部场景，故略低于满分。",
+            "quote": "AssertionError: assert 'nested-min-max' not in ['nested-min-max']\n +  where ['nested-min-max'] = _messages_for('\\n        def f(a, b, c, key):\\n            return max(a, max(b, c, key=key))\\n        ')",
+            "quote_found": true,
+            "cost_usd": 0.001301
+          },
+          "log_dir": "artifacts\\failgate-run-94c88c3650",
+          "output_tail": "    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11130.py\", line 38, in test_no_message_when_inner_call_has_keyword\n    assert NESTED_MIN_MAX not in self._messages_for(code)\nAssertionError: assert 'nested-min-max' not in ['nested-min-max']\n +  where ['nested-min-max'] = _messages_for('\\n        def f(a, b, c, key):\\n            return max(a, max(b, c, key=key))\\n        ')\n +    where _messages_for = <test_failgate_issue_11130.TestNestedMinMaxInnerKeyword object at 0x77bd704d0e10>._messages_for\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11130.py::TestNestedMinMaxInnerKeyword::test_no_message_when_inner_call_has_keyword\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11130.py",
+            "claim": "nested-min-max falsely flags inner min/max calls carrying key=/default= (dropping them in the suggested rewrite); the test asserts no W3301 for inner-keyword cases (plain, default=, splat path) while the outer-keyword max(a, max(b,c), key=k) is still reported. It fails on the unfixed checker because the first three cases each emit nested-min-max.",
+            "script": "\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11130.\n\n``nested-min-max`` (W3301) must not suggest flattening a nested ``min``/``max``\ncall when the *inner* call carries keyword arguments (``key=``/``default=``).\nThe suggested replacement silently drops those keywords, so it is not\nequivalent to the original expression, e.g.::\n\n    max(a, max(b, c, key=key))  # original\n    max(a, b, c)                # pylint's (wrong) suggestion\n\nThe *outer* keyword case ``max(a, max(b, c), key=k)`` is still reported: there\nthe keyword applies to every argument, so flattening keeps the same semantics.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\n\nfrom pylint.checkers.nested_min_max import NestedMinMaxChecker\nfrom pylint.testutils import CheckerTestCase\n\nNESTED_MIN_MAX = \"nested-min-max\"\n\n\nclass TestNestedMinMaxInnerKeyword(CheckerTestCase):\n    CHECKER_CLASS = NestedMinMaxChecker\n\n    def _messages_for(self, code: str) -> list[str]:\n        self.walk(astroid.parse(code))\n        return [message.msg_id for message in self.linter.release_messages()]\n\n    def test_no_message_when_inner_call_has_keyword(self) -> None:\n        \"\"\"An inner call with ``key=`` must not be flattened.\"\"\"\n        code = \"\"\"\n        def f(a, b, c, key):\n            return max(a, max(b, c, key=key))\n        \"\"\"\n        assert NESTED_MIN_MAX not in self._messages_for(code)\n\n    def test_no_message_when_inner_call_has_default(self) -> None:\n        code = \"\"\"\n        def f(a, b, c):\n            return min(a, min(b, c, default=0))\n        \"\"\"\n        assert NESTED_MIN_MAX not in self._messages_for(code)\n\n    def test_no_message_when_inner_call_has_keyword_on_splat_path(self) -> None:\n        code = \"\"\"\n        LIST = [1, 2]\n        def f(key):\n            return max(3, max(LIST, key=key))\n        \"\"\"\n        assert NESTED_MIN_MAX not in self._messages_for(code)\n\n    def test_outer_keyword_is_still_reported(self) -> None:\n        \"\"\"``key`` on the outer call applies to all arguments; keep flagging it.\"\"\"\n        code = \"\"\"\n        def f(a, b, c, key):\n            return max(a, max(b, c), key=key)\n        \"\"\"\n        assert self._messages_for(code).count(NESTED_MIN_MAX) == 1\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11130.\n\n``nested-min-max`` (W3301) must not suggest flattening a nested ``min``/``max``\ncall when the *inner* call carries keyword arguments (``key=``/``default=``).\nThe suggested replacement silently drops those keywords, so it is not\nequivalent to the original expression, e.g.::\n\n    max(a, max(b, c, key=key))  # original\n    max(a, b, c)                # pylint's (wrong) suggestion\n\nThe *outer* keyword case ``max(a, max(b, c), key=k)`` is still reported: there\nthe keyword applies to every argument, so flattening keeps the same semantics.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\n\nfrom pylint.checkers.nested_min_max import NestedMinMaxChecker\nfrom pylint.testutils import CheckerTestCase\n\nNESTED_MIN_MAX = \"nested-min-max\"\n\n\nclass TestNestedMinMaxInnerKeyword(CheckerTestCase):\n    CHECKER_CLASS = NestedMinMaxChecker\n\n    def _messages_for(self, code: str) -> list[str]:\n        self.walk(astroid.parse(code))\n        return [message.msg_id for message in self.linter.release_messages()]\n\n    def test_no_message_when_inner_call_has_keyword(self) -> None:\n        \"\"\"An inner call with ``key=`` must not be flattened.\"\"\"\n        code = \"\"\"\n        def f(a, b, c, key):\n            return max(a, max(b, c, key=key))\n        \"\"\"\n        assert NESTED_MIN_MAX not in self._messages_for(code)\n\n    def test_no_message_when_inner_call_has_default(self) -> None:\n        code = \"\"\"\n        def f(a, b, c):\n            return min(a, min(b, c, default=0))\n        \"\"\"\n        assert NESTED_MIN_MAX not in self._messages_for(code)\n\n    def test_no_message_when_inner_call_has_keyword_on_splat_path(self) -> None:\n        code = \"\"\"\n        LIST = [1, 2]\n        def f(key):\n            return max(3, max(LIST, key=key))\n        \"\"\"\n        assert NESTED_MIN_MAX not in self._messages_for(code)\n\n    def test_outer_keyword_is_still_reported(self) -> None:\n        \"\"\"``key`` on the outer call applies to all arguments; keep flagging it.\"\"\"\n        code = \"\"\"\n        def f(a, b, c, key):\n            return max(a, max(b, c), key=key)\n        \"\"\"\n        assert self._messages_for(code).count(NESTED_MIN_MAX) == 1\n",
+        "final_run": {
+          "version": "e91fca7d28",
+          "python": "3.14",
+          "env_key": "ba991287e0cfa1d163578082d313907dedf3afb221c43f8868e64ea3a073260f",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert 'nested-min-max' not in ['nested-min-max']",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本用 pylint 官方的 CheckerTestCase 直接驱动 NestedMinMaxChecker，输出显示对 `max(a, max(b, c, key=key))` 确实发出了 'nested-min-max' 消息（内层带 key= 仍被展平），这正是 issue 描述的误报行为；断言检查的也是 issue 的预期行为（内层带关键字时不应报告），失败原因来自被测包而非脚本自身。仅因只跑到第一个用例（default/splat/外层用例未执行）而未覆盖全部场景，故略低于满分。",
+            "quote": "AssertionError: assert 'nested-min-max' not in ['nested-min-max']\n +  where ['nested-min-max'] = _messages_for('\\n        def f(a, b, c, key):\\n            return max(a, max(b, c, key=key))\\n        ')",
+            "quote_found": true,
+            "cost_usd": 0.001301
+          },
+          "log_dir": "artifacts\\failgate-run-94c88c3650",
+          "output_tail": "    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11130.py\", line 38, in test_no_message_when_inner_call_has_keyword\n    assert NESTED_MIN_MAX not in self._messages_for(code)\nAssertionError: assert 'nested-min-max' not in ['nested-min-max']\n +  where ['nested-min-max'] = _messages_for('\\n        def f(a, b, c, key):\\n            return max(a, max(b, c, key=key))\\n        ')\n +    where _messages_for = <test_failgate_issue_11130.TestNestedMinMaxInnerKeyword object at 0x77bd704d0e10>._messages_for\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11130.py::TestNestedMinMaxInnerKeyword::test_no_message_when_inner_call_has_keyword\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 20,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 3,
+          "read_file": 5,
+          "write_scratch": 2,
+          "run": 2,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.013547,
+        "prompt_tokens": 220484,
+        "completion_tokens": 6344,
+        "cached_tokens": 204800,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11130-1790933422.json",
+        "duration_s": 68.3,
+        "test_path": "tests/test_failgate_issue_11130.py"
+      },
+      "intake_cost_usd": 0.001632,
+      "judge_cost_usd": 0.001301,
+      "judge_prompt_tokens": 2941,
+      "judge_completion_tokens": 412,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11102,
+      "title": "AttributeError: `'Slice' object has no attribute 'name'` in async checker",
+      "intake_version": "pylint-dev/pylint@2f47d86123",
+      "intake_python": "3.14.5",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "2f47d86123f35511587532556c009b436f71ca37",
+        "committed_at": "2026-06-09T02:59:43Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.6.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_11102.py",
+        "run": {
+          "version": "2f47d86123",
+          "python": "3.14",
+          "env_key": "4e45990f73fd4fd1d0579e65f00d2d2fe4e2d1f7036f5904e06e8d39d088948c",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.6935,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'Slice' object has no attribute 'name'. Did you mean: 'qname'?",
+              "frames": [
+                "pylint/utils/ast_walker.py:walk",
+                "pylint/checkers/async_checker.py:visit_asyncwith"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'Slice' object has no attribute 'name'. Did you mean: 'frame'?",
+              "frames": [
+                "pylint/pylint/utils/ast_walker.py:walk",
+                "pylint/pylint/checkers/async_checker.py:visit_asyncwith"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-fbfbd87bec",
+          "output_tail": "           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11102.py\", line 39, in test_async_with_slice_does_not_crash\n    self.walk(node)\n    ~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/testutils/checker_test_case.py\", line 114, in walk\n    walker.walk(node)\n    ~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 90, in walk\n    self.walk(child)\n    ~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/async_checker.py\", line 92, in visit_asyncwith\n    \"not-async-context-manager\", node=node, args=(inferred.name,)\n                                                  ^^^^^^^^^^^^^\nAttributeError: 'Slice' object has no attribute 'name'. Did you mean: 'qname'?\n----------------------------- Captured stderr call -----------------------------\nException on node <AsyncWith l.3 at 0x77f4c171ee40> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/async_checker.py\", line 92, in visit_asyncwith\n    \"not-async-context-manager\", node=node, args=(inferred.name,)\n                                                  ^^^^^^^^^^^^^\nAttributeError: 'Slice' object has no attribute 'name'. Did you mean: 'qname'?\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11102.py::TestAsyncCheckerSliceContextManager::test_async_with_slice_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11102.py",
+            "claim": "Running AsyncChecker.visit_asyncwith on `async with slice(None)` reproduces the reported AttributeError: 'Slice' object has no attribute 'name' at async_checker.py:92 (args=(inferred.name,)); the test asserts no crash by walking the module.",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11102.\n\nUsing a plain ``slice`` object as an async context manager used to crash the\nasync checker with ``AttributeError: 'Slice' object has no attribute 'name'``\nwhen the inferred node has no ``name`` attribute.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport re\n\nimport astroid\n\nfrom pylint.checkers import async_checker\nfrom pylint.testutils import CheckerTestCase\n\n\nclass TestAsyncCheckerSliceContextManager(CheckerTestCase):\n    \"\"\"Regression test for a crash in :class:`AsyncChecker`.\"\"\"\n\n    CHECKER_CLASS = async_checker.AsyncChecker\n    CONFIG = {\n        \"mixin_class_rgx\": re.compile(\".*Mixin$\"),\n        \"ignored_checks_for_mixins\": [],\n    }\n\n    def test_async_with_slice_does_not_crash(self) -> None:\n        node = astroid.extract_node(\n            \"\"\"\n        async def fn(): #@\n            async with slice(None):\n                pass\n        \"\"\"\n        )\n        self.walk(node)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.6935
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11102.\n\nUsing a plain ``slice`` object as an async context manager used to crash the\nasync checker with ``AttributeError: 'Slice' object has no attribute 'name'``\nwhen the inferred node has no ``name`` attribute.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport re\n\nimport astroid\n\nfrom pylint.checkers import async_checker\nfrom pylint.testutils import CheckerTestCase\n\n\nclass TestAsyncCheckerSliceContextManager(CheckerTestCase):\n    \"\"\"Regression test for a crash in :class:`AsyncChecker`.\"\"\"\n\n    CHECKER_CLASS = async_checker.AsyncChecker\n    CONFIG = {\n        \"mixin_class_rgx\": re.compile(\".*Mixin$\"),\n        \"ignored_checks_for_mixins\": [],\n    }\n\n    def test_async_with_slice_does_not_crash(self) -> None:\n        node = astroid.extract_node(\n            \"\"\"\n        async def fn(): #@\n            async with slice(None):\n                pass\n        \"\"\"\n        )\n        self.walk(node)\n",
+        "final_run": {
+          "version": "2f47d86123",
+          "python": "3.14",
+          "env_key": "4e45990f73fd4fd1d0579e65f00d2d2fe4e2d1f7036f5904e06e8d39d088948c",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.6935,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'Slice' object has no attribute 'name'. Did you mean: 'qname'?",
+              "frames": [
+                "pylint/utils/ast_walker.py:walk",
+                "pylint/checkers/async_checker.py:visit_asyncwith"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'Slice' object has no attribute 'name'. Did you mean: 'frame'?",
+              "frames": [
+                "pylint/pylint/utils/ast_walker.py:walk",
+                "pylint/pylint/checkers/async_checker.py:visit_asyncwith"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-fbfbd87bec",
+          "output_tail": "           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11102.py\", line 39, in test_async_with_slice_does_not_crash\n    self.walk(node)\n    ~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/testutils/checker_test_case.py\", line 114, in walk\n    walker.walk(node)\n    ~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 90, in walk\n    self.walk(child)\n    ~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/async_checker.py\", line 92, in visit_asyncwith\n    \"not-async-context-manager\", node=node, args=(inferred.name,)\n                                                  ^^^^^^^^^^^^^\nAttributeError: 'Slice' object has no attribute 'name'. Did you mean: 'qname'?\n----------------------------- Captured stderr call -----------------------------\nException on node <AsyncWith l.3 at 0x77f4c171ee40> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/async_checker.py\", line 92, in visit_asyncwith\n    \"not-async-context-manager\", node=node, args=(inferred.name,)\n                                                  ^^^^^^^^^^^^^\nAttributeError: 'Slice' object has no attribute 'name'. Did you mean: 'qname'?\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11102.py::TestAsyncCheckerSliceContextManager::test_async_with_slice_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 25,
+        "tool_counts": {
+          "read_file": 8,
+          "list_files": 4,
+          "search_code": 5,
+          "write_scratch": 2,
+          "run": 2,
+          "write_test": 2,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.009928,
+        "prompt_tokens": 187852,
+        "completion_tokens": 4054,
+        "cached_tokens": 174464,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11102-1790933609.json",
+        "duration_s": 92.7,
+        "test_path": "tests/test_failgate_issue_11102.py"
+      },
+      "intake_cost_usd": 0.000562,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    }
+  ],
+  "fbpa": [
+    {
+      "number": 11267,
+      "title": "Crash `AttributeError: 'For' object has no attribute 'value'` when `x.__class__` is a for-loop, `with`, or unpacking target",
+      "reported_version": "4.1.0-dev0",
+      "python": "3.13",
+      "proxy": "—",
+      "fix": {
+        "pr": 11268,
+        "sha": "cc609701f092ba24bb79d7c39494c9e16ac86aba",
+        "parent": "5632ffeb3d74ec998145da60400acea8f8041737",
+        "committed_at": "2026-08-15T17:28:17Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.8.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.281,
+          "tail": "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1851, in visit_assignattr\n    self._check_invalid_class_object(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1867, in _check_invalid_class_object\n    inferred = safe_infer(node.parent.value)\n                          ^^^^^^^^^^^^^^^^^\nAttributeError: 'For' object has no attribute 'value'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11267.py::test_class_checker_does_not_crash_on_for_loop_class_target\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-51c419f713"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.781,
+          "tail": "Traceback (most recent call last):\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1851, in visit_assignattr\n    self._check_invalid_class_object(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pylint/checkers/classes/class_checker.py\", line 1867, in _check_invalid_class_object\n    inferred = safe_infer(node.parent.value)\n                          ^^^^^^^^^^^^^^^^^\nAttributeError: 'For' object has no attribute 'value'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11267.py::test_class_checker_does_not_crash_on_for_loop_class_target\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-345483cc0d"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.781,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-36d372ae7c"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.297,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-e236a6c9da"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11231,
+      "title": "False positive invalid-name (C0103) for module-level TypedDict instantiation, regression from PR #10673",
+      "reported_version": "4.0.6",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 11232,
+        "sha": "d9b20de170c8195e2493dccbded9f229baeb885f",
+        "parent": "004341d24de41186f10f85bc2e96f743f49c1c45",
+        "committed_at": "2026-08-09T14:49:12Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.188,
+          "tail": "    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11231.py\", line 47, in test_no_invalid_name_for_module_level_typeddict_instance\n    assert messages == []\nAssertionError: assert [('C0103', 8,...aming style')] == []\n  \n  Left contains one more item: ('C0103', 8, 'Class name \"_DEFAULT_VALUE\" doesn\\'t conform to PascalCase naming style')\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11231.py::test_no_invalid_name_for_module_level_typeddict_instance\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.23s",
+          "log_dir": "artifacts\\failgate-run-521bee79ba"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.078,
+          "tail": "    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11231.py\", line 47, in test_no_invalid_name_for_module_level_typeddict_instance\n    assert messages == []\nAssertionError: assert [('C0103', 8,...aming style')] == []\n  \n  Left contains one more item: ('C0103', 8, 'Class name \"_DEFAULT_VALUE\" doesn\\'t conform to PascalCase naming style')\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11231.py::test_no_invalid_name_for_module_level_typeddict_instance\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.23s",
+          "log_dir": "artifacts\\failgate-run-0a1750c70c"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.062,
+          "tail": ".                                                                        [100%]\n1 passed in 0.22s",
+          "log_dir": "artifacts\\failgate-run-fb4031a166"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.125,
+          "tail": ".                                                                        [100%]\n1 passed in 0.25s",
+          "log_dir": "artifacts\\failgate-run-64200e8e65"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11228,
+      "title": "`AttributeError: 'FunctionDef' object has no attribute 'ancestors'` in docparams checker",
+      "reported_version": "pylint-dev/pylint@a219ca322",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 11222,
+      "title": "AttributeError: 'UnaryOp' object has no attribute 'value'",
+      "reported_version": "pylint-dev/pylint@e95c41667",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 11225,
+        "sha": "a219ca3227524b017feab30a5f59118adaeb4eb5",
+        "parent": "2fdee6bc7b190dc270d943c77aed5962016d9ce9",
+        "committed_at": "2026-08-03T20:23:36Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.938,
+          "tail": "    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 714, in visit_call\n    self._check_shallow_copy_environ(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 660, in _check_shallow_copy_environ\n    arg = utils.infer_kwarg_from_call(node, keyword=\"x\")\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/utils.py\", line 760, in infer_kwarg_from_call\n    if item[0].value == keyword:\n       ^^^^^^^^^^^^^\nAttributeError: 'UnaryOp' object has no attribute 'value'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11222.py::TestShallowCopyEnvironWithNonConstantKeyword::test_copy_call_with_unaryop_dict_key_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-1115daf713"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.859,
+          "tail": "    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 714, in visit_call\n    self._check_shallow_copy_environ(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/stdlib.py\", line 660, in _check_shallow_copy_environ\n    arg = utils.infer_kwarg_from_call(node, keyword=\"x\")\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/utils.py\", line 760, in infer_kwarg_from_call\n    if item[0].value == keyword:\n       ^^^^^^^^^^^^^\nAttributeError: 'UnaryOp' object has no attribute 'value'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11222.py::TestShallowCopyEnvironWithNonConstantKeyword::test_copy_call_with_unaryop_dict_key_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-f35fb3f0ee"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.89,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-4fd2613c90"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.922,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-67ff473aac"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11198,
+      "title": "Crash on using getattr on a classmethod",
+      "reported_version": "4.0.6",
+      "python": "3.13",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 11175,
+      "title": "Crash (astroid-error) in comparison-with-callable when comparing a lambda assigned as a class attribute",
+      "reported_version": "4.1.0-dev0",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 11186,
+        "sha": "caecb914f37607610e9a1d31b7eaeec8b9c273d2",
+        "parent": "7f0d9a706ad6d549168bad4acb446cf5be36f2ae",
+        "committed_at": "2026-08-09T14:26:42Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.828,
+          "tail": "  File \"/opt/venv/lib/python3.12/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 367, in visit_compare\n    self._check_callable_comparison(node)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 350, in _check_callable_comparison\n    and \"typing._SpecialForm\" not in inferred.decoratornames()\n                                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'Lambda' object has no attribute 'decoratornames'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11175.py::TestComparisonWithCallableOnBoundLambda::test_comparing_bound_lambda_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\failgate-run-9214ab02fd"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.859,
+          "tail": "  File \"/opt/venv/lib/python3.12/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 367, in visit_compare\n    self._check_callable_comparison(node)\n  File \"/opt/venv/lib/python3.12/site-packages/pylint/checkers/base/comparison_checker.py\", line 350, in _check_callable_comparison\n    and \"typing._SpecialForm\" not in inferred.decoratornames()\n                                     ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'Lambda' object has no attribute 'decoratornames'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11175.py::TestComparisonWithCallableOnBoundLambda::test_comparing_bound_lambda_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\failgate-run-bbaa85b086"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.813,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-9f3cb0df64"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.797,
+          "tail": ".                                                                        [100%]\n1 passed in 0.07s",
+          "log_dir": "artifacts\\failgate-run-deea071526"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11148,
+      "title": "`useless-parent-delegation` (W0246) false positive when an override changes a positional-only default",
+      "reported_version": "main (2bfab5f)",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 11151,
+        "sha": "d7e833f05e9f936a2ca26d6e167f070e88618cc1",
+        "parent": "d654d3898abafa4472ce46a711aa972ac97a99f7",
+        "committed_at": "2026-07-05T04:56:28Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.828,
+          "tail": "          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11148.py\", line 52, in test_posonly_default_change_is_not_useless_parent_delegation\n    assert emitted == [], (\nAssertionError: Overriding a method while changing the default of a positional-only parameter must not be reported as useless-parent-delegation, but got: ['W0246']\nassert ['W0246'] == []\n  \n  Left contains one more item: 'W0246'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11148.py::test_posonly_default_change_is_not_useless_parent_delegation\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.08s",
+          "log_dir": "artifacts\\failgate-run-8331933b1b"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.828,
+          "tail": "          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11148.py\", line 52, in test_posonly_default_change_is_not_useless_parent_delegation\n    assert emitted == [], (\nAssertionError: Overriding a method while changing the default of a positional-only parameter must not be reported as useless-parent-delegation, but got: ['W0246']\nassert ['W0246'] == []\n  \n  Left contains one more item: 'W0246'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11148.py::test_posonly_default_change_is_not_useless_parent_delegation\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\failgate-run-b0754f684c"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.781,
+          "tail": ".                                                                        [100%]\n1 passed in 0.07s",
+          "log_dir": "artifacts\\failgate-run-710b4e44d9"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.187,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-f79d1bc3a1"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11147,
+      "title": "`bad-string-format-type` (E1307) false positives for `%i`, `%u` and `%a`",
+      "reported_version": "main (2bfab5f)",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 11150,
+        "sha": "9b5b337d58916911a49c3d0bd5ba40a3e5c0fabd",
+        "parent": "60edffe5babc4ae5906b2806f285c50776f53487",
+        "committed_at": "2026-07-05T06:49:22Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.813,
+          "tail": "    assert \"E1307\" not in _lint(tmp_path, source)\nAssertionError: assert 'E1307' not in '***********... 0.00/10\\n\\n'\n  \n  'E1307' is contained here:\n    s.py:2:0: E1307: Argument 'builtins.float' does not match format type 'i' (bad-string-format-type)\n  ?           +++++\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:3:0: E1307: Argument 'builtins.float' does not match format type 'u' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:4:0: E1307: Argument 'builtins.float' does not match format type 'a' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:5:0: E1307: Argumen...\n  \n  ...Full output truncated (5 lines hidden), use '-vv' to show\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11147.py::test_i_u_a_percent_formats_are_not_flagged\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.08s",
+          "log_dir": "artifacts\\failgate-run-5d921988b2"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.828,
+          "tail": "    assert \"E1307\" not in _lint(tmp_path, source)\nAssertionError: assert 'E1307' not in '***********... 0.00/10\\n\\n'\n  \n  'E1307' is contained here:\n    s.py:2:0: E1307: Argument 'builtins.float' does not match format type 'i' (bad-string-format-type)\n  ?           +++++\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:3:0: E1307: Argument 'builtins.float' does not match format type 'u' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:4:0: E1307: Argument 'builtins.float' does not match format type 'a' (bad-string-format-type)\n    /tmp/pytest-of-failgate/pytest-0/test_i_u_a_percent_formats_are0/format_types.py:5:0: E1307: Argumen...\n  \n  ...Full output truncated (5 lines hidden), use '-vv' to show\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11147.py::test_i_u_a_percent_formats_are_not_flagged\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.08s",
+          "log_dir": "artifacts\\failgate-run-0130ccff23"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.812,
+          "tail": "..                                                                       [100%]\n2 passed in 0.10s",
+          "log_dir": "artifacts\\failgate-run-77237288d9"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.828,
+          "tail": "..                                                                       [100%]\n2 passed in 0.10s",
+          "log_dir": "artifacts\\failgate-run-d6766f6af7"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11140,
+      "title": "False negative: `unnecessary-negation` misses `not (a is not b)` and `not (a not in b)`",
+      "reported_version": "4.x (main branch)",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 11141,
+        "sha": "60edffe5babc4ae5906b2806f285c50776f53487",
+        "parent": "d7e833f05e9f936a2ca26d6e167f070e88618cc1",
+        "committed_at": "2026-07-05T06:25:49Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.906,
+          "tail": "    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11140.py\", line 59, in test_unnecessary_negation_flags_negated_is_not_and_not_in\n    assert messages == [\n    ...<4 lines>...\n    ]\nAssertionError: assert ['Consider ch...\"a is not b\"'] == ['Consider ch...a in values\"']\n  \n  Right contains 2 more items, first extra item: 'Consider changing \"not a is not b\" to \"a is b\"'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11140.py::test_unnecessary_negation_flags_negated_is_not_and_not_in\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-20f78cf6f6"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.906,
+          "tail": "    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11140.py\", line 59, in test_unnecessary_negation_flags_negated_is_not_and_not_in\n    assert messages == [\n    ...<4 lines>...\n    ]\nAssertionError: assert ['Consider ch...\"a is not b\"'] == ['Consider ch...a in values\"']\n  \n  Right contains 2 more items, first extra item: 'Consider changing \"not a is not b\" to \"a is b\"'\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11140.py::test_unnecessary_negation_flags_negated_is_not_and_not_in\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-f133dc10f2"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.891,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-1eda9e4511"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.922,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-2c912c7f97"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11136,
+      "title": "False positive: `too-many-locals` (R0914) counts PEP 695 type parameters as local variables",
+      "reported_version": "4.x (main branch)",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 11138,
+        "sha": "e628929a7213be2cd70ac315dc92361ce83faac0",
+        "parent": "5ce1ffd4bf755f4e1622a59df94f4f11a5bea259",
+        "committed_at": "2026-07-04T07:23:36Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.813,
+          "tail": "  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11136.py\", line 49, in test_pep695_type_parameters_are_not_counted_as_locals\n    assert not reporter.messages, (\nAssertionError: PEP 695 type parameters must not be counted as local variables, but pylint emitted: R0914 Too many local variables (17/15)\nassert not [Message(msg_id='R0914', symbol='too-many-locals', msg='Too many local variables (17/15)', C='R', category='refactor',...ters_ar0/pep695_type_params.py', module='pep695_type_params', obj='build', line=1, column=0, end_line=1, end_column=9)]\n +  where [Message(msg_id='R0914', symbol='too-many-locals', msg='Too many local variables (17/15)', C='R', category='refactor',...ters_ar0/pep695_type_params.py', module='pep695_type_params', obj='build', line=1, column=0, end_line=1, end_column=9)] = <pylint.testutils.reporter_for_tests.GenericTestReporter object at 0x7d5b03f5a540>.messages\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11136.py::test_pep695_type_parameters_are_not_counted_as_locals\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts\\failgate-run-ddea452b68"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.813,
+          "tail": "  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_11136.py\", line 49, in test_pep695_type_parameters_are_not_counted_as_locals\n    assert not reporter.messages, (\nAssertionError: PEP 695 type parameters must not be counted as local variables, but pylint emitted: R0914 Too many local variables (17/15)\nassert not [Message(msg_id='R0914', symbol='too-many-locals', msg='Too many local variables (17/15)', C='R', category='refactor',...ters_ar0/pep695_type_params.py', module='pep695_type_params', obj='build', line=1, column=0, end_line=1, end_column=9)]\n +  where [Message(msg_id='R0914', symbol='too-many-locals', msg='Too many local variables (17/15)', C='R', category='refactor',...ters_ar0/pep695_type_params.py', module='pep695_type_params', obj='build', line=1, column=0, end_line=1, end_column=9)] = <pylint.testutils.reporter_for_tests.GenericTestReporter object at 0x707cd7b7eb40>.messages\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11136.py::test_pep695_type_parameters_are_not_counted_as_locals\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.08s",
+          "log_dir": "artifacts\\failgate-run-d0c186b185"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.813,
+          "tail": ".                                                                        [100%]\n1 passed in 0.08s",
+          "log_dir": "artifacts\\failgate-run-f2f96b1c2b"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.797,
+          "tail": ".                                                                        [100%]\n1 passed in 0.08s",
+          "log_dir": "artifacts\\failgate-run-a2f9ce0171"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11130,
+      "title": "False positive: `nested-min-max` drops inner `key=`/`default=` and suggests a non-equivalent call",
+      "reported_version": "4.x (main branch)",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 11131,
+        "sha": "0ad31b7c817b57e2aa8a5abb568b76a438a59121",
+        "parent": "e91fca7d2839e260b3521b667c5fca86cfb56efa",
+        "committed_at": "2026-07-04T05:16:16Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.922,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11130.py\", line 38, in test_no_message_when_inner_call_has_keyword\n    assert NESTED_MIN_MAX not in self._messages_for(code)\nAssertionError: assert 'nested-min-max' not in ['nested-min-max']\n +  where ['nested-min-max'] = _messages_for('\\n        def f(a, b, c, key):\\n            return max(a, max(b, c, key=key))\\n        ')\n +    where _messages_for = <test_failgate_issue_11130.TestNestedMinMaxInnerKeyword object at 0x7f008f85ce10>._messages_for\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11130.py::TestNestedMinMaxInnerKeyword::test_no_message_when_inner_call_has_keyword\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-7fc6a3b70a"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.89,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_11130.py\", line 38, in test_no_message_when_inner_call_has_keyword\n    assert NESTED_MIN_MAX not in self._messages_for(code)\nAssertionError: assert 'nested-min-max' not in ['nested-min-max']\n +  where ['nested-min-max'] = _messages_for('\\n        def f(a, b, c, key):\\n            return max(a, max(b, c, key=key))\\n        ')\n +    where _messages_for = <test_failgate_issue_11130.TestNestedMinMaxInnerKeyword object at 0x760ef8c40e10>._messages_for\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11130.py::TestNestedMinMaxInnerKeyword::test_no_message_when_inner_call_has_keyword\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-e82cd613cd"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.469,
+          "tail": "....                                                                     [100%]\n4 passed in 0.07s",
+          "log_dir": "artifacts\\failgate-run-cac0c9ea4e"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.907,
+          "tail": "....                                                                     [100%]\n4 passed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-7b4113c974"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11102,
+      "title": "AttributeError: `'Slice' object has no attribute 'name'` in async checker",
+      "reported_version": "pylint-dev/pylint@2f47d86123",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 11103,
+        "sha": "c4f8d9b94dbb8fd0844154d577779b98f8edf05a",
+        "parent": "2757ade252e3716ae9fee80969090c161a65fc38",
+        "committed_at": "2026-06-14T18:28:00Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.6.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.906,
+          "tail": "AttributeError: 'Slice' object has no attribute 'name'. Did you mean: 'qname'?\n----------------------------- Captured stderr call -----------------------------\nException on node <AsyncWith l.3 at 0x7e3c0218ae40> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/async_checker.py\", line 92, in visit_asyncwith\n    \"not-async-context-manager\", node=node, args=(inferred.name,)\n                                                  ^^^^^^^^^^^^^\nAttributeError: 'Slice' object has no attribute 'name'. Did you mean: 'qname'?\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11102.py::TestAsyncCheckerSliceContextManager::test_async_with_slice_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-91470e0623"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.891,
+          "tail": "AttributeError: 'Slice' object has no attribute 'name'. Did you mean: 'qname'?\n----------------------------- Captured stderr call -----------------------------\nException on node <AsyncWith l.3 at 0x7f46e76f6e40> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/async_checker.py\", line 92, in visit_asyncwith\n    \"not-async-context-manager\", node=node, args=(inferred.name,)\n                                                  ^^^^^^^^^^^^^\nAttributeError: 'Slice' object has no attribute 'name'. Did you mean: 'qname'?\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11102.py::TestAsyncCheckerSliceContextManager::test_async_with_slice_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-f4bf50557f"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.922,
+          "tail": ".                                                                        [100%]\n1 passed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-ac46a119db"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.906,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-1aa4af2ffd"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    }
+  ]
+}

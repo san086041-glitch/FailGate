@@ -42,6 +42,14 @@ def _f(name: str, status: str = "modified") -> PullFile:
     return PullFile(filename=name, status=status)
 
 
+def test_doc_dirs_and_changelog_fragments_are_not_source():
+    files = [_f("docs/pylock.rst"), _f("doc/whatsnew/fragments/123.fix"),
+             _f("changelog.d/9.bugfix"), _f("CHANGELOG.rst"), _f("tests/test_x.py")]
+    assert fxs.source_changes(files, "tests") == []
+    assert fxs.source_changes([*files, _f("src/packaging/pylock.py")], "tests") == [
+        "src/packaging/pylock.py"]
+
+
 def test_skip_reason_and_source_changes():
     tests_only = [_f("tests/data/cases/x.py"), _f("CHANGES.md")]
     assert fxs.skip_reason(tests_only, "tests") == "no_source_change"

@@ -311,6 +311,27 @@ def test_l2_replay_summary_and_render():
     assert json.loads(l2replay.dump(reports, cases, meta))["summary"]["l2"] == 2
 
 
+def test_l2_record_round_trip_and_refbpa_note(tmp_path):
+    """replay l2-fbpa 读回记录、只换掉重跑的那几题，报告写明补跑了什么（ADR 0040 补充）。"""
+    reports = [l2_report(1), l2_report(2)]
+    cases = [FbpaCase(number=1, title="a", proxy="—", outcome="fb_pa"),
+             FbpaCase(number=2, title="b", proxy="—", outcome="setup_failed", error="ReadTimeout")]
+    meta = {"started": "t", "model": "m", "prompt": "1", "selection": "x", "max_steps": 40,
+            "max_attempts": 4, "budget_usd": 0.5, "runs": 2}
+    path = tmp_path / "run.json"
+    path.write_text(l2replay.dump(reports, cases, meta), encoding="utf-8")
+    r2, c2, m2 = l2replay.load(path)
+    assert [r.number for r in r2] == [1, 2] and c2[1].error == "ReadTimeout" and m2 == meta
+    # setup_failed 算进分母：网络抖动会冤枉 L2 测试，所以要能补跑
+    assert l2replay.summarize(r2, c2)["fbpa_eligible"] == 2
+    c2[1] = FbpaCase(number=2, title="b", proxy="—", outcome="fb_pa")
+    meta2 = {**m2, "refbpa": {"from": "eval/runs/run.json", "at": "t2",
+                              "redone": ["#2：setup_failed → fb_pa"]}}
+    md = l2replay.render("o/r", r2, c2, meta2)
+    assert "补跑严格 FB/PA" in md and "#2：setup_failed → fb_pa" in md and "**2/2**" in md
+    assert "补跑" not in l2replay.render("o/r", r2, c2, m2)
+
+
 # ---------------------------------------------------------------- 真实 Docker
 
 

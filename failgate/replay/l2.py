@@ -12,9 +12,10 @@ from __future__ import annotations
 import json
 from collections import Counter
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
-from failgate.replay.fbpa import FbpaCase, note_for
+from failgate.replay.fbpa import ELIGIBLE_EXCLUDED, FbpaCase, note_for
 from failgate.replay.metrics import wilson
 from failgate.repro.issue import L2IssueReport
 
@@ -45,7 +46,7 @@ def summarize(reports: Sequence[L2IssueReport], cases: Sequence[FbpaCase]) -> di
     k = counts["l2"]
     agents = [r.agent for r in reports if r.agent is not None]
     fb = Counter(c.outcome for c in cases)
-    with_fix = [c for c in cases if c.outcome not in ("no_fix", "no_script")]
+    with_fix = [c for c in cases if c.outcome not in ELIGIBLE_EXCLUDED]
     return {
         "n": n,
         "outcomes": dict(counts),
@@ -54,7 +55,7 @@ def summarize(reports: Sequence[L2IssueReport], cases: Sequence[FbpaCase]) -> di
         "l2_ci": wilson(k, n),
         "with_traceback": sum(r.has_traceback for r in reports),
         "l2_with_traceback": sum(r.has_traceback and outcome(r) == "l2" for r in reports),
-        # 严格 FB/PA：分母是"写出了 L2 测试、且有修复提交"的
+        # 严格 FB/PA：分母是"写出了 L2 测试、且有改了源码的修复提交"的
         "fbpa_eligible": len(with_fix),
         "fb_pa": fb["fb_pa"],
         "fb_pa_ci": wilson(fb["fb_pa"], len(with_fix)),
@@ -92,6 +93,7 @@ def render(
         f"${meta['budget_usd']}",
         "- 做法：Agent 在 **issue 创建时** 默认分支上的提交里写测试；写出 L2 之后，"
         "把测试放到修复提交的父提交和修复提交上各跑 2 次（同一个 Python、同一个 pytest）。",
+        *_refbpa_lines(meta),
         "",
         "## 汇总",
         "",
@@ -102,7 +104,7 @@ def render(
         f"（95% Wilson 区间 {_pct(lo)}–{_pct(hi)}） |",
         f"| 有堆栈的 issue 中 L2 | {s['l2_with_traceback']}/{s['with_traceback']} |",
         f"| **L2 测试的严格 FB/PA** | **{s['fb_pa']}/{s['fbpa_eligible']}**"
-        f"（{_pct(flo)}–{_pct(fhi)}；分母是写出了 L2 且有修复提交的） |",
+        f"（{_pct(flo)}–{_pct(fhi)}；分母是写出了 L2 且有改了源码的修复提交的） |",
         f"| 端到端（能当修复验收标准的测试） | {s['fb_pa']}/{e2e_n}（全部样本，保守口径） |",
         f"| 平均步数 / 提交次数 / 耗时 | {s['mean_steps']} / {s['mean_submits']} / "
         f"{s['mean_duration_s']} 秒 |",
@@ -153,6 +155,22 @@ def render(
         for c in notes:
             lines.append(f"- #{c.number}（{c.outcome}）：{note_for(c)[:200]}")
     return "\n".join(lines) + "\n"
+
+
+def _refbpa_lines(meta: dict[str, Any]) -> list[str]:
+    """replay l2-fbpa 补跑过的：写明从哪份记录来、哪些题重跑了、原来的结论。"""
+    rf = meta.get("refbpa")
+    if not rf:
+        return []
+    return [f"- **补跑严格 FB/PA**（{rf['at']}，出题 Agent 没重跑，"
+            f"L2 测试用 `{rf['from']}` 里的）：" + "；".join(rf["redone"])]
+
+
+def load(path: Path) -> tuple[list[L2IssueReport], list[FbpaCase], dict[str, Any]]:
+    """读回 dump 写的回放记录。"""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return ([L2IssueReport.model_validate(r) for r in data["reports"]],
+            [FbpaCase.model_validate(c) for c in data["fbpa"]], data["meta"])
 
 
 def dump(reports: Sequence[L2IssueReport], cases: Sequence[FbpaCase], meta: dict[str, Any]) -> str:

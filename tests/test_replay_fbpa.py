@@ -14,6 +14,7 @@ from failgate.replay.fbpa import (
     classify,
     dump,
     evaluate_case,
+    note_for,
     render,
     summarize,
 )
@@ -136,6 +137,43 @@ async def test_no_fix_commit_and_setup_errors():
                                run_at=boom,
                                setup_errors=(RuntimeError,))
     assert case.outcome == "setup_failed" and "上限" in (case.error or "")
+
+    class ReadTimeout(RuntimeError):  # httpx 的超时 str() 是空的
+        pass
+
+    async def silent(*_: object) -> list[ExecResult]:
+        raise ReadTimeout()
+
+    case = await evaluate_case(candidate_from_l1(report), find_fix=find, pretend=pretend,
+                               run_at=silent, setup_errors=(RuntimeError,))
+    assert case.outcome == "setup_failed" and case.error == "ReadTimeout"
+
+
+async def test_fix_without_source_change_is_not_run_or_counted():
+    """关闭 issue 的提交只改了文档（packaging #1185 → PR #1339）：不跑、不计入分母。"""
+    report = held_out(4062)
+    seen: list[FixCommit] = []
+
+    async def find(_: int) -> FixCommit:
+        return FIX
+
+    async def pretend(_: FixCommit) -> str:
+        raise AssertionError("不该走到这里")
+
+    async def run_at(*_: object) -> list[ExecResult]:
+        raise AssertionError("不该跑")
+
+    async def docs_only(fix: FixCommit) -> bool:
+        seen.append(fix)
+        return False
+
+    case = await evaluate_case(candidate_from_l1(report), find_fix=find, pretend=pretend,
+                               run_at=run_at, setup_errors=(RuntimeError,),
+                               code_changed=docs_only)
+    assert case.outcome == "fix_not_code" and seen == [FIX]
+    assert "PR #4086 没改源码" in note_for(case)
+    s = summarize([case, FbpaCase(number=1, title="a", proxy="fb_pa", outcome="fb_pa")])
+    assert (s["eligible"], s["fb_pa"]) == (1, 1)
 
 
 async def test_issue_without_l1_script_is_skipped():

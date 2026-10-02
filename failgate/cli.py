@@ -645,6 +645,38 @@ def _run_paths(run_id: str) -> tuple[Path, Path]:
     return Path("eval/runs") / f"{run_id}.json", Path("eval/reports") / f"{run_id}.md"
 
 
+def _code_changed(gh: Any, repo: str, trees: dict[str, Any]) -> Any:
+    """严格 FB/PA 用：关闭 issue 的提交有没有改源码（ADR 0040 补充）。
+
+    trees 是按提交缓存的源码包（和 run_at 共用，父提交不重复下载）。
+    """
+
+    async def check(fix: Any) -> bool:
+        from failgate.replay import fixset as fxs
+        from failgate.replay import verify_eval as ve
+        from failgate.repro.source import fetch_github_tree
+
+        if fix.parent not in trees:
+            trees[fix.parent] = await fetch_github_tree(gh, repo, fix.parent)
+        files = ve._pull_files(await gh.compare_files(repo, fix.parent, fix.sha))
+        return bool(fxs.source_changes(files, trees[fix.parent].test_dir()))
+
+    return check
+
+
+def _require_docker(settings: Settings) -> None:
+    """回放 / 复现开跑前确认 Docker 引擎连得上。
+
+    2026-10-02 留出集回放时 Docker Desktop 停了：24 题每题先花一次 Intake 再失败，
+    报告里全是"拉取镜像失败"。现在一开始就停下，不花钱。
+    """
+    from failgate.home import check_docker
+
+    c = check_docker(settings, timeout=10)
+    if c.ok is not True:
+        raise typer.BadParameter(f"Docker 不可用：{c.detail}。{c.hint}")
+
+
 def _selection(repo: str) -> Any:
     """仓库的选题规则（eval/datasets/<repo>/selection.json，ADR 0040）。"""
     from failgate.replay import selection
@@ -1695,6 +1727,7 @@ class _ReproRuntime:
             raise typer.BadParameter("请先在 .env 中设置 LLM_API_KEY")
         self.settings = settings
         self.llm = llm
+        _require_docker(settings)
         sandbox = build_sandbox(settings)
         self.pypi = PyPIClient(settings.pypi_url)
         self.reproducer = PackageReproducer(
@@ -2004,6 +2037,7 @@ def replay_fbpa(
                     find_fix=lambda n: find_fix(gh, repo, n),
                     pretend=pretend, run_at=run_at,
                     setup_errors=(*SETUP_ERRORS, SourceError, GraphQLError, httpx.HTTPError),
+                    code_changed=_code_changed(gh, repo, trees),
                 )
                 cases.append(case)
                 pr = f"PR #{case.fix.pr}" if case.fix and case.fix.pr else "—"
@@ -2039,6 +2073,7 @@ class _L2Runtime:
             raise typer.BadParameter("请先在 .env 中设置 LLM_API_KEY")
         self.settings = settings
         self.llm = llm
+        _require_docker(settings)
         self.sandbox = build_sandbox(settings)
         self.pypi = PyPIClient(settings.pypi_url)
         self.gh = GitHubRest(settings.github_token)
@@ -2137,19 +2172,12 @@ def replay_l2(
 
     选样规则和 replay repro 相同；需要 GITHUB_TOKEN 和 Docker。
     """
-    import httpx
-
-    from failgate.platforms.github_rest import GraphQLError
     from failgate.replay import fbpa
     from failgate.replay import l2 as l2replay
-    from failgate.replay.fixes import FixCommit, find_fix
     from failgate.replay.repro import select_issues
     from failgate.repro.agent import TEST_PROMPT_VERSION
     from failgate.repro.config import PackageConfig
-    from failgate.repro.l2 import L2Unsupported
-    from failgate.repro.package import SETUP_ERRORS
-    from failgate.repro.sandbox import ExecResult
-    from failgate.repro.source import SourceError, SourceTree, fetch_github_tree
+    from failgate.repro.source import SourceTree
 
     settings = Settings()
     if not settings.github_token:
@@ -2207,30 +2235,7 @@ def replay_l2(
                 a = report.agent
                 typer.echo(f"  → {report.source.level} · {a.status if a else report.source.error}"
                            f" · ${report.total_cost_usd:.4f}")
-                pin, src_version = report.source.pytest, report.source.version
-
-                async def pretend(fix: FixCommit, v: str | None = src_version) -> str:
-                    return v or "0.0.0.dev0"
-
-                async def run_at(sha: str, python: str, version: str, code: str,
-                                 pin: str | None = pin, number: int = doc.number
-                                 ) -> list[ExecResult]:
-                    # 修复前后用和 L2 时同一套 Python、pytest、伪版本号：只让代码变化
-                    if sha not in trees:
-                        trees[sha] = await fetch_github_tree(rt.gh, repo, sha)
-                    prepared = await rt.tester.prepare(
-                        cfg, trees[sha], number=number, python=python, version=version,
-                        pytest=pin,
-                    )
-                    return [await rt.tester.run_once(prepared, code) for _ in range(runs)]
-
-                case = await fbpa.evaluate_case(
-                    fbpa.candidate_from_l2(report),
-                    find_fix=lambda n: find_fix(rt.gh, repo, n),
-                    pretend=pretend, run_at=run_at,
-                    setup_errors=(*SETUP_ERRORS, SourceError, L2Unsupported, GraphQLError,
-                                  httpx.HTTPError),
-                )
+                case = await _l2_fbpa(rt, repo, cfg, report, trees, runs)
                 cases.append(case)
                 if case.outcome != "no_script":
                     typer.echo(f"  严格 FB/PA：{case.outcome}")
@@ -2245,6 +2250,101 @@ def replay_l2(
         typer.echo(f"\nL2 {sm['l2']}/{sm['n']}；L2 测试严格 FB/PA "
                    f"{sm['fb_pa']}/{sm['fbpa_eligible']}；花费 ${sm['total_cost_usd']}"
                    f"\n报告：{report_path}")
+
+    asyncio.run(run())
+
+
+async def _l2_fbpa(rt: Any, repo: str, cfg: Any, report: Any, trees: dict[str, Any],
+                   runs: int) -> Any:
+    """一个 L2 报告的严格 FB/PA（replay l2 和 replay l2-fbpa 共用）。"""
+    import httpx
+
+    from failgate.platforms.github_rest import GraphQLError
+    from failgate.replay import fbpa
+    from failgate.replay.fixes import FixCommit, find_fix
+    from failgate.repro.l2 import L2Unsupported
+    from failgate.repro.package import SETUP_ERRORS
+    from failgate.repro.sandbox import ExecResult
+    from failgate.repro.source import SourceError, fetch_github_tree
+
+    pin, src_version = report.source.pytest, report.source.version
+
+    async def pretend(fix: FixCommit) -> str:
+        return src_version or "0.0.0.dev0"
+
+    async def run_at(sha: str, python: str, version: str, code: str) -> list[ExecResult]:
+        # 修复前后用和 L2 时同一套 Python、pytest、伪版本号：只让代码变化
+        if sha not in trees:
+            trees[sha] = await fetch_github_tree(rt.gh, repo, sha)
+        prepared = await rt.tester.prepare(
+            cfg, trees[sha], number=report.number, python=python, version=version, pytest=pin,
+        )
+        return [await rt.tester.run_once(prepared, code) for _ in range(runs)]
+
+    return await fbpa.evaluate_case(
+        fbpa.candidate_from_l2(report),
+        find_fix=lambda n: find_fix(rt.gh, repo, n),
+        pretend=pretend, run_at=run_at,
+        code_changed=_code_changed(rt.gh, repo, trees),
+        setup_errors=(*SETUP_ERRORS, SourceError, L2Unsupported, GraphQLError, httpx.HTTPError),
+    )
+
+
+@replay_app.command("l2-fbpa")
+def replay_l2_fbpa(
+    from_run: Annotated[Path, typer.Option("--from", help="replay l2 的回放记录 JSON")],
+    package: Annotated[str, typer.Option(help="PyPI 包名（和当初 replay l2 一样）")],
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    numbers: Annotated[str | None, typer.Option(
+        help="逗号分隔的编号；默认只重跑 setup_failed 的（网络 / 环境出错）")] = None,
+    runs: Annotated[int, typer.Option(help="每个版本跑几次")] = 2,
+) -> None:
+    """只重跑严格 FB/PA，不重跑出题 Agent（$0）：L2 测试用回放记录里的。
+
+    用于环境 / 网络出错后补跑，或判定规则变了之后重算（ADR 0040 补充）。写成新的记录
+    `<原名>-refbpa.json`，原记录不动；报告里写明重跑了哪些、原来的结论是什么。
+    需要 GITHUB_TOKEN 和 Docker。
+    """
+    from failgate.replay import l2 as l2replay
+    from failgate.repro.config import PackageConfig
+
+    settings = Settings()
+    if not settings.github_token:
+        raise typer.BadParameter("需要 GITHUB_TOKEN（查修复提交用 GraphQL）")
+    reports, cases, meta = l2replay.load(from_run)
+    repo = reports[0].repo if reports else ""
+    wanted = ({int(x) for x in numbers.split(",") if x.strip()} if numbers
+              else {c.number for c in cases if c.outcome == "setup_failed"})
+    if not wanted:
+        typer.echo("没有要重跑的（没有 setup_failed）")
+        return
+    cfg = PackageConfig(name=package, import_name=import_name)
+    out_run = from_run.with_name(from_run.stem + "-refbpa.json")
+    out_report = Path("eval/reports") / (from_run.stem + "-refbpa.md")
+
+    async def run() -> None:
+        rt = _L2Runtime(settings)
+        trees: dict[str, Any] = {}
+        redone: list[str] = []
+        try:
+            by_number = {r.number: r for r in reports}
+            for i, c in enumerate(cases):
+                if c.number not in wanted:
+                    continue
+                new = await _l2_fbpa(rt, repo, cfg, by_number[c.number], trees, runs)
+                redone.append(f"#{c.number}：{c.outcome} → {new.outcome}")
+                typer.echo(f"#{c.number}：{c.outcome} → {new.outcome}")
+                cases[i] = new
+        finally:
+            await rt.aclose()
+        meta2 = {**meta, "refbpa": {
+            "from": from_run.as_posix(), "at": datetime.now().isoformat(timespec="seconds"),
+            "redone": redone}}
+        out_run.write_text(l2replay.dump(reports, cases, meta2), encoding="utf-8")
+        out_report.write_text(l2replay.render(repo, reports, cases, meta2), encoding="utf-8")
+        sm = l2replay.summarize(reports, cases)
+        typer.echo(f"\nL2 {sm['l2']}/{sm['n']}；L2 测试严格 FB/PA "
+                   f"{sm['fb_pa']}/{sm['fbpa_eligible']}\n记录：{out_run}\n报告：{out_report}")
 
     asyncio.run(run())
 

@@ -1,0 +1,1935 @@
+{
+  "meta": {
+    "started": "2026-10-02T17:22:53",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "和 replay repro 相同的规则：2022-01-01 之后创建、以完成状态关闭，带 `bug` 之一，排除 `duplicate` / `invalid` / `wontfix` / `question` / `support`，按编号从新到旧跳过 12 个、取 12 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.5,
+    "runs": 2,
+    "kind": "L2 测试"
+  },
+  "summary": {
+    "n": 12,
+    "outcomes": {
+      "l2": 8,
+      "not_reproduced": 4
+    },
+    "l2": 8,
+    "l2_rate": 0.6666666666666666,
+    "l2_ci": [
+      0.3906175873976139,
+      0.8618821601026385
+    ],
+    "with_traceback": 2,
+    "l2_with_traceback": 2,
+    "fbpa_eligible": 6,
+    "fb_pa": 5,
+    "fb_pa_ci": [
+      0.43649056343635395,
+      0.9699474141282697
+    ],
+    "fbpa_outcomes": {
+      "fb_pa": 5,
+      "no_fix": 1,
+      "setup_failed": 1,
+      "no_script": 4,
+      "fix_not_code": 1
+    },
+    "end_to_end_n": 12,
+    "total_cost_usd": 0.3196,
+    "mean_cost_usd": 0.0266,
+    "mean_steps": 26.3,
+    "mean_submits": 0.83,
+    "mean_duration_s": 120.5
+  },
+  "reports": [
+    {
+      "repo": "pypa/packaging",
+      "number": 788,
+      "title": "Specifier `<` that contains prerelease version does not match on valid prerelease versions",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "e0dda88874e73cd484b9e8464c5921a903db3cf0",
+        "committed_at": "2024-03-11T17:54:41Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.12",
+        "version": "24.1.dev0",
+        "pytest": "pytest==8.1.1",
+        "test_path": "tests/test_failgate_issue_788.py",
+        "run": {
+          "version": "e0dda88874",
+          "python": "3.12",
+          "env_key": "dab84fa1b3975189b153ee20577e07730748e0077a7b8f98ce54704a5e8f1c89",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert False is True",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本直接调用被测包的 Specifier('<3.0.0a8').contains('3.0.0a7')，运行输出显示其实际返回 False，正是 issue 描述的 bug 行为；断言检查的也正是 issue 中期望返回 True 的行为，失败并非脚本自身造成。",
+            "quote": "AssertionError: assert False is True\n +  where False = <bound method Specifier.contains of <Specifier('<3.0.0a8')>>('3.0.0a7')",
+            "quote_found": true,
+            "cost_usd": 0.001024
+          },
+          "log_dir": "artifacts\\failgate-run-9f1d12f668",
+          "output_tail": "    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 256, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 182, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 172, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1772, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_788.py\", line 9, in test_exclusive_ordered_less_than_with_prerelease_specifier\n    assert Specifier(\"<3.0.0a8\").contains(\"3.0.0a7\") is True\nAssertionError: assert False is True\n +  where False = <bound method Specifier.contains of <Specifier('<3.0.0a8')>>('3.0.0a7')\n +    where <bound method Specifier.contains of <Specifier('<3.0.0a8')>> = <Specifier('<3.0.0a8')>.contains\n +      where <Specifier('<3.0.0a8')> = Specifier('<3.0.0a8')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_788.py::test_exclusive_ordered_less_than_with_prerelease_specifier\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_788.py",
+            "claim": "测试断言 Specifier('<3.0.0a8').contains('3.0.0a7') 为 True（规范要求当 specifier 自身是预发布时，< 应允许更早的预发布），当前代码中 Specifier.prereleases 对 < 操作符返回 False，导致断言失败。",
+            "script": "from packaging.specifiers import Specifier\n\n\ndef test_exclusive_ordered_less_than_with_prerelease_specifier():\n    # Per the version specifier spec, \"<\" must not allow prereleases of the\n    # specified version *unless the specified version is itself a pre-release*.\n    # `<3.0.0a8` is itself a pre-release, so it must allow earlier pre-releases\n    # such as `3.0.0a7`.\n    assert Specifier(\"<3.0.0a8\").contains(\"3.0.0a7\") is True\n\n    # For contrast, the inclusive form already behaves this way.\n    assert Specifier(\"<=3.0.0a8\").contains(\"3.0.0a7\") is True\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "from packaging.specifiers import Specifier\n\n\ndef test_exclusive_ordered_less_than_with_prerelease_specifier():\n    # Per the version specifier spec, \"<\" must not allow prereleases of the\n    # specified version *unless the specified version is itself a pre-release*.\n    # `<3.0.0a8` is itself a pre-release, so it must allow earlier pre-releases\n    # such as `3.0.0a7`.\n    assert Specifier(\"<3.0.0a8\").contains(\"3.0.0a7\") is True\n\n    # For contrast, the inclusive form already behaves this way.\n    assert Specifier(\"<=3.0.0a8\").contains(\"3.0.0a7\") is True\n",
+        "final_run": {
+          "version": "e0dda88874",
+          "python": "3.12",
+          "env_key": "dab84fa1b3975189b153ee20577e07730748e0077a7b8f98ce54704a5e8f1c89",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert False is True",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本直接调用被测包的 Specifier('<3.0.0a8').contains('3.0.0a7')，运行输出显示其实际返回 False，正是 issue 描述的 bug 行为；断言检查的也正是 issue 中期望返回 True 的行为，失败并非脚本自身造成。",
+            "quote": "AssertionError: assert False is True\n +  where False = <bound method Specifier.contains of <Specifier('<3.0.0a8')>>('3.0.0a7')",
+            "quote_found": true,
+            "cost_usd": 0.001024
+          },
+          "log_dir": "artifacts\\failgate-run-9f1d12f668",
+          "output_tail": "    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/skipping.py\", line 256, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 182, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 172, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1772, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_788.py\", line 9, in test_exclusive_ordered_less_than_with_prerelease_specifier\n    assert Specifier(\"<3.0.0a8\").contains(\"3.0.0a7\") is True\nAssertionError: assert False is True\n +  where False = <bound method Specifier.contains of <Specifier('<3.0.0a8')>>('3.0.0a7')\n +    where <bound method Specifier.contains of <Specifier('<3.0.0a8')>> = <Specifier('<3.0.0a8')>.contains\n +      where <Specifier('<3.0.0a8')> = Specifier('<3.0.0a8')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_788.py::test_exclusive_ordered_less_than_with_prerelease_specifier\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "steps": 12,
+        "tool_counts": {
+          "search_code": 2,
+          "list_files": 3,
+          "read_file": 2,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.005312,
+        "prompt_tokens": 65828,
+        "completion_tokens": 2019,
+        "cached_tokens": 57344,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-788-1790929429.json",
+        "duration_s": 35.0,
+        "test_path": "tests/test_failgate_issue_788.py"
+      },
+      "intake_cost_usd": 0.000733,
+      "judge_cost_usd": 0.001024,
+      "judge_prompt_tokens": 2777,
+      "judge_completion_tokens": 222,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 774,
+      "title": "Marker referencing 'platform_release' fails to evaluate on Linux systems with non-PEP 440 kernel versions",
+      "intake_version": null,
+      "intake_python": "3.12.1",
+      "has_traceback": true,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "4dce7618f59d623512b21d846da3e072e86aaf2e",
+        "committed_at": "2024-01-15T23:19:47Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.12",
+        "version": "23.3.dev0",
+        "pytest": "pytest==7.4.4",
+        "test_path": "tests/test_failgate_issue_774.py",
+        "run": {
+          "version": "4dce7618f5",
+          "python": "3.12",
+          "env_key": "a13de9b6569ec7edae0de0ddb39229b5e014d60110b1fb423354649b687b9970",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: '<N>.<N>.<N>-gentoo'",
+              "frames": [
+                "packaging/specifiers.py:contains",
+                "packaging/specifiers.py:_coerce_version",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "reported": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: '<N>.<N>.<N>-gentoo'",
+              "frames": [
+                "packaging/specifiers.py:contains",
+                "packaging/specifiers.py:_coerce_version",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-dbd9008617",
+          "output_tail": "    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_774.py\", line 18, in test_marker_platform_release_non_pep440_version\n    result = marker.evaluate(environment)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/markers.py\", line 252, in evaluate\n    return _evaluate_markers(self._markers, current_environment)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/markers.py\", line 158, in _evaluate_markers\n    groups[-1].append(_eval_op(lhs_value, op, rhs_value))\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/markers.py\", line 116, in _eval_op\n    return spec.contains(lhs, prereleases=True)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/specifiers.py\", line 558, in contains\n    normalized_item = _coerce_version(item)\n                      ^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/specifiers.py\", line 26, in _coerce_version\n    version = Version(version)\n              ^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/version.py\", line 200, in __init__\n    raise InvalidVersion(f\"Invalid version: '{version}'\")\npackaging.version.InvalidVersion: Invalid version: '6.7.0-gentoo'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_774.py::test_marker_platform_release_non_pep440_version\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_774.py",
+            "claim": "Evaluating `Marker('platform_release >= \"20.0\" and sys_platform == \"darwin\"')` with a non-PEP 440 kernel release (`platform_release='6.7.0-gentoo'`) raises packaging.version.InvalidVersion from markers._eval_op -> Specifier.contains -> _coerce_version, exactly as in issue #774; the test requires evaluation to return a bool instead of raising.",
+            "script": "from packaging.markers import Marker\n\n\ndef test_marker_platform_release_non_pep440_version():\n    \"\"\"Comparing ``platform_release`` against a version must not raise.\n\n    On Linux, ``platform_release`` is the kernel release as reported by\n    ``uname -r`` (e.g. ``6.7.0-gentoo``), which is not a PEP 440 version.\n    Evaluating a marker such as ``platform_release >= \"20.0\"`` therefore\n    must not blow up with ``InvalidVersion``.\n    \"\"\"\n    marker = Marker('platform_release >= \"20.0\" and sys_platform == \"darwin\"')\n    environment = {\n        \"platform_release\": \"6.7.0-gentoo\",\n        \"sys_platform\": \"linux\",\n    }\n\n    result = marker.evaluate(environment)\n\n    assert isinstance(result, bool)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0
+          }
+        ],
+        "final_script": "from packaging.markers import Marker\n\n\ndef test_marker_platform_release_non_pep440_version():\n    \"\"\"Comparing ``platform_release`` against a version must not raise.\n\n    On Linux, ``platform_release`` is the kernel release as reported by\n    ``uname -r`` (e.g. ``6.7.0-gentoo``), which is not a PEP 440 version.\n    Evaluating a marker such as ``platform_release >= \"20.0\"`` therefore\n    must not blow up with ``InvalidVersion``.\n    \"\"\"\n    marker = Marker('platform_release >= \"20.0\" and sys_platform == \"darwin\"')\n    environment = {\n        \"platform_release\": \"6.7.0-gentoo\",\n        \"sys_platform\": \"linux\",\n    }\n\n    result = marker.evaluate(environment)\n\n    assert isinstance(result, bool)\n",
+        "final_run": {
+          "version": "4dce7618f5",
+          "python": "3.12",
+          "env_key": "a13de9b6569ec7edae0de0ddb39229b5e014d60110b1fb423354649b687b9970",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: '<N>.<N>.<N>-gentoo'",
+              "frames": [
+                "packaging/specifiers.py:contains",
+                "packaging/specifiers.py:_coerce_version",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "reported": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: '<N>.<N>.<N>-gentoo'",
+              "frames": [
+                "packaging/specifiers.py:contains",
+                "packaging/specifiers.py:_coerce_version",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-dbd9008617",
+          "output_tail": "    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_774.py\", line 18, in test_marker_platform_release_non_pep440_version\n    result = marker.evaluate(environment)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/markers.py\", line 252, in evaluate\n    return _evaluate_markers(self._markers, current_environment)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/markers.py\", line 158, in _evaluate_markers\n    groups[-1].append(_eval_op(lhs_value, op, rhs_value))\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/markers.py\", line 116, in _eval_op\n    return spec.contains(lhs, prereleases=True)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/specifiers.py\", line 558, in contains\n    normalized_item = _coerce_version(item)\n                      ^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/specifiers.py\", line 26, in _coerce_version\n    version = Version(version)\n              ^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/version.py\", line 200, in __init__\n    raise InvalidVersion(f\"Invalid version: '{version}'\")\npackaging.version.InvalidVersion: Invalid version: '6.7.0-gentoo'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_774.py::test_marker_platform_release_non_pep440_version\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s"
+        },
+        "steps": 13,
+        "tool_counts": {
+          "list_files": 1,
+          "read_file": 5,
+          "search_code": 1,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 2,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.013261,
+        "prompt_tokens": 120737,
+        "completion_tokens": 7805,
+        "cached_tokens": 109952,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-774-1790929552.json",
+        "duration_s": 57.1,
+        "test_path": "tests/test_failgate_issue_774.py"
+      },
+      "intake_cost_usd": 0.00117,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 767,
+      "title": "Permit `contains` calls to Specifier[Set] to use arbitrary strings",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "769823740a8f5e6b0e37fd05f57f091b56b0ceeb",
+        "committed_at": "2023-12-19T23:12:41Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.12",
+        "version": "23.3.dev0",
+        "pytest": "pytest==7.4.3",
+        "test_path": "tests/test_failgate_issue_767.py",
+        "run": {
+          "version": "769823740a",
+          "python": "3.12",
+          "env_key": "218d6af8decae7b90d40bfaeb1e33f56d4de540646f595e83a45469d76e4745e",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: 'foobar'",
+              "frames": [
+                "packaging/specifiers.py:contains",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "reported": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: 'foobar'",
+              "frames": [
+                "packaging/src/packaging/specifiers.py:contains",
+                "packaging/src/packaging/version.py:__init__"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-48fa1fd855",
+          "output_tail": "    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_767.py\", line 15, in test_specifier_set_contains_arbitrary_string_does_not_raise\n    result = SpecifierSet(\"===foobar\", prereleases=True).contains(\"foobar\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/specifiers.py\", line 927, in contains\n    item = Version(item)\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/version.py\", line 200, in __init__\n    raise InvalidVersion(f\"Invalid version: '{version}'\")\npackaging.version.InvalidVersion: Invalid version: 'foobar'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_767.py::test_specifier_set_contains_arbitrary_string_does_not_raise\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_767.py",
+            "claim": "SpecifierSet(\"===foobar\", prereleases=True).contains(\"foobar\") 在 buggy 代码上抛出 packaging.version.InvalidVersion: Invalid version: 'foobar'（specifiers.py:927 的 contains → version.py:200），测试断言该调用应正常返回一个布尔值而不是抛异常。",
+            "script": "\"\"\"Regression test for pypa/packaging#767.\n\n``SpecifierSet.contains`` used to raise ``InvalidVersion`` when it was given\nan arbitrary, non-PEP 440 version string -- even when the specifier set was\nbuilt around the ``===`` identity operator, which is explicitly an escape\nhatch for arbitrary version strings.  Passing such a string must not blow up;\nthe call has to return a plain boolean instead.\n\"\"\"\n\nfrom packaging.specifiers import SpecifierSet\n\n\ndef test_specifier_set_contains_arbitrary_string_does_not_raise():\n    # The exact call from the bug report: it must not raise InvalidVersion.\n    result = SpecifierSet(\"===foobar\", prereleases=True).contains(\"foobar\")\n\n    # It must gracefully report whether the item is contained, i.e. return a\n    # boolean rather than propagating an InvalidVersion exception.\n    assert isinstance(result, bool)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "\"\"\"Regression test for pypa/packaging#767.\n\n``SpecifierSet.contains`` used to raise ``InvalidVersion`` when it was given\nan arbitrary, non-PEP 440 version string -- even when the specifier set was\nbuilt around the ``===`` identity operator, which is explicitly an escape\nhatch for arbitrary version strings.  Passing such a string must not blow up;\nthe call has to return a plain boolean instead.\n\"\"\"\n\nfrom packaging.specifiers import SpecifierSet\n\n\ndef test_specifier_set_contains_arbitrary_string_does_not_raise():\n    # The exact call from the bug report: it must not raise InvalidVersion.\n    result = SpecifierSet(\"===foobar\", prereleases=True).contains(\"foobar\")\n\n    # It must gracefully report whether the item is contained, i.e. return a\n    # boolean rather than propagating an InvalidVersion exception.\n    assert isinstance(result, bool)\n",
+        "final_run": {
+          "version": "769823740a",
+          "python": "3.12",
+          "env_key": "218d6af8decae7b90d40bfaeb1e33f56d4de540646f595e83a45469d76e4745e",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: 'foobar'",
+              "frames": [
+                "packaging/specifiers.py:contains",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "reported": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: 'foobar'",
+              "frames": [
+                "packaging/src/packaging/specifiers.py:contains",
+                "packaging/src/packaging/version.py:__init__"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-48fa1fd855",
+          "output_tail": "    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_767.py\", line 15, in test_specifier_set_contains_arbitrary_string_does_not_raise\n    result = SpecifierSet(\"===foobar\", prereleases=True).contains(\"foobar\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/specifiers.py\", line 927, in contains\n    item = Version(item)\n           ^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/packaging/version.py\", line 200, in __init__\n    raise InvalidVersion(f\"Invalid version: '{version}'\")\npackaging.version.InvalidVersion: Invalid version: 'foobar'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_767.py::test_specifier_set_contains_arbitrary_string_does_not_raise\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "steps": 31,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 5,
+          "read_file": 8,
+          "write_scratch": 6,
+          "run": 6,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.028749,
+        "prompt_tokens": 511915,
+        "completion_tokens": 16527,
+        "cached_tokens": 492032,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-767-1790929763.json",
+        "duration_s": 191.7,
+        "test_path": "tests/test_failgate_issue_767.py"
+      },
+      "intake_cost_usd": 0.00082,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 766,
+      "title": "Arbitrary equality not matching when a prerelease? Even with `prereleases=True`",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "769823740a8f5e6b0e37fd05f57f091b56b0ceeb",
+        "committed_at": "2023-12-19T23:12:41Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.12",
+        "version": "23.3.dev0",
+        "pytest": "pytest==7.4.3",
+        "test_path": "tests/test_failgate_issue_766.py",
+        "run": {
+          "version": "769823740a",
+          "python": "3.12",
+          "env_key": "218d6af8decae7b90d40bfaeb1e33f56d4de540646f595e83a45469d76e4745e",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert False",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "运行输出直接显示被测包对 `SpecifierSet('===1.a1', prereleases=True).contains('1.a1')` 返回 False，与 issue 描述的实际行为完全一致；脚本断言检查的正是 issue 提出的预期行为（应返回 True），失败源于被测包行为而非脚本自身错误。",
+            "quote": "assert False\n +  where False = <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>>('1.a1')",
+            "quote_found": true,
+            "cost_usd": 0.00093
+          },
+          "log_dir": "artifacts\\failgate-run-4573624ea4",
+          "output_tail": "    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_766.py\", line 15, in test_arbitrary_equality_matches_unnormalized_prerelease_string\n    assert SpecifierSet(\"===1.a1\", prereleases=True).contains(\"1.a1\")\nAssertionError: assert False\n +  where False = <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>>('1.a1')\n +    where <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>> = <SpecifierSet('===1.a1', prereleases=True)>.contains\n +      where <SpecifierSet('===1.a1', prereleases=True)> = SpecifierSet('===1.a1', prereleases=True)\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_766.py::test_arbitrary_equality_matches_unnormalized_prerelease_string\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_766.py",
+            "claim": "复现 issue #766：SpecifierSet('===1.a1', prereleases=True).contains(\"1.a1\") 因 === 对归一化版本(\"1a1\")与原始 spec 串(\"1.a1\")比较而返回 False，测试断言其应为 True（当前失败，AssertionError）。",
+            "script": "# This file is dual licensed under the terms of the Apache License, Version\n# 2.0, and the BSD License. See the LICENSE file in the root of this repository\n# for complete details.\n\nfrom packaging.specifiers import SpecifierSet\n\n\ndef test_arbitrary_equality_matches_unnormalized_prerelease_string():\n    # https://github.com/pypa/packaging/issues/766\n    #\n    # Arbitrary equality (===) is a plain string comparison, so a specifier of\n    # ``===1.a1`` must match the prospective version ``1.a1`` even when\n    # ``1.a1`` is a pre-release. Previously the prospective version was\n    # normalized to ``1a1`` before being compared to the raw specifier string.\n    assert SpecifierSet(\"===1.a1\", prereleases=True).contains(\"1.a1\")\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "# This file is dual licensed under the terms of the Apache License, Version\n# 2.0, and the BSD License. See the LICENSE file in the root of this repository\n# for complete details.\n\nfrom packaging.specifiers import SpecifierSet\n\n\ndef test_arbitrary_equality_matches_unnormalized_prerelease_string():\n    # https://github.com/pypa/packaging/issues/766\n    #\n    # Arbitrary equality (===) is a plain string comparison, so a specifier of\n    # ``===1.a1`` must match the prospective version ``1.a1`` even when\n    # ``1.a1`` is a pre-release. Previously the prospective version was\n    # normalized to ``1a1`` before being compared to the raw specifier string.\n    assert SpecifierSet(\"===1.a1\", prereleases=True).contains(\"1.a1\")\n",
+        "final_run": {
+          "version": "769823740a",
+          "python": "3.12",
+          "env_key": "218d6af8decae7b90d40bfaeb1e33f56d4de540646f595e83a45469d76e4745e",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert False",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "运行输出直接显示被测包对 `SpecifierSet('===1.a1', prereleases=True).contains('1.a1')` 返回 False，与 issue 描述的实际行为完全一致；脚本断言检查的正是 issue 提出的预期行为（应返回 True），失败源于被测包行为而非脚本自身错误。",
+            "quote": "assert False\n +  where False = <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>>('1.a1')",
+            "quote_found": true,
+            "cost_usd": 0.00093
+          },
+          "log_dir": "artifacts\\failgate-run-4573624ea4",
+          "output_tail": "    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_766.py\", line 15, in test_arbitrary_equality_matches_unnormalized_prerelease_string\n    assert SpecifierSet(\"===1.a1\", prereleases=True).contains(\"1.a1\")\nAssertionError: assert False\n +  where False = <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>>('1.a1')\n +    where <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>> = <SpecifierSet('===1.a1', prereleases=True)>.contains\n +      where <SpecifierSet('===1.a1', prereleases=True)> = SpecifierSet('===1.a1', prereleases=True)\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_766.py::test_arbitrary_equality_matches_unnormalized_prerelease_string\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "steps": 17,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 3,
+          "read_file": 7,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.012983,
+        "prompt_tokens": 152720,
+        "completion_tokens": 6477,
+        "cached_tokens": 138112,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-766-1790929852.json",
+        "duration_s": 59.2,
+        "test_path": "tests/test_failgate_issue_766.py"
+      },
+      "intake_cost_usd": 0.000659,
+      "judge_cost_usd": 0.00093,
+      "judge_prompt_tokens": 2460,
+      "judge_completion_tokens": 223,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 744,
+      "title": "23.2: musl changes broke arm glibc",
+      "intake_version": "23.2",
+      "intake_python": "3.11.6",
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "2f83540272e79e3fe1f5d42abae8df0c14ddf4c2",
+        "committed_at": "2023-10-27T22:12:52Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.11",
+        "version": "23.3.dev0",
+        "pytest": "pytest==7.4.3",
+        "test_path": "tests/test_failgate_issue_744.py",
+        "run": null,
+        "level": "NONE",
+        "error": "Agent 没有提交测试（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 4,
+          "search_code": 6,
+          "read_file": 13,
+          "run": 10,
+          "write_scratch": 6,
+          "run_test": 1
+        },
+        "cost_usd": 0.046522,
+        "prompt_tokens": 947501,
+        "completion_tokens": 27340,
+        "cached_tokens": 920192,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-744-1790930098.json",
+        "duration_s": 180.6,
+        "test_path": null
+      },
+      "intake_cost_usd": 0.000898,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 738,
+      "title": "Issue with requirement string with + syntax",
+      "intake_version": null,
+      "intake_python": "3.11.6",
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "09f131b326453f18a217fe34f4f7a77603b545db",
+        "committed_at": "2023-10-16T00:50:00Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.11",
+        "version": "23.3.dev0",
+        "pytest": "pytest==7.4.2",
+        "test_path": "tests/test_failgate_issue_738.py",
+        "run": null,
+        "level": "NONE",
+        "error": "Agent 没有提交测试（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 2,
+          "read_file": 7,
+          "run": 19,
+          "search_code": 2,
+          "write_scratch": 10
+        },
+        "cost_usd": 0.043731,
+        "prompt_tokens": 1012646,
+        "completion_tokens": 25004,
+        "cached_tokens": 986624,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-738-1790930320.json",
+        "duration_s": 190.3,
+        "test_path": null
+      },
+      "intake_cost_usd": 0.003653,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 735,
+      "title": "ExceptionGroup wrapper does not appear to function with except*",
+      "intake_version": null,
+      "intake_python": "3.11.5",
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "f13c298f0a623f3f7e01cc8395956b718d21503a",
+        "committed_at": "2023-10-03T21:03:37Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.11",
+        "version": "23.3.dev0",
+        "pytest": "pytest==7.4.2",
+        "test_path": "tests/test_failgate_issue_735.py",
+        "run": {
+          "version": "f13c298f0a",
+          "python": "3.11",
+          "env_key": "c3c8983bcfdb1278d155a1e75298300a9bcfa6ad08199b422f44091a61f53c41",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert <class 'packaging.metadata.ExceptionGroup'> is <class 'ExceptionGroup'>",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "运行输出显示在 Python 3.11 上 packaging.metadata.ExceptionGroup 并不是内置的 ExceptionGroup（断言失败），这正是 issue 描述的实际行为；脚本第一个断言检查的也正是 issue 的预期行为（应使用内置 ExceptionGroup）。第二个 except* 测试未被运行，但第一个断言已直接展示该问题。",
+            "quote": "AssertionError: assert <class 'packaging.metadata.ExceptionGroup'> is <class 'ExceptionGroup'>",
+            "quote_found": true,
+            "cost_usd": 0.001004
+          },
+          "log_dir": "artifacts\\failgate-run-22f1c8ad3d",
+          "output_tail": "    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_735.py\", line 16, in test_metadata_uses_builtin_exception_group_on_python_311\n    assert packaging.metadata.ExceptionGroup is builtins.ExceptionGroup\nAssertionError: assert <class 'packaging.metadata.ExceptionGroup'> is <class 'ExceptionGroup'>\n +  where <class 'packaging.metadata.ExceptionGroup'> = <module 'packaging.metadata' from '/opt/venv/lib/python3.11/site-packages/packaging/metadata.py'>.ExceptionGroup\n +    where <module 'packaging.metadata' from '/opt/venv/lib/python3.11/site-packages/packaging/metadata.py'> = packaging.metadata\n +  and   <class 'ExceptionGroup'> = builtins.ExceptionGroup\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_735.py::test_metadata_uses_builtin_exception_group_on_python_311\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.03s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_735.py",
+            "claim": "在 Python 3.11 上，packaging.metadata.ExceptionGroup 仍是模块内的 shim（不是 builtins.ExceptionGroup），因此 Metadata.from_email 抛出的组无法被 except* 捕获；测试分别断言两者同一性、以及 except* 能捕获库抛出的组，修复前两个断言/捕获均失败。",
+            "script": "\"\"\"Regression test for pypa/packaging#735.\n\nOn Python 3.11+, ``packaging.metadata`` must expose the *builtin*\n``ExceptionGroup`` (so that ``except*`` can catch groups raised by the\nlibrary), not the fallback shim defined in ``packaging/metadata.py``.\n\"\"\"\n\nimport builtins\n\nimport packaging.metadata\nfrom packaging.metadata import InvalidMetadata, Metadata\n\n\ndef test_metadata_uses_builtin_exception_group_on_python_311():\n    \"\"\"packaging.metadata.ExceptionGroup must be the builtin on Python 3.11+.\"\"\"\n    assert packaging.metadata.ExceptionGroup is builtins.ExceptionGroup\n\n\ndef test_metadata_exception_group_is_catchable_with_except_star():\n    \"\"\"A group raised by the library must be catchable with ``except*``.\"\"\"\n    caught = []\n\n    try:\n        # A duplicated / invalid field makes `from_email` raise a group.\n        Metadata.from_email(\"Name: foo\\nName: bar\\n\")\n    except* InvalidMetadata as exc_group:\n        caught.append(exc_group)\n        assert isinstance(exc_group, builtins.ExceptionGroup)\n        assert exc_group.exceptions\n\n    assert len(caught) == 1\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for pypa/packaging#735.\n\nOn Python 3.11+, ``packaging.metadata`` must expose the *builtin*\n``ExceptionGroup`` (so that ``except*`` can catch groups raised by the\nlibrary), not the fallback shim defined in ``packaging/metadata.py``.\n\"\"\"\n\nimport builtins\n\nimport packaging.metadata\nfrom packaging.metadata import InvalidMetadata, Metadata\n\n\ndef test_metadata_uses_builtin_exception_group_on_python_311():\n    \"\"\"packaging.metadata.ExceptionGroup must be the builtin on Python 3.11+.\"\"\"\n    assert packaging.metadata.ExceptionGroup is builtins.ExceptionGroup\n\n\ndef test_metadata_exception_group_is_catchable_with_except_star():\n    \"\"\"A group raised by the library must be catchable with ``except*``.\"\"\"\n    caught = []\n\n    try:\n        # A duplicated / invalid field makes `from_email` raise a group.\n        Metadata.from_email(\"Name: foo\\nName: bar\\n\")\n    except* InvalidMetadata as exc_group:\n        caught.append(exc_group)\n        assert isinstance(exc_group, builtins.ExceptionGroup)\n        assert exc_group.exceptions\n\n    assert len(caught) == 1\n",
+        "final_run": {
+          "version": "f13c298f0a",
+          "python": "3.11",
+          "env_key": "c3c8983bcfdb1278d155a1e75298300a9bcfa6ad08199b422f44091a61f53c41",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert <class 'packaging.metadata.ExceptionGroup'> is <class 'ExceptionGroup'>",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "运行输出显示在 Python 3.11 上 packaging.metadata.ExceptionGroup 并不是内置的 ExceptionGroup（断言失败），这正是 issue 描述的实际行为；脚本第一个断言检查的也正是 issue 的预期行为（应使用内置 ExceptionGroup）。第二个 except* 测试未被运行，但第一个断言已直接展示该问题。",
+            "quote": "AssertionError: assert <class 'packaging.metadata.ExceptionGroup'> is <class 'ExceptionGroup'>",
+            "quote_found": true,
+            "cost_usd": 0.001004
+          },
+          "log_dir": "artifacts\\failgate-run-22f1c8ad3d",
+          "output_tail": "    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 177, in pytest_runtest_call\n    raise e\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/runner.py\", line 169, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 1792, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_735.py\", line 16, in test_metadata_uses_builtin_exception_group_on_python_311\n    assert packaging.metadata.ExceptionGroup is builtins.ExceptionGroup\nAssertionError: assert <class 'packaging.metadata.ExceptionGroup'> is <class 'ExceptionGroup'>\n +  where <class 'packaging.metadata.ExceptionGroup'> = <module 'packaging.metadata' from '/opt/venv/lib/python3.11/site-packages/packaging/metadata.py'>.ExceptionGroup\n +    where <module 'packaging.metadata' from '/opt/venv/lib/python3.11/site-packages/packaging/metadata.py'> = packaging.metadata\n +  and   <class 'ExceptionGroup'> = builtins.ExceptionGroup\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_735.py::test_metadata_uses_builtin_exception_group_on_python_311\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.03s"
+        },
+        "steps": 17,
+        "tool_counts": {
+          "search_code": 3,
+          "list_files": 3,
+          "read_file": 2,
+          "write_scratch": 1,
+          "run": 3,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.011248,
+        "prompt_tokens": 124200,
+        "completion_tokens": 6986,
+        "cached_tokens": 116992,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-735-1790930410.json",
+        "duration_s": 66.1,
+        "test_path": "tests/test_failgate_issue_735.py"
+      },
+      "intake_cost_usd": 0.001361,
+      "judge_cost_usd": 0.001004,
+      "judge_prompt_tokens": 2580,
+      "judge_completion_tokens": 254,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 733,
+      "title": "Inconsistent (and broken) behavior for Optional Metadata values",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "f13c298f0a623f3f7e01cc8395956b718d21503a",
+        "committed_at": "2023-10-03T21:03:37Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.12",
+        "version": "23.3.dev0",
+        "pytest": "pytest==7.4.2",
+        "test_path": "tests/test_failgate_issue_733.py",
+        "run": null,
+        "level": "NONE",
+        "error": "Agent 没有提交测试（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 2,
+          "read_file": 6,
+          "run": 16,
+          "write_scratch": 11,
+          "write_test": 2,
+          "run_test": 1
+        },
+        "cost_usd": 0.032935,
+        "prompt_tokens": 796993,
+        "completion_tokens": 18678,
+        "cached_tokens": 777472,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-733-1790930627.json",
+        "duration_s": 148.5,
+        "test_path": null
+      },
+      "intake_cost_usd": 0.001909,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 688,
+      "title": "CHANGELOG.rst is not included in the source tarball, making the documentation unbuildable",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "55584fb5ca327ba38b74ca5c668125caaebd9a5d",
+        "committed_at": "2023-04-13T03:58:34Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.11",
+        "version": "23.2.dev0",
+        "pytest": "pytest==7.3.0",
+        "test_path": "tests/test_failgate_issue_688.py",
+        "run": null,
+        "level": "NONE",
+        "error": null
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_688.py",
+            "claim": "Adds tests/test_failgate_issue_688.py which asserts CHANGELOG.rst would be part of the source distribution (via pyproject's [tool.flit.sdist] include, with a hatchling fallback). On this commit the sdist manifest omits CHANGELOG.rst, so the test fails with an AssertionError explaining docs/changelog.rst's `.. include:: ../CHANGELOG.rst` cannot be built from an sdist; once the maintainer adds CHANGELOG.rst to the sdist include list it passes.",
+            "script": "\"\"\"Regression test for pypa/packaging#688.\n\n``docs/changelog.rst`` does ``.. include:: ../CHANGELOG.rst``, so\n``CHANGELOG.rst`` must be shipped in the source distribution.  flit only\nships the package, ``pyproject.toml``, the readme and the licence files by\ndefault, so a root-level ``CHANGELOG.rst`` has to be listed explicitly in\n``[tool.flit.sdist] include``.  If it is missing from the sdist the\ndocumentation cannot be built from a released source tarball.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport fnmatch\nfrom pathlib import Path\n\ntry:\n    import tomllib\nexcept ImportError:  # pragma: no cover - Python < 3.11\n    import tomli as tomllib\n\n\nREPO_ROOT = Path(__file__).resolve().parent.parent\nCHANGELOG = \"CHANGELOG.rst\"\n\n\ndef _matches(name: str, patterns: list[str]) -> bool:\n    \"\"\"Return whether ``name`` is covered by one of the sdist globs.\"\"\"\n    for pattern in patterns:\n        pattern = pattern.rstrip(\"/\")\n        if fnmatch.fnmatch(name, pattern) or fnmatch.fnmatch(name, pattern + \"/*\"):\n            return True\n    return False\n\n\ndef _sdist_would_include(name: str) -> bool:\n    with (REPO_ROOT / \"pyproject.toml\").open(\"rb\") as f:\n        pyproject = tomllib.load(f)\n\n    tool = pyproject.get(\"tool\", {})\n\n    flit_sdist = tool.get(\"flit\", {}).get(\"sdist\")\n    if flit_sdist is not None:\n        return _matches(name, list(flit_sdist.get(\"include\", []))) and not _matches(\n            name, list(flit_sdist.get(\"exclude\", []))\n        )\n\n    # hatchling ships every file that is not excluded, so a file only needs\n    # to be absent from the exclude list to end up in the sdist.\n    hatch_sdist = tool.get(\"hatch\", {}).get(\"build\", {}).get(\"targets\", {}).get(\"sdist\")\n    if hatch_sdist is not None:\n        return not _matches(name, list(hatch_sdist.get(\"exclude\", [])))\n\n    raise AssertionError(\"Unknown sdist configuration in pyproject.toml\")\n\n\ndef test_changelog_is_included_in_sdist():\n    assert (REPO_ROOT / CHANGELOG).is_file(), f\"{CHANGELOG} is missing from the repo\"\n\n    assert _sdist_would_include(CHANGELOG), (\n        f\"{CHANGELOG} is not part of the source distribution, so \"\n        \"docs/changelog.rst (``.. include:: ../CHANGELOG.rst``) cannot be \"\n        \"built from an sdist.\"\n    )\n",
+            "kind": "UNRELATED_FAILURE",
+            "reason": "失败了，但和报告不一致（一致度 0.50 < 0.6）",
+            "match": 0.5
+          },
+          {
+            "n": 2,
+            "name": "tests/test_failgate_issue_688.py",
+            "claim": "tests/test_failgate_issue_688.py builds the source tarball from the declared sdist manifest (flit defaults + [tool.flit.sdist] include/exclude), then asserts CHANGELOG.rst is inside the tarball and that every docs `.. include::` (docs/changelog.rst -> ../CHANGELOG.rst, docs/index.rst -> ../README.rst) resolves within it. On this commit the sdist manifest omits CHANGELOG.rst so the tarball lacks it and the test fails with \"CHANGELOG.rst is missing from the source distribution, so the documentation cannot be built from it.\"; once the maintainer adds CHANGELOG.rst to the sdist include list, it passes.",
+            "script": "\"\"\"Regression test for pypa/packaging#688.\n\n``docs/changelog.rst`` contains ``.. include:: ../CHANGELOG.rst``, so\n``CHANGELOG.rst`` must be shipped in the source distribution.  flit only\nincludes the package, ``pyproject.toml``, the readme and the licence files in\nan sdist by default; a root level ``CHANGELOG.rst`` therefore has to be listed\nin ``[tool.flit.sdist] include``.  When it is missing, the documentation cannot\nbe built from a released source tarball.\n\nRather than importing the build backend (flit_core may not be available in the\ntest environment), this test derives the sdist contents from the declared sdist\nmanifest, packs them into an actual source tarball and then verifies that the\ndocumentation can be built from the unpacked tarball.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport fnmatch\nimport io\nimport posixpath\nimport re\nimport tarfile\nfrom pathlib import Path\n\ntry:\n    import tomllib\nexcept ImportError:  # pragma: no cover - Python < 3.11\n    import tomli as tomllib\n\n\nREPO_ROOT = Path(__file__).resolve().parent.parent\nCHANGELOG = \"CHANGELOG.rst\"\n\nINCLUDE_RE = re.compile(r\"^\\s*\\.\\.\\s+include::\\s+(\\S+)\\s*$\", re.MULTILINE)\n\n\ndef _expand(patterns: list[str]) -> set[str]:\n    files: set[str] = set()\n    for pattern in patterns:\n        path = REPO_ROOT / pattern\n        if path.is_dir():\n            for child in path.rglob(\"*\"):\n                if child.is_file():\n                    files.add(child.relative_to(REPO_ROOT).as_posix())\n        else:\n            for child in REPO_ROOT.glob(pattern):\n                if child.is_file():\n                    files.add(child.relative_to(REPO_ROOT).as_posix())\n    return files\n\n\ndef _sdist_files() -> list[str]:\n    \"\"\"Files that the declared sdist manifest puts into the tarball.\"\"\"\n    with (REPO_ROOT / \"pyproject.toml\").open(\"rb\") as f:\n        pyproject = tomllib.load(f)\n\n    project = pyproject[\"project\"]\n    flit = pyproject[\"tool\"][\"flit\"]\n    sdist = flit.get(\"sdist\", {})\n\n    # flit ships these in every sdist, without them being listed in include.\n    patterns = [\"pyproject.toml\", \"LICENSE*\"]\n    readme = project.get(\"readme\")\n    if isinstance(readme, str):\n        patterns.append(readme)\n    module = flit.get(\"module\", {}).get(\"name\", project[\"name\"])\n    for candidate in (module, f\"src/{module}\"):\n        if (REPO_ROOT / candidate).is_dir():\n            patterns.append(candidate)\n            break\n\n    files = _expand(patterns) | _expand(list(sdist.get(\"include\", [])))\n\n    for pattern in sdist.get(\"exclude\", []):\n        pattern = pattern.rstrip(\"/\")\n        for name in list(files):\n            if fnmatch.fnmatch(name, pattern) or name.startswith(pattern + \"/\"):\n                files.discard(name)\n\n    return sorted(files)\n\n\ndef _build_sdist(files: list[str]) -> tarfile.TarFile:\n    \"\"\"Pack ``files`` into an in-memory source tarball, like an sdist.\"\"\"\n    buffer = io.BytesIO()\n    with tarfile.open(fileobj=buffer, mode=\"w:gz\") as tf:\n        for name in files:\n            tf.add(REPO_ROOT / name, arcname=name)\n    buffer.seek(0)\n    return tarfile.open(fileobj=buffer)\n\n\ndef test_documentation_can_be_built_from_the_source_tarball():\n    with _build_sdist(_sdist_files()) as sdist:\n        names = {m.name for m in sdist.getmembers() if m.isfile()}\n\n        assert CHANGELOG in names, (\n            f\"{CHANGELOG} is missing from the source distribution, so the \"\n            \"documentation cannot be built from it.\"\n        )\n\n        # Every ``.. include::`` in the shipped docs must resolve inside the\n        # unpacked source tarball.\n        for name in sorted(n for n in names if n.startswith(\"docs/\") and n.endswith(\".rst\")):\n            text = sdist.extractfile(name).read().decode()\n            for target in INCLUDE_RE.findall(text):\n                resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), target))\n                assert resolved in names, (\n                    f\"{name} includes {target!r}, but {resolved} is missing \"\n                    \"from the source distribution, so the documentation cannot \"\n                    \"be built.\"\n                )\n",
+            "kind": "UNRELATED_FAILURE",
+            "reason": "失败了，但和报告不一致（一致度 0.50 < 0.6）",
+            "match": 0.5
+          }
+        ],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 3,
+          "run": 15,
+          "read_file": 8,
+          "write_test": 3,
+          "run_test": 3,
+          "write_scratch": 3,
+          "submit": 2
+        },
+        "cost_usd": 0.035174,
+        "prompt_tokens": 465540,
+        "completion_tokens": 24129,
+        "cached_tokens": 453888,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-688-1790930833.json",
+        "duration_s": 186.6,
+        "test_path": "tests/test_failgate_issue_688.py"
+      },
+      "intake_cost_usd": 0.00075,
+      "judge_cost_usd": 0.00492,
+      "judge_prompt_tokens": 3461,
+      "judge_completion_tokens": 3423,
+      "judge_cached_tokens": 768
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 683,
+      "title": "different result of  '_compare_equal' prefix match with epoch",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "5b34465682d40ddd42dd6cba88e158e1674de7b9",
+        "committed_at": "2023-02-13T08:47:54Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.11",
+        "version": "23.1.dev0",
+        "pytest": "pytest==7.2.1",
+        "test_path": "tests/test_failgate_issue_683.py",
+        "run": {
+          "version": "5b34465682",
+          "python": "3.11",
+          "env_key": "e5fd735489d9e374dbd91f6da91f959f30236dd5d16dd9f120532e3ea9c6a743",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert False",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "The output shows the installed packaging returning False for the epoch prefix match `==1!1.0.*` vs `1!1`, while the non-epoch baseline `==1.0.*` vs `1` passes on the earlier line — exactly the differing `_compare_equal`/`_pad_version` behaviour with an epoch described in the issue (specifier longer than prospective version). The assertion checks the expected correct behaviour rather than something unrelated, so the failure demonstrates the reported bug.",
+            "quote": "assert Specifier(\"==1!1.0.*\").contains(\"1!1\")\nAssertionError: assert False\n +  where False = <bound method Specifier.contains of <Specifier('==1!1.0.*')>>('1!1')",
+            "quote_found": true,
+            "cost_usd": 0.002212
+          },
+          "log_dir": "artifacts\\failgate-run-6dc8348397",
+          "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________ test_prefix_match_with_epoch_pads_release_segment _______________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_683.py\", line 23, in test_prefix_match_with_epoch_pads_release_segment\n    assert Specifier(\"==1!1.0.*\").contains(\"1!1\")\nAssertionError: assert False\n +  where False = <bound method Specifier.contains of <Specifier('==1!1.0.*')>>('1!1')\n +    where <bound method Specifier.contains of <Specifier('==1!1.0.*')>> = <Specifier('==1!1.0.*')>.contains\n +      where <Specifier('==1!1.0.*')> = Specifier('==1!1.0.*')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_683.py::test_prefix_match_with_epoch_pads_release_segment\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_683.py",
+            "claim": "tests/test_failgate_issue_683.py asserts that '==X.*' prefix matching zero-pads the prospective release segment when a non-zero epoch is present (e.g. Specifier(\"==1!1.0.*\").contains(\"1!1\") must be True, consistent with Specifier(\"==1.0.*\").contains(\"1\")); on this commit it fails with AssertionError because _pad_version/_version_split skip padding when the release segment follows an epoch.",
+            "script": "# This file is dual licensed under the terms of the Apache License, Version\n# 2.0, and the BSD License. See the LICENSE file in the root of this repository\n# for complete details.\n\nfrom packaging.specifiers import Specifier\n\n\ndef test_prefix_match_with_epoch_pads_release_segment():\n    \"\"\"``==X.*`` prefix matching must zero-pad the release segment even when a\n    non-zero epoch is involved.\n\n    ``1!1`` and ``1!1.0`` (``1!1.0.0``, ...) denote the same release, so a\n    prospective version with fewer release components than the specifier must\n    still match the longer ``==X.*`` specifier, exactly like ``1`` matches\n    ``==1.0.*``.  ``_compare_equal``/``_pad_version`` used to skip the padding\n    whenever an epoch was present, so the two forms below disagreed.\n    \"\"\"\n    # Baseline without an epoch: the prospective release segment is 0-padded.\n    assert Specifier(\"==1.0.*\").contains(\"1\")\n    assert Specifier(\"==1.0.0.*\").contains(\"1.0\")\n\n    # The same prefix match is expected once a non-zero epoch is involved.\n    assert Specifier(\"==1!1.0.*\").contains(\"1!1\")\n    assert Specifier(\"==1!1.0.0.*\").contains(\"1!1\")\n    assert Specifier(\"==1!1.0.0.*\").contains(\"1!1.0\")\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "# This file is dual licensed under the terms of the Apache License, Version\n# 2.0, and the BSD License. See the LICENSE file in the root of this repository\n# for complete details.\n\nfrom packaging.specifiers import Specifier\n\n\ndef test_prefix_match_with_epoch_pads_release_segment():\n    \"\"\"``==X.*`` prefix matching must zero-pad the release segment even when a\n    non-zero epoch is involved.\n\n    ``1!1`` and ``1!1.0`` (``1!1.0.0``, ...) denote the same release, so a\n    prospective version with fewer release components than the specifier must\n    still match the longer ``==X.*`` specifier, exactly like ``1`` matches\n    ``==1.0.*``.  ``_compare_equal``/``_pad_version`` used to skip the padding\n    whenever an epoch was present, so the two forms below disagreed.\n    \"\"\"\n    # Baseline without an epoch: the prospective release segment is 0-padded.\n    assert Specifier(\"==1.0.*\").contains(\"1\")\n    assert Specifier(\"==1.0.0.*\").contains(\"1.0\")\n\n    # The same prefix match is expected once a non-zero epoch is involved.\n    assert Specifier(\"==1!1.0.*\").contains(\"1!1\")\n    assert Specifier(\"==1!1.0.0.*\").contains(\"1!1\")\n    assert Specifier(\"==1!1.0.0.*\").contains(\"1!1.0\")\n",
+        "final_run": {
+          "version": "5b34465682",
+          "python": "3.11",
+          "env_key": "e5fd735489d9e374dbd91f6da91f959f30236dd5d16dd9f120532e3ea9c6a743",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert False",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "The output shows the installed packaging returning False for the epoch prefix match `==1!1.0.*` vs `1!1`, while the non-epoch baseline `==1.0.*` vs `1` passes on the earlier line — exactly the differing `_compare_equal`/`_pad_version` behaviour with an epoch described in the issue (specifier longer than prospective version). The assertion checks the expected correct behaviour rather than something unrelated, so the failure demonstrates the reported bug.",
+            "quote": "assert Specifier(\"==1!1.0.*\").contains(\"1!1\")\nAssertionError: assert False\n +  where False = <bound method Specifier.contains of <Specifier('==1!1.0.*')>>('1!1')",
+            "quote_found": true,
+            "cost_usd": 0.002212
+          },
+          "log_dir": "artifacts\\failgate-run-6dc8348397",
+          "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________ test_prefix_match_with_epoch_pads_release_segment _______________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_683.py\", line 23, in test_prefix_match_with_epoch_pads_release_segment\n    assert Specifier(\"==1!1.0.*\").contains(\"1!1\")\nAssertionError: assert False\n +  where False = <bound method Specifier.contains of <Specifier('==1!1.0.*')>>('1!1')\n +    where <bound method Specifier.contains of <Specifier('==1!1.0.*')>> = <Specifier('==1!1.0.*')>.contains\n +      where <Specifier('==1!1.0.*')> = Specifier('==1!1.0.*')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_683.py::test_prefix_match_with_epoch_pads_release_segment\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "steps": 34,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 3,
+          "read_file": 7,
+          "write_scratch": 8,
+          "run": 10,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.035775,
+        "prompt_tokens": 646696,
+        "completion_tokens": 22963,
+        "cached_tokens": 631936,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-683-1790931057.json",
+        "duration_s": 192.4,
+        "test_path": "tests/test_failgate_issue_683.py"
+      },
+      "intake_cost_usd": 0.002668,
+      "judge_cost_usd": 0.002212,
+      "judge_prompt_tokens": 1621,
+      "judge_completion_tokens": 1501,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 667,
+      "title": "`print()` calls in `test_tags`",
+      "intake_version": "main@068a0b5975a95a5cc30262599ca29bb6ceabe4af",
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "068a0b5975a95a5cc30262599ca29bb6ceabe4af",
+        "committed_at": "2023-01-16T10:10:06Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.11",
+        "version": "23.1.dev0",
+        "pytest": "pytest==7.2.1",
+        "test_path": "tests/test_failgate_issue_667.py",
+        "run": {
+          "version": "068a0b5975",
+          "python": "3.11",
+          "env_key": "a5c23bb2ff5afab529fd47a861144edc9684b11a1909c38b8b98bfcd19bfb87f",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "test_tags.py still contains leftover debug print() calls at line <N>, line <N>, line <N>, line <N>",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "The script statically parses tests/test_tags.py and the assertion failure confirms real print() calls exist at exactly the four lines (237, 245, 255, 273) named in the issue. The assertion checks the issue's expected behavior (no leftover print calls), so the failure is genuinely caused by the package's test source, though it's a static AST check rather than observing the noisy output at runtime.",
+            "quote": "AssertionError: test_tags.py still contains leftover debug print() calls at line 237, line 245, line 255, line 273",
+            "quote_found": true,
+            "cost_usd": 0.00074
+          },
+          "log_dir": "artifacts\\failgate-run-1578178b96",
+          "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________ test_test_tags_contains_no_stray_print_calls _________________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_667.py\", line 28, in test_test_tags_contains_no_stray_print_calls\n    assert not calls, (\nAssertionError: test_tags.py still contains leftover debug print() calls at line 237, line 245, line 255, line 273\nassert not [<ast.Call object at 0x7ba5e5ca4730>, <ast.Call object at 0x7ba5e5d781f0>, <ast.Call object at 0x7ba5e5d78a30>, <ast.Call object at 0x7ba5e5d796c0>]\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_667.py::test_test_tags_contains_no_stray_print_calls\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_667.py",
+            "claim": "tests/test_tags.py still contains the four leftover debug print() calls reported in issue #667 (lines 237, 245, 255, 273), so the new test fails on this commit with \"still contains leftover debug print() calls at line 237, line 245, line 255, line 273\"; once the prints are removed the test passes.",
+            "script": "\"\"\"Regression test for pypa/packaging#667: leftover ``print()`` calls in ``test_tags``.\n\nThe issue reports stray debugging ``print()`` calls left behind in the macOS\nplatform tests in ``tests/test_tags.py`` (lines 237, 245, 255 and 273), which\nspew noise into the test output.  The expected behaviour is that the test\nmodule no longer contains any ``print()`` call.\n\"\"\"\n\nimport ast\nimport pathlib\n\n\ndef _find_print_calls(path: pathlib.Path):\n    \"\"\"Return every ``print(...)`` call found in the module at ``path``.\"\"\"\n    tree = ast.parse(path.read_text(encoding=\"utf-8\"), filename=str(path))\n    return [\n        node\n        for node in ast.walk(tree)\n        if isinstance(node, ast.Call)\n        and isinstance(node.func, ast.Name)\n        and node.func.id == \"print\"\n    ]\n\n\ndef test_test_tags_contains_no_stray_print_calls():\n    test_tags = pathlib.Path(__file__).parent / \"test_tags.py\"\n    calls = sorted(_find_print_calls(test_tags), key=lambda call: call.lineno)\n    assert not calls, (\n        f\"{test_tags.name} still contains leftover debug print() calls at \"\n        + \", \".join(f\"line {call.lineno}\" for call in calls)\n    )\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85
+          }
+        ],
+        "final_script": "\"\"\"Regression test for pypa/packaging#667: leftover ``print()`` calls in ``test_tags``.\n\nThe issue reports stray debugging ``print()`` calls left behind in the macOS\nplatform tests in ``tests/test_tags.py`` (lines 237, 245, 255 and 273), which\nspew noise into the test output.  The expected behaviour is that the test\nmodule no longer contains any ``print()`` call.\n\"\"\"\n\nimport ast\nimport pathlib\n\n\ndef _find_print_calls(path: pathlib.Path):\n    \"\"\"Return every ``print(...)`` call found in the module at ``path``.\"\"\"\n    tree = ast.parse(path.read_text(encoding=\"utf-8\"), filename=str(path))\n    return [\n        node\n        for node in ast.walk(tree)\n        if isinstance(node, ast.Call)\n        and isinstance(node.func, ast.Name)\n        and node.func.id == \"print\"\n    ]\n\n\ndef test_test_tags_contains_no_stray_print_calls():\n    test_tags = pathlib.Path(__file__).parent / \"test_tags.py\"\n    calls = sorted(_find_print_calls(test_tags), key=lambda call: call.lineno)\n    assert not calls, (\n        f\"{test_tags.name} still contains leftover debug print() calls at \"\n        + \", \".join(f\"line {call.lineno}\" for call in calls)\n    )\n",
+        "final_run": {
+          "version": "068a0b5975",
+          "python": "3.11",
+          "env_key": "a5c23bb2ff5afab529fd47a861144edc9684b11a1909c38b8b98bfcd19bfb87f",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "test_tags.py still contains leftover debug print() calls at line <N>, line <N>, line <N>, line <N>",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "The script statically parses tests/test_tags.py and the assertion failure confirms real print() calls exist at exactly the four lines (237, 245, 255, 273) named in the issue. The assertion checks the issue's expected behavior (no leftover print calls), so the failure is genuinely caused by the package's test source, though it's a static AST check rather than observing the noisy output at runtime.",
+            "quote": "AssertionError: test_tags.py still contains leftover debug print() calls at line 237, line 245, line 255, line 273",
+            "quote_found": true,
+            "cost_usd": 0.00074
+          },
+          "log_dir": "artifacts\\failgate-run-1578178b96",
+          "output_tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_________________ test_test_tags_contains_no_stray_print_calls _________________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_667.py\", line 28, in test_test_tags_contains_no_stray_print_calls\n    assert not calls, (\nAssertionError: test_tags.py still contains leftover debug print() calls at line 237, line 245, line 255, line 273\nassert not [<ast.Call object at 0x7ba5e5ca4730>, <ast.Call object at 0x7ba5e5d781f0>, <ast.Call object at 0x7ba5e5d78a30>, <ast.Call object at 0x7ba5e5d796c0>]\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_667.py::test_test_tags_contains_no_stray_print_calls\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s"
+        },
+        "steps": 19,
+        "tool_counts": {
+          "read_file": 6,
+          "list_files": 4,
+          "run": 2,
+          "search_code": 2,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.015953,
+        "prompt_tokens": 140921,
+        "completion_tokens": 10929,
+        "cached_tokens": 134144,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-667-1790931217.json",
+        "duration_s": 84.9,
+        "test_path": "tests/test_failgate_issue_667.py"
+      },
+      "intake_cost_usd": 0.000754,
+      "judge_cost_usd": 0.00074,
+      "judge_prompt_tokens": 1291,
+      "judge_completion_tokens": 357,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 660,
+      "title": "`parse_wheel_name` and `parse_sdist_filename` now raises `InvalidVersion`",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "63e657138d30063bd46ed16a2e10cfe279a1d7c3",
+        "committed_at": "2023-01-10T23:10:44Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.11",
+        "version": "23.1.dev0",
+        "pytest": "pytest==7.2.0",
+        "test_path": "tests/test_failgate_issue_660.py",
+        "run": {
+          "version": "63e657138d",
+          "python": "3.11",
+          "env_key": "98e1c406e7e42771cbfa4bf49f9d99c1666d378304ba14e4beb7a8d0e5ce9718",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: '<N>.<N>.<N>.invalid'",
+              "frames": [
+                "packaging/utils.py:parse_wheel_filename",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本调用 parse_wheel_filename 传入含非法版本的 wheel 文件名，运行输出直接显示 packaging.utils.parse_wheel_filename 内部 Version(parts[1]) 抛出 InvalidVersion，这正是 issue 描述的 'dist filename 解析函数会抛 InvalidVersion' 的实际行为；脚本断言的 InvalidWheelFilename 也正是 issue 提出的两种修复方案之一的预期行为。",
+            "quote": "packaging.version.InvalidVersion: Invalid version: '1.0.0.invalid'",
+            "quote_found": true,
+            "cost_usd": 0.000623
+          },
+          "log_dir": "artifacts\\failgate-run-2a75e6321a",
+          "output_tail": "F\n=================================== FAILURES ===================================\n________________ test_parse_wheel_filename_with_invalid_version ________________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_660.py\", line 21, in test_parse_wheel_filename_with_invalid_version\n    parse_wheel_filename(\"foo-1.0.0.invalid-py3-none-any.whl\")\n  File \"/opt/venv/lib/python3.11/site-packages/packaging/utils.py\", line 107, in parse_wheel_filename\n    version = Version(parts[1])\n              ^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/packaging/version.py\", line 197, in __init__\n    raise InvalidVersion(f\"Invalid version: '{version}'\")\npackaging.version.InvalidVersion: Invalid version: '1.0.0.invalid'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_660.py::test_parse_wheel_filename_with_invalid_version\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_660.py",
+            "claim": "parse_wheel_filename/parse_sdist_filename leak packaging.version.InvalidVersion when the filename contains a non-PEP440 (formerly LegacyVersion) version; the test requires InvalidWheelFilename/InvalidSdistFilename and currently fails with the escaping InvalidVersion.",
+            "script": "# This file is dual licensed under the terms of the Apache License, Version\n# 2.0, and the BSD License. See the LICENSE file in the root of this repository\n# for complete details.\n\nimport pytest\n\nfrom packaging.utils import (\n    InvalidSdistFilename,\n    InvalidWheelFilename,\n    parse_sdist_filename,\n    parse_wheel_filename,\n)\n\n\ndef test_parse_wheel_filename_with_invalid_version():\n    # A wheel filename whose version part is not a valid PEP 440 version (this\n    # used to be accepted as a LegacyVersion) is an invalid filename, so\n    # ``InvalidWheelFilename`` should be raised instead of leaking\n    # ``InvalidVersion`` from packaging.version.\n    with pytest.raises(InvalidWheelFilename):\n        parse_wheel_filename(\"foo-1.0.0.invalid-py3-none-any.whl\")\n\n\ndef test_parse_sdist_filename_with_invalid_version():\n    # Same as above, for the sdist filename parsing function.\n    with pytest.raises(InvalidSdistFilename):\n        parse_sdist_filename(\"foo-1.0.0.invalid.tar.gz\")\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "# This file is dual licensed under the terms of the Apache License, Version\n# 2.0, and the BSD License. See the LICENSE file in the root of this repository\n# for complete details.\n\nimport pytest\n\nfrom packaging.utils import (\n    InvalidSdistFilename,\n    InvalidWheelFilename,\n    parse_sdist_filename,\n    parse_wheel_filename,\n)\n\n\ndef test_parse_wheel_filename_with_invalid_version():\n    # A wheel filename whose version part is not a valid PEP 440 version (this\n    # used to be accepted as a LegacyVersion) is an invalid filename, so\n    # ``InvalidWheelFilename`` should be raised instead of leaking\n    # ``InvalidVersion`` from packaging.version.\n    with pytest.raises(InvalidWheelFilename):\n        parse_wheel_filename(\"foo-1.0.0.invalid-py3-none-any.whl\")\n\n\ndef test_parse_sdist_filename_with_invalid_version():\n    # Same as above, for the sdist filename parsing function.\n    with pytest.raises(InvalidSdistFilename):\n        parse_sdist_filename(\"foo-1.0.0.invalid.tar.gz\")\n",
+        "final_run": {
+          "version": "63e657138d",
+          "python": "3.11",
+          "env_key": "98e1c406e7e42771cbfa4bf49f9d99c1666d378304ba14e4beb7a8d0e5ce9718",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: '<N>.<N>.<N>.invalid'",
+              "frames": [
+                "packaging/utils.py:parse_wheel_filename",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本调用 parse_wheel_filename 传入含非法版本的 wheel 文件名，运行输出直接显示 packaging.utils.parse_wheel_filename 内部 Version(parts[1]) 抛出 InvalidVersion，这正是 issue 描述的 'dist filename 解析函数会抛 InvalidVersion' 的实际行为；脚本断言的 InvalidWheelFilename 也正是 issue 提出的两种修复方案之一的预期行为。",
+            "quote": "packaging.version.InvalidVersion: Invalid version: '1.0.0.invalid'",
+            "quote_found": true,
+            "cost_usd": 0.000623
+          },
+          "log_dir": "artifacts\\failgate-run-2a75e6321a",
+          "output_tail": "F\n=================================== FAILURES ===================================\n________________ test_parse_wheel_filename_with_invalid_version ________________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_660.py\", line 21, in test_parse_wheel_filename_with_invalid_version\n    parse_wheel_filename(\"foo-1.0.0.invalid-py3-none-any.whl\")\n  File \"/opt/venv/lib/python3.11/site-packages/packaging/utils.py\", line 107, in parse_wheel_filename\n    version = Version(parts[1])\n              ^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/packaging/version.py\", line 197, in __init__\n    raise InvalidVersion(f\"Invalid version: '{version}'\")\npackaging.version.InvalidVersion: Invalid version: '1.0.0.invalid'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_660.py::test_parse_wheel_filename_with_invalid_version\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "steps": 13,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 3,
+          "read_file": 2,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.010211,
+        "prompt_tokens": 80339,
+        "completion_tokens": 6676,
+        "cached_tokens": 74496,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-660-1790931296.json",
+        "duration_s": 53.8,
+        "test_path": "tests/test_failgate_issue_660.py"
+      },
+      "intake_cost_usd": 0.000948,
+      "judge_cost_usd": 0.000623,
+      "judge_prompt_tokens": 1264,
+      "judge_completion_tokens": 266,
+      "judge_cached_tokens": 256
+    }
+  ],
+  "fbpa": [
+    {
+      "number": 788,
+      "title": "Specifier `<` that contains prerelease version does not match on valid prerelease versions",
+      "reported_version": null,
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 794,
+        "sha": "cf2cbe2aec28f87c6228a6fb136c27931c9af407",
+        "parent": "a716c52b5f3ca9b4a512f538b80ced8ee01b2775",
+        "committed_at": "2024-09-16T22:31:59Z",
+        "merge": false
+      },
+      "pretend_version": "24.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.593,
+          "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_788.py\", line 9, in test_exclusive_ordered_less_than_with_prerelease_specifier\n    assert Specifier(\"<3.0.0a8\").contains(\"3.0.0a7\") is True\nAssertionError: assert False is True\n +  where False = <bound method Specifier.contains of <Specifier('<3.0.0a8')>>('3.0.0a7')\n +    where <bound method Specifier.contains of <Specifier('<3.0.0a8')>> = <Specifier('<3.0.0a8')>.contains\n +      where <Specifier('<3.0.0a8')> = Specifier('<3.0.0a8')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_788.py::test_exclusive_ordered_less_than_with_prerelease_specifier\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-5c0a8fb19a"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.609,
+          "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 195, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_788.py\", line 9, in test_exclusive_ordered_less_than_with_prerelease_specifier\n    assert Specifier(\"<3.0.0a8\").contains(\"3.0.0a7\") is True\nAssertionError: assert False is True\n +  where False = <bound method Specifier.contains of <Specifier('<3.0.0a8')>>('3.0.0a7')\n +    where <bound method Specifier.contains of <Specifier('<3.0.0a8')>> = <Specifier('<3.0.0a8')>.contains\n +      where <Specifier('<3.0.0a8')> = Specifier('<3.0.0a8')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_788.py::test_exclusive_ordered_less_than_with_prerelease_specifier\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-22bf846af7"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.609,
+          "tail": ".                                                                        [100%]\n1 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-b21193ed1a"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.594,
+          "tail": ".                                                                        [100%]\n1 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-f760973ac1"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 774,
+      "title": "Marker referencing 'platform_release' fails to evaluate on Linux systems with non-PEP 440 kernel versions",
+      "reported_version": null,
+      "python": "3.12",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_fix",
+      "error": null
+    },
+    {
+      "number": 767,
+      "title": "Permit `contains` calls to Specifier[Set] to use arbitrary strings",
+      "reported_version": null,
+      "python": "3.12",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "setup_failed",
+      "error": ""
+    },
+    {
+      "number": 766,
+      "title": "Arbitrary equality not matching when a prerelease? Even with `prereleases=True`",
+      "reported_version": null,
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 1124,
+        "sha": "69307a312b3e4a3d989fd46abc6cbc0acf70adba",
+        "parent": "e9385363dcbdc4494cd1b2438e1f945b42a49422",
+        "committed_at": "2026-03-27T00:17:05Z",
+        "merge": false
+      },
+      "pretend_version": "23.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.594,
+          "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_766.py\", line 15, in test_arbitrary_equality_matches_unnormalized_prerelease_string\n    assert SpecifierSet(\"===1.a1\", prereleases=True).contains(\"1.a1\")\nAssertionError: assert False\n +  where False = <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>>('1.a1')\n +    where <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>> = <SpecifierSet('===1.a1', prereleases=True)>.contains\n +      where <SpecifierSet('===1.a1', prereleases=True)> = SpecifierSet('===1.a1', prereleases=True)\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_766.py::test_arbitrary_equality_matches_unnormalized_prerelease_string\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-df1fad80b8"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.61,
+          "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_766.py\", line 15, in test_arbitrary_equality_matches_unnormalized_prerelease_string\n    assert SpecifierSet(\"===1.a1\", prereleases=True).contains(\"1.a1\")\nAssertionError: assert False\n +  where False = <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>>('1.a1')\n +    where <bound method SpecifierSet.contains of <SpecifierSet('===1.a1', prereleases=True)>> = <SpecifierSet('===1.a1', prereleases=True)>.contains\n +      where <SpecifierSet('===1.a1', prereleases=True)> = SpecifierSet('===1.a1', prereleases=True)\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_766.py::test_arbitrary_equality_matches_unnormalized_prerelease_string\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-5af769475d"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.578,
+          "tail": ".                                                                        [100%]\n1 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-a7ab4c4b13"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.75,
+          "tail": ".                                                                        [100%]\n1 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-3ea568dd0c"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 744,
+      "title": "23.2: musl changes broke arm glibc",
+      "reported_version": "23.2",
+      "python": "3.11",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 738,
+      "title": "Issue with requirement string with + syntax",
+      "reported_version": null,
+      "python": "3.11",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 735,
+      "title": "ExceptionGroup wrapper does not appear to function with except*",
+      "reported_version": null,
+      "python": "3.11",
+      "proxy": "—",
+      "fix": {
+        "pr": 736,
+        "sha": "080405b1974efff3e7b5a199c3b6592f36ad97e0",
+        "parent": "5e84eeb660b7261098a5f673f2d4fe184805704b",
+        "committed_at": "2023-10-18T02:36:27Z",
+        "merge": false
+      },
+      "pretend_version": "23.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.079,
+          "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_735.py\", line 16, in test_metadata_uses_builtin_exception_group_on_python_311\n    assert packaging.metadata.ExceptionGroup is builtins.ExceptionGroup\nAssertionError: assert <class 'packaging.metadata.ExceptionGroup'> is <class 'ExceptionGroup'>\n +  where <class 'packaging.metadata.ExceptionGroup'> = <module 'packaging.metadata' from '/opt/venv/lib/python3.11/site-packages/packaging/metadata.py'>.ExceptionGroup\n +    where <module 'packaging.metadata' from '/opt/venv/lib/python3.11/site-packages/packaging/metadata.py'> = packaging.metadata\n +  and   <class 'ExceptionGroup'> = builtins.ExceptionGroup\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_735.py::test_metadata_uses_builtin_exception_group_on_python_311\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.03s",
+          "log_dir": "artifacts\\failgate-run-ba928c6fce"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.594,
+          "tail": "    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 194, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_735.py\", line 16, in test_metadata_uses_builtin_exception_group_on_python_311\n    assert packaging.metadata.ExceptionGroup is builtins.ExceptionGroup\nAssertionError: assert <class 'packaging.metadata.ExceptionGroup'> is <class 'ExceptionGroup'>\n +  where <class 'packaging.metadata.ExceptionGroup'> = <module 'packaging.metadata' from '/opt/venv/lib/python3.11/site-packages/packaging/metadata.py'>.ExceptionGroup\n +    where <module 'packaging.metadata' from '/opt/venv/lib/python3.11/site-packages/packaging/metadata.py'> = packaging.metadata\n +  and   <class 'ExceptionGroup'> = builtins.ExceptionGroup\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_735.py::test_metadata_uses_builtin_exception_group_on_python_311\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.03s",
+          "log_dir": "artifacts\\failgate-run-3e8a92337c"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.594,
+          "tail": "..                                                                       [100%]\n2 passed in 0.03s",
+          "log_dir": "artifacts\\failgate-run-088e7997e9"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.594,
+          "tail": "..                                                                       [100%]\n2 passed in 0.03s",
+          "log_dir": "artifacts\\failgate-run-78f5fd8864"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 733,
+      "title": "Inconsistent (and broken) behavior for Optional Metadata values",
+      "reported_version": null,
+      "python": "3.12",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 688,
+      "title": "CHANGELOG.rst is not included in the source tarball, making the documentation unbuildable",
+      "reported_version": null,
+      "python": "3.11",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 683,
+      "title": "different result of  '_compare_equal' prefix match with epoch",
+      "reported_version": null,
+      "python": "3.11",
+      "proxy": "—",
+      "fix": {
+        "pr": 712,
+        "sha": "c52d2b30465ace6d11f54c01b6ea30419a94b5ef",
+        "parent": "cc0c65cb43537491ba468da1ba9b9f49c932d9eb",
+        "committed_at": "2023-10-02T00:54:06Z",
+        "merge": false
+      },
+      "pretend_version": "23.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.579,
+          "tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________ test_prefix_match_with_epoch_pads_release_segment _______________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_683.py\", line 23, in test_prefix_match_with_epoch_pads_release_segment\n    assert Specifier(\"==1!1.0.*\").contains(\"1!1\")\nAssertionError: assert False\n +  where False = <bound method Specifier.contains of <Specifier('==1!1.0.*')>>('1!1')\n +    where <bound method Specifier.contains of <Specifier('==1!1.0.*')>> = <Specifier('==1!1.0.*')>.contains\n +      where <Specifier('==1!1.0.*')> = Specifier('==1!1.0.*')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_683.py::test_prefix_match_with_epoch_pads_release_segment\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-899e0fbd88"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.562,
+          "tail": "F                                                                        [100%]\n=================================== FAILURES ===================================\n______________ test_prefix_match_with_epoch_pads_release_segment _______________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_683.py\", line 23, in test_prefix_match_with_epoch_pads_release_segment\n    assert Specifier(\"==1!1.0.*\").contains(\"1!1\")\nAssertionError: assert False\n +  where False = <bound method Specifier.contains of <Specifier('==1!1.0.*')>>('1!1')\n +    where <bound method Specifier.contains of <Specifier('==1!1.0.*')>> = <Specifier('==1!1.0.*')>.contains\n +      where <Specifier('==1!1.0.*')> = Specifier('==1!1.0.*')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_683.py::test_prefix_match_with_epoch_pads_release_segment\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-ddbe6ed1ea"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.563,
+          "tail": ".                                                                        [100%]\n1 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-163fa07fbe"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.578,
+          "tail": ".                                                                        [100%]\n1 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-e1250023c5"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 667,
+      "title": "`print()` calls in `test_tags`",
+      "reported_version": "main@068a0b5975a95a5cc30262599ca29bb6ceabe4af",
+      "python": "3.11",
+      "proxy": "—",
+      "fix": {
+        "pr": 668,
+        "sha": "67bd518c5d7b206dd191275d784b605a191f19e4",
+        "parent": "1b9da4420e9e23046dc095a3779f2607ae6e4d62",
+        "committed_at": "2023-01-25T23:46:25Z",
+        "merge": false
+      },
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "fix_not_code",
+      "error": null
+    },
+    {
+      "number": 660,
+      "title": "`parse_wheel_name` and `parse_sdist_filename` now raises `InvalidVersion`",
+      "reported_version": null,
+      "python": "3.11",
+      "proxy": "—",
+      "fix": {
+        "pr": 721,
+        "sha": "524b701c6e30fc4da9355117367273f591c6de72",
+        "parent": "b509bef6a4573595b23a97ecbfe569000918157f",
+        "committed_at": "2023-10-01T12:53:22Z",
+        "merge": false
+      },
+      "pretend_version": "23.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.578,
+          "tail": "=================================== FAILURES ===================================\n________________ test_parse_wheel_filename_with_invalid_version ________________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_660.py\", line 21, in test_parse_wheel_filename_with_invalid_version\n    parse_wheel_filename(\"foo-1.0.0.invalid-py3-none-any.whl\")\n  File \"/opt/venv/lib/python3.11/site-packages/packaging/utils.py\", line 124, in parse_wheel_filename\n    version = Version(parts[1])\n              ^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/packaging/version.py\", line 200, in __init__\n    raise InvalidVersion(f\"Invalid version: '{version}'\")\npackaging.version.InvalidVersion: Invalid version: '1.0.0.invalid'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_660.py::test_parse_wheel_filename_with_invalid_version\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-15b590f0ac"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.563,
+          "tail": "=================================== FAILURES ===================================\n________________ test_parse_wheel_filename_with_invalid_version ________________\nTraceback (most recent call last):\n  File \"/workspace/src/tests/test_failgate_issue_660.py\", line 21, in test_parse_wheel_filename_with_invalid_version\n    parse_wheel_filename(\"foo-1.0.0.invalid-py3-none-any.whl\")\n  File \"/opt/venv/lib/python3.11/site-packages/packaging/utils.py\", line 124, in parse_wheel_filename\n    version = Version(parts[1])\n              ^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/packaging/version.py\", line 200, in __init__\n    raise InvalidVersion(f\"Invalid version: '{version}'\")\npackaging.version.InvalidVersion: Invalid version: '1.0.0.invalid'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_660.py::test_parse_wheel_filename_with_invalid_version\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-833c5d442e"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.594,
+          "tail": "..                                                                       [100%]\n2 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-846b6237b7"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.078,
+          "tail": "..                                                                       [100%]\n2 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-2a3d840d5e"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    }
+  ]
+}
