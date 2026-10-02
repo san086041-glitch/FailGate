@@ -2438,6 +2438,7 @@ def replay_verify(
     variants = [k.strip() for k in kinds.split(",") if k.strip()]
     if bad := [k for k in variants if k not in ve.VARIANTS]:
         raise typer.BadParameter(f"未知的变体：{bad}，可选 {ve.VARIANTS}")
+    _require_docker(settings)
     run = json.loads(source.read_text(encoding="utf-8"))
     cases = ve.load_cases(run)
     if only:
