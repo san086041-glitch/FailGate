@@ -645,6 +645,17 @@ def _run_paths(run_id: str) -> tuple[Path, Path]:
     return Path("eval/runs") / f"{run_id}.json", Path("eval/reports") / f"{run_id}.md"
 
 
+def _selection(repo: str) -> Any:
+    """仓库的选题规则（eval/datasets/<repo>/selection.json，ADR 0040）。"""
+    from failgate.replay import selection
+    from failgate.replay.dataset import EVAL_ROOT
+
+    try:
+        return selection.load(repo, EVAL_ROOT)
+    except selection.SelectionMissing as e:
+        raise typer.BadParameter(str(e)) from None
+
+
 def _write_report(run_path: Path, min_precision: float) -> None:
     from failgate.replay.dataset import load_labels
     from failgate.replay.dedup import RunResult
@@ -1798,13 +1809,13 @@ def replay_repro(
 
     settings = Settings()
     cfg = PackageConfig(name=package, import_name=import_name)
+    rule = None if numbers else _selection(repo)
     started = datetime.now()
     run_id = f"{repo.replace('/', '__')}__repro__{started:%Y%m%d-%H%M}"
     run_path, report_path = _run_paths(run_id)
     selection = (
         f"指定编号 {numbers}" if numbers else
-        f"{since} 之后创建、以完成状态关闭的 T: bug，类别为 crash / invalid code / "
-        f"unstable formatting / parser，排除 duplicate / not a bug / invalid / outdated，"
+        f"{since} 之后创建、以完成状态关闭，{rule.describe(repro=True) if rule else ''}，"
         f"按编号从新到旧跳过 {offset} 个、取 {limit} 个"
     )
     meta = {
@@ -1827,8 +1838,10 @@ def replay_repro(
                     select(IssueDoc).where(IssueDoc.repo_id == repo_row.id)
                 )).all()
             await db.dispose()
+            assert rule is not None  # 没指定编号时已经读过规则
             wanted = [d.number for d in select_issues(
-                all_docs, since=datetime.fromisoformat(since), limit=limit, offset=offset
+                all_docs, rule=rule, since=datetime.fromisoformat(since), limit=limit,
+                offset=offset,
             )]
         docs = await _load_issue_docs(db_url, repo, wanted)
         typer.echo(f"选中 {len(docs)} 个：{[d.number for d in docs]}")
@@ -2142,13 +2155,15 @@ def replay_l2(
     if not settings.github_token:
         raise typer.BadParameter("需要 GITHUB_TOKEN（查修复提交用 GraphQL）")
     cfg = PackageConfig(name=package, import_name=import_name)
+    rule = None if numbers else _selection(repo)
     started = datetime.now()
     run_id = f"{repo.replace('/', '__')}__l2__{started:%Y%m%d-%H%M}"
     run_path, report_path = _run_paths(run_id)
     selection = (
         f"指定编号 {numbers}" if numbers else
-        f"和 replay repro 相同的规则，{since} 之后创建，按编号从新到旧跳过 {offset} 个、"
-        f"取 {limit} 个"
+        f"和 replay repro 相同的规则：{since} 之后创建、以完成状态关闭，"
+        f"{rule.describe(repro=True) if rule else ''}，"
+        f"按编号从新到旧跳过 {offset} 个、取 {limit} 个"
     )
     meta = {
         "started": started.isoformat(timespec="seconds"), "model": settings.llm_model_large,
@@ -2171,8 +2186,10 @@ def replay_l2(
                     select(IssueDoc).where(IssueDoc.repo_id == repo_row.id)
                 )).all()
             await db.dispose()
+            assert rule is not None  # 没指定编号时已经读过规则
             wanted = [d.number for d in select_issues(
-                all_docs, since=datetime.fromisoformat(since), limit=limit, offset=offset
+                all_docs, rule=rule, since=datetime.fromisoformat(since), limit=limit,
+                offset=offset,
             )]
         docs = await _load_issue_docs(db_url, repo, wanted)
         typer.echo(f"选中 {len(docs)} 个：{[d.number for d in docs]}")
@@ -3191,15 +3208,14 @@ def replay_fix(
 @replay_app.command("fixset")
 def replay_fixset(
     repo: Annotated[str, typer.Argument(help="owner/name，例如 psf/black")],
-    out: Annotated[Path, typer.Option(help="评测集 JSON（已存在就接着补）")] = Path(
-        "eval/datasets/psf__black/fixset_v1.json"),
+    package: Annotated[str, typer.Option(help="包名，例如 black")],
+    out: Annotated[Path | None, typer.Option(
+        help="评测集 JSON（已存在就接着补），默认 eval/datasets/<repo>/fixset_v1.json")] = None,
     since: Annotated[str, typer.Option(help="只收这一天之后创建的 issue")] = "2022-01-01",
     target: Annotated[int, typer.Option(help="凑够多少题")] = 36,
     exclude_from: Annotated[str, typer.Option(
-        help="逗号分隔的回放记录 JSON：里面用过的题都排除（开发集、留出集）")] = (
-        "eval/runs/psf__black__repro__20260925-1452.json,"
-        "eval/runs/psf__black__l2__20260926-1551.json"),
-    package: Annotated[str, typer.Option(help="包名")] = "black",
+        help="逗号分隔的回放记录 JSON：里面用过的题都排除（开发集、留出集）；"
+             "接着补时和文件里记下的排除名单合并")] = "",
     concurrency: Annotated[int, typer.Option(help="同时处理几题（每题一个沙箱）")] = 2,
     max_candidates: Annotated[int, typer.Option(help="最多看多少个候选")] = 150,
     db_url: Annotated[str, typer.Option("--db", help="回放语料库")] = REPLAY_DB,
@@ -3214,18 +3230,23 @@ def replay_fixset(
     from failgate.replay import fix_eval as fe
     from failgate.replay import fixset as fxs
     from failgate.replay import verify_eval as ve
+    from failgate.replay.dataset import dataset_dir
     from failgate.replay.fixes import find_fix
     from failgate.repro.config import PackageConfig
     from failgate.repro.source import SourceError, fetch_github_tree
 
     settings = Settings()
+    rule = _selection(repo)
+    out = out or dataset_dir(repo) / "fixset_v1.json"
     exclude = fxs.exclude_from_runs(Path(p) for p in exclude_from.split(",") if p.strip())
     if out.exists():
         fs = fxs.load(out)
+        exclude |= set(fs.exclude)
+        fs.exclude = sorted(exclude)
         typer.echo(f"接着补：已收 {len(fs.cases)}、已跳过 {len(fs.skipped)}")
     else:
         fs = fxs.Fixset(repo=repo, since=since, target=target, exclude=sorted(exclude),
-                        started=datetime.now().isoformat(timespec="seconds"))
+                        rule=rule, started=datetime.now().isoformat(timespec="seconds"))
     cfg = PackageConfig(name=package)
 
     async def run() -> None:
@@ -3238,7 +3259,8 @@ def replay_fixset(
             all_docs = (await s.scalars(
                 select(IssueDoc).where(IssueDoc.repo_id == repo_row.id))).all()
         await db.dispose()
-        pool = fxs.candidates(all_docs, since=datetime.fromisoformat(since), exclude=exclude)
+        pool = fxs.candidates(all_docs, rule=rule, since=datetime.fromisoformat(since),
+                              exclude=exclude)
         seen = fs.seen()
         todo = [d for d in pool if d.number not in seen][:max_candidates]
         typer.echo(f"候选 {len(pool)} 个（排除 {len(exclude)} 个），这次最多看 {len(todo)} 个")

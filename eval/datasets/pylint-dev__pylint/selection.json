@@ -1,0 +1,6 @@
+{
+ "bug_labels": ["Bug :beetle:", "Crash 💥", "False Positive 🦟", "False Negative 🦋", "Regression"],
+ "repro_labels": ["Crash 💥", "False Positive 🦟", "False Negative 🦋"],
+ "exclude_labels": ["Duplicate 🐫", "Invalid", "Won't fix/not planned", "Cannot reproduce 🤷", "Upstream Bug 🪲", "Downstream Bug 🪲", "Needs astroid update", "Needs astroid Brain 🧠"],
+ "note": "pylint 的误报 / 漏报常常只打 False Positive / False Negative、不打 Bug，所以都算 bug。复现只取崩溃、误报、漏报：都能用一段代码 + 运行 pylint 复现。排除修在 astroid 或别的上游项目里的（Upstream Bug、Needs astroid update / Brain）：修复不在这个仓库里，回放找不到修复提交。"
+}

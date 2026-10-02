@@ -1,0 +1,6 @@
+{
+ "bug_labels": ["T: bug"],
+ "repro_labels": ["C: crash", "C: invalid code", "C: unstable formatting", "C: parser"],
+ "exclude_labels": ["R: duplicate", "R: not a bug", "R: invalid", "R: outdated"],
+ "note": "格式化器自身的行为 bug，可以通过公开 API 复现；排除打包、集成、配置、文件收集这类环境问题。和 ADR 0040 之前写死在代码里的规则逐条相同。"
+}

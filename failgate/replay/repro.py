@@ -1,6 +1,7 @@
 """复现回放评测：在仓库历史上已经修复的 bug 上跑复现 Agent（技术方案第 18 节）。
 
-选样规则写死在代码里（select_issues），避免挑样本。
+选样规则是固定的（select_issues + 仓库的 selection.json，跑之前定好、和数据集一起
+提交），避免挑样本。
 
 指标：
 - L1 复现率：在报告的版本上复现，并且失败特征和报告一致；
@@ -20,27 +21,19 @@ from datetime import datetime
 from typing import Any
 
 from failgate.replay.metrics import wilson
+from failgate.replay.selection import Selection, closed_since
 from failgate.repro.issue import IssueReproReport
-
-# 格式化器自身的行为 bug，可以通过公开 API 复现；排除打包、集成、配置、文件收集这类环境问题
-REPRO_CATEGORIES = frozenset({"C: crash", "C: invalid code", "C: unstable formatting", "C: parser"})
-EXCLUDE_LABELS = frozenset({"R: duplicate", "R: not a bug", "R: invalid", "R: outdated"})
 
 
 def select_issues(
-    docs: Iterable[Any], *, since: datetime, limit: int, offset: int = 0
+    docs: Iterable[Any], *, rule: Selection, since: datetime, limit: int, offset: int = 0
 ) -> list[Any]:
-    """已完成关闭的 T: bug，属于 REPRO_CATEGORIES 之一，不带排除标签；按编号从新到旧，
+    """已完成关闭、符合仓库选题规则（rule.is_repro）的 bug；按编号从新到旧，
     跳过前 offset 个（开发集），取 limit 个。"""
     out = []
     skipped = 0
     for d in sorted(docs, key=lambda d: d.number, reverse=True):
-        labels = set(d.labels or [])
-        if d.state != "closed" or d.state_reason != "completed":
-            continue
-        if d.created_at is None or d.created_at.replace(tzinfo=None) < since:
-            continue
-        if "T: bug" not in labels or not labels & REPRO_CATEGORIES or labels & EXCLUDE_LABELS:
+        if not closed_since(d, since) or not rule.is_repro(d.labels or []):
             continue
         if skipped < offset:
             skipped += 1

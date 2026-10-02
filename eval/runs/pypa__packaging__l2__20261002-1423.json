@@ -1,0 +1,651 @@
+{
+  "meta": {
+    "started": "2026-10-02T14:23:51",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "和 replay repro 相同的规则：2022-01-01 之后创建、以完成状态关闭，带 `bug` 之一，排除 `duplicate` / `invalid` / `wontfix` / `question` / `support`，按编号从新到旧跳过 0 个、取 3 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.05,
+    "runs": 2,
+    "kind": "L2 测试"
+  },
+  "summary": {
+    "n": 3,
+    "outcomes": {
+      "l2": 3
+    },
+    "l2": 3,
+    "l2_rate": 1.0,
+    "l2_ci": [
+      0.43849391955098227,
+      1.0
+    ],
+    "with_traceback": 0,
+    "l2_with_traceback": 0,
+    "fbpa_eligible": 2,
+    "fb_pa": 1,
+    "fb_pa_ci": [
+      0.09452865480086614,
+      0.9054713451991339
+    ],
+    "fbpa_outcomes": {
+      "fail_after": 1,
+      "fb_pa": 1,
+      "no_fix": 1
+    },
+    "end_to_end_n": 3,
+    "total_cost_usd": 0.0396,
+    "mean_cost_usd": 0.0132,
+    "mean_steps": 29.3,
+    "mean_submits": 1.0,
+    "mean_duration_s": 105.5
+  },
+  "reports": [
+    {
+      "repo": "pypa/packaging",
+      "number": 1185,
+      "title": "Validate `packages.index` is a URL in `pylock.toml`",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "ff14df979f865165553999d9d1a111feec6f4843",
+        "committed_at": "2026-05-10T12:31:27Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.14",
+        "version": "26.3.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_1185.py",
+        "run": {
+          "version": "ff14df979f",
+          "python": "3.14",
+          "env_key": "362b149621c993cff535feb389c8e6c93ea43e9ad0716a3fecd623f11df57de5",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "Failed",
+              "message": "DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "The test feeds `index = \"not-a-url\"` through the library's own pylock parser and the package accepted it without raising, which is exactly the missing-URL-validation behavior the issue complains about (pip installs fine, only uv rejects it). The failure comes from the package's behavior, not from the script's own assert/raise, though the issue's reported symptoms were observed via pip/uv rather than via `Pylock.from_dict` directly.",
+            "quote": "Failed: DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>",
+            "quote_found": true,
+            "cost_usd": 0.000745
+          },
+          "log_dir": "artifacts\\failgate-run-c8c0ad1200",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_1185.py\", line 48, in test_pylock_package_index_must_be_a_url\n    with pytest.raises(PylockValidationError):\n         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/raises.py\", line 710, in __exit__\n    fail(f\"DID NOT RAISE {self.expected_exceptions[0]!r}\")\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/outcomes.py\", line 163, in __call__\n    raise Failed(msg=reason, pytrace=pytrace)\nFailed: DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_1185.py::test_pylock_package_index_must_be_a_url\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_1185.py",
+            "claim": "Pylock.from_dict silently accepts packages[].index = \"not-a-url\" (the pylock example from issue #1185), so the test asserting PylockValidationError fails with \"DID NOT RAISE\"; a URL index still parses fine.",
+            "script": "\"\"\"Regression test for pypa/packaging#1185.\n\n``packages.index`` in a ``pylock.toml`` file must be a URL.  A value such as\n``\"not-a-url\"`` is not a valid lock file and must be rejected when the lock\nfile is validated.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport pytest\n\nfrom packaging.pylock import Pylock, PylockValidationError\n\n\ndef _lock_file_with_index(index: str) -> dict:\n    return {\n        \"lock-version\": \"1.0\",\n        \"created-by\": \"demo\",\n        \"packages\": [\n            {\n                \"name\": \"click\",\n                \"version\": \"8.3.3\",\n                \"index\": index,\n                \"wheels\": [\n                    {\n                        \"name\": \"click-8.3.3-py3-none-any.whl\",\n                        \"url\": (\n                            \"https://files.pythonhosted.org/packages/ae/44/\"\n                            \"c1221527f6a71a01ec6fbad7fa78f1d50dfa0221\"\n                            \"7385cf0fa3eec7087d59/click-8.3.3-py3-none-any.whl\"\n                        ),\n                        \"size\": 110502,\n                        \"hashes\": {\n                            \"sha256\": (\n                                \"a2bf429bb3033c89fa4936ffb35d5cb471e3719e\"\n                                \"1f3c8a7c3fff0b8314305613\"\n                            ),\n                        },\n                    }\n                ],\n            }\n        ],\n    }\n\n\ndef test_pylock_package_index_must_be_a_url() -> None:\n    data = _lock_file_with_index(\"not-a-url\")\n    with pytest.raises(PylockValidationError):\n        Pylock.from_dict(data)\n\n\ndef test_pylock_package_index_accepts_a_url() -> None:\n    data = _lock_file_with_index(\"https://pypi.org/simple/\")\n    pylock = Pylock.from_dict(data)\n    assert pylock.packages[0].index == \"https://pypi.org/simple/\"\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85
+          }
+        ],
+        "final_script": "\"\"\"Regression test for pypa/packaging#1185.\n\n``packages.index`` in a ``pylock.toml`` file must be a URL.  A value such as\n``\"not-a-url\"`` is not a valid lock file and must be rejected when the lock\nfile is validated.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport pytest\n\nfrom packaging.pylock import Pylock, PylockValidationError\n\n\ndef _lock_file_with_index(index: str) -> dict:\n    return {\n        \"lock-version\": \"1.0\",\n        \"created-by\": \"demo\",\n        \"packages\": [\n            {\n                \"name\": \"click\",\n                \"version\": \"8.3.3\",\n                \"index\": index,\n                \"wheels\": [\n                    {\n                        \"name\": \"click-8.3.3-py3-none-any.whl\",\n                        \"url\": (\n                            \"https://files.pythonhosted.org/packages/ae/44/\"\n                            \"c1221527f6a71a01ec6fbad7fa78f1d50dfa0221\"\n                            \"7385cf0fa3eec7087d59/click-8.3.3-py3-none-any.whl\"\n                        ),\n                        \"size\": 110502,\n                        \"hashes\": {\n                            \"sha256\": (\n                                \"a2bf429bb3033c89fa4936ffb35d5cb471e3719e\"\n                                \"1f3c8a7c3fff0b8314305613\"\n                            ),\n                        },\n                    }\n                ],\n            }\n        ],\n    }\n\n\ndef test_pylock_package_index_must_be_a_url() -> None:\n    data = _lock_file_with_index(\"not-a-url\")\n    with pytest.raises(PylockValidationError):\n        Pylock.from_dict(data)\n\n\ndef test_pylock_package_index_accepts_a_url() -> None:\n    data = _lock_file_with_index(\"https://pypi.org/simple/\")\n    pylock = Pylock.from_dict(data)\n    assert pylock.packages[0].index == \"https://pypi.org/simple/\"\n",
+        "final_run": {
+          "version": "ff14df979f",
+          "python": "3.14",
+          "env_key": "362b149621c993cff535feb389c8e6c93ea43e9ad0716a3fecd623f11df57de5",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "Failed",
+              "message": "DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "The test feeds `index = \"not-a-url\"` through the library's own pylock parser and the package accepted it without raising, which is exactly the missing-URL-validation behavior the issue complains about (pip installs fine, only uv rejects it). The failure comes from the package's behavior, not from the script's own assert/raise, though the issue's reported symptoms were observed via pip/uv rather than via `Pylock.from_dict` directly.",
+            "quote": "Failed: DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>",
+            "quote_found": true,
+            "cost_usd": 0.000745
+          },
+          "log_dir": "artifacts\\failgate-run-c8c0ad1200",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_1185.py\", line 48, in test_pylock_package_index_must_be_a_url\n    with pytest.raises(PylockValidationError):\n         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/raises.py\", line 710, in __exit__\n    fail(f\"DID NOT RAISE {self.expected_exceptions[0]!r}\")\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/outcomes.py\", line 163, in __call__\n    raise Failed(msg=reason, pytrace=pytrace)\nFailed: DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_1185.py::test_pylock_package_index_must_be_a_url\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s"
+        },
+        "steps": 19,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 5,
+          "read_file": 7,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.007043,
+        "prompt_tokens": 216731,
+        "completion_tokens": 5788,
+        "cached_tokens": 196864,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-1185-1790918719.json",
+        "duration_s": 60.5,
+        "test_path": "tests/test_failgate_issue_1185.py"
+      },
+      "intake_cost_usd": 0.000583,
+      "judge_cost_usd": 0.000745,
+      "judge_prompt_tokens": 2773,
+      "judge_completion_tokens": 611,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 978,
+      "title": "arbitrary equality and version normalization",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "312041efe426489071fbeb0cd94d831597e1f253",
+        "committed_at": "2025-11-15T03:34:06Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.14",
+        "version": "25.1.dev0",
+        "pytest": "pytest==9.0.1",
+        "test_path": "tests/test_failgate_issue_978.py",
+        "run": {
+          "version": "312041efe4",
+          "python": "3.14",
+          "env_key": "cb5c427402a80cf78081795058dd07b68ed044270a85d5fda55c341cb22a10d1",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert True is False",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "运行输出直接显示被测包的 == 任意相等判断行为：Specifier('===1.1').contains('1.01') 返回 True（assert True is False），这正是 issue 中报告的不对称行为之一，脚本断言检查的也正是 issue 描述的『简单字符串相等、不做零填充归一化』预期，失败原因来自被测包而非脚本自身。",
+            "quote": "AssertionError: assert True is False\n +  where True = contains('1.01')\n +    where contains = <Specifier('===1.1')>.contains",
+            "quote_found": true,
+            "cost_usd": 0.000595
+          },
+          "log_dir": "artifacts\\failgate-run-2e1f4ee4f6",
+          "output_tail": "    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_978.py\", line 37, in test_arbitrary_equality_is_a_plain_string_comparison\n    assert Specifier(specifier).contains(version) is expected\nAssertionError: assert True is False\n +  where True = contains('1.01')\n +    where contains = <Specifier('===1.1')>.contains\n +      where <Specifier('===1.1')> = Specifier('===1.1')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_978.py::test_arbitrary_equality_is_a_plain_string_comparison[===1.1-1.01-False]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_978.py",
+            "claim": "tests/test_failgate_issue_978.py asserts that `===` (arbitrary equality) is a plain string comparison: Specifier(\"===1.1\").contains(\"1.01\") and Specifier(\"===1.01\").contains(\"1.1\") must both be False while each spelling matches itself. On this code the first direction returns True (and \"===1.01\" vs \"1.01\" returns False) because the prospective version is normalized via Version() while the specifier side is kept verbatim, so the test fails with `assert True is False` at packaging/specifiers.py:511.",
+            "script": "\"\"\"Regression test for pypa/packaging#978.\n\n``===`` (arbitrary equality) is described as doing \"simple string equality\noperations which do not take into account any of the semantic information such\nas zero padding\".  However, the prospective version was normalized (parsed into\na ``Version``) before being compared while the version coming from the\nspecifier was used verbatim, so the comparison was asymmetric::\n\n    >>> Specifier(\"===1.1\").contains(\"1.01\")\n    True\n    >>> Specifier(\"===1.01\").contains(\"1.1\")\n    False\n\nNeither ``\"1.01\"`` nor ``\"1.1\"`` should match a specifier spelling the other\nzero-padded form, and each spelling must still match itself.\n\"\"\"\n\nimport pytest\n\nfrom packaging.specifiers import Specifier\n\n\n@pytest.mark.parametrize(\n    (\"specifier\", \"version\", \"expected\"),\n    [\n        # Zero padding must not be normalized away: \"1.01\" != \"1.1\" here.\n        (\"===1.1\", \"1.01\", False),\n        (\"===1.01\", \"1.1\", False),\n        # A literal string match is of course still a match, on both sides.\n        (\"===1.1\", \"1.1\", True),\n        (\"===1.01\", \"1.01\", True),\n    ],\n)\ndef test_arbitrary_equality_is_a_plain_string_comparison(\n    specifier: str, version: str, expected: bool\n) -> None:\n    assert Specifier(specifier).contains(version) is expected\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for pypa/packaging#978.\n\n``===`` (arbitrary equality) is described as doing \"simple string equality\noperations which do not take into account any of the semantic information such\nas zero padding\".  However, the prospective version was normalized (parsed into\na ``Version``) before being compared while the version coming from the\nspecifier was used verbatim, so the comparison was asymmetric::\n\n    >>> Specifier(\"===1.1\").contains(\"1.01\")\n    True\n    >>> Specifier(\"===1.01\").contains(\"1.1\")\n    False\n\nNeither ``\"1.01\"`` nor ``\"1.1\"`` should match a specifier spelling the other\nzero-padded form, and each spelling must still match itself.\n\"\"\"\n\nimport pytest\n\nfrom packaging.specifiers import Specifier\n\n\n@pytest.mark.parametrize(\n    (\"specifier\", \"version\", \"expected\"),\n    [\n        # Zero padding must not be normalized away: \"1.01\" != \"1.1\" here.\n        (\"===1.1\", \"1.01\", False),\n        (\"===1.01\", \"1.1\", False),\n        # A literal string match is of course still a match, on both sides.\n        (\"===1.1\", \"1.1\", True),\n        (\"===1.01\", \"1.01\", True),\n    ],\n)\ndef test_arbitrary_equality_is_a_plain_string_comparison(\n    specifier: str, version: str, expected: bool\n) -> None:\n    assert Specifier(specifier).contains(version) is expected\n",
+        "final_run": {
+          "version": "312041efe4",
+          "python": "3.14",
+          "env_key": "cb5c427402a80cf78081795058dd07b68ed044270a85d5fda55c341cb22a10d1",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert True is False",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "运行输出直接显示被测包的 == 任意相等判断行为：Specifier('===1.1').contains('1.01') 返回 True（assert True is False），这正是 issue 中报告的不对称行为之一，脚本断言检查的也正是 issue 描述的『简单字符串相等、不做零填充归一化』预期，失败原因来自被测包而非脚本自身。",
+            "quote": "AssertionError: assert True is False\n +  where True = contains('1.01')\n +    where contains = <Specifier('===1.1')>.contains",
+            "quote_found": true,
+            "cost_usd": 0.000595
+          },
+          "log_dir": "artifacts\\failgate-run-2e1f4ee4f6",
+          "output_tail": "    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_978.py\", line 37, in test_arbitrary_equality_is_a_plain_string_comparison\n    assert Specifier(specifier).contains(version) is expected\nAssertionError: assert True is False\n +  where True = contains('1.01')\n +    where contains = <Specifier('===1.1')>.contains\n +      where <Specifier('===1.1')> = Specifier('===1.1')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_978.py::test_arbitrary_equality_is_a_plain_string_comparison[===1.1-1.01-False]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "steps": 29,
+        "tool_counts": {
+          "read_file": 9,
+          "search_code": 9,
+          "run": 4,
+          "write_scratch": 1,
+          "list_files": 3,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.011442,
+        "prompt_tokens": 309184,
+        "completion_tokens": 12522,
+        "cached_tokens": 288768,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-978-1790918893.json",
+        "duration_s": 103.2,
+        "test_path": "tests/test_failgate_issue_978.py"
+      },
+      "intake_cost_usd": 0.000354,
+      "judge_cost_usd": 0.000595,
+      "judge_prompt_tokens": 2282,
+      "judge_completion_tokens": 484,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pypa/packaging",
+      "number": 943,
+      "title": "Fully cover handling arbitrary equality (`===`) in `Specifier` and `SpecifierSet`.",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pypa/packaging",
+        "sha": "a85e63daecba56bbb829492624a844d306053504",
+        "committed_at": "2025-10-08T18:20:52Z",
+        "package": "packaging",
+        "module": "packaging",
+        "python": "3.14",
+        "version": "25.1.dev0",
+        "pytest": "pytest==8.4.2",
+        "test_path": "tests/test_failgate_issue_943.py",
+        "run": {
+          "version": "a85e63daec",
+          "python": "3.14",
+          "env_key": "c828f8f2f46234e878e80f3fd39e98dc841b583995ec7b8a26171e3166aca68b",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: 'foo'",
+              "frames": [
+                "packaging/specifiers.py:filter",
+                "packaging/specifiers.py:prereleases",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "The failure comes from the packaging library itself: `Specifier(\"===foo\").contains(\"foo\")` triggers `filter` → `prereleases` → `Version(version).is_prerelease`, raising `InvalidVersion: Invalid version: 'foo'`. This is exactly the arbitrary-equality gap described in the issue, where `_coerce_version`/Version parsing breaks on valid `===foo` operands instead of treating them as plain strings. The script asserts the issue's expected behavior (`===foo` matching 'foo'), so the failure is the reported bug, not script error.",
+            "quote": "packaging.version.InvalidVersion: Invalid version: 'foo'",
+            "quote_found": true,
+            "cost_usd": 0.000711
+          },
+          "log_dir": "artifacts\\failgate-run-79bba1256a",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 178, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1671, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 157, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_943.py\", line 18, in test_arbitrary_equality_matches_non_version_strings\n    assert Specifier(\"===foo\").contains(\"foo\") is True\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/packaging/specifiers.py\", line 544, in contains\n    return bool(list(self.filter([item], prereleases=prereleases)))\n                ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/packaging/specifiers.py\", line 575, in filter\n    prereleases if prereleases is not None else self.prereleases\n                                                ^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/packaging/specifiers.py\", line 265, in prereleases\n    if Version(version).is_prerelease:\n       ~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/packaging/version.py\", line 203, in __init__\n    raise InvalidVersion(f\"Invalid version: {version!r}\")\npackaging.version.InvalidVersion: Invalid version: 'foo'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_943.py::test_arbitrary_equality_matches_non_version_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_943.py",
+            "claim": "Test reproduces issue #943: arbitrary equality (===) with a non-PEP-440 string (e.g. \"foo\", \"lolwat\") crashes with InvalidVersion because filtering/matching coerces the operand with Version() (`Specifier.prereleases`/`_coerce_version`). It asserts Specifier/SpecifierSet .contains() and .filter() (and `in`) treat such strings as valid === operands and match them; on the current code it fails with InvalidVersion, and passes on the newer vendored packaging 26.2 which handles === without coercing.",
+            "script": "\"\"\"Regression tests for arbitrary equality (``===``) handling.\n\nSee https://github.com/pypa/packaging/issues/943\n\n``===`` is the :pep:`440` escape hatch that allows matching arbitrary version\nstrings which are not required to be valid PEP 440 versions.  Because matching\ngoes through ``filter()``, which has to coerce items with ``_coerce_version``\nto implement PEP 440 semantics, arbitrary strings used with ``===foo`` used to\nblow up with ``InvalidVersion`` instead of being compared as plain strings.\n\"\"\"\n\nfrom packaging.specifiers import Specifier, SpecifierSet\n\n\ndef test_arbitrary_equality_matches_non_version_strings():\n    # A non-PEP-440 string is a valid ``===`` operand and must be matched as a\n    # plain (case-insensitive) string, without trying to parse it as a Version.\n    assert Specifier(\"===foo\").contains(\"foo\") is True\n    assert list(Specifier(\"===foo\").filter([\"foo\"])) == [\"foo\"]\n\n    assert SpecifierSet(\"===foo\").contains(\"foo\") is True\n    assert list(SpecifierSet(\"===foo\").filter([\"foo\"])) == [\"foo\"]\n\n    # The same, with the \"lolwat\" escape-hatch value used elsewhere in the\n    # test-suite, and through the ``in`` operator.\n    assert \"lolwat\" in Specifier(\"===lolwat\")\n    assert \"lolwat\" in SpecifierSet(\"===lolwat\")\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85
+          }
+        ],
+        "final_script": "\"\"\"Regression tests for arbitrary equality (``===``) handling.\n\nSee https://github.com/pypa/packaging/issues/943\n\n``===`` is the :pep:`440` escape hatch that allows matching arbitrary version\nstrings which are not required to be valid PEP 440 versions.  Because matching\ngoes through ``filter()``, which has to coerce items with ``_coerce_version``\nto implement PEP 440 semantics, arbitrary strings used with ``===foo`` used to\nblow up with ``InvalidVersion`` instead of being compared as plain strings.\n\"\"\"\n\nfrom packaging.specifiers import Specifier, SpecifierSet\n\n\ndef test_arbitrary_equality_matches_non_version_strings():\n    # A non-PEP-440 string is a valid ``===`` operand and must be matched as a\n    # plain (case-insensitive) string, without trying to parse it as a Version.\n    assert Specifier(\"===foo\").contains(\"foo\") is True\n    assert list(Specifier(\"===foo\").filter([\"foo\"])) == [\"foo\"]\n\n    assert SpecifierSet(\"===foo\").contains(\"foo\") is True\n    assert list(SpecifierSet(\"===foo\").filter([\"foo\"])) == [\"foo\"]\n\n    # The same, with the \"lolwat\" escape-hatch value used elsewhere in the\n    # test-suite, and through the ``in`` operator.\n    assert \"lolwat\" in Specifier(\"===lolwat\")\n    assert \"lolwat\" in SpecifierSet(\"===lolwat\")\n",
+        "final_run": {
+          "version": "a85e63daec",
+          "python": "3.14",
+          "env_key": "c828f8f2f46234e878e80f3fd39e98dc841b583995ec7b8a26171e3166aca68b",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InvalidVersion",
+              "message": "Invalid version: 'foo'",
+              "frames": [
+                "packaging/specifiers.py:filter",
+                "packaging/specifiers.py:prereleases",
+                "packaging/version.py:__init__"
+              ]
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "The failure comes from the packaging library itself: `Specifier(\"===foo\").contains(\"foo\")` triggers `filter` → `prereleases` → `Version(version).is_prerelease`, raising `InvalidVersion: Invalid version: 'foo'`. This is exactly the arbitrary-equality gap described in the issue, where `_coerce_version`/Version parsing breaks on valid `===foo` operands instead of treating them as plain strings. The script asserts the issue's expected behavior (`===foo` matching 'foo'), so the failure is the reported bug, not script error.",
+            "quote": "packaging.version.InvalidVersion: Invalid version: 'foo'",
+            "quote_found": true,
+            "cost_usd": 0.000711
+          },
+          "log_dir": "artifacts\\failgate-run-79bba1256a",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 178, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1671, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 157, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_943.py\", line 18, in test_arbitrary_equality_matches_non_version_strings\n    assert Specifier(\"===foo\").contains(\"foo\") is True\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/packaging/specifiers.py\", line 544, in contains\n    return bool(list(self.filter([item], prereleases=prereleases)))\n                ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/packaging/specifiers.py\", line 575, in filter\n    prereleases if prereleases is not None else self.prereleases\n                                                ^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/packaging/specifiers.py\", line 265, in prereleases\n    if Version(version).is_prerelease:\n       ~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/packaging/version.py\", line 203, in __init__\n    raise InvalidVersion(f\"Invalid version: {version!r}\")\npackaging.version.InvalidVersion: Invalid version: 'foo'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_943.py::test_arbitrary_equality_matches_non_version_strings\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s"
+        },
+        "steps": 40,
+        "tool_counts": {
+          "search_code": 5,
+          "read_file": 7,
+          "write_scratch": 1,
+          "run": 23,
+          "list_files": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.017829,
+        "prompt_tokens": 763437,
+        "completion_tokens": 19552,
+        "cached_tokens": 737536,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pypa__packaging-943-1790919116.json",
+        "duration_s": 152.8,
+        "test_path": "tests/test_failgate_issue_943.py"
+      },
+      "intake_cost_usd": 0.000328,
+      "judge_cost_usd": 0.000711,
+      "judge_prompt_tokens": 2483,
+      "judge_completion_tokens": 627,
+      "judge_cached_tokens": 256
+    }
+  ],
+  "fbpa": [
+    {
+      "number": 1185,
+      "title": "Validate `packages.index` is a URL in `pylock.toml`",
+      "reported_version": null,
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 1339,
+        "sha": "2497782b2bb03812d2a12ae882a4390c61ec5061",
+        "parent": "abf000549c2ec5b31357046498d6e4f0f9d7d743",
+        "committed_at": "2026-07-20T04:38:37Z",
+        "merge": false
+      },
+      "pretend_version": "26.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.734,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_1185.py\", line 48, in test_pylock_package_index_must_be_a_url\n    with pytest.raises(PylockValidationError):\n         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/raises.py\", line 710, in __exit__\n    fail(f\"DID NOT RAISE {self.expected_exceptions[0]!r}\")\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/outcomes.py\", line 163, in __call__\n    raise Failed(msg=reason, pytrace=pytrace)\nFailed: DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_1185.py::test_pylock_package_index_must_be_a_url\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-85dc3d736b"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.766,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_1185.py\", line 48, in test_pylock_package_index_must_be_a_url\n    with pytest.raises(PylockValidationError):\n         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/raises.py\", line 710, in __exit__\n    fail(f\"DID NOT RAISE {self.expected_exceptions[0]!r}\")\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/outcomes.py\", line 163, in __call__\n    raise Failed(msg=reason, pytrace=pytrace)\nFailed: DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_1185.py::test_pylock_package_index_must_be_a_url\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s",
+          "log_dir": "artifacts\\failgate-run-358257d816"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.735,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_1185.py\", line 48, in test_pylock_package_index_must_be_a_url\n    with pytest.raises(PylockValidationError):\n         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/raises.py\", line 710, in __exit__\n    fail(f\"DID NOT RAISE {self.expected_exceptions[0]!r}\")\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/outcomes.py\", line 163, in __call__\n    raise Failed(msg=reason, pytrace=pytrace)\nFailed: DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_1185.py::test_pylock_package_index_must_be_a_url\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s",
+          "log_dir": "artifacts\\failgate-run-aaa5362dc1"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.719,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_1185.py\", line 48, in test_pylock_package_index_must_be_a_url\n    with pytest.raises(PylockValidationError):\n         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/raises.py\", line 710, in __exit__\n    fail(f\"DID NOT RAISE {self.expected_exceptions[0]!r}\")\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/outcomes.py\", line 163, in __call__\n    raise Failed(msg=reason, pytrace=pytrace)\nFailed: DID NOT RAISE <class 'packaging.pylock.PylockValidationError'>\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_1185.py::test_pylock_package_index_must_be_a_url\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.02s",
+          "log_dir": "artifacts\\failgate-run-df9c8a21f7"
+        }
+      ],
+      "outcome": "fail_after",
+      "error": null
+    },
+    {
+      "number": 978,
+      "title": "arbitrary equality and version normalization",
+      "reported_version": null,
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 1124,
+        "sha": "69307a312b3e4a3d989fd46abc6cbc0acf70adba",
+        "parent": "e9385363dcbdc4494cd1b2438e1f945b42a49422",
+        "committed_at": "2026-03-27T00:17:05Z",
+        "merge": false
+      },
+      "pretend_version": "25.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.204,
+          "tail": "    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_978.py\", line 37, in test_arbitrary_equality_is_a_plain_string_comparison\n    assert Specifier(specifier).contains(version) is expected\nAssertionError: assert True is False\n +  where True = contains('1.01')\n +    where contains = <Specifier('===1.1')>.contains\n +      where <Specifier('===1.1')> = Specifier('===1.1')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_978.py::test_arbitrary_equality_is_a_plain_string_comparison[===1.1-1.01-False]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-d82c94969b"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.703,
+          "tail": "    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_978.py\", line 37, in test_arbitrary_equality_is_a_plain_string_comparison\n    assert Specifier(specifier).contains(version) is expected\nAssertionError: assert True is False\n +  where True = contains('1.01')\n +    where contains = <Specifier('===1.1')>.contains\n +      where <Specifier('===1.1')> = Specifier('===1.1')\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_978.py::test_arbitrary_equality_is_a_plain_string_comparison[===1.1-1.01-False]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-3344e88397"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.75,
+          "tail": "....                                                                     [100%]\n4 passed in 0.01s",
+          "log_dir": "artifacts\\failgate-run-d5bab08d19"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.719,
+          "tail": "....                                                                     [100%]\n4 passed in 0.02s",
+          "log_dir": "artifacts\\failgate-run-b31cb4f857"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 943,
+      "title": "Fully cover handling arbitrary equality (`===`) in `Specifier` and `SpecifierSet`.",
+      "reported_version": null,
+      "python": "3.14",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_fix",
+      "error": null
+    }
+  ]
+}

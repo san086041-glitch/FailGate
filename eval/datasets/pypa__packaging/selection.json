@@ -1,0 +1,6 @@
+{
+ "bug_labels": ["bug"],
+ "repro_labels": [],
+ "exclude_labels": ["duplicate", "invalid", "wontfix", "question", "support"],
+ "note": "packaging 的 bug 大多是版本号、依赖说明符、标记的解析或比较结果不对，都能用一段调用公开 API 的代码复现，所以复现不再按类别筛。"
+}

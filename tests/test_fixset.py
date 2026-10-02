@@ -11,6 +11,7 @@ from typing import Any
 from failgate.replay import fix_eval as fe
 from failgate.replay import fixset as fxs
 from failgate.replay.fixes import FixCommit
+from failgate.replay.selection import Selection
 from failgate.verify.tamper import PullFile
 
 
@@ -32,7 +33,8 @@ def test_candidates_newest_first_with_filters():
         doc(9),
         doc(10),
     ]
-    got = fxs.candidates(docs, since=datetime(2022, 1, 1), exclude={9})
+    rule = Selection(bug_labels=["T: bug"], exclude_labels=["R: duplicate"])
+    got = fxs.candidates(docs, rule=rule, since=datetime(2022, 1, 1), exclude={9})
     assert [d.number for d in got] == [10, 5, 1]
 
 

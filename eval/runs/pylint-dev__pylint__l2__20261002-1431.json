@@ -1,0 +1,562 @@
+{
+  "meta": {
+    "started": "2026-10-02T14:31:57",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "和 replay repro 相同的规则：2022-01-01 之后创建、以完成状态关闭，带 `Bug :beetle:` / `Crash 💥` / `False Positive 🦟` / `False Negative 🦋` / `Regression` 之一，类别为 `Crash 💥` / `False Positive 🦟` / `False Negative 🦋` 之一，排除 `Duplicate 🐫` / `Invalid` / `Won't fix/not planned` / `Cannot reproduce 🤷` / `Upstream Bug 🪲` / `Downstream Bug 🪲` / `Needs astroid update` / `Needs astroid Brain 🧠`，按编号从新到旧跳过 0 个、取 3 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.05,
+    "runs": 2,
+    "kind": "L2 测试"
+  },
+  "summary": {
+    "n": 3,
+    "outcomes": {
+      "l2": 2,
+      "not_reproduced": 1
+    },
+    "l2": 2,
+    "l2_rate": 0.6666666666666666,
+    "l2_ci": [
+      0.2076549551264879,
+      0.9385096847238394
+    ],
+    "with_traceback": 3,
+    "l2_with_traceback": 2,
+    "fbpa_eligible": 2,
+    "fb_pa": 2,
+    "fb_pa_ci": [
+      0.34237195288961925,
+      1.0
+    ],
+    "fbpa_outcomes": {
+      "fb_pa": 2,
+      "no_script": 1
+    },
+    "end_to_end_n": 3,
+    "total_cost_usd": 0.0277,
+    "mean_cost_usd": 0.0092,
+    "mean_steps": 25.7,
+    "mean_submits": 0.67,
+    "mean_duration_s": 93.1
+  },
+  "reports": [
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11492,
+      "title": "Uncaught `InferenceError: Inference failed for all members` in types checker",
+      "intake_version": "914495634",
+      "intake_python": "3.14.7",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "9144956341a5fc9987cd84e7c2332f65d7d51a42",
+        "committed_at": "2026-09-29T08:31:55Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.10.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11492.py",
+        "run": {
+          "version": "9144956341",
+          "python": "3.14",
+          "env_key": "478a01f104b3667d78a0149a6e54c854dd1cca089d0191fdbca79472a08ceb5a",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InferenceError",
+              "message": "Inference failed for all members of [<AssignAttr.foo l.<N> at <ADDR>>].",
+              "frames": [
+                "pylint/checkers/typecheck.py:visit_call",
+                "pylint/checkers/typecheck.py:_check_not_callable",
+                "pylint/checkers/typecheck.py:_check_uninferable_call"
+              ]
+            },
+            "reported": {
+              "exc_type": "InferenceError",
+              "message": "Inference failed for all members of [<AssignAttr.foo l.<N> at <ADDR>>].",
+              "frames": [
+                "pylint/pylint/checkers/typecheck.py:visit_call",
+                "pylint/pylint/checkers/typecheck.py:_check_not_callable",
+                "pylint/pylint/checkers/typecheck.py:_check_uninferable_call"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-4a30b8b3c0",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2419, in _get_attribute_from_metaclass\n    for attr in bases._infer_stmts(attrs, context, frame=cls):\n                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 203, in _infer_stmts\n    raise InferenceError(\n    ...<4 lines>...\n    )\nastroid.exceptions.InferenceError: Inference failed for all members of [<AssignAttr.foo l.2 at 0x7d9912053380>].\n----------------------------- Captured stderr call -----------------------------\nException on node <Call l.6 at 0x7d9912053cb0> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/typecheck.py\", line 1577, in visit_call\n    self._check_not_callable(node, called)\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/typecheck.py\", line 1927, in _check_not_callable\n    self._check_uninferable_call(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/typecheck.py\", line 1464, in _check_uninferable_call\n    attrs = klass._proxied.getattr(node.func.attrname)\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2382, in getattr\n    values += self._metaclass_lookup_attribute(name, context)\n              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2408, in _metaclass_lookup_attribute\n    attrs.update(cls_attributes)\n    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2419, in _get_attribute_from_metaclass\n    for attr in bases._infer_stmts(attrs, context, frame=cls):\n                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 203, in _infer_stmts\n    raise InferenceError(\n    ...<4 lines>...\n    )\nastroid.exceptions.InferenceError: Inference failed for all members of [<AssignAttr.foo l.2 at 0x7d9912053380>].\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11492.py::test_no_crash_on_uninferable_call_with_metaclass_attribute\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11492.py",
+            "claim": "Test walks the types checker over the issue's snippet (`with _ as type.foo:` + `[C.foo() for _ in []]`); the checker raises astroid InferenceError \"Inference failed for all members of [<AssignAttr.foo l.2 ...>]\" from typecheck.py _check_uninferable_call -> scoped_nodes.getattr -> bases._infer_stmts, exactly as reported.",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11492.\n\nRunning the types checker on the snippet below used to crash with an uncaught\n``astroid.exceptions.InferenceError`` raised while looking up an attribute on a\nclass whose metaclass attribute cannot be inferred.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\n\nfrom pylint.checkers import typecheck\nfrom pylint.testutils.unittest_linter import UnittestLinter\nfrom pylint.utils import ASTWalker\n\nCRASHING_CODE = \"\"\"\nwith _ as type.foo:\n    pass\n\ndef fn():\n    [C.foo() for _ in []]\n    C = None\n\"\"\"\n\n\ndef test_no_crash_on_uninferable_call_with_metaclass_attribute() -> None:\n    \"\"\"The types checker must not raise InferenceError on this snippet.\"\"\"\n    linter = UnittestLinter()\n    checker = typecheck.TypeChecker(linter)\n    checker.open()\n    module = astroid.parse(CRASHING_CODE)\n    walker = ASTWalker(linter)\n    walker.add_checker(checker)\n    walker.walk(module)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/pylint/issues/11492.\n\nRunning the types checker on the snippet below used to crash with an uncaught\n``astroid.exceptions.InferenceError`` raised while looking up an attribute on a\nclass whose metaclass attribute cannot be inferred.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\n\nfrom pylint.checkers import typecheck\nfrom pylint.testutils.unittest_linter import UnittestLinter\nfrom pylint.utils import ASTWalker\n\nCRASHING_CODE = \"\"\"\nwith _ as type.foo:\n    pass\n\ndef fn():\n    [C.foo() for _ in []]\n    C = None\n\"\"\"\n\n\ndef test_no_crash_on_uninferable_call_with_metaclass_attribute() -> None:\n    \"\"\"The types checker must not raise InferenceError on this snippet.\"\"\"\n    linter = UnittestLinter()\n    checker = typecheck.TypeChecker(linter)\n    checker.open()\n    module = astroid.parse(CRASHING_CODE)\n    walker = ASTWalker(linter)\n    walker.add_checker(checker)\n    walker.walk(module)\n",
+        "final_run": {
+          "version": "9144956341",
+          "python": "3.14",
+          "env_key": "478a01f104b3667d78a0149a6e54c854dd1cca089d0191fdbca79472a08ceb5a",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InferenceError",
+              "message": "Inference failed for all members of [<AssignAttr.foo l.<N> at <ADDR>>].",
+              "frames": [
+                "pylint/checkers/typecheck.py:visit_call",
+                "pylint/checkers/typecheck.py:_check_not_callable",
+                "pylint/checkers/typecheck.py:_check_uninferable_call"
+              ]
+            },
+            "reported": {
+              "exc_type": "InferenceError",
+              "message": "Inference failed for all members of [<AssignAttr.foo l.<N> at <ADDR>>].",
+              "frames": [
+                "pylint/pylint/checkers/typecheck.py:visit_call",
+                "pylint/pylint/checkers/typecheck.py:_check_not_callable",
+                "pylint/pylint/checkers/typecheck.py:_check_uninferable_call"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-4a30b8b3c0",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2419, in _get_attribute_from_metaclass\n    for attr in bases._infer_stmts(attrs, context, frame=cls):\n                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 203, in _infer_stmts\n    raise InferenceError(\n    ...<4 lines>...\n    )\nastroid.exceptions.InferenceError: Inference failed for all members of [<AssignAttr.foo l.2 at 0x7d9912053380>].\n----------------------------- Captured stderr call -----------------------------\nException on node <Call l.6 at 0x7d9912053cb0> in file '<?>'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/typecheck.py\", line 1577, in visit_call\n    self._check_not_callable(node, called)\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/typecheck.py\", line 1927, in _check_not_callable\n    self._check_uninferable_call(node)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/checkers/typecheck.py\", line 1464, in _check_uninferable_call\n    attrs = klass._proxied.getattr(node.func.attrname)\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2382, in getattr\n    values += self._metaclass_lookup_attribute(name, context)\n              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2408, in _metaclass_lookup_attribute\n    attrs.update(cls_attributes)\n    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2419, in _get_attribute_from_metaclass\n    for attr in bases._infer_stmts(attrs, context, frame=cls):\n                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 203, in _infer_stmts\n    raise InferenceError(\n    ...<4 lines>...\n    )\nastroid.exceptions.InferenceError: Inference failed for all members of [<AssignAttr.foo l.2 at 0x7d9912053380>].\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11492.py::test_no_crash_on_uninferable_call_with_metaclass_attribute\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 17,
+        "tool_counts": {
+          "read_file": 7,
+          "list_files": 2,
+          "search_code": 3,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.004626,
+        "prompt_tokens": 134249,
+        "completion_tokens": 3877,
+        "cached_tokens": 121344,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11492-1790919207.json",
+        "duration_s": 51.3,
+        "test_path": "tests/test_failgate_issue_11492.py"
+      },
+      "intake_cost_usd": 0.000328,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11491,
+      "title": "Assertion failure: `assert isinstance(self, nodes.Module)` via stdlib checker",
+      "intake_version": "914495634",
+      "intake_python": "3.14.7",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "9144956341a5fc9987cd84e7c2332f65d7d51a42",
+        "committed_at": "2026-09-29T08:31:55Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.10.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11491.py",
+        "run": null,
+        "level": "NONE",
+        "error": "Agent 没有提交测试（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 40,
+        "tool_counts": {
+          "list_files": 3,
+          "read_file": 6,
+          "search_code": 4,
+          "write_scratch": 8,
+          "run": 19
+        },
+        "cost_usd": 0.014778,
+        "prompt_tokens": 309084,
+        "completion_tokens": 19957,
+        "cached_tokens": 296320,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11491-1790919456.json",
+        "duration_s": 153.3,
+        "test_path": null
+      },
+      "intake_cost_usd": 0.000356,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/pylint",
+      "number": 11479,
+      "title": "`AttributeError: 'ClassDef' object has no attribute 'expr'` in private-import checker",
+      "intake_version": "71c4a0e70",
+      "intake_python": "3.14.7",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/pylint",
+        "sha": "39e618b13e82713eee73b8bcd7f66e21243b272e",
+        "committed_at": "2026-09-27T14:52:50Z",
+        "package": "pylint",
+        "module": "pylint",
+        "python": "3.14",
+        "version": "4.0.10.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "tests/test_failgate_issue_11479.py",
+        "run": {
+          "version": "39e618b13e",
+          "python": "3.14",
+          "env_key": "f87ce8ce60a8430e4110d568af5049d9ea5ee1fc870a1f4b716a0c4dabe320b1",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'ClassDef' object has no attribute 'expr'",
+              "frames": [
+                "pylint/extensions/private_import.py:_get_type_annotation_names",
+                "pylint/extensions/private_import.py:_populate_type_annotations",
+                "pylint/extensions/private_import.py:_assignments_call_private_name"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'ClassDef' object has no attribute 'expr'",
+              "frames": [
+                "pylint/pylint/extensions/private_import.py:_get_type_annotation_names",
+                "pylint/pylint/extensions/private_import.py:_populate_type_annotations",
+                "pylint/pylint/extensions/private_import.py:_assignments_call_private_name"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-720142015e",
+          "output_tail": "    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 178, in _populate_type_annotations\n    self._assignments_call_private_name(name_assignments, private_name)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 249, in _assignments_call_private_name\n    current_attribute = current_attribute.expr\n                        ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/node_classes.py\", line 2104, in __getattr__\n    return super().__getattr__(name)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\nAttributeError: 'ClassDef' object has no attribute 'expr'\n----------------------------- Captured stderr call -----------------------------\nException on node <ImportFrom l.1 at 0x798fa7945f90> in file '/workspace/crash.py'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 76, in visit_importfrom\n    private_names = self._get_type_annotation_names(node, names)\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 128, in _get_type_annotation_names\n    self._populate_type_annotations(node.root(), self.all_used_type_annotations)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 178, in _populate_type_annotations\n    self._assignments_call_private_name(name_assignments, private_name)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 249, in _assignments_call_private_name\n    current_attribute = current_attribute.expr\n                        ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/node_classes.py\", line 2104, in __getattr__\n    return super().__getattr__(name)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\nAttributeError: 'ClassDef' object has no attribute 'expr'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11479.py::TestPrivateImportNoCrash::test_annotated_assignment_call_attribute_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_11479.py",
+            "claim": "测试用项目自带的 CheckerTestCase 走 PrivateImportChecker，对 issue 里的代码 `from random import randint` + `x: str = ''().a` 进行 walk，会在 pylint/extensions/private_import.py:249 处触发 AttributeError: 'ClassDef' object has no attribute 'expr'（与报告堆栈一致），修复后不再崩溃。",
+            "script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for a crash in the private-import checker.\n\nhttps://github.com/pylint-dev/pylint/issues/11479\n\"\"\"\n\nimport astroid\n\nfrom pylint.extensions import private_import\nfrom pylint.testutils import CheckerTestCase\n\n\nclass TestPrivateImportNoCrash(CheckerTestCase):\n\n    CHECKER_CLASS = private_import.PrivateImportChecker\n\n    def test_annotated_assignment_call_attribute_does_not_crash(self) -> None:\n        \"\"\"An annotated assignment whose value is a call followed by an attribute\n        access must not make the checker crash.\n        \"\"\"\n        module = astroid.parse(\n            \"from random import randint\\n\\nx: str = ''().a\\n\", path=\"crash.py\"\n        )\n\n        self.walk(module)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/pylint-dev/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/pylint/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for a crash in the private-import checker.\n\nhttps://github.com/pylint-dev/pylint/issues/11479\n\"\"\"\n\nimport astroid\n\nfrom pylint.extensions import private_import\nfrom pylint.testutils import CheckerTestCase\n\n\nclass TestPrivateImportNoCrash(CheckerTestCase):\n\n    CHECKER_CLASS = private_import.PrivateImportChecker\n\n    def test_annotated_assignment_call_attribute_does_not_crash(self) -> None:\n        \"\"\"An annotated assignment whose value is a call followed by an attribute\n        access must not make the checker crash.\n        \"\"\"\n        module = astroid.parse(\n            \"from random import randint\\n\\nx: str = ''().a\\n\", path=\"crash.py\"\n        )\n\n        self.walk(module)\n",
+        "final_run": {
+          "version": "39e618b13e",
+          "python": "3.14",
+          "env_key": "f87ce8ce60a8430e4110d568af5049d9ea5ee1fc870a1f4b716a0c4dabe320b1",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'ClassDef' object has no attribute 'expr'",
+              "frames": [
+                "pylint/extensions/private_import.py:_get_type_annotation_names",
+                "pylint/extensions/private_import.py:_populate_type_annotations",
+                "pylint/extensions/private_import.py:_assignments_call_private_name"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'ClassDef' object has no attribute 'expr'",
+              "frames": [
+                "pylint/pylint/extensions/private_import.py:_get_type_annotation_names",
+                "pylint/pylint/extensions/private_import.py:_populate_type_annotations",
+                "pylint/pylint/extensions/private_import.py:_assignments_call_private_name"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-720142015e",
+          "output_tail": "    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 178, in _populate_type_annotations\n    self._assignments_call_private_name(name_assignments, private_name)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 249, in _assignments_call_private_name\n    current_attribute = current_attribute.expr\n                        ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/node_classes.py\", line 2104, in __getattr__\n    return super().__getattr__(name)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\nAttributeError: 'ClassDef' object has no attribute 'expr'\n----------------------------- Captured stderr call -----------------------------\nException on node <ImportFrom l.1 at 0x798fa7945f90> in file '/workspace/crash.py'\nTraceback (most recent call last):\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/utils/ast_walker.py\", line 87, in walk\n    callback(astroid)\n    ~~~~~~~~^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 76, in visit_importfrom\n    private_names = self._get_type_annotation_names(node, names)\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 128, in _get_type_annotation_names\n    self._populate_type_annotations(node.root(), self.all_used_type_annotations)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 178, in _populate_type_annotations\n    self._assignments_call_private_name(name_assignments, private_name)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 249, in _assignments_call_private_name\n    current_attribute = current_attribute.expr\n                        ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/node_classes.py\", line 2104, in __getattr__\n    return super().__getattr__(name)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\nAttributeError: 'ClassDef' object has no attribute 'expr'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11479.py::TestPrivateImportNoCrash::test_annotated_assignment_call_attribute_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s"
+        },
+        "steps": 20,
+        "tool_counts": {
+          "list_files": 2,
+          "read_file": 7,
+          "search_code": 3,
+          "write_scratch": 1,
+          "run": 4,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.007202,
+        "prompt_tokens": 180409,
+        "completion_tokens": 7638,
+        "cached_tokens": 166272,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__pylint-11479-1790919563.json",
+        "duration_s": 74.7,
+        "test_path": "tests/test_failgate_issue_11479.py"
+      },
+      "intake_cost_usd": 0.000399,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    }
+  ],
+  "fbpa": [
+    {
+      "number": 11492,
+      "title": "Uncaught `InferenceError: Inference failed for all members` in types checker",
+      "reported_version": "914495634",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 11504,
+        "sha": "1cafd4d2cc42a0cd9569862be6e7c193fc9f5bb7",
+        "parent": "0d024555d91aad03037414c514b40b8b80700412",
+        "committed_at": "2026-09-30T07:07:25Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.10.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.891,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2408, in _metaclass_lookup_attribute\n    attrs.update(cls_attributes)\n    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2419, in _get_attribute_from_metaclass\n    for attr in bases._infer_stmts(attrs, context, frame=cls):\n                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 203, in _infer_stmts\n    raise InferenceError(\n    ...<4 lines>...\n    )\nastroid.exceptions.InferenceError: Inference failed for all members of [<AssignAttr.foo l.2 at 0x7cfa00253380>].\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11492.py::test_no_crash_on_uninferable_call_with_metaclass_attribute\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-29e0ac650a"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.891,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2408, in _metaclass_lookup_attribute\n    attrs.update(cls_attributes)\n    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2419, in _get_attribute_from_metaclass\n    for attr in bases._infer_stmts(attrs, context, frame=cls):\n                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 203, in _infer_stmts\n    raise InferenceError(\n    ...<4 lines>...\n    )\nastroid.exceptions.InferenceError: Inference failed for all members of [<AssignAttr.foo l.2 at 0x75668f9a3380>].\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11492.py::test_no_crash_on_uninferable_call_with_metaclass_attribute\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-de35296c94"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.875,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-fedf5ee577"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.907,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-bcc4b144bb"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 11491,
+      "title": "Assertion failure: `assert isinstance(self, nodes.Module)` via stdlib checker",
+      "reported_version": "914495634",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 11479,
+      "title": "`AttributeError: 'ClassDef' object has no attribute 'expr'` in private-import checker",
+      "reported_version": "71c4a0e70",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 11481,
+        "sha": "9144956341a5fc9987cd84e7c2332f65d7d51a42",
+        "parent": "68366cb7a323b781ed48c3e9e9d00650da7fd611",
+        "committed_at": "2026-09-29T08:31:55Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.10.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.906,
+          "tail": "    self._assignments_call_private_name(name_assignments, private_name)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 249, in _assignments_call_private_name\n    current_attribute = current_attribute.expr\n                        ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/node_classes.py\", line 2104, in __getattr__\n    return super().__getattr__(name)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\nAttributeError: 'ClassDef' object has no attribute 'expr'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11479.py::TestPrivateImportNoCrash::test_annotated_assignment_call_attribute_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts\\failgate-run-d27dc6c210"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.906,
+          "tail": "    self._assignments_call_private_name(name_assignments, private_name)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pylint/extensions/private_import.py\", line 249, in _assignments_call_private_name\n    current_attribute = current_attribute.expr\n                        ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/nodes/node_classes.py\", line 2104, in __getattr__\n    return super().__getattr__(name)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/astroid/bases.py\", line 146, in __getattr__\n    return getattr(self._proxied, name)\nAttributeError: 'ClassDef' object has no attribute 'expr'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_11479.py::TestPrivateImportNoCrash::test_annotated_assignment_call_attribute_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-7b5f2a1764"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.906,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-532af24763"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.86,
+          "tail": ".                                                                        [100%]\n1 passed in 0.05s",
+          "log_dir": "artifacts\\failgate-run-c955e69965"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    }
+  ]
+}

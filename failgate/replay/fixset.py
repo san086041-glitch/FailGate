@@ -3,7 +3,8 @@
 旧的修复实验题（ADR 0028）来自 L2 留出集：只收"崩溃类"、要先复现成功，只剩 8 题，
 而且 W9 先量用它们的 transcript 做过分析，已经算开发集。新集合换一套规则：
 
-    回放库里的 issue：已完成关闭、T: bug、不带排除标签、创建于 since 之后、不在排除名单里
+    回放库里的 issue：已完成关闭、符合仓库的选题规则（selection.json）、创建于 since 之后、
+    不在排除名单里
       │ 按编号从新到旧
       ▼
     找修复提交（GraphQL ClosedEvent.closer）──没有 → 跳过
@@ -32,7 +33,7 @@ from pydantic import BaseModel, Field
 
 from failgate.replay.fix_eval import Gold, deps_changed, is_test_change
 from failgate.replay.fixes import FixCommit
-from failgate.replay.repro import EXCLUDE_LABELS
+from failgate.replay.selection import Selection, closed_since
 from failgate.replay.verify_eval import EvalCase
 from failgate.verify.engine import Exam
 from failgate.verify.tamper import PullFile
@@ -69,6 +70,7 @@ class Fixset(BaseModel):
     since: str
     target: int
     exclude: list[int] = Field(default_factory=list)
+    rule: Selection | None = None  # 生成时的选题规则；旧文件没有（当时是写死的 black 规则）
     started: str = ""
     cases: list[FixsetCase] = Field(default_factory=list)
     skipped: list[Skipped] = Field(default_factory=list)
@@ -77,19 +79,13 @@ class Fixset(BaseModel):
         return {c.number for c in self.cases} | {s.number for s in self.skipped}
 
 
-def candidates(docs: Iterable[Any], *, since: datetime, exclude: set[int]) -> list[Any]:
-    """已完成关闭的 T: bug，不带排除标签，since 之后创建，不在排除名单里；按编号从新到旧。"""
-    out = []
-    for d in sorted(docs, key=lambda d: d.number, reverse=True):
-        labels = set(d.labels or [])
-        if d.state != "closed" or d.state_reason != "completed" or d.number in exclude:
-            continue
-        if d.created_at is None or d.created_at.replace(tzinfo=None) < since:
-            continue
-        if "T: bug" not in labels or labels & EXCLUDE_LABELS:
-            continue
-        out.append(d)
-    return out
+def candidates(
+    docs: Iterable[Any], *, rule: Selection, since: datetime, exclude: set[int]
+) -> list[Any]:
+    """已完成关闭、符合仓库选题规则（rule.is_bug）、since 之后创建、不在排除名单里；
+    按编号从新到旧。"""
+    return [d for d in sorted(docs, key=lambda d: d.number, reverse=True)
+            if d.number not in exclude and closed_since(d, since) and rule.is_bug(d.labels or [])]
 
 
 def source_changes(files: Sequence[PullFile], test_dir: str) -> list[str]:
@@ -155,10 +151,11 @@ def gold_rows(fs: Fixset) -> list[dict[str, Any]]:
 
 def render(fs: Fixset) -> str:
     ok = [c for c in fs.cases if c.gold.status == "ok"]
+    rule = fs.rule.describe() if fs.rule else "`T: bug`，不带排除标签"
     lines = [
         f"# 修复评测集 v2：{fs.repo}",
         "",
-        f"- 规则：{fs.since} 之后创建、已完成关闭的 `T: bug`，不带排除标签，按编号从新到旧；"
+        f"- 规则：{fs.since} 之后创建、已完成关闭，{rule}，按编号从新到旧；"
         f"上游修复要有源码和测试改动、不改依赖，金标准 F2P 非空；凑够 {fs.target} 题为止",
         f"- 排除（之前的开发集 / 留出集）：{len(fs.exclude)} 个",
         f"- 收下 {len(ok)} 题，跳过 {len(fs.skipped)} 个；开始于 {fs.started}",
