@@ -39,6 +39,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
+from failgate import tracing
 from failgate.fix.guard import Denied, GuardError
 from failgate.fix.workspace import FixWorkspace
 from failgate.llm import LLMClient, LLMError, ToolCall, Usage
@@ -307,10 +308,10 @@ class FixAgent:
 
     def build(self) -> Any:
         g = StateGraph(FixState)
-        g.add_node("plan", self.plan_node)
-        g.add_node("edit", self.edit_node)
-        g.add_node("verify", self.verify_node)
-        g.add_node("reflect", self.reflect_node)
+        g.add_node("plan", self._traced("plan", self.plan_node))
+        g.add_node("edit", self._traced("edit", self.edit_node))
+        g.add_node("verify", self._traced("verify", self.verify_node))
+        g.add_node("reflect", self._traced("reflect", self.reflect_node))
         g.add_edge(START, "plan")
         g.add_conditional_edges("plan", lambda s: "end" if s["ended"] else "edit",
                                 {"end": END, "edit": "edit"})
@@ -320,6 +321,18 @@ class FixAgent:
         g.add_conditional_edges("reflect", self._after_reflect,
                                 {"end": END, "plan": "plan"})
         return g.compile(checkpointer=InMemorySaver())
+
+    def _traced(self, name: str, fn: Any) -> Any:
+        """每个阶段一个 span（ADR 0036 / 0025）：Langfuse 里能按阶段看，CLI 拿它显示实时进度。"""
+
+        async def node(state: FixState) -> dict[str, Any]:
+            with tracing.tracer.start_as_current_span(
+                f"fix {name}", attributes={"failgate.fix.phase": name,
+                                           "failgate.fix.round": state["round"] + 1}):
+                out: dict[str, Any] = await fn(state)
+                return out
+
+        return node
 
     async def run(self) -> FixResult:
         started = time.monotonic()
@@ -651,8 +664,13 @@ class FixAgent:
         handler = getattr(self, f"_tool_{call.name}", None)
         if handler is None:
             return f"当前阶段没有这个工具：{call.name}"
+        target = args.get("path") or args.get("pattern") or ""
         try:
-            out: str = await handler(**args)
+            with tracing.tracer.start_as_current_span(
+                f"fix tool {call.name}",
+                attributes={"failgate.fix.tool": call.name, "failgate.fix.step": self.result.steps,
+                            "failgate.fix.target": str(target)[:120]}):
+                out: str = await handler(**args)
         except GuardError as e:
             if isinstance(e, Denied):
                 self.result.denied += 1

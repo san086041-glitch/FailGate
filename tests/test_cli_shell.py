@@ -37,6 +37,13 @@ def test_split_keeps_windows_paths_and_quotes():
         shell.split('fix run "unterminated')
 
 
+def test_split_keeps_issue_and_pr_numbers():
+    # 用户实测踩到：shlex 默认把 # 后面当注释，owner/name#20 变成 owner/name
+    assert shell.split("verify san086041-glitch/failgate-demo#20") == [
+        "verify", "san086041-glitch/failgate-demo#20"]
+    assert shell.split("hidden show a/b#2 --x") == ["hidden", "show", "a/b#2", "--x"]
+
+
 def test_completion_tree(command):
     tree = shell.nested(command)
     assert tree is not None

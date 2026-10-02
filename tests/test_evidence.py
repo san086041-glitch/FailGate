@@ -229,7 +229,7 @@ def test_evidence_cli_list_and_show(tmp_path):
     out = tmp_path / "out"
     res = cli.invoke(app, ["evidence", "show", ev.id[:8], "--db", url, "--out", str(out)])
     assert res.exit_code == 0, res.output
-    assert "✅ 哈希一致" in res.output
+    assert "✓ 哈希一致" in res.output  # 终端符号和首页一致（ADR 0038）
     assert json.loads((out / "receipt.json").read_text(encoding="utf-8")) == ev.receipt
     assert (out / "test_failgate_issue_1.py").read_text(encoding="utf-8") == TEST_CODE
     res = cli.invoke(app, ["evidence", "show", "abc", "--db", url])

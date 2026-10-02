@@ -23,6 +23,8 @@ from typer._click.exceptions import ClickException
 from typer.core import TyperGroup, TyperOption
 from typer.exceptions import Abort
 
+from failgate.i18n import t
+
 if TYPE_CHECKING:
     from prompt_toolkit import PromptSession
     from prompt_toolkit.formatted_text import FormattedText
@@ -32,15 +34,19 @@ HELP = frozenset({"help", "?", "h"})
 CLEAR = frozenset({"clear", "cls"})
 HOME = frozenset({"home"})
 BUILTINS = sorted(EXIT | HELP | CLEAR | HOME)
-TOOLBAR = " Tab 补全 · ↑↓ 历史 · help 全部命令 · home 首页 · exit 或连按两次 Ctrl+C 退出 "
+def toolbar() -> str:
+    return t(" Tab 补全 · ↑↓ 历史 · help 全部命令 · home 首页 · exit 或连按两次 Ctrl+C 退出 ",
+             " Tab complete · ↑↓ history · help all commands · home · exit or Ctrl+C twice ")
 HISTORY = Path.home() / ".failgate" / "history"
 
 
 def split(line: str) -> list[str]:
-    """按 shell 规则切参数，但**不把反斜杠当转义**：Windows 路径 D:\\x\\y 要原样保留。"""
+    """按 shell 规则切参数，但**不把反斜杠当转义**：Windows 路径 D:\\x\\y 要原样保留；
+    **也不把 # 当注释**：owner/name#20 是这个项目最常用的参数（shlex 默认会把 #20 吃掉）。"""
     lexer = shlex.shlex(line, posix=True)
     lexer.whitespace_split = True
     lexer.escape = ""
+    lexer.commenters = ""
     return list(lexer)
 
 
@@ -68,7 +74,7 @@ class Shell:
         try:
             args = split(line)
         except ValueError as exc:  # 引号没闭合
-            self.echo(f"没法解析这一行：{exc}")
+            self.echo(t(f"没法解析这一行：{exc}", f"cannot parse this line: {exc}"))
             return True
         if args and args[0] == "failgate":  # 习惯性带上前缀也行
             args = args[1:]
@@ -79,7 +85,8 @@ class Shell:
             return False
         if word in HELP and len(args) == 1:
             self.run(["--help"])
-            self.echo("交互模式里还可以用：home（首页）、clear（清屏）、exit（退出）")
+            self.echo(t("交互模式里还可以用：home（首页）、clear（清屏）、exit（退出）",
+                        "also in the shell: home, clear, exit"))
             return True
         if word in CLEAR and len(args) == 1:
             from rich.console import Console
@@ -104,19 +111,19 @@ class Shell:
             rich_utils.rich_format_error(exc)
             return exc.exit_code
         except Abort:
-            self.echo("已中断")
+            self.echo(t("已中断", "interrupted"))
             return 130
         except KeyboardInterrupt:
-            self.echo("已中断")
+            self.echo(t("已中断", "interrupted"))
             return 130
         except SystemExit as exc:  # 有的命令直接 sys.exit
             return exc.code if isinstance(exc.code, int) else 1
         except Exception as exc:  # noqa: BLE001 —— 命令自己的错误：报出来，回到提示符
-            self.echo(f"出错了：{type(exc).__name__}: {exc}")
+            self.echo(t("出错了：", "error: ") + f"{type(exc).__name__}: {exc}")
             return 1
         code = rv if isinstance(rv, int) else 0
         if code == 130:  # typer 把命令执行中的 Ctrl+C 转成 Exit(130)
-            self.echo("已中断")
+            self.echo(t("已中断", "interrupted"))
         return code
 
 
@@ -148,7 +155,7 @@ def make_session(command: Command, **kwargs: Any) -> PromptSession[str]:
     kwargs.setdefault("history", history)
     return PromptSession(completer=NestedCompleter.from_nested_dict(tree),
                          auto_suggest=AutoSuggestFromHistory(), complete_while_typing=False,
-                         bottom_toolbar=TOOLBAR, key_bindings=keys, **kwargs)
+                         bottom_toolbar=toolbar, key_bindings=keys, **kwargs)
 
 
 def prompt_text() -> FormattedText:
@@ -170,11 +177,12 @@ def loop(shell: Shell, session: PromptSession[str]) -> None:
             if armed:
                 break
             armed = True
-            shell.echo("再按一次 Ctrl+C 退出（或输入 exit）")
+            shell.echo(t("再按一次 Ctrl+C 退出（或输入 exit）",
+                         "press Ctrl+C again to exit (or type exit)"))
             continue
         except EOFError:  # Ctrl+D
             break
         armed = False
         if not shell.handle(line):
             break
-    shell.echo("再见。")
+    shell.echo(t("再见。", "Bye."))

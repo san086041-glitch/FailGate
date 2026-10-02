@@ -178,6 +178,12 @@ def setup(settings: Settings) -> TracerProvider | None:
         return None
     current = trace.get_tracer_provider()
     if isinstance(current, TracerProvider):
+        if getattr(current, "failgate_progress_only", False):
+            # CLI 的实时进度先装了一个不导出的 provider（ADR 0038，交互模式里先跑了 verify
+            # 再 serve）：在它上面补上导出，否则这个进程的链路全丢
+            current.add_span_processor(BaggageAttributes())
+            current.add_span_processor(BatchSpanProcessor(exporter))
+            current.failgate_progress_only = False  # type: ignore[attr-defined]
         return current
     resource = Resource.create({"service.name": settings.otel_service_name})
     provider = TracerProvider(resource=resource)

@@ -15,6 +15,7 @@ import uvicorn
 from sqlalchemy import select
 
 from failgate.db import Case, Database, IssueDoc, Repo
+from failgate.i18n import t
 from failgate.repro.sandbox import DockerSandbox, SandboxLimits
 from failgate.settings import Settings
 
@@ -47,6 +48,8 @@ def main(
         "--quiet", "-q", help="首页不显示 logo（也可以设 FAILGATE_NO_BANNER=1）")] = False,
     shell: Annotated[bool, typer.Option(
         "--shell/--no-shell", help="显示首页后进入交互模式（只在终端里生效）")] = True,
+    ui_lang: Annotated[str | None, typer.Option(
+        "--lang", help="界面语言 zh / en（默认读 FAILGATE_LANG，再默认中文）")] = None,
 ) -> None:
     """找到 .env 并让之后所有 Settings() 都读它；不带子命令时显示首页，在终端里再进入交互模式。"""
     from failgate.settings import find_env_file, use_env_file
@@ -57,6 +60,9 @@ def main(
         raise typer.BadParameter(str(exc), param_hint="--env-file") from exc
     use_env_file(choice.path)
     ctx.obj = choice
+    from failgate.i18n import set_lang
+
+    set_lang(ui_lang or Settings().failgate_lang)
     if ctx.invoked_subcommand is not None or _SHELL_ACTIVE:
         return
     from failgate import home
@@ -70,19 +76,22 @@ def main(
 
     show_home(home.banner_enabled(out, quiet or settings.failgate_no_banner))
     if shell and out.is_terminal and sys.stdin.isatty():
-        _run_shell(choice.path, lambda: show_home(False))
+        _run_shell(choice.path, ui_lang, lambda: show_home(False))
 
 
 _SHELL_ACTIVE = False  # 交互模式里每条命令都会再走一遍根回调：别再嵌套进一个交互模式
 
 
-def _run_shell(env_file: Path | None, show_home: Callable[[], None]) -> None:
+def _run_shell(env_file: Path | None, ui_lang: str | None,
+               show_home: Callable[[], None]) -> None:
     global _SHELL_ACTIVE
     from failgate import shell as sh
 
     command = typer.main.get_command(app)
     # 启动时用的 .env 固定下来：之后每条命令都带上，不会因为找的顺序变了而换文件
     base = ["--env-file", str(env_file)] if env_file is not None else []
+    if ui_lang:  # 启动时给了 --lang：之后每条命令都带上
+        base += ["--lang", ui_lang]
     _SHELL_ACTIVE = True
     try:
         sh.loop(sh.Shell(command, base_args=base, show_home=show_home), sh.make_session(command))
@@ -114,10 +123,15 @@ def up(
         help="另起一个只跑沙箱车道的 worker（要 QUEUE_BACKEND=redis）")] = False,
     allow_pending: Annotated[bool, typer.Option(
         help="有待发的写操作也启动（服务一起来就会把它们发出去）")] = False,
+    logs: Annotated[bool, typer.Option(
+        "--logs/--no-logs", help="显示子进程的全部日志（关掉时只留警告和错误）")] = True,
 ) -> None:
-    """本机一键上线：检查环境 → 起服务和 smee 转发 → Ctrl+C 一次全部停掉（ADR 0037）。"""
+    """本机一键上线：检查环境 → 起服务和 smee 转发 → 底部实时状态板 → Ctrl+C 一次全部停掉
+    （ADR 0037、0038）。"""
     import time
+    from datetime import UTC, datetime
 
+    from rich.live import Live
     from rich.text import Text
 
     from failgate import home
@@ -132,32 +146,48 @@ def up(
     report = asyncio.run(home.collect(settings, choice, full=True))
     if report.failed:
         home.render_doctor(report, out)
-        out.print(Text("环境有问题，没有启动。", style="red"))
+        out.print(Text(t("环境有问题，没有启动。", "Environment problems: not started."),
+                       style="red"))
         raise typer.Exit(1)
     if worker and settings.queue_backend != "redis":
-        raise typer.BadParameter("--worker 要 QUEUE_BACKEND=redis（进程内队列只能在服务进程里跑）")
-    out.print(Text("✓ 环境检查通过", style="green"))
+        raise typer.BadParameter(t("--worker 要 QUEUE_BACKEND=redis"
+                                   "（进程内队列只能在服务进程里跑）",
+                                   "--worker needs QUEUE_BACKEND=redis (the in-process queue "
+                                   "only runs inside the server)"))
+    out.print(Text(t("✓ 环境检查通过", "✓ environment OK"), style="green"))
 
     # 2. 待发的写操作：默认不启动，先列出来
     if report.stats is not None and report.stats.get("pending_effects"):
         pending = asyncio.run(u.pending_effects(settings))
         if not allow_pending:
-            out.print(Text(f"有 {report.stats['pending_effects']} 条待发的写操作，"
-                           "服务一启动就会把它们发出去：", style="yellow"))
+            count = report.stats["pending_effects"]
+            out.print(Text(t(f"有 {count} 条待发的写操作，服务一启动就会把它们发出去：",
+                             f"{count} pending write(s) will be sent as soon as the server "
+                             "starts:"), style="yellow"))
             for e in pending:
                 out.print(f"  {e['at']:%m-%d %H:%M}  {e['action']:<16} "
-                          f"{e['repo']}#{e['number']}（{e['mode']}，已试 {e['attempts']} 次）")
-            out.print("确认可以发出去：failgate up --allow-pending；"
-                      "先看清楚：failgate effects list")
+                          f"{e['repo']}#{e['number']} "
+                          + t(f"（{e['mode']}，已试 {e['attempts']} 次）",
+                              f"({e['mode']}, {e['attempts']} attempt(s))"))
+            out.print(t("确认可以发出去：failgate up --allow-pending；"
+                        "先看清楚：failgate effects list",
+                        "OK to send: failgate up --allow-pending; review: failgate effects list"))
             raise typer.Exit(1)
-        out.print(Text(f"! 有 {len(pending)} 条待发的写操作，启动后会补发（--allow-pending）",
+        out.print(Text(t(f"! 有 {len(pending)} 条待发的写操作，启动后会补发（--allow-pending）",
+                         f"! {len(pending)} pending write(s) will be sent after start "
+                         "(--allow-pending)"),
                        style="yellow"))
     # 3. 端口
     if u.port_in_use(host, port):
-        out.print(Text(f"端口 {port} 已经被占用（可能是之前起的 failgate serve）。", style="red"))
-        out.print(f"  停掉它：{u.stop_port_hint(port)}\n"
-                  "  之前如果还手动起过 smee 转发，也一起关掉（同一个通道会转发给两个服务）；\n"
-                  "  或者换端口：failgate up --port 8081")
+        out.print(Text(t(f"端口 {port} 已经被占用（可能是之前起的 failgate serve）。",
+                         f"Port {port} is in use (maybe an earlier failgate serve)."),
+                       style="red"))
+        out.print(t(f"  停掉它：{u.stop_port_hint(port)}\n"
+                    "  之前如果还手动起过 smee 转发，也一起关掉（同一个通道会转发给两个服务）；\n"
+                    "  或者换端口：failgate up --port 8081",
+                    f"  stop it: {u.stop_port_hint(port)}\n"
+                    "  also stop any smee client you started by hand (one channel would feed "
+                    "two servers);\n  or use another port: failgate up --port 8081"))
         raise typer.Exit(1)
     # 4. 转发通道
     smee, npx = None, None
@@ -165,23 +195,34 @@ def up(
         smee, source = asyncio.run(u.resolve_smee(settings))
         npx = u.find_npx()
         if smee and not npx:
-            out.print(Text("! 没找到 npx（要装 Node.js）：只起服务，不转发", style="yellow"))
+            out.print(Text(t("! 没找到 npx（要装 Node.js）：只起服务，不转发",
+                             "! npx not found (install Node.js): server only, no tunnel"),
+                           style="yellow"))
             smee = None
         elif smee:
-            out.print(Text(f"✓ 转发通道：{smee}（{source}）", style="green"))
+            out.print(Text(t(f"✓ 转发通道：{smee}（{source}）", f"✓ tunnel: {smee} ({source})"),
+                           style="green"))
         else:
-            out.print(Text(f"! 不转发：{source}（可以在 .env 里设 SMEE_URL）", style="yellow"))
-    live = [r["repo"] for r in (report.stats or {}).get("repos", []) if r["mode"] == "live"]
-    if live:
-        out.print(Text(f"! live 模式的仓库会真的发评论、打标签：{', '.join(live)}",
+            out.print(Text(t(f"! 不转发：{source}（可以在 .env 里设 SMEE_URL）",
+                             f"! no tunnel: {source} (set SMEE_URL in .env)"), style="yellow"))
+    live_repos = [r["repo"] for r in (report.stats or {}).get("repos", [])
+                  if r["mode"] == "live"]
+    if live_repos:
+        repos_txt = ", ".join(live_repos)
+        out.print(Text(t(f"! live 模式的仓库会真的发评论、打标签：{repos_txt}",
+                         f"! live-mode repos will really get comments and labels: {repos_txt}"),
                        style="yellow"))
 
     # 5. 起进程：先服务，等 /healthz，再 worker 和转发（转发早了事件会打到还没起来的服务上）
     procs = u.plan(env_file=choice.path, host=host, port=port, smee=smee, npx=npx,
                    worker=worker)
-    sup = u.Supervisor(out)
+    sup = u.Supervisor(out, verbose=logs)
     base = f"http://{host}:{port}"
     code = 0
+    board = u.Board(procs, base, datetime.now(UTC))
+    live: Live | None = None
+    loop = asyncio.new_event_loop()
+    db = Database(settings.failgate_db_url)
     try:
         serve_proc = procs[0]
         sup.start(serve_proc)
@@ -190,30 +231,50 @@ def up(
             return serve_proc.popen is not None and serve_proc.popen.poll() is None
 
         if not u.wait_healthy(f"{base}/healthz", serving):
-            out.print(Text("服务没能启动（看上面 serve 的输出）", style="red"))
+            out.print(Text(t("服务没能启动（看上面 serve 的输出）",
+                             "the server did not start (see the serve output above)"),
+                           style="red"))
             code = 1
         else:
             for proc in procs[1:]:
                 sup.start(proc)
-            out.print(Text(f"\n▶ 服务    {base}    工作台 {base}/console", style="bold green"))
+            out.print(Text(t(f"\n▶ 服务    {base}    工作台 {base}/console",
+                             f"\n▶ server  {base}    console {base}/console"),
+                           style="bold green"))
             if smee:
-                out.print(Text(f"▶ 转发    {smee} → {base}/webhooks/github",
+                out.print(Text(t("▶ 转发    ", "▶ tunnel  ") + f"{smee} → {base}/webhooks/github",
                                style="bold green"))
             if worker:
-                out.print(Text("▶ worker  沙箱车道（复现 / 核验 / 修复）", style="bold green"))
-            out.print(Text("  Ctrl+C 停止全部\n", style="dim"))
+                out.print(Text(t("▶ worker  沙箱车道（复现 / 核验 / 修复）",
+                                 "▶ worker  sandbox lane (repro / verify / fix)"),
+                               style="bold green"))
+            out.print(Text(t("  Ctrl+C 停止全部\n", "  Ctrl+C stops everything\n"), style="dim"))
+            if out.is_terminal:  # 底部状态板；日志照常在上面滚
+                loop.run_until_complete(board.refresh(db))
+                live = Live(board, console=out, refresh_per_second=2)
+                live.start()
+            last = time.monotonic()
             while code == 0:
                 dead = sup.exited()
                 if dead is not None and dead.popen is not None:
-                    out.print(Text(f"{dead.name} 退出了（退出码 {dead.popen.returncode}），"
-                                   "停止全部", style="red"))
+                    rc = dead.popen.returncode
+                    out.print(Text(t(f"{dead.name} 退出了（退出码 {rc}），停止全部",
+                                     f"{dead.name} exited (code {rc}); stopping everything"),
+                                   style="red"))
                     code = 1
-                time.sleep(0.5)
+                if live is not None and time.monotonic() - last >= 2:
+                    loop.run_until_complete(board.refresh(db))
+                    last = time.monotonic()
+                time.sleep(0.25)
     except KeyboardInterrupt:
-        out.print(Text("\n正在停止…", style="yellow"))
+        out.print(Text(t("\n正在停止…", "\nStopping…"), style="yellow"))
     finally:
+        if live is not None:
+            live.stop()
         sup.stop_all()
-    out.print(Text("已全部停止", style="dim"))
+        loop.run_until_complete(db.dispose())
+        loop.close()
+    out.print(Text(t("已全部停止", "All stopped"), style="dim"))
     if code:
         raise typer.Exit(code)
 
@@ -234,26 +295,37 @@ def console(
         health = httpx.get(f"{base}/healthz", timeout=2.0)
         page = httpx.get(f"{base}/console", timeout=2.0, follow_redirects=False)
     except httpx.HTTPError:
-        typer.echo(f"{base} 上没有服务在跑：先另开一个终端运行 failgate serve", err=True)
+        typer.echo(t(f"{base} 上没有服务在跑：先另开一个终端运行 failgate serve",
+                     f"nothing is serving on {base}: run failgate up (or serve) first"),
+                   err=True)
         raise typer.Exit(1) from None
     if health.status_code != 200:
-        typer.echo(f"{base}/healthz 返回 {health.status_code}，不像是 FailGate 服务", err=True)
+        typer.echo(t(f"{base}/healthz 返回 {health.status_code}，不像是 FailGate 服务",
+                     f"{base}/healthz returned {health.status_code}: not a FailGate server"),
+                   err=True)
         raise typer.Exit(1)
     if page.status_code == 404:
         from failgate.up import stop_port_hint
 
         stop = stop_port_hint(port)
-        typer.echo(f"{base} 上跑的是旧版本的 failgate serve（没有工作台）。\n"
-                   f"  1. 停掉它：{stop}\n"
-                   "  2. 用新代码重新启动：failgate serve\n"
-                   "  或者另起一个端口：failgate serve --port 8081，"
-                   "再 failgate console --port 8081",
+        typer.echo(t(f"{base} 上跑的是旧版本的 failgate serve（没有工作台）。\n"
+                     f"  1. 停掉它：{stop}\n"
+                     "  2. 用新代码重新启动：failgate serve\n"
+                     "  或者另起一个端口：failgate serve --port 8081，"
+                     "再 failgate console --port 8081",
+                     f"{base} runs an old failgate serve (no console).\n"
+                     f"  1. stop it: {stop}\n"
+                     "  2. restart with the new code: failgate serve\n"
+                     "  or use another port: failgate serve --port 8081, "
+                     "then failgate console --port 8081"),
                    err=True)
         raise typer.Exit(1)
     url = f"{base}/console"
-    typer.echo(f"工作台：{url}")
+    typer.echo(t("工作台：", "Console: ") + url)
     if Settings().console_token:
-        typer.echo("配置了 CONSOLE_TOKEN：第一次访问用 /console?token=<令牌>，之后存在 cookie 里")
+        typer.echo(t("配置了 CONSOLE_TOKEN：第一次访问用 /console?token=<令牌>，之后存在 cookie 里",
+                     "CONSOLE_TOKEN is set: open /console?token=<token> once; it is kept "
+                     "in a cookie"))
     if open_browser:
         webbrowser.open(url)
 
@@ -373,18 +445,39 @@ def db_copy(
 
 
 @app.command()
-def cases(limit: int = 20) -> None:
-    """列出最近的 Case。"""
+def cases(
+    limit: int = 20,
+    state: Annotated[str | None, typer.Option(help="只看这个状态，例如 VERIFIED")] = None,
+    repo: Annotated[str | None, typer.Option(help="只看这个仓库 owner/name")] = None,
+    kind: Annotated[str | None, typer.Option(help="issue 或 pull")] = None,
+) -> None:
+    """列出最近的 Case（状态按工作台的颜色：通过绿、驳回红、进行中蓝）。"""
+    from failgate.home import make_console
+    from failgate.views import cases_table
 
     async def run() -> list[tuple[Case, Repo]]:
         db = Database(Settings().failgate_db_url)
         async with db.session() as s:
             q = select(Case, Repo).join(Repo, Case.repo_id == Repo.id)
+            if state:
+                q = q.where(Case.state == state.upper())
+            if repo:
+                q = q.where(Repo.full_name == repo)
+            if kind:
+                q = q.where(Case.kind == kind)
             rows = (await s.execute(q.order_by(Case.id.desc()).limit(limit))).all()
         await db.dispose()
         return [(c, r) for c, r in rows]
 
-    for c, r in asyncio.run(run()):
+    rows = asyncio.run(run())
+    if not rows:
+        typer.echo(t("没有符合条件的 Case", "no matching cases"))
+        return
+    con = make_console()
+    if con.is_terminal:
+        con.print(cases_table(rows))
+        return
+    for c, r in rows:  # 管道 / 重定向：保持原来一行一个的纯文本，方便脚本处理
         typer.echo(f"#{c.id:<5} {r.full_name}#{c.number:<6} {c.kind:<6} {c.state}")
 
 
@@ -1172,8 +1265,16 @@ def evidence_list(
         finally:
             await db.dispose()
         if not refs:
-            typer.echo("没有证据")
-        for ref in refs:
+            typer.echo(t("没有证据", "no evidence"))
+            return
+        from failgate.home import make_console
+        from failgate.views import evidence_table
+
+        con = make_console()
+        if con.is_terminal:
+            con.print(evidence_table(refs))
+            return
+        for ref in refs:  # 管道 / 重定向：原来的纯文本
             ev = ref.evidence
             exam = "考卷" if ev.acceptance else "非考卷"
             old = f"（已被 {ev.superseded_by[:8]} 取代）" if ev.superseded_by else ""
@@ -1210,8 +1311,16 @@ def evidence_show(
         if ref is None:
             typer.echo(f"找不到证据 {evidence_id}", err=True)
             return 1
+        from failgate.home import make_console
+        from failgate.views import audit_lines
+
+        con = make_console()
         ev = ref.evidence
-        typer.echo(json.dumps(ev.receipt, ensure_ascii=False, indent=2, sort_keys=True))
+        receipt = json.dumps(ev.receipt, ensure_ascii=False, indent=2, sort_keys=True)
+        if con.is_terminal:
+            con.print_json(receipt)
+        else:
+            typer.echo(receipt)
         problems = audit(ref)
         if out is not None:
             out.mkdir(parents=True, exist_ok=True)
@@ -1222,12 +1331,8 @@ def evidence_show(
             test_file = out / Path(ev.test_path).name
             test_file.write_bytes(ev.test_code.encode("utf-8"))
             typer.echo(f"已写出 {out / 'receipt.json'} 和 {test_file}")
-        if problems:
-            for p in problems:
-                typer.echo(f"❌ {p}")
-            return 1
-        typer.echo(f"✅ 哈希一致：receipt {ev.receipt_sha256[:12]} · test {ev.test_sha256[:12]}")
-        return 0
+        con.print(audit_lines(problems, ev.receipt_sha256, ev.test_sha256))
+        return 1 if problems else 0
 
     raise typer.Exit(asyncio.run(run()))
 
@@ -1240,11 +1345,15 @@ def verify_pr(
     lang: Annotated[str, typer.Option(help="报告语言 zh / en")] = "zh",
     strength: Annotated[bool | None, typer.Option(
         "--strength/--no-strength", help="是否评估考卷强度（默认读 VERIFY_STRENGTH）")] = None,
+    markdown: Annotated[bool, typer.Option(
+        help="输出和 PR 评论一样的 Markdown 报告（输出不是终端时默认就是）")] = False,
 ) -> None:
     """用封存的考卷核验一个 PR（ClaimVerify 三层 + 考卷强度）。需要 Docker 和 GITHUB_TOKEN。
 
     退出码：0 通过验收，1 驳回，2 无法判定或没有声明。"""
+    from failgate.home import make_console
     from failgate.platforms.github_rest import GitHubRest
+    from failgate.progress import live_progress, progress_console
     from failgate.repro.l2 import TestReproducer
     from failgate.repro.pypi import PyPIClient
     from failgate.verify.claims import parse_claims
@@ -1252,10 +1361,11 @@ def verify_pr(
     from failgate.verify.report import render_verification
     from failgate.verify.store import latest_exam
     from failgate.verify.workbench import SandboxWorkbench, fetch_pull
+    from failgate.views import verification_panel
 
     m = re.fullmatch(r"([\w.-]+/[\w.-]+)#(\d+)", target)
     if m is None:
-        raise typer.BadParameter("要写成 owner/name#PR编号")
+        raise typer.BadParameter(t("要写成 owner/name#PR编号", "expected owner/name#PR"))
     repo, number = m.group(1), int(m.group(2))
     settings = Settings()
 
@@ -1277,8 +1387,11 @@ def verify_pr(
             async with db.session() as s:
                 for n in claims:
                     exams[n] = await latest_exam(s, repo, n)
-            typer.echo(f"{repo}#{number}：声称修复 {claims or '（无）'}；"
-                       f"合并基点 {pr.base_sha[:7]} → head {pr.head_sha[:7]}", err=True)
+            claimed = claims or t("（无）", "(none)")
+            typer.echo(t(f"{repo}#{number}：声称修复 {claimed}；"
+                         f"合并基点 {pr.base_sha[:7]} → head {pr.head_sha[:7]}",
+                         f"{repo}#{number}: claims to fix {claimed}; "
+                         f"base {pr.base_sha[:7]} → head {pr.head_sha[:7]}"), err=True)
             tester = TestReproducer(sandbox, _env_cache(settings, sandbox), pypi,
                                     run_timeout_s=settings.sandbox_run_timeout_seconds)
             verifier = ClaimVerifier(
@@ -1286,12 +1399,17 @@ def verify_pr(
                 strength=settings.verify_strength if strength is None else strength,
                 max_mutants=settings.strength_max_mutants,
             )
-            result = await verifier.verify(pr, claims, exams)
+            with live_progress(t("核验 ", "Verify ") + f"{repo}#{number}", progress_console()):
+                result = await verifier.verify(pr, claims, exams)
         finally:
             await db.dispose()
             await gh.aclose()
             await pypi.aclose()
-        typer.echo(render_verification(result, lang))
+        con = make_console()
+        if markdown or not con.is_terminal:
+            typer.echo(render_verification(result, lang))
+        else:
+            con.print(verification_panel(result))
         if out is not None:
             out.write_text(json.dumps(result.receipt(), ensure_ascii=False, indent=2,
                                       sort_keys=True) + "\n", encoding="utf-8")
@@ -2541,17 +2659,25 @@ def trace_open(
     import httpx
 
     s = Settings()
-    local = ("用本地接收器看：另开终端 failgate trace sink spans.jsonl，服务端设 "
-             "TRACING_EXPORTER=otlp、OTLP_ENDPOINT=http://127.0.0.1:4318/v1/traces，"
-             "之后 failgate trace show spans.jsonl")
+    local = t("用本地接收器看：另开终端 failgate trace sink spans.jsonl，服务端设 "
+              "TRACING_EXPORTER=otlp、OTLP_ENDPOINT=http://127.0.0.1:4318/v1/traces，"
+              "之后 failgate trace show spans.jsonl",
+              "View locally: run failgate trace sink spans.jsonl in another terminal, set "
+              "TRACING_EXPORTER=otlp and OTLP_ENDPOINT=http://127.0.0.1:4318/v1/traces on the "
+              "server, then failgate trace show spans.jsonl")
     if s.tracing_exporter == "none":
-        typer.echo("提示：TRACING_EXPORTER=none，服务现在不发链路（要看新的链路先改成 otlp）")
+        typer.echo(t("提示：TRACING_EXPORTER=none，服务现在不发链路（要看新的链路先改成 otlp）",
+                     "note: TRACING_EXPORTER=none, the server sends no traces now "
+                     "(set it to otlp for new ones)"))
     host = s.langfuse_host.rstrip("/")
     if s.otlp_endpoint and not s.otlp_endpoint.startswith(host):
-        typer.echo(f"链路发到 {s.otlp_endpoint}（不是 Langfuse）。{local}")
+        typer.echo(t(f"链路发到 {s.otlp_endpoint}（不是 Langfuse）。",
+                     f"traces go to {s.otlp_endpoint} (not Langfuse). ") + local)
         raise typer.Exit(1)
     if not (s.langfuse_public_key and s.langfuse_secret_key):
-        typer.echo(f"没有配置 Langfuse（LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY）。{local}")
+        typer.echo(t("没有配置 Langfuse（LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY）。",
+                     "Langfuse is not configured (LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY). ")
+                   + local)
         raise typer.Exit(1)
     url = host
     try:  # 用 key 查项目 id，直接打开这个项目的链路列表；查不到就打开首页
@@ -2561,10 +2687,12 @@ def trace_open(
         projects = resp.json().get("data") or []
         if projects:
             url = f"{host}/project/{projects[0]['id']}/traces"
-            typer.echo(f"Langfuse 项目：{projects[0].get('name', projects[0]['id'])}")
+            name = projects[0].get("name", projects[0]["id"])
+            typer.echo(t("Langfuse 项目：", "Langfuse project: ") + str(name))
     except (httpx.HTTPError, ValueError, KeyError) as exc:
-        typer.echo(f"没查到项目（{type(exc).__name__}），打开 Langfuse 首页")
-    typer.echo(f"链路：{url}")
+        typer.echo(t(f"没查到项目（{type(exc).__name__}），打开 Langfuse 首页",
+                     f"project lookup failed ({type(exc).__name__}); opening the Langfuse home"))
+    typer.echo(t("链路：", "Traces: ") + url)
     if open_browser:
         webbrowser.open(url)
 
@@ -2662,14 +2790,19 @@ def _mcp_how_to_register(env_file: Path | None) -> None:
 
     env = (env_file or Path(active_env_file())).expanduser().resolve().as_posix()
     python = Path(sys.executable).as_posix()
-    typer.echo("failgate mcp 是给 Claude Code / Cursor 这类客户端启动的 stdio 服务，"
-               "不用手动运行（在终端里运行会一直等协议输入）。\n")
-    typer.echo("注册到 Claude Code（在你要修的仓库目录里运行）：")
+    args = f'["-m", "failgate", "mcp", "--env-file", "{env}"]'
+    typer.echo(t("failgate mcp 是给 Claude Code / Cursor 这类客户端启动的 stdio 服务，"
+                 "不用手动运行（在终端里运行会一直等协议输入）。\n",
+                 "failgate mcp is a stdio server launched by clients such as Claude Code / "
+                 "Cursor; don't run it by hand (in a terminal it just waits for protocol "
+                 "input).\n"))
+    typer.echo(t("注册到 Claude Code（在你要修的仓库目录里运行）：",
+                 "Register with Claude Code (run inside the repo you are fixing):"))
     typer.echo(f"  claude mcp add failgate -- {python} -m failgate mcp --env-file {env}\n")
-    typer.echo("Cursor 等客户端：command 填上面的 python 路径，"
-               f'args 填 ["-m", "failgate", "mcp", "--env-file", "{env}"]')
-    typer.echo("提供的工具：reproduce_issue、run_acceptance_test、verify_fix、get_fix_task、"
-               "get_job、list_evidence（ADR 0033）")
+    typer.echo(t(f"Cursor 等客户端：command 填上面的 python 路径，args 填 {args}",
+                 f"Cursor and others: command = the python path above, args = {args}"))
+    typer.echo(t("提供的工具：", "Tools: ") + "reproduce_issue, run_acceptance_test, verify_fix, "
+               "get_fix_task, get_job, list_evidence (ADR 0033)")
 
 
 memory_app = typer.Typer(help="Agent 的长期记忆：情景记忆（ADR 0032）", no_args_is_help=True)
@@ -2754,13 +2887,16 @@ def fix_run(
     """
     from failgate.fix.agent import HANDOFFS, FixTask
     from failgate.fix.run import fix_tree
+    from failgate.home import make_console
     from failgate.memory.episodic import EpisodicMemory
+    from failgate.progress import live_progress, progress_console
     from failgate.replay import fix_eval as fe
     from failgate.replay import fixset as fxs
     from failgate.replay import verify_eval as ve
     from failgate.repro.config import PackageConfig
     from failgate.repro.package import IssueContext
     from failgate.repro.source import fetch_github_tree
+    from failgate.views import fix_panel
 
     if handoff not in HANDOFFS:
         raise typer.BadParameter(f"未知的交接方式：{handoff}，可选 {HANDOFFS}")
@@ -2795,16 +2931,27 @@ def fix_run(
                 memory_before=cutoff,
                 exclude_prs=[case.upstream_pr] if case.upstream_pr else [],
             )
-            res = await fix_tree(
-                rt.llm, settings.llm_model_large, rt.tester, cfg, tree, task,
-                python=case.exam.python, version=case.exam.version, pytest=case.exam.pytest,
-                max_rounds=rounds, budget_usd=budget, thinking=thinking,
-                artifacts_dir=Path(settings.sandbox_artifacts_dir),
-                handoff=handoff,  # type: ignore[arg-type]
-                memory=episodic,
-            )
+            arm = t("对照组", "control") if control else t("实验组", "treatment")
+            title = t(f"修复 {repo}#{number}（{arm}）", f"Fix {repo}#{number} ({arm})")
+            with live_progress(title, progress_console()):
+                res = await fix_tree(
+                    rt.llm, settings.llm_model_large, rt.tester, cfg, tree, task,
+                    python=case.exam.python, version=case.exam.version,
+                    pytest=case.exam.pytest, max_rounds=rounds, budget_usd=budget,
+                    thinking=thinking, artifacts_dir=Path(settings.sandbox_artifacts_dir),
+                    handoff=handoff,  # type: ignore[arg-type]
+                    memory=episodic,
+                )
         finally:
             await rt.aclose()
+        con = make_console()
+        if con.is_terminal:
+            from rich.syntax import Syntax
+
+            con.print(fix_panel(number, res, control=control))
+            if show_patch and res.patch:
+                con.print(Syntax(res.patch, "diff", theme="ansi_dark", word_wrap=True))
+            return
         typer.echo(f"#{number} {'对照组' if control else '实验组'} → {res.status}"
                    f"（{len(res.attempts)} 轮，{res.steps} 步，{res.duration_s} 秒，"
                    f"${res.cost_usd:.4f}，被拒写入 {res.denied} 次）")

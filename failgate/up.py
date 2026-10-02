@@ -26,9 +26,12 @@ from typing import IO, Any
 from urllib.parse import urlsplit
 
 import httpx
-from rich.console import Console
+from rich.console import Console, Group
+from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
+from failgate.i18n import t
 from failgate.settings import Settings
 
 STYLES = {"serve": "cyan", "worker": "yellow", "smee": "magenta"}
@@ -81,16 +84,19 @@ async def resolve_smee(settings: Settings) -> tuple[str | None, str]:
 
     gh = build_github_app(settings)
     if gh is None:
-        return None, "没配置 SMEE_URL，也没配置 GitHub App"
+        return None, t("没配置 SMEE_URL，也没配置 GitHub App", "no SMEE_URL and no GitHub App")
     try:
         url = str((await gh.get_hook_config()).get("url") or "")
     except Exception as exc:  # noqa: BLE001 —— 读不到就只起服务，原因报出来
-        return None, f"读 App 的 webhook 配置失败（{type(exc).__name__}）"
+        return None, t(f"读 App 的 webhook 配置失败（{type(exc).__name__}）",
+                       f"could not read the App webhook config ({type(exc).__name__})")
     finally:
         await gh.aclose()
     if urlsplit(url).hostname == "smee.io":
-        return url, "GitHub App 的 webhook 地址"
-    return None, f"App 的 webhook 地址不是 smee 通道（{urlsplit(url).hostname or '空'}）"
+        return url, t("GitHub App 的 webhook 地址", "GitHub App webhook URL")
+    host = urlsplit(url).hostname or t("空", "empty")
+    return None, t(f"App 的 webhook 地址不是 smee 通道（{host}）",
+                   f"the App webhook URL is not a smee channel ({host})")
 
 
 def find_npx() -> list[str] | None:
@@ -150,8 +156,10 @@ class Supervisor:
     """起子进程、把输出加前缀合并到一个屏幕、按顺序停掉。"""
 
     def __init__(self, console: Console,
-                 popen: Callable[..., subprocess.Popen[str]] = subprocess.Popen) -> None:
+                 popen: Callable[..., subprocess.Popen[str]] = subprocess.Popen,
+                 *, verbose: bool = True) -> None:
         self.console = console
+        self.verbose = verbose
         self.popen = popen
         self.procs: list[Proc] = []
         self.threads: list[threading.Thread] = []
@@ -167,15 +175,16 @@ class Supervisor:
                                 encoding="utf-8", errors="replace", bufsize=1, **kwargs)
         self.procs.append(proc)
         if proc.popen.stdout is not None:
-            t = threading.Thread(target=self._pump, args=(proc.name, proc.popen.stdout),
-                                 daemon=True)
-            t.start()
-            self.threads.append(t)
+            pump = threading.Thread(target=self._pump, args=(proc.name, proc.popen.stdout),
+                                    daemon=True)
+            pump.start()
+            self.threads.append(pump)
 
     def _pump(self, name: str, stream: IO[str]) -> None:
         tag = Text(f"{name:<6}│ ", style=STYLES.get(name, "white"))
         for line in stream:
-            self.console.print(tag + Text(line.rstrip("\n")), soft_wrap=True)
+            if keep_line(name, line, self.verbose):
+                self.console.print(tag + Text(line.rstrip("\n")), soft_wrap=True)
 
     def exited(self) -> Proc | None:
         """第一个已经退出的子进程。"""
@@ -186,8 +195,8 @@ class Supervisor:
         """后起的先停（先断 smee 转发，再停 worker，最后停服务）。"""
         for proc in reversed(self.procs):
             self._stop(proc, grace)
-        for t in self.threads:
-            t.join(timeout=1.0)
+        for thread in self.threads:
+            thread.join(timeout=1.0)
 
     def _stop(self, proc: Proc, grace: float) -> None:
         p = proc.popen
@@ -230,3 +239,140 @@ def wait_healthy(url: str, alive: Callable[[], bool], timeout: float = 90.0,
             pass
         time.sleep(0.5)
     return False
+
+
+# ---------------------------------------------------------------- 实时状态板（ADR 0038）
+
+
+@dataclass
+class Snapshot:
+    events: int = 0  # 本次启动以来收到的 webhook
+    cases: int = 0  # 本次启动以来状态变过的 Case
+    cost: float = 0.0  # 本次启动以来模块运行的花费
+    verdicts: dict[str, int] = field(default_factory=dict)
+    recent: list[tuple[Any, str, int, str, str, str]] = field(default_factory=list)
+    working: list[tuple[str, int, str, str, Any]] = field(default_factory=list)
+    error: str = ""
+
+
+async def snapshot(db: Any, since: Any, recent: int = 6) -> Snapshot:
+    """只读查询：本次启动（since 之后）发生了什么、现在有哪些 Case 在跑。"""
+    from sqlalchemy import func, select
+
+    from failgate.db import Case, Delivery, Repo, Run, TransitionLog, VerificationRecord
+    from failgate.views import WORKING
+
+    snap = Snapshot()
+    async with db.session() as s:
+        snap.events = int(await s.scalar(select(func.count()).select_from(Delivery)
+                                         .where(Delivery.received_at >= since)) or 0)
+        snap.cases = int(await s.scalar(select(func.count(func.distinct(TransitionLog.case_id)))
+                                        .where(TransitionLog.at >= since)) or 0)
+        snap.cost = float(await s.scalar(select(func.coalesce(func.sum(Run.usd), 0.0))
+                                         .where(Run.started_at >= since)) or 0.0)
+        rows = (await s.execute(select(VerificationRecord.verdict, func.count())
+                                .where(VerificationRecord.created_at >= since)
+                                .group_by(VerificationRecord.verdict))).all()
+        snap.verdicts = {str(v): n for v, n in rows}
+        logs = (await s.execute(
+            select(TransitionLog.at, Repo.full_name, Case.number, Case.kind,
+                   TransitionLog.from_state, TransitionLog.to_state)
+            .join(Case, TransitionLog.case_id == Case.id).join(Repo, Case.repo_id == Repo.id)
+            .where(TransitionLog.at >= since)
+            .order_by(TransitionLog.id.desc()).limit(recent))).all()
+        snap.recent = [tuple(r) for r in logs]  # type: ignore[misc]
+        busy = (await s.execute(
+            select(Repo.full_name, Case.number, Case.kind, Case.state, Case.updated_at)
+            .join(Repo, Case.repo_id == Repo.id).where(Case.state.in_(WORKING))
+            .order_by(Case.updated_at).limit(4))).all()
+        snap.working = [tuple(r) for r in busy]  # type: ignore[misc]
+    return snap
+
+
+class Board:
+    """`up` 底部的状态板：上面照常滚日志，它固定在最下面每 2 秒刷新。"""
+
+    def __init__(self, procs: list[Proc], base: str, since: Any) -> None:
+        self.procs = procs
+        self.base = base
+        self.since = since
+        self.started = time.monotonic()
+        self.snap = Snapshot()
+
+    async def refresh(self, db: Any) -> None:
+        try:
+            self.snap = await snapshot(db, self.since)
+        except Exception as exc:  # noqa: BLE001 —— 库一时读不到不该让 up 退出
+            self.snap.error = t(f"数据库读不到（{type(exc).__name__}）",
+                                f"cannot read the database ({type(exc).__name__})")
+
+    def __rich__(self) -> Any:
+        from datetime import UTC, datetime
+
+        from failgate.views import state_text
+
+        snap = self.snap
+        services = Text()
+        for proc in self.procs:
+            alive = proc.popen is not None and proc.popen.poll() is None
+            services.append("● " if alive else "○ ", style="green" if alive else "red")
+            services.append(f"{proc.name}   ")
+        stats = Text(t("本次  ", "This run  "), style="bold")
+        stats.append(t(f"事件 {snap.events} · Case {snap.cases} · 核验 ",
+                       f"events {snap.events} · cases {snap.cases} · verified "))
+        stats.append(f"✓{snap.verdicts.get('VERIFIED', 0)} ", style="green")
+        stats.append(f"✗{snap.verdicts.get('REFUTED', 0)} ", style="red")
+        stats.append(f"?{snap.verdicts.get('INCONCLUSIVE', 0)}", style="yellow")
+        stats.append(t(" · 花费 ", " · spent ") + f"${snap.cost:.4f}")
+        rows: list[Any] = [services, stats]
+        now = datetime.now(UTC)
+        if snap.working:
+            busy = Table.grid(padding=(0, 2))
+            for repo, number, kind, state, since in snap.working:
+                kind_label = "PR" if kind == "pull" else "issue"
+                took = int((now - _aware(since)).total_seconds())
+                busy.add_row(Text(t("进行中", "running"), style="bold blue"),
+                             f"{repo.split('/')[-1]} {kind_label} #{number}",
+                             state_text(state), Text(f"{took // 60}:{took % 60:02d}", style="dim"))
+            rows.append(busy)
+        if snap.recent:
+            recent = Table.grid(padding=(0, 2))
+            for at, repo, number, _kind, old, new in snap.recent:
+                line = Text(f"{old} → ")
+                line.append_text(state_text(new))
+                recent.add_row(Text(f"{_aware(at).astimezone():%H:%M:%S}", style="dim"),
+                               f"{repo.split('/')[-1]}#{number}", line)
+            rows.append(Text(t("最近", "Recent"), style="bold"))
+            rows.append(recent)
+        else:
+            rows.append(Text(t("还没有新事件：在演示仓库开 issue 或评论 /failgate … 试试",
+                               "no events yet: open an issue or comment /failgate … on the "
+                               "demo repo"), style="dim"))
+        if snap.error:
+            rows.append(Text(snap.error, style="red"))
+        up_for = int(time.monotonic() - self.started)
+        h, rem = divmod(up_for, 3600)
+        uptime = f"{h}:{rem // 60:02d}:{rem % 60:02d}"
+        title = Text(t(f" FailGate 在线 · 已运行 {uptime} ", f" FailGate live · up {uptime} "),
+                     style="bold green")
+        return Panel(Group(*rows), title=title, title_align="left", border_style="green",
+                     subtitle=t(f"工作台 {self.base}/console · Ctrl+C 停止",
+                                f"console {self.base}/console · Ctrl+C to stop"),
+                     subtitle_align="right")
+
+
+def _aware(at: Any) -> Any:
+    """SQLite 读回来的时间可能不带时区（都是按 UTC 存的）。"""
+    from datetime import UTC
+
+    return at if at.tzinfo is not None else at.replace(tzinfo=UTC)
+
+
+LOG_KEEP = ("WARNING", "ERROR", "CRITICAL", "Traceback", "Exception", "error", "Error")
+
+
+def keep_line(name: str, line: str, verbose: bool) -> bool:
+    """--logs 关掉时只留警告和错误；/healthz 的访问日志任何时候都不显示（up 自己在轮询）。"""
+    if '"GET /healthz' in line:
+        return False
+    return verbose or any(k in line for k in LOG_KEEP)

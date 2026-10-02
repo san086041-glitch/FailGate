@@ -137,6 +137,11 @@ def _env_file_isolation(monkeypatch):
     monkeypatch.setitem(Settings.model_config, "env_file", ".env")
     monkeypatch.setattr("failgate.settings.project_root", lambda: None)
     monkeypatch.delenv("FAILGATE_ENV_FILE", raising=False)
+    # 界面语言（ADR 0039）是模块级状态：每个测试从中文开始
+    monkeypatch.delenv("FAILGATE_LANG", raising=False)
+    from failgate.i18n import set_lang
+
+    set_lang("zh")
 
 
 @pytest.fixture

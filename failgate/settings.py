@@ -6,6 +6,8 @@ from typing import Literal
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from failgate.i18n import t
+
 RepoMode = Literal["shadow", "live", "paused"]
 
 
@@ -78,6 +80,8 @@ class Settings(BaseSettings):
     console_token: str = ""
     # 命令行首页不显示 logo（ADR 0036；等同 failgate -q）
     failgate_no_banner: bool = False
+    # 命令行界面语言 zh / en（ADR 0039）；单次运行可以 failgate --lang en
+    failgate_lang: str = "zh"
     # failgate up 用的 webhook 转发通道（ADR 0037）。空 = 用 GitHub App 的 webhook 地址
     # （GET /app/hook/config，是 smee.io 的才用）；都没有就只起服务
     smee_url: str = ""
@@ -167,7 +171,7 @@ def find_env_file(explicit: Path | None = None, *, cwd: Path | None = None) -> E
     if explicit is not None:
         path = explicit.expanduser().resolve()
         if not path.is_file():
-            raise FileNotFoundError(f"{path} 不存在")
+            raise FileNotFoundError(t(f"{path} 不存在", f"{path} does not exist"))
         return EnvChoice(path, "参数")
     note = ""
     configured = os.environ.get(ENV_FILE, "").strip()
@@ -175,7 +179,7 @@ def find_env_file(explicit: Path | None = None, *, cwd: Path | None = None) -> E
         path = Path(configured).expanduser().resolve()
         if path.is_file():
             return EnvChoice(path, ENV_FILE)
-        note = f"{ENV_FILE}={configured} 不存在"
+        note = t(f"{ENV_FILE}={configured} 不存在", f"{ENV_FILE}={configured} does not exist")
     path = (cwd or Path.cwd()).resolve() / ".env"
     if path.is_file():
         return EnvChoice(path, "当前目录", note)
