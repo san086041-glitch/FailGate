@@ -61,3 +61,17 @@ jobs:
       - run: pip install -e ".[dev]"
       # 沙箱集成测试和数据库无关，已经在上面的任务里跑过
       - run: pytest -q -m "not docker"
+
+  compose:
+    # 一键部署（ADR 0044）：compose 配置能解析、镜像能构建、容器里 failgate 能启动
+    runs-on: ubuntu-latest
+    env:
+      CONSOLE_TOKEN: ci-only
+      GITHUB_APP_PRIVATE_KEY_PATH: ./deploy/no-key.txt
+    steps:
+      - uses: actions/checkout@v7
+      - run: touch .env
+      - run: docker compose config --quiet
+      - run: docker compose build api
+      - run: docker run --rm failgate:local failgate --help
+      - run: docker run --rm failgate:local docker --version

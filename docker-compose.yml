@@ -1,14 +1,99 @@
-# M0：只有 api（worker 在同一进程内）+ SQLite 卷。
-# M1 起加入 worker、scheduler、postgres(pgvector)、redis；M2 起加入 egress 代理和镜像缓存（见技术方案第 20 节）。
+# 一键部署（ADR 0044）：docker compose up -d --build
+#
+#   api      webhook 接入 + 快车道（分诊、查重、答疑、写评论）+ 工作台，只绑 127.0.0.1:8080
+#   worker   沙箱车道（复现、核验、修复）：通过 docker.sock 让宿主机的 Docker 跑沙箱容器；
+#            安装阶段的出网白名单代理（ADR 0042）由它第一次安装时自动建在宿主机上
+#   postgres / redis   只在 compose 内部网络里，不对宿主机开端口（和本机已有的 failgate-pg 不冲突）
+#   tunnel   可选（--profile tunnel）：smee 转发 GitHub webhook，需要 SMEE_URL
+#
+# 配置读 .env（和本机直接跑共用）；下面的 environment 只覆盖"容器里路径 / 地址不一样"的几项。
+x-failgate: &failgate
+  build: .
+  image: failgate:local
+  env_file: .env
+  restart: unless-stopped
+  depends_on:
+    postgres: {condition: service_healthy}
+    redis: {condition: service_healthy}
+  volumes:
+    - failgate-data:/data
+    - ${GITHUB_APP_PRIVATE_KEY_PATH:?在 .env 里设置 GITHUB_APP_PRIVATE_KEY_PATH}:/run/secrets/github-app.pem:ro
+    - ${FIXER_APP_PRIVATE_KEY_PATH:-./deploy/no-key.txt}:/run/secrets/fixer-app.pem:ro
+  environment: &failgate-env
+    FAILGATE_DB_URL: postgresql+asyncpg://failgate:failgate@postgres:5432/failgate
+    QUEUE_BACKEND: redis
+    REDIS_URL: redis://redis:6379/0
+    GITHUB_APP_PRIVATE_KEY_PATH: /run/secrets/github-app.pem
+    FIXER_APP_PRIVATE_KEY_PATH: /run/secrets/fixer-app.pem
+    SANDBOX_ARTIFACTS_DIR: /data/artifacts
+    # 宿主机访问容器时来源地址不是 127.0.0.1，工作台必须用 token（ADR 0035）
+    CONSOLE_TOKEN: ${CONSOLE_TOKEN:?在 .env 里设置 CONSOLE_TOKEN（工作台访问口令，随便一串长随机字符）}
+
 services:
   api:
-    build: .
-    ports: ["8080:8080"]
-    env_file: .env
+    <<: *failgate
+    command: ["failgate", "serve", "--host", "0.0.0.0", "--port", "8080"]
     environment:
-      FAILGATE_DB_URL: sqlite+aiosqlite:////data/failgate.db
+      <<: *failgate-env
+      WORKER_LANES: events
+    ports: ["127.0.0.1:${FAILGATE_PORT:-8080}:8080"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  worker:
+    <<: *failgate
+    command: ["failgate", "worker", "--lanes", "sandbox"]
     volumes:
       - failgate-data:/data
+      - ${GITHUB_APP_PRIVATE_KEY_PATH:?在 .env 里设置 GITHUB_APP_PRIVATE_KEY_PATH}:/run/secrets/github-app.pem:ro
+      - ${FIXER_APP_PRIVATE_KEY_PATH:-./deploy/no-key.txt}:/run/secrets/fixer-app.pem:ro
+      # 能控制宿主机 Docker = 等同宿主机 root：只给 worker，api 不挂
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: failgate
+      POSTGRES_PASSWORD: failgate
+      POSTGRES_DB: failgate
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U failgate -d failgate"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  tunnel:
+    image: node:20-alpine
+    profiles: [tunnel]
+    restart: unless-stopped
+    depends_on:
+      api: {condition: service_healthy}
+    env_file: .env
+    # SMEE_URL 在容器里检查：compose 会对没启用的 profile 也校验 ${VAR:?}，写在这里会挡住默认启动
+    command:
+      - sh
+      - -c
+      - 'test -n "$$SMEE_URL" || { echo "在 .env 里设置 SMEE_URL（smee.io 通道地址）"; exit 1; };
+         exec npx --yes smee-client@2 --url "$$SMEE_URL" --target http://api:8080/webhooks/github'
 
 volumes:
   failgate-data:
+  postgres-data:
+  redis-data:

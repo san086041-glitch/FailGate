@@ -1,0 +1,6 @@
+# 镜像只需要 pyproject.toml、README.md、failgate/；其余不进构建上下文
+*
+!pyproject.toml
+!README.md
+!failgate/
+**/__pycache__
