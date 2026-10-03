@@ -12,6 +12,7 @@
 
 <p align="center">
   <a href="https://github.com/san086041-glitch/FailGate/actions/workflows/ci.yml"><img src="https://github.com/san086041-glitch/FailGate/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" alt="Python 3.11+">
   <img src="https://img.shields.io/badge/sandbox-Docker-2496ED?logo=docker&logoColor=white" alt="Docker sandbox">
   <img src="https://img.shields.io/badge/MCP-Claude%20Code%20%C2%B7%20Cursor-8A63D2" alt="MCP">

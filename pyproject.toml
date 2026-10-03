@@ -8,6 +8,8 @@ version = "0.0.1"
 description = "bug 的验收层：修复谁都能写，FailGate 负责证明它修对了"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
