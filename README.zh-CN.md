@@ -210,8 +210,6 @@ claude mcp add failgate -- \
 
 ## 📚 文档
 
-| | |
-|---|---|
-| [部署](docs/deploy.md) · [GitHub App](docs/github-app-setup.md) · [Fixer App](docs/fixer-app-setup.md) | 安装手册 |
-
-<sub>FailGate 在 2026-09-28 之前叫 RepoWarden。README 里的动图和截图由 [`.github/workflows/readme-media.yml`](.github/workflows/readme-media.yml) 从真实运行中重新生成。</sub>
+- [用 docker compose 部署](docs/deploy.md)
+- [配置 GitHub App](docs/github-app-setup.md)
+- [配置 Fixer App](docs/fixer-app-setup.md)（只有用 `/failgate fix` 才需要）
