@@ -1,0 +1,61 @@
+name: README media
+
+# 重新录 README 里的动图：推一个 media-run/** 分支触发，跑完下载 readme-media 产物、删掉分支。
+# 全部是真实运行：命令行动图是 VHS 录的 failgate verify（公开演示仓库 + 导入的公开考卷），
+# GitHub 动图是 Playwright 截的 failgate-demo 真实页面。
+on:
+  push:
+    branches: ["media-run/**"]
+  workflow_dispatch:
+
+jobs:
+  cli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      FAILGATE_DB_URL: sqlite+aiosqlite:///${{ github.workspace }}/media.db
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - run: sudo apt-get update && sudo apt-get install -y fonts-jetbrains-mono fonts-noto-cjk
+      - name: 导入演示仓库的公开考卷（不含隐藏考卷）
+        run: python scripts/media/demo_exams.py import --db "$FAILGATE_DB_URL"
+      - name: 先各跑一遍，建好环境缓存（录的那次走缓存）
+        run: |
+          failgate verify san086041-glitch/failgate-demo#5 --markdown > warm-5.md || true
+          failgate verify san086041-glitch/failgate-demo#16 --markdown > warm-16.md || true
+          tail -n 5 warm-5.md warm-16.md
+      - uses: charmbracelet/vhs-action@v2
+        with:
+          path: docs/media/tapes/verify-refuted.en.tape
+      - run: |
+          for t in verify-refuted.zh verify-verified.en verify-verified.zh; do
+            vhs "docs/media/tapes/$t.tape"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: readme-media-cli
+          path: |
+            docs/media/out/
+            warm-*.md
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install playwright pillow && playwright install --with-deps chromium
+      - run: sudo apt-get install -y fonts-noto-cjk
+      - run: python scripts/media/web_shots.py --out docs/media/out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: readme-media-web
+          path: docs/media/out/

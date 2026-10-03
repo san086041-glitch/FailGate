@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="112" viewBox="0 0 540 112" role="img" aria-label="FailGate">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f81f7"/>
+      <stop offset="1" stop-color="#8957e5"/>
+    </linearGradient>
+  </defs>
+  <!-- gate: two posts + lintel; inside, a test that fails (red) then passes (green) -->
+  <rect x="8" y="12" width="88" height="88" rx="22" fill="url(#g)"/>
+  <rect x="26" y="30" width="8" height="54" rx="3" fill="#fff"/>
+  <rect x="70" y="30" width="8" height="54" rx="3" fill="#fff"/>
+  <rect x="22" y="26" width="60" height="9" rx="3" fill="#fff"/>
+  <circle cx="52" cy="54" r="10" fill="#f85149"/>
+  <path d="M47.5 49.5l9 9m0-9l-9 9" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="52" cy="74" r="10" fill="#3fb950"/>
+  <path d="M47 74.5l3.6 3.6L57.5 70" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="116" y="66" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif" font-size="52" font-weight="700" fill="#1f2328" letter-spacing="-1">FailGate</text>
+  <text x="118" y="92" font-family="Segoe UI, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif" font-size="15" fill="#59636e" letter-spacing="1.6">THE ACCEPTANCE LAYER FOR BUG FIXES</text>
+</svg>
