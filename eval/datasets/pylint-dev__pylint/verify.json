@@ -1,0 +1,4 @@
+{
+ "related_always": ["tests/test_functional.py"],
+ "note": "pylint 的检查器是插件式加载的，检查器行为由 tests/test_functional.py 读 tests/functional/ 下的 .py + .txt 驱动，它只 import pylint.testutils，按 import 静态挑选永远挑不到（ADR 0041）。沙箱里全量跑约 44 秒（869 过 / 17 跳过 / 14 个修复前后都失败的环境差异）。"
+}

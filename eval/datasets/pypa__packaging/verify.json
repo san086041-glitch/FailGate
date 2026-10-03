@@ -1,0 +1,4 @@
+{
+ "test_deps": ["pretend"],
+ "note": "packaging 的测试 import pretend（tests/requirements.txt 里的第三方依赖；coverage、pip、pytest 环境里已有）。只装 pytest 时 test_specifiers.py 等在合并基点和 PR 上都收集失败，第三层原来会误判为\"没有新增失败\"（ADR 0041）。"
+}

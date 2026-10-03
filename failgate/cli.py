@@ -1390,6 +1390,12 @@ def verify_pr(
         "--strength/--no-strength", help="是否评估考卷强度（默认读 VERIFY_STRENGTH）")] = None,
     markdown: Annotated[bool, typer.Option(
         help="输出和 PR 评论一样的 Markdown 报告（输出不是终端时默认就是）")] = False,
+    related_always: Annotated[str, typer.Option(
+        help="第三层总要跑的测试，逗号分隔（如 pylint 的 tests/test_functional.py，ADR 0041）"
+    )] = "",
+    test_deps: Annotated[str, typer.Option(
+        help="相关测试要的第三方依赖，逗号分隔（如 packaging 的 pretend；按提交日期锁版本）"
+    )] = "",
 ) -> None:
     """用封存的考卷核验一个 PR（ClaimVerify 三层 + 考卷强度）。需要 Docker 和 GITHUB_TOKEN。
 
@@ -1438,9 +1444,11 @@ def verify_pr(
             tester = TestReproducer(sandbox, _env_cache(settings, sandbox), pypi,
                                     run_timeout_s=settings.sandbox_run_timeout_seconds)
             verifier = ClaimVerifier(
-                SandboxWorkbench.for_github(gh, tester),
+                SandboxWorkbench.for_github(
+                    gh, tester, [x.strip() for x in test_deps.split(",") if x.strip()]),
                 strength=settings.verify_strength if strength is None else strength,
                 max_mutants=settings.strength_max_mutants,
+                related_always=[x.strip() for x in related_always.split(",") if x.strip()],
             )
             with live_progress(t("核验 ", "Verify ") + f"{repo}#{number}", progress_console()):
                 result = await verifier.verify(pr, claims, exams)
@@ -2413,13 +2421,16 @@ def replay_verify(
     repo: Annotated[str, typer.Argument(help="owner/name，例如 psf/black")],
     source: Annotated[Path, typer.Option("--from", help="replay l2 的运行记录 JSON")],
     kinds: Annotated[str, typer.Option(help="逗号分隔的变体")] = ",".join(
-        ("fix", "revert_code", "exam_skip", "conftest_skip", "unrelated")),
+        ("fix", "revert_code", "exam_skip", "conftest_skip", "unrelated", "break_other")),
     only: Annotated[str | None, typer.Option(help="逗号分隔的 issue 编号（调试用）")] = None,
     resume: Annotated[
         Path | None, typer.Option(help="接着一份没跑完的结果（.jsonl）继续，跳过已完成的")
     ] = None,
     strength: Annotated[bool, typer.Option(
         "--strength", help="第一层通过的案例顺带算考卷强度（变异测试，ADR 0020）")] = False,
+    repo_config: Annotated[bool, typer.Option(
+        "--repo-config/--no-repo-config",
+        help="读 eval/datasets/<repo>/verify.json（第三层总要跑的测试）；关掉用来做对照")] = True,
 ) -> None:
     """ClaimVerify 正负例评测：上游真实修复当正例，程序构造的 4 种作弊当负例（ADR 0019）。
 
@@ -2448,8 +2459,11 @@ def replay_verify(
     stem = resume.stem if resume else f"{repo.replace('/', '__')}__verify__{started:%Y%m%d-%H%M}"
     jsonl = resume or Path("eval/runs") / f"{stem}.jsonl"
     report_path = Path("eval/reports") / f"{stem}.md"
+    vcfg = ve.load_verify_config(repo) if repo_config else ve.VerifyConfig()
+    related_always, test_deps = vcfg.related_always, vcfg.test_deps
     meta = {"repo": repo, "started": started.isoformat(timespec="seconds"),
-            "source": source.as_posix()}
+            "source": source.as_posix(), "related_always": related_always,
+            "test_deps": test_deps}
 
     async def run_all() -> None:
         gh = GitHubRest(settings.github_token)
@@ -2488,12 +2502,15 @@ def replay_verify(
                     typer.echo(f"#{case.number} {kind} …")
                     res = await ve.run_case(
                         repo, case, kind, fetch=fetch, compare=compare,
-                        bench_for=lambda f: SandboxWorkbench(f, tester), trees=trees,
-                        strength=strength,
+                        bench_for=lambda f: SandboxWorkbench(f, tester, test_deps),
+                        trees=trees, strength=strength, related_always=related_always,
                     )
                     results.append(res)
                     with jsonl.open("a", encoding="utf-8") as fh:
                         fh.write(json.dumps(res, ensure_ascii=False) + "\n")
+                    if res.get("skipped"):
+                        typer.echo(f"  → n/a（{res['skipped']}），不计入")
+                        continue
                     mark = "✅" if res["correct"] else "❌"
                     st = res.get("strength") or {}
                     extra = (f" · 强度 {st['grade']} {st['killed']}/{st['killed'] + st['survived']}"

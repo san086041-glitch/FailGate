@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any, Literal, Protocol
@@ -119,9 +120,11 @@ class Layer2(BaseModel):
 
 class Layer3(BaseModel):
     status: Literal["pass", "fail", "inconclusive", "none"]
-    reason: str  # pass / new_failures / none / base_infra / head_infra / setup
+    reason: str  # pass / new_failures / none / not_run / base_infra / head_infra / setup
     files: list[str] = []
     new_failures: list[str] = []
+    # 合并基点和 PR 上都收集失败的测试文件（多半缺测试依赖）：没跑起来，不能算"没有新增失败"
+    not_run: list[str] = []
 
 
 class ClaimResult(BaseModel):
@@ -250,9 +253,13 @@ def overall(claims: list[ClaimResult]) -> ClaimVerdict | None:
 
 class ClaimVerifier:
     def __init__(self, bench: Workbench, *, exam_runs: int = EXAM_RUNS,
-                 strength: bool = False, max_mutants: int = MAX_MUTANTS) -> None:
+                 strength: bool = False, max_mutants: int = MAX_MUTANTS,
+                 related_always: Sequence[str] = ()) -> None:
         self.bench = bench
         self.exam_runs = exam_runs
+        # 第三层总要跑的测试（仓库配置，ADR 0041）：静态挑选看不到的，例如 pylint 的
+        # tests/test_functional.py。head 上不存在的忽略。
+        self.related_always = list(related_always)
         # strength=True 时 bench 还要实现 strength.StrengthBench
         self.strength = StrengthEvaluator(bench, max_mutants=max_mutants) if strength else None  # type: ignore[arg-type]
 
@@ -341,6 +348,8 @@ class ClaimVerifier:
         tests = self.bench.read_files(head_env)
         tests = {p: s for p, s in tests.items() if is_test_file(p)}
         files = select_related_tests(pr.files, tests, exclude=exam.test_path)
+        files += [p for p in self.related_always
+                  if p in tests and p not in files and p != exam.test_path]
         if not files:
             return Layer3(status="none", reason="none")
         on_base = set(self.bench.read_files(base_env, set(files)))
@@ -354,12 +363,17 @@ class ClaimVerifier:
             base_failed = failed_nodes(base_run.stdout + "\n" + base_run.stderr)
         if head_run.infra_failure:
             return Layer3(status="inconclusive", files=files, reason="head_infra")
-        new = failed_nodes(head_run.stdout + "\n" + head_run.stderr) - base_failed
+        head_failed = failed_nodes(head_run.stdout + "\n" + head_run.stderr)
+        # 文件级的 ERROR = 收集失败（import 不了），两边都失败就是根本没跑起来（ADR 0041）
+        not_run = [f for f in files if f in head_failed and (f in base_failed or f not in on_base)]
+        new = head_failed - base_failed
         if new:
             # 重跑一次，排除偶发失败
             again = await self.bench.run_tests(head_env, sorted(new), RELATED_TIMEOUT_S)
             new &= failed_nodes(again.stdout + "\n" + again.stderr)
         if new:
             return Layer3(status="fail", files=files, new_failures=sorted(new),
-                          reason="new_failures")
-        return Layer3(status="pass", files=files, reason="pass")
+                          reason="new_failures", not_run=not_run)
+        if not_run and len(not_run) == len(files):
+            return Layer3(status="none", files=files, reason="not_run", not_run=not_run)
+        return Layer3(status="pass", files=files, reason="pass", not_run=not_run)

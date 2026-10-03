@@ -140,14 +140,22 @@ class SourceTree:
         """在这个源码包上改文件，得到一个新的源码包（离线评测构造负例用）。
 
         changes：相对仓库根的路径 → 新内容（None 表示删除）。label 当作新包的"提交号"，
-        环境缓存按源码摘要区分，所以不会和原提交的环境混在一起。"""
+        环境缓存按源码摘要区分，所以不会和原提交的环境混在一起。
+
+        新写的文件沿用原文件的修改时间（新增的用包里最晚的时间）：TarInfo 默认 mtime=0
+        （1970 年），改的是会打进 wheel 的源码时，flit 等构建后端写 zip 会因为"早于 1980 年"
+        直接失败（ADR 0041 的 break_other 在 packaging 上踩到）。"""
         top = self.top_dir
         out = io.BytesIO()
         with tarfile.open(fileobj=io.BytesIO(self.tarball), mode="r:gz") as src, \
                 tarfile.open(fileobj=out, mode="w:gz") as dst:
+            mtimes: dict[str, float] = {}
+            latest = 0.0
             for m in src.getmembers():
+                latest = max(latest, m.mtime)
                 rel = m.name[len(top) + 1:] if m.name.startswith(f"{top}/") else None
                 if rel is not None and rel in changes:
+                    mtimes[rel] = m.mtime
                     continue
                 dst.addfile(m, src.extractfile(m) if m.isfile() else None)
             for rel, content in changes.items():
@@ -156,6 +164,7 @@ class SourceTree:
                 data = content.encode("utf-8")
                 info = tarfile.TarInfo(f"{top}/{rel}")
                 info.size, info.mode = len(data), 0o644
+                info.mtime = mtimes.get(rel) or latest or 946684800.0  # 兜底 2000-01-01
                 dst.addfile(info, io.BytesIO(data))
         return SourceTree(repo=self.repo, sha=label, committed_at=self.committed_at,
                           tarball=out.getvalue())

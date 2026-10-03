@@ -59,6 +59,9 @@ _TEXT: dict[str, dict[str, str]] = {
         "l3.pass": "{n} 个相关测试文件在 PR 的代码上没有新增失败",
         "l3.new_failures": "相关测试里有 {n} 个在 PR 的代码上新出现失败",
         "l3.none": "没找到和改动相关的已有测试",
+        "l3.not_run": ("挑出的 {n} 个相关测试文件在合并基点和 PR 上都没跑起来"
+                       "（收集失败，多半缺测试依赖），没有查成回归"),
+        "l3.not_run_part": "；另有 {k} 个文件没跑起来",
         "l3.base_infra": "相关测试在合并基点上超时或内存超限",
         "l3.head_infra": "相关测试在 PR 的代码上超时或内存超限",
         "l3.setup": "环境搭不起来，没有跑相关测试",
@@ -145,6 +148,10 @@ _TEXT: dict[str, dict[str, str]] = {
         "l3.pass": "{n} related test file(s) show no new failures on the PR",
         "l3.new_failures": "{n} related test(s) newly fail on the PR",
         "l3.none": "no existing tests related to the change were found",
+        "l3.not_run": ("the {n} related test file(s) could not run on either the merge base or "
+                       "the PR (collection failed, likely missing test dependencies), so "
+                       "regressions were not checked"),
+        "l3.not_run_part": "; {k} more file(s) could not run",
         "l3.base_infra": "related tests timed out or ran out of memory on the merge base",
         "l3.head_infra": "related tests timed out or ran out of memory on the PR",
         "l3.setup": "the environment could not be built, so related tests were not run",
@@ -210,7 +217,12 @@ def _l1(layer: Layer1, t: dict[str, str]) -> str:
 
 def _l3(layer: Layer3, t: dict[str, str]) -> str:
     n = len(layer.new_failures) if layer.reason == "new_failures" else len(layer.files)
-    return t[f"l3.{layer.reason}"].format(n=n)
+    if layer.reason == "pass":
+        n = len(layer.files) - len(layer.not_run)
+    text = t[f"l3.{layer.reason}"].format(n=n)
+    if layer.not_run and layer.reason != "not_run":
+        text += t["l3.not_run_part"].format(k=len(layer.not_run))
+    return text
 
 
 def _signal(s: Signal, t: dict[str, str]) -> str:

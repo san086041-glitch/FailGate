@@ -4,7 +4,10 @@
 1. 同名：改了 `pkg/text.py`，就选 `test_text.py`；
 2. 直接 import 了改动的模块：`import pkg.text`、`from pkg.text import …`、`from pkg import text`；
 3. import 了改动模块所在的包：`from pkg import slugify`（包的 __init__ 往往会再导出）。
-考卷文件本身不选，它由第一层负责。没有覆盖率映射，所以会漏掉"通过别的模块间接依赖"的测试。
+考卷文件本身不选，它由第一层负责。没有覆盖率映射，所以会漏掉"通过别的模块间接依赖"的测试；
+插件式加载的项目（pylint 的检查器由 functional 测试读数据文件驱动）靠仓库配置的
+"总要跑的测试"补上（ClaimVerifier(related_always=…)，ADR 0041）。
+没有测试函数的文件不选：`pylint/testutils/lint_module_test.py` 文件名像测试，其实是测试工具。
 """
 
 from __future__ import annotations
@@ -59,6 +62,19 @@ def _imports(source: str) -> set[str]:
     return names
 
 
+def has_tests(source: str) -> bool:
+    """文件里有没有 pytest 会收集的测试：顶层 test* 函数，或 Test* 类。解析不了的当作有。"""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return True
+    return any(
+        (isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name.startswith("test"))
+        or (isinstance(n, ast.ClassDef) and n.name.startswith("Test"))
+        for n in tree.body
+    )
+
+
 def select_related_tests(
     files: list[PullFile], tests: dict[str, str], *, exclude: str, limit: int = MAX_FILES
 ) -> list[str]:
@@ -71,6 +87,8 @@ def select_related_tests(
     ranked: list[tuple[int, str]] = []
     for path, source in tests.items():
         if path == exclude or path.rsplit("/", 1)[-1] == "conftest.py":
+            continue
+        if not has_tests(source):
             continue
         name = path.rsplit("/", 1)[-1][:-3]
         imported = _imports(source)

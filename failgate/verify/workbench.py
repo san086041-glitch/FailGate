@@ -11,7 +11,7 @@ import asyncio
 import dataclasses
 import json
 import tempfile
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -69,23 +69,34 @@ FetchTree = Callable[[str, str], Awaitable[SourceTree]]
 class SandboxWorkbench:
     """fetch_tree(仓库, 提交) → 源码包。线上从 GitHub 取；测试和离线评测可以换成本地目录。"""
 
-    def __init__(self, fetch_tree: FetchTree, tester: TestReproducer) -> None:
+    def __init__(self, fetch_tree: FetchTree, tester: TestReproducer,
+                 test_deps: Sequence[str] = ()) -> None:
         self.fetch_tree = fetch_tree
         self.tester = tester
+        # 第三层相关测试要的第三方依赖（仓库配置，ADR 0041）：只装 pytest 时 packaging 的
+        # 测试 import pretend 就收集失败。按提交日期锁版本，进入环境缓存 key。
+        self.test_deps = list(test_deps)
 
     @classmethod
-    def for_github(cls, gh: GitHubRest, tester: TestReproducer) -> SandboxWorkbench:
+    def for_github(cls, gh: GitHubRest, tester: TestReproducer,
+                   test_deps: Sequence[str] = ()) -> SandboxWorkbench:
         async def fetch(repo: str, sha: str) -> SourceTree:
             return await fetch_github_tree(gh, repo, sha)
 
-        return cls(fetch, tester)
+        return cls(fetch, tester, test_deps)
+
+    async def _pinned_test_deps(self, tree: SourceTree, python: str) -> list[str]:
+        return [pick_release(d, await self.tester.pypi.releases(d), python, tree.committed_at)
+                for d in self.test_deps]
 
     async def prepare(self, repo: str, sha: str, exam: Exam) -> Prepared:
         try:
             tree = await self.fetch_tree(repo, sha)
             cfg = PackageConfig(name=exam.package, import_name=exam.module)
+            extra = await self._pinned_test_deps(tree, exam.python or "3.12")
             src = await self.tester.prepare(cfg, tree, number=exam.issue, python=exam.python,
-                                            version=exam.version, pytest=exam.pytest)
+                                            version=exam.version, pytest=exam.pytest,
+                                            extra=extra)
         except _SETUP_ERRORS as e:
             raise SetupFailed(f"{type(e).__name__}: {str(e)[:300]}") from e
         # 考卷的路径以封存时为准（head 上的测试目录可能变了）

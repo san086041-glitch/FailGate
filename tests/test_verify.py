@@ -28,7 +28,7 @@ from failgate.verify.engine import (
     judge_layer1,
 )
 from failgate.verify.receipt import check_receipt, code_sha256
-from failgate.verify.related import module_of, outcomes, select_related_tests
+from failgate.verify.related import has_tests, module_of, outcomes, select_related_tests
 from failgate.verify.report import render_verification
 from failgate.verify.tamper import PullFile, tamper_signals
 
@@ -136,18 +136,34 @@ def test_module_of():
     assert module_of("my-lib/x.py") is None
 
 
+T = "\n\ndef test_x():\n    pass\n"  # 假测试文件里放一个真测试（没有测试的文件不选）
+
+
 def test_select_related_tests_ranks_name_then_import_then_package():
     tests = {
-        "tests/test_other.py": "from mylib import core\n",  # 直接 import 改动的模块
-        "tests/test_pkg.py": "from mylib import helpers\n",  # 只 import 了包
-        "tests/test_core.py": "import json\n",  # 同名
-        "tests/test_unrelated.py": "import os\n",
+        "tests/test_other.py": "from mylib import core\n" + T,  # 直接 import 改动的模块
+        "tests/test_pkg.py": "from mylib import helpers\n" + T,  # 只 import 了包
+        "tests/test_core.py": "import json\n" + T,  # 同名
+        "tests/test_unrelated.py": "import os\n" + T,
         EXAM_PATH: "from mylib.core import parse\n",  # 考卷本身不选
         "tests/conftest.py": "import mylib\n",
     }
     got = select_related_tests([pf("mylib/core.py")], tests, exclude=EXAM_PATH)
     assert got == ["tests/test_core.py", "tests/test_other.py", "tests/test_pkg.py"]
     assert select_related_tests([pf("README.md")], tests, exclude=EXAM_PATH) == []
+
+
+def test_files_without_tests_are_not_selected():
+    """pylint/testutils/lint_module_test.py 名字像测试，其实是测试工具（ADR 0041）。"""
+    tests = {
+        "mylib/testutils/lint_module_test.py": "import mylib.core\n\nclass LintModuleTest:\n"
+                                               "    def runTest(self): ...\n",
+        "tests/test_core.py": "import mylib.core\n\nclass TestCore:\n    def test_a(self): ...\n",
+    }
+    assert select_related_tests([pf("mylib/core.py")], tests, exclude=EXAM_PATH) == [
+        "tests/test_core.py"]
+    assert has_tests("async def test_a():\n    pass\n") and has_tests("def (:")
+    assert not has_tests("def helper():\n    pass\n")
 
 
 def test_outcomes_parses_pytest_summary_with_or_without_src_prefix():
@@ -314,7 +330,7 @@ def test_pr_without_claims_has_no_verdict():
     assert v.verdict is None and "没有声明修复任何 issue" in render_verification(v, "zh")
 
 
-RELATED = {"tests/test_core.py": "from mylib.core import parse\n", EXAM_PATH: EXAM_CODE}
+RELATED = {"tests/test_core.py": "from mylib.core import parse\n" + T, EXAM_PATH: EXAM_CODE}
 
 
 def test_new_failure_in_related_tests_is_refuted_after_a_rerun():
@@ -346,12 +362,72 @@ def test_failure_already_on_base_or_gone_on_rerun_is_not_a_regression():
 
 
 def test_related_test_added_by_the_pr_only_runs_on_head():
-    head = {**RELATED, "tests/test_new.py": "import mylib.core\n"}
+    head = {**RELATED, "tests/test_new.py": "import mylib.core\n" + T}
     bench = FakeBench(exam_runs=GOOD, files={BASE: RELATED, HEAD: head},
                       test_runs={BASE: [res(0, "")], HEAD: [res(0, "")]})
     verify(bench)
     assert bench.test_calls == [(HEAD, ["tests/test_core.py", "tests/test_new.py"]),
                                 (BASE, ["tests/test_core.py"])]
+
+
+COLLECT_ERR = res(1, "ERROR src/tests/test_core.py - "
+                     "ModuleNotFoundError: No module named 'pretend'\n")
+
+
+def test_related_tests_that_never_collect_are_not_a_pass():
+    """packaging 的测试 import pretend，只装 pytest 时两边都收集失败：不能算"没有新增失败"。"""
+    bench = FakeBench(exam_runs=GOOD, files={BASE: RELATED, HEAD: RELATED},
+                      test_runs={BASE: [COLLECT_ERR], HEAD: [COLLECT_ERR]})
+    v = verify(bench)
+    c = v.claims[0]
+    assert v.verdict == ClaimVerdict.VERIFIED and c.layer3 is not None  # none 不影响结论
+    assert (c.layer3.status, c.layer3.reason) == ("none", "not_run")
+    assert c.layer3.not_run == ["tests/test_core.py"]
+    assert "都没跑起来" in render_verification(v, "zh")
+    assert "could not run" in render_verification(v, "en")
+
+
+def test_collection_error_only_on_the_pr_is_a_regression():
+    """PR 把测试文件弄得 import 不了：base 能跑、head 收集失败 → 新增失败。"""
+    bench = FakeBench(exam_runs=GOOD, files={BASE: RELATED, HEAD: RELATED},
+                      test_runs={BASE: [res(0, "3 passed")], HEAD: [COLLECT_ERR, COLLECT_ERR]})
+    c = verify(bench).claims[0]
+    assert c.layer3 is not None and c.layer3.status == "fail" and c.layer3.not_run == []
+
+
+def test_partly_runnable_related_tests_say_how_many_did_not_run():
+    two = {**RELATED, "tests/test_more.py": "import mylib.core\n" + T}
+    bench = FakeBench(exam_runs=GOOD, files={BASE: two, HEAD: two},
+                      test_runs={BASE: [COLLECT_ERR], HEAD: [COLLECT_ERR]})
+    v = verify(bench)
+    c = v.claims[0]
+    assert c.layer3 is not None and (c.layer3.status, c.layer3.not_run) == (
+        "pass", ["tests/test_core.py"])
+    assert "1 个相关测试文件在 PR 的代码上没有新增失败；另有 1 个文件没跑起来" in \
+        render_verification(v, "zh")
+
+
+FUNCTIONAL = {"tests/test_functional.py": "from mylib import testutils\n" + T}
+
+
+def test_related_always_runs_tests_static_selection_cannot_see():
+    """pylint 的 functional 测试不 import 检查器模块：靠仓库配置总要跑（ADR 0041）。"""
+    # 像 pylint：改的是 mylib/checkers/variables.py，functional 测试只 import mylib.testutils
+    checker_pr = pull([pf("mylib/checkers/variables.py")])
+    files = {BASE: FUNCTIONAL, HEAD: FUNCTIONAL}
+    broke = res(1, "FAILED tests/test_functional.py::test_functional[unused_variable] - x\n")
+    bench = FakeBench(exam_runs=GOOD, files=files,
+                      test_runs={BASE: [res(0, "")], HEAD: [broke, broke]})
+    v = asyncio.run(ClaimVerifier(bench, related_always=[
+        "tests/test_functional.py", "tests/test_missing.py", EXAM_PATH]).verify(
+        checker_pr, [7], {7: exam()}))
+    c = v.claims[0]
+    assert v.verdict == ClaimVerdict.REFUTED and c.layer3 is not None
+    assert c.layer3.files == ["tests/test_functional.py"]  # head 上没有的、考卷本身都不跑
+    assert c.layer3.new_failures == ["tests/test_functional.py::test_functional[unused_variable]"]
+    # 不配置时静态挑选挑不到，第三层是 none
+    layer3 = verify(FakeBench(exam_runs=GOOD, files=files), checker_pr).claims[0].layer3
+    assert layer3 is not None and layer3.status == "none"
 
 
 # ---------------------------------------------------------------- 真实 Docker：fixture 仓库
