@@ -218,16 +218,12 @@ class SandboxFixRunner:
         from failgate.repro.envcache import EnvCache
         from failgate.repro.l2 import TestReproducer
         from failgate.repro.pypi import PyPIClient
-        from failgate.repro.sandbox import DockerSandbox, SandboxLimits
+        from failgate.repro.sandbox import DockerSandbox
 
         if self._ready is None:
             s = self.settings
             gh = GitHubRest(s.github_token, base_url=s.github_api_url)
-            sandbox = DockerSandbox(
-                s.docker_bin, limits=SandboxLimits(memory=s.sandbox_memory, cpus=s.sandbox_cpus),
-                install_network=s.sandbox_install_network,
-                artifacts_dir=Path(s.sandbox_artifacts_dir),
-            )
+            sandbox = DockerSandbox.from_settings(s)
             cache = EnvCache(sandbox, Path(s.sandbox_artifacts_dir) / "envcache.json",
                              max_bytes=int(s.sandbox_env_cache_gb * 1024**3),
                              index_url=s.pip_index_url)

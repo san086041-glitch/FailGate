@@ -16,7 +16,7 @@ from sqlalchemy import select
 
 from failgate.db import Case, Database, IssueDoc, Repo
 from failgate.i18n import t
-from failgate.repro.sandbox import DockerSandbox, SandboxLimits
+from failgate.repro.sandbox import DockerSandbox
 from failgate.settings import Settings
 
 if TYPE_CHECKING:
@@ -1420,12 +1420,7 @@ def verify_pr(
 
     async def run() -> int:
         gh = GitHubRest(settings.github_token)
-        sandbox = DockerSandbox(
-            settings.docker_bin,
-            limits=SandboxLimits(memory=settings.sandbox_memory, cpus=settings.sandbox_cpus),
-            install_network=settings.sandbox_install_network,
-            artifacts_dir=Path(settings.sandbox_artifacts_dir),
-        )
+        sandbox = DockerSandbox.from_settings(settings)
         pypi = PyPIClient(settings.pypi_url)
         db = Database(db_url or settings.failgate_db_url)
         await db.create_all()
@@ -1588,12 +1583,7 @@ app.add_typer(sandbox_app, name="sandbox")
 
 
 def build_sandbox(settings: Settings) -> DockerSandbox:
-    return DockerSandbox(
-        settings.docker_bin,
-        limits=SandboxLimits(memory=settings.sandbox_memory, cpus=settings.sandbox_cpus),
-        install_network=settings.sandbox_install_network,
-        artifacts_dir=Path(settings.sandbox_artifacts_dir),
-    )
+    return DockerSandbox.from_settings(settings)
 
 
 @sandbox_app.command("check")

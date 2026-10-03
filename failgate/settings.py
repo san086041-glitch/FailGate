@@ -110,7 +110,9 @@ class Settings(BaseSettings):
     sandbox_cpus: float = 2.0
     sandbox_run_timeout_seconds: int = 120
     # install 阶段的网络。生产环境应换成只放行包源的 egress 代理网络（failgate-egress）
-    sandbox_install_network: str = "bridge"
+    # egress（默认，ADR 0042）：install 阶段只能经白名单代理访问 PyPI；bridge：不受限地出网
+    sandbox_install_network: str = "egress"
+    sandbox_egress_allow: str = ""  # 白名单额外的域名，逗号分隔（PIP_INDEX_URL 的主机会自动加上）
     sandbox_artifacts_dir: str = "./artifacts"
     # 环境缓存（package 模式装好的环境 commit 成镜像）的总大小上限，超过按 LRU 删除
     sandbox_env_cache_gb: float = 20.0

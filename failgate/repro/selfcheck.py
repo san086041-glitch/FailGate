@@ -46,6 +46,29 @@ print("PROBE" + json.dumps(r))
 '''
 
 
+# 安装阶段的出网探针（ADR 0042）：和真实安装一样经 sandbox.install 起容器
+EGRESS_PROBE = r'''
+import json, socket, urllib.request
+r = {}
+def get(url):
+    try:
+        urllib.request.urlopen(url, timeout=15).read(64)
+        return "ok"
+    except Exception as e:
+        return type(e).__name__ + ": " + str(e)[:120]
+r["pypi"] = get("https://pypi.org/simple/pip/")
+r["other_site"] = get("https://example.com/")
+r["proxy_to_lan"] = get("https://192.168.1.1/")
+for name, addr in [("direct_internet", ("1.1.1.1", 443)), ("direct_lan", ("192.168.1.1", 80))]:
+    try:
+        socket.create_connection(addr, timeout=4).close()
+        r[name] = "connected"
+    except OSError as e:
+        r[name] = type(e).__name__ + ": " + str(e)[:80]
+print("EGRESS" + json.dumps(r))
+'''
+
+
 @dataclass
 class CheckItem:
     name: str
@@ -119,9 +142,38 @@ async def self_check(sandbox: DockerSandbox, image: str) -> list[CheckItem]:
             "内存超限识别", res.oom_killed and not res.timed_out,
             f"exit={res.exit_code} OOM={res.oom_killed}（依据：{res.oom_source}）",
         ))
+        items += await _egress_items(sandbox, image, volume)
     finally:
         await sandbox.remove_workspace(volume)
     return items
+
+
+async def _egress_items(sandbox: DockerSandbox, image: str, volume: str) -> list[CheckItem]:
+    if not sandbox.egress:
+        return [CheckItem("安装阶段出网白名单", False,
+                          f"SANDBOX_INSTALL_NETWORK={sandbox.install_network}：安装阶段可以访问整个"
+                          "互联网（PR 的 setup.py 会在这里执行）；改成 egress 启用白名单代理")]
+    with tempfile.TemporaryDirectory() as tmp:
+        await asyncio.to_thread(Path(tmp, "egress_probe.py").write_text, EGRESS_PROBE,
+                                encoding="utf-8")
+        await sandbox.copy_in(volume, Path(tmp), image)
+    res = await sandbox.install(image, volume, ["python", "egress_probe.py"], timeout_s=90,
+                                allowed=(("python", "egress_probe.py"),))
+    line = next((ln for ln in res.stdout.splitlines() if ln.startswith("EGRESS")), None)
+    if line is None:
+        return [CheckItem("安装阶段出网探针", False, res.output_tail(10))]
+    p = json.loads(line[len("EGRESS"):])
+    allow = ", ".join(sandbox.egress_allow)
+    return [
+        CheckItem("安装阶段能访问 PyPI", p["pypi"] == "ok",
+                  f"经代理：{p['pypi'][:80]}（白名单 {allow}）"),
+        CheckItem("安装阶段其他网站被拒", "403" in p["other_site"], p["other_site"][:80]),
+        CheckItem("安装阶段不能绕过代理", p["direct_internet"] != "connected",
+                  f"直连 1.1.1.1:443：{p['direct_internet'][:60]}"),
+        CheckItem("安装阶段连不到局域网",
+                  p["direct_lan"] != "connected" and "403" in p["proxy_to_lan"],
+                  f"直连：{p['direct_lan'][:40]}；经代理：{p['proxy_to_lan'][:40]}"),
+    ]
 
 
 def _parse_bytes(size: str) -> int:

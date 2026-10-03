@@ -28,11 +28,14 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import IO, Literal
+from typing import IO, Any, Literal
 
 from pydantic import BaseModel
 
 from failgate import tracing
+from failgate.repro import egress as egress_mod
+from failgate.repro.egress import MODE as EGRESS_MODE
+from failgate.repro.egress import allow_list, proxy_env
 
 Phase = Literal["install", "run"]
 
@@ -291,14 +294,78 @@ class DockerSandbox:
         docker_bin: str = "",
         *,
         limits: SandboxLimits | None = None,
-        install_network: str = "bridge",
+        install_network: str = EGRESS_MODE,
         artifacts_dir: Path | None = None,
+        egress_allow: Sequence[str] | None = None,
     ) -> None:
         self.docker = find_docker(docker_bin) or "docker"
         self.limits = limits or SandboxLimits()
+        # "egress"：install 阶段走白名单代理（ADR 0042）；其他值原样当作 docker 网络名
         self.install_network = install_network
+        self.egress_allow = list(egress_allow) if egress_allow is not None else allow_list()
         self.artifacts_dir = artifacts_dir
         self._env = docker_env(self.docker)
+        self._egress_lock = asyncio.Lock()
+        self._egress_ready = False
+
+    @classmethod
+    def from_settings(cls, s: Any) -> DockerSandbox:
+        """按配置建沙箱（流水线、CLI、MCP 共用；s 是 Settings）。"""
+        return cls(
+            s.docker_bin,
+            limits=SandboxLimits(memory=s.sandbox_memory, cpus=s.sandbox_cpus),
+            install_network=s.sandbox_install_network,
+            artifacts_dir=Path(s.sandbox_artifacts_dir),
+            egress_allow=allow_list([x for x in s.sandbox_egress_allow.split(",") if x.strip()],
+                                    s.pip_index_url),
+        )
+
+    @property
+    def egress(self) -> bool:
+        return self.install_network == EGRESS_MODE
+
+    async def ensure_egress(self) -> None:
+        """建好白名单代理：镜像、internal 网络、代理容器（白名单变了就重建）。幂等。"""
+        if not self.egress:
+            return
+        async with self._egress_lock:
+            if self._egress_ready:
+                return
+            if await self.image_info(egress_mod.IMAGE) is None:
+                await self.build_image(egress_mod.IMAGE, egress_mod.DOCKERFILE, limit_s=600)
+            code, _, _ = await self._docker("network", "inspect", egress_mod.NETWORK, limit_s=20)
+            if code != 0:
+                code, _, err = await self._docker(
+                    "network", "create", "--internal", "--label", f"{LABEL}=egress",
+                    egress_mod.NETWORK, limit_s=30)
+                if code != 0:
+                    raise SandboxError(f"建 egress 网络失败：{err.strip()[:300]}")
+            want = f"ALLOW={','.join(self.egress_allow)}"
+            code, out, _ = await self._docker(
+                "inspect", "--format", "{{.State.Running}} {{json .Config.Env}}",
+                egress_mod.CONTAINER, limit_s=20)
+            running, _, env_json = out.strip().partition(" ")
+            try:
+                current = json.loads(env_json) if code == 0 else []
+            except json.JSONDecodeError:
+                current = []
+            # 精确比较：子串匹配会把 "ALLOW=pypi.org,old" 当成已经是 "ALLOW=pypi.org"
+            if code == 0 and want not in current:
+                await self._docker("rm", "-f", egress_mod.CONTAINER, limit_s=60)
+                code = 1
+            if code != 0:
+                code, _, err = await self._docker(*egress_mod.run_args(self.egress_allow),
+                                                  limit_s=60)
+                if code != 0:
+                    raise SandboxError(f"启动 egress 代理失败：{err.strip()[:300]}")
+            elif running != "true":
+                await self._docker("start", egress_mod.CONTAINER, limit_s=60)
+            code, _, err = await self._docker(
+                "network", "connect", "--alias", egress_mod.ALIAS, egress_mod.NETWORK,
+                egress_mod.CONTAINER, limit_s=30)
+            if code != 0 and "already exists" not in err:
+                raise SandboxError(f"代理接入 egress 网络失败：{err.strip()[:300]}")
+            self._egress_ready = True
 
     async def _docker(
         self, *args: str, limit_s: float = 120.0, stdin: bytes | None = None
@@ -484,6 +551,9 @@ class DockerSandbox:
         commit_to：安装成功后把容器 commit 成这个镜像（环境缓存用）。
         """
         check_command(argv, allowed)
+        if self.egress:
+            await self.ensure_egress()
+            env = [*env, *proxy_env()]
         return await self._exec(
             "install", image, volume, argv, timeout_s, env=env, commit_to=commit_to
         )
@@ -554,7 +624,8 @@ class DockerSandbox:
         name = f"failgate-{phase}-{uuid.uuid4().hex[:10]}"
         args = build_run_args(
             name=name, image=image, volume=volume, argv=argv, phase=phase,
-            timeout_s=timeout_s, limits=self.limits, install_network=self.install_network,
+            timeout_s=timeout_s, limits=self.limits,
+            install_network=egress_mod.NETWORK if self.egress else self.install_network,
             env=env,
         )
         log_dir, out_f, err_f = _open_logs(self.artifacts_dir, name)
