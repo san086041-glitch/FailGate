@@ -17,7 +17,6 @@
   <img src="https://img.shields.io/badge/sandbox-Docker-2496ED?logo=docker&logoColor=white" alt="Docker 沙箱">
   <img src="https://img.shields.io/badge/MCP-Claude%20Code%20%C2%B7%20Cursor-8A63D2" alt="MCP">
   <img src="https://img.shields.io/badge/tests-800%2B-2ea44f" alt="800+ 个测试">
-  <img src="https://img.shields.io/badge/ADRs-44-orange" alt="44 个 ADR">
 </p>
 
 <p align="center">
@@ -71,16 +70,16 @@ FailGate 是 bug 的**验收层**：在修复出现之前出好考卷并封存�
 
 ## 📊 实测数据
 
-每个数字都链接到原始报告。样本不大，人工复核是 Claude 做的（不是维护者），每个 ADR 里都写了局限，引用前请先看。
+样本都不大，每个数字都有已知的局限（见[FailGate 不声称什么](#-failgate-不声称什么)）；人工复核是 Claude 做的，不是各项目的维护者。
 
 | 测了什么 | 结果 | 详情 |
 |---|---|---|
-| 生成的考卷在上游修复前失败、修复后通过（严格 FB/PA），4 个真实仓库 | **32 / 36** | black 9/11 · pylint 10/10 · packaging 6/6 · astroid 7/9：ADR 0040、astroid 体检报告 |
-| 上游真实修复 + 4 种作弊 PR（只改测试、考卷里加 skip、conftest 跳过、无关提交）的结论全部判对 | **125 / 125** | black 45 · pylint 50 · packaging 30：ADR 0019、ADR 0041 |
-| 在考卷管不到的地方注入回归，被第 ③ 层抓到 | **18 / 21** | pylint 加了"总要跑的测试"后从 4/8 升到 8/8：ADR 0041 |
-| 修复 Agent 过了考卷、其实没修对的补丁 | 走完完整核验后 **7 → 3** | 给 Agent 看考卷**没有**提高修对率（两组都是 13/24），价值在验收门本身：ADR 0028 |
-| GitHub 上的完整闭环：`/failgate fix` → 修复 Agent 开 PR → 通过核验 | **5 / 5 个 issue** | 其中一个是维护者加严考卷后，自动重修一轮才通过：live 记录、[#21 → #22](#-完整流程从-issue-进来到修复合并) |
-| Claude Code 通过 MCP 使用 FailGate：写测试 → 修 → 核验 | **2 分 16 秒** | live 记录 |
+| 生成的考卷在上游修复前失败、修复后通过（严格 FB/PA），4 个真实仓库 | **32 / 36** | black 9/11 · pylint 10/10 · packaging 6/6 · astroid 7/9 |
+| 上游真实修复 + 4 种作弊 PR（只改测试、考卷里加 skip、conftest 跳过、无关提交）的结论全部判对 | **125 / 125** | black 45 · pylint 50 · packaging 30 |
+| 在考卷管不到的地方注入回归，被第 ③ 层抓到 | **18 / 21** | pylint 加了"总要跑的测试"后从 4/8 升到 8/8 |
+| 修复 Agent 过了考卷、其实没修对的补丁 | 走完完整核验后 **7 → 3** | 给 Agent 看考卷**没有**提高修对率（两组都是 13/24），价值在验收门本身 |
+| GitHub 上的完整闭环：`/failgate fix` → 修复 Agent 开 PR → 通过核验 | **5 / 5 个 issue** | PR [#16](https://github.com/san086041-glitch/failgate-demo/pull/16)、[#17](https://github.com/san086041-glitch/failgate-demo/pull/17)、[#18](https://github.com/san086041-glitch/failgate-demo/pull/18)、[#20](https://github.com/san086041-glitch/failgate-demo/pull/20)（自动重修一轮）、[#22](#-完整流程从-issue-进来到修复合并) |
+| Claude Code 通过 MCP 使用 FailGate：写测试 → 修 → 核验 | **2 分 16 秒** | Claude Code（Sonnet 5.5）处理[演示 issue #1](https://github.com/san086041-glitch/failgate-demo/issues/1)，9 次工具调用 |
 
 ## ⚡ 一分钟试用
 
@@ -132,7 +131,7 @@ failgate up
 
 `checkup` 对任意公开仓库跑一遍完整评测，生成大白话报告。`up` 一条命令起服务和 webhook 转发，底部有实时状态板。
 
-
+`failgate --help` 列出全部命令。
 
 </td>
 <td width="33%" valign="top">
@@ -147,7 +146,6 @@ claude mcp add failgate -- \
 ```
 
 工具：`reproduce_issue`、`run_acceptance_test`、`verify_fix`、`get_fix_task`。不会往你的仓库里写文件。
-
 
 
 </td>
@@ -186,12 +184,12 @@ claude mcp add failgate -- \
 <tr>
 <td width="62%" valign="top">
 
-- **显式状态机，而不是让 Agent 自由循环。** 每个 issue / PR 是一个 `Case`，Agent 只在有边界、有预算的步骤里运行（ADR 0001）。
+- **显式状态机，而不是让 Agent 自由循环。** 每个 issue / PR 是一个 `Case`，Agent 只在有边界、有预算的步骤里运行。
 - **对外写操作只有一个出口。** 所有 GitHub 写操作都经过 `PolicyGate`：幂等键、影子模式、密钥扫描、标签策略。
-- **角色隔离。** 出题、修复、阅卷的权限各不相同：修复 Agent 在工具层就改不了测试和测试配置，推送用单独的 GitHub App（ADR 0027、0029）。
-- **沙箱。** 分两个阶段：安装阶段只能经白名单代理出网；运行阶段断网、非 root、去掉全部 capabilities、根目录只读、限制 pid / 内存 / CPU（ADR 0008、0042）。
-- **平台。** 两条队列车道，沙箱任务不再挡住分诊（快事件 p95 从 448 秒降到 22 秒）；Redis + arq，进程崩溃后任务会重投；PostgreSQL + Alembic；OpenTelemetry 链路发到 Langfuse（ADR 0023–0025）。
-- **先量后改。** 每个模块都有基于真实仓库历史的离线回放（"时间旅行"到修复前的那个提交）；44 个 ADR 记录了试过什么、哪里失败了、为什么这样选。
+- **角色隔离。** 出题、修复、阅卷的权限各不相同：修复 Agent 在工具层就改不了测试和测试配置，推送用单独的 GitHub App。
+- **沙箱。** 分两个阶段：安装阶段只能经白名单代理出网；运行阶段断网、非 root、去掉全部 capabilities、根目录只读、限制 pid / 内存 / CPU。
+- **平台。** 两条队列车道，沙箱任务不再挡住分诊（快事件 p95 从 448 秒降到 22 秒）；Redis + arq，进程崩溃后任务会重投；PostgreSQL + Alembic；OpenTelemetry 链路发到 Langfuse。
+- **先量后改。** 每个模块都有基于真实仓库历史的离线回放（"时间旅行"到修复前的那个提交）；每个设计决定在改代码前都先写下来：试过什么、哪里失败了、为什么这样选。
 
 </td>
 <td width="38%" valign="top">
@@ -208,7 +206,7 @@ claude mcp add failgate -- \
 - **"通过验收"不等于"修对了"。** 考卷太弱时，错误的修复也能通过。这正是考卷强度和隐藏考卷存在的原因，所以它们会显示出来，而不是藏起来。
 - **样本小，但如实报告。** 4 个 Python 仓库，每个抽 12 个 issue，每个只跑一次；人工复核由 Claude 按"必须有 GitHub 证据"的规则完成。
 - **只支持 Python + pytest。** 需要系统库的包可能在沙箱里装不上。
-- **考卷强度只是提示。** 测试被补强时强度分会跟着上升（SWE-bench + UTBoost 上 10 个上升、0 个下降，p = 0.002），但单看强度分，分不出考卷是太弱还是够用（p = 0.41），见 ADR 0022。
+- **考卷强度只是提示。** 测试被补强时强度分会跟着上升（SWE-bench + UTBoost 上 10 个上升、0 个下降，p = 0.002），但单看强度分，分不出考卷是太弱还是够用（p = 0.41）。
 
 ## 📚 文档
 
@@ -216,4 +214,4 @@ claude mcp add failgate -- \
 |---|---|
 | [部署](docs/deploy.md) · [GitHub App](docs/github-app-setup.md) · [Fixer App](docs/fixer-app-setup.md) | 安装手册 |
 
-<sub>FailGate 在 2026-09-28 之前叫 RepoWarden（改名原因）。README 里的动图和截图由 [`.github/workflows/readme-media.yml`](.github/workflows/readme-media.yml) 从真实运行中重新生成。</sub>
+<sub>FailGate 在 2026-09-28 之前叫 RepoWarden。README 里的动图和截图由 [`.github/workflows/readme-media.yml`](.github/workflows/readme-media.yml) 从真实运行中重新生成。</sub>

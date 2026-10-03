@@ -17,7 +17,6 @@
   <img src="https://img.shields.io/badge/sandbox-Docker-2496ED?logo=docker&logoColor=white" alt="Docker sandbox">
   <img src="https://img.shields.io/badge/MCP-Claude%20Code%20%C2%B7%20Cursor-8A63D2" alt="MCP">
   <img src="https://img.shields.io/badge/tests-800%2B-2ea44f" alt="800+ tests">
-  <img src="https://img.shields.io/badge/ADRs-44-orange" alt="44 ADRs">
 </p>
 
 <p align="center">
@@ -71,16 +70,16 @@ Wording matters: a pass means **"passes the acceptance test + no tampering found
 
 ## 📊 Results
 
-Every number links to the raw report. Datasets are small, reviews were done by Claude (not by maintainers), and limitations are listed in each ADR — read them before quoting.
+Datasets are small and every number has known limits (see [What FailGate does not claim](#-what-failgate-does-not-claim)); the human-style reviews were done by Claude, not by the projects' maintainers.
 
 | What was measured | Result | Details |
 |---|---|---|
-| Generated exams that **fail before and pass after** the upstream fix (strict FB/PA), 4 real repos | **32 / 36** | black 9/11 · pylint 10/10 · packaging 6/6 · astroid 7/9 — ADR 0040, astroid checkup |
-| Correct verdicts on real upstream fixes + 4 kinds of cheating PRs (test-only, `skip` in exam, conftest skip, unrelated commit) | **125 / 125** | black 45 · pylint 50 · packaging 30 — ADR 0019, ADR 0041 |
-| Regressions injected outside the exam's reach, caught by layer ③ | **18 / 21** | pylint went 4/8 → 8/8 after adding "always-run" tests — ADR 0041 |
-| Fix-agent patches that passed the exam but were actually wrong | **7 → 3** after full verification | giving the agent the exam did **not** raise its fix rate (13/24 both arms) — the value is in the gate — ADR 0028 |
-| Full loop on GitHub: `/failgate fix` → fixer agent opens a PR → verified | **5 / 5 issues** | one needed an automatic retry after a maintainer tightened the exam — live log, [#21 → #22](#-end-to-end-from-issue-to-merged-fix) |
-| Claude Code using FailGate over MCP: write test → fix → verify | **2 min 16 s** | live log |
+| Generated exams that **fail before and pass after** the upstream fix (strict FB/PA), 4 real repos | **32 / 36** | black 9/11 · pylint 10/10 · packaging 6/6 · astroid 7/9 |
+| Correct verdicts on real upstream fixes + 4 kinds of cheating PRs (test-only, `skip` in exam, conftest skip, unrelated commit) | **125 / 125** | black 45 · pylint 50 · packaging 30 |
+| Regressions injected outside the exam's reach, caught by layer ③ | **18 / 21** | pylint went 4/8 → 8/8 after adding "always-run" tests |
+| Fix-agent patches that passed the exam but were actually wrong | **7 → 3** after full verification | giving the agent the exam did **not** raise its fix rate (13/24 both arms) — the value is in the gate |
+| Full loop on GitHub: `/failgate fix` → fixer agent opens a PR → verified | **5 / 5 issues** | PRs [#16](https://github.com/san086041-glitch/failgate-demo/pull/16), [#17](https://github.com/san086041-glitch/failgate-demo/pull/17), [#18](https://github.com/san086041-glitch/failgate-demo/pull/18), [#20](https://github.com/san086041-glitch/failgate-demo/pull/20) (one automatic retry), [#22](#-end-to-end-from-issue-to-merged-fix) |
+| Claude Code using FailGate over MCP: write test → fix → verify | **2 min 16 s** | Claude Code (Sonnet 5.5) on [demo issue #1](https://github.com/san086041-glitch/failgate-demo/issues/1), 9 tool calls |
 
 ## ⚡ Try it in a minute
 
@@ -132,7 +131,7 @@ failgate up
 
 `checkup` runs the whole evaluation on any public repo and writes a plain-language report. `up` starts the service + webhook tunnel with a live status board.
 
-
+`failgate --help` lists every command.
 
 </td>
 <td width="33%" valign="top">
@@ -147,7 +146,6 @@ claude mcp add failgate -- \
 ```
 
 Tools: `reproduce_issue`, `run_acceptance_test`, `verify_fix`, `get_fix_task`. Nothing is written into your repo.
-
 
 
 </td>
@@ -188,10 +186,10 @@ About 10 minutes end to end, **$0.013** in LLM calls. Here is the same run from 
 
 - **Explicit state machine, not a free-running agent.** Each issue / PR is a `Case`; agents run inside bounded steps with budgets.
 - **One door for side effects.** Every GitHub write goes through `PolicyGate`: idempotency keys, shadow mode, secret scanning, label policy.
-- **Separated roles.** The exam writer, the fixer and the grader have different permissions: the fixer cannot touch tests or test config (enforced in the tool layer), and pushes through a separate GitHub App (ADR 0027, 0029).
-- **Sandbox.** Two phases: install through an egress allow-list proxy, run with no network, non-root, all capabilities dropped, read-only root, pid / memory / CPU limits (ADR 0008, 0042).
-- **Platform.** Two queue lanes so sandbox jobs never block triage (fast-event p95 448 s → 22 s), Redis + arq with crash redelivery, PostgreSQL + Alembic, OpenTelemetry traces to Langfuse (ADR 0023–0025).
-- **Measure first.** Every component has an offline replay on real repo history ("time travel" to the commit before the fix), and 44 ADRs record what was tried, what failed and why.
+- **Separated roles.** The exam writer, the fixer and the grader have different permissions: the fixer cannot touch tests or test config (enforced in the tool layer), and pushes through a separate GitHub App.
+- **Sandbox.** Two phases: install through an egress allow-list proxy, run with no network, non-root, all capabilities dropped, read-only root, pid / memory / CPU limits.
+- **Platform.** Two queue lanes so sandbox jobs never block triage (fast-event p95 448 s → 22 s), Redis + arq with crash redelivery, PostgreSQL + Alembic, OpenTelemetry traces to Langfuse.
+- **Measure first.** Every component has an offline replay on real repo history ("time travel" to the commit before the fix), and every design decision is written down (what was tried, what failed and why) before the code changes.
 
 </td>
 <td width="38%" valign="top">
@@ -208,7 +206,7 @@ About 10 minutes end to end, **$0.013** in LLM calls. Here is the same run from 
 - **"Verified" ≠ correct.** A weak exam lets a wrong fix through — that's why strength and hidden exams exist, and why they are shown, not hidden.
 - **Small, honest samples.** 4 Python repos, 12 sampled issues each, one run each; human-style review was done by Claude with a "GitHub evidence required" rule.
 - **Python + pytest only.** Packages that need system libraries may not install in the sandbox.
-- **Exam strength is a hint.** It reacts to stronger tests (10 up / 0 down on SWE-bench + UTBoost, p = 0.002) but can't by itself tell a weak exam from a good one (p = 0.41) — ADR 0022.
+- **Exam strength is a hint.** It reacts to stronger tests (10 up / 0 down on SWE-bench + UTBoost, p = 0.002) but can't by itself tell a weak exam from a good one (p = 0.41).
 
 ## 📚 Docs
 
