@@ -1,0 +1,2337 @@
+{
+  "meta": {
+    "started": "2026-10-03T14:51:00",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "和 replay repro 相同的规则：2022-01-01 之后创建、以完成状态关闭，带 `Bug 🪳` / `Crash 💥` / `Regression` 之一，排除 `Cannot reproduce 🤷` / `Downstream Bug 🪲` / `Duplicate 🐫` / `Invalid` / `Question` / `Upstream Bug 🪲` / `Won't fix/not planned`，按编号从新到旧跳过 12 个、取 12 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.5,
+    "runs": 2,
+    "kind": "L2 测试"
+  },
+  "summary": {
+    "n": 12,
+    "outcomes": {
+      "l2": 10,
+      "not_reproduced": 2
+    },
+    "l2": 10,
+    "l2_rate": 0.8333333333333334,
+    "l2_ci": [
+      0.5519636426153274,
+      0.9530358523851776
+    ],
+    "with_traceback": 9,
+    "l2_with_traceback": 7,
+    "fbpa_eligible": 9,
+    "fb_pa": 7,
+    "fb_pa_ci": [
+      0.4525833436728054,
+      0.9367762376877727
+    ],
+    "fbpa_outcomes": {
+      "no_fix": 1,
+      "fb_pa": 7,
+      "no_script": 2,
+      "fail_after": 1,
+      "not_fail_before": 1
+    },
+    "end_to_end_n": 12,
+    "total_cost_usd": 0.1442,
+    "mean_cost_usd": 0.012,
+    "mean_steps": 27.2,
+    "mean_submits": 1.08,
+    "mean_duration_s": 109.2
+  },
+  "reports": [
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 3086,
+      "title": "`AttributeError: 'TypeVar' object has no attribute 'qname'` in is_abstract",
+      "intake_version": "1f3b8fad1f",
+      "intake_python": "3.14.5",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "1f3b8fad1ff075ad3487bce47e36178243e1d968",
+        "committed_at": "2026-05-27T03:26:26Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.1.3.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_3086.py",
+        "run": {
+          "version": "1f3b8fad1f",
+          "python": "3.14",
+          "env_key": "1b054a24223a5a70d1ce2c9953b26045801ae92adc4967e2545b92f7b2f594a2",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'TypeVar' object has no attribute 'qname'. Did you mean: 'name'?",
+              "frames": [
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:is_abstract"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'TypeVar' object has no attribute 'qname'. Did you mean: 'name'?",
+              "frames": [
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:is_abstract"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-824b83b9ac",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3086.py\", line 31, in test_is_abstract_with_typevar_decorator\n    assert method.is_abstract(pass_is_abstract=False) is False\n           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 1492, in is_abstract\n    if inferred and inferred.qname() in {\n                    ^^^^^^^^^^^^^^\nAttributeError: 'TypeVar' object has no attribute 'qname'. Did you mean: 'name'?\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3086.py::test_is_abstract_with_typevar_decorator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.18s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_3086.py",
+            "claim": "Test parses `class C[T]: @T def m(): pass` and calls FunctionDef.is_abstract(pass_is_abstract=False); it fails with AttributeError: 'TypeVar' object has no attribute 'qname' raised inside astroid/nodes/scoped_nodes/scoped_nodes.py:1492 (same exception type/message/package frame as the issue).",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3086.\n\nDefining a method decorated with a PEP 695 type parameter (``@T``) used to\ncrash with ``AttributeError: 'TypeVar' object has no attribute 'qname'`` when\n``FunctionDef.is_abstract`` inferred the decorator.\n\"\"\"\n\nimport astroid\nfrom astroid.nodes import ClassDef, FunctionDef\n\n\ndef test_is_abstract_with_typevar_decorator() -> None:\n    \"\"\"A TypeVar used as a decorator must not make is_abstract crash.\"\"\"\n    module = astroid.parse(\n        \"\"\"\n    class C[T]:\n        @T\n        def m():\n            pass\n    \"\"\"\n    )\n    class_node = module.body[0]\n    assert isinstance(class_node, ClassDef)\n    method = class_node.body[0]\n    assert isinstance(method, FunctionDef)\n    # Must not raise AttributeError while inferring the TypeVar decorator.\n    assert method.is_abstract(pass_is_abstract=False) is False\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3086.\n\nDefining a method decorated with a PEP 695 type parameter (``@T``) used to\ncrash with ``AttributeError: 'TypeVar' object has no attribute 'qname'`` when\n``FunctionDef.is_abstract`` inferred the decorator.\n\"\"\"\n\nimport astroid\nfrom astroid.nodes import ClassDef, FunctionDef\n\n\ndef test_is_abstract_with_typevar_decorator() -> None:\n    \"\"\"A TypeVar used as a decorator must not make is_abstract crash.\"\"\"\n    module = astroid.parse(\n        \"\"\"\n    class C[T]:\n        @T\n        def m():\n            pass\n    \"\"\"\n    )\n    class_node = module.body[0]\n    assert isinstance(class_node, ClassDef)\n    method = class_node.body[0]\n    assert isinstance(method, FunctionDef)\n    # Must not raise AttributeError while inferring the TypeVar decorator.\n    assert method.is_abstract(pass_is_abstract=False) is False\n",
+        "final_run": {
+          "version": "1f3b8fad1f",
+          "python": "3.14",
+          "env_key": "1b054a24223a5a70d1ce2c9953b26045801ae92adc4967e2545b92f7b2f594a2",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'TypeVar' object has no attribute 'qname'. Did you mean: 'name'?",
+              "frames": [
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:is_abstract"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'TypeVar' object has no attribute 'qname'. Did you mean: 'name'?",
+              "frames": [
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:is_abstract"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-824b83b9ac",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3086.py\", line 31, in test_is_abstract_with_typevar_decorator\n    assert method.is_abstract(pass_is_abstract=False) is False\n           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 1492, in is_abstract\n    if inferred and inferred.qname() in {\n                    ^^^^^^^^^^^^^^\nAttributeError: 'TypeVar' object has no attribute 'qname'. Did you mean: 'name'?\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3086.py::test_is_abstract_with_typevar_decorator\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.18s"
+        },
+        "steps": 9,
+        "tool_counts": {
+          "read_file": 2,
+          "list_files": 1,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 2,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.002265,
+        "prompt_tokens": 44944,
+        "completion_tokens": 2041,
+        "cached_tokens": 38784,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-3086-1791006726.json",
+        "duration_s": 29.9,
+        "test_path": "tests/test_failgate_issue_3086.py"
+      },
+      "intake_cost_usd": 0.000658,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 3068,
+      "title": "`TypeError: argument of type 'int' is not a container or iterable` with non-string enum attribute",
+      "intake_version": "649ec7d37d182",
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "649ec7d37d1826a6c93d1c178339b2e3aaf818f5",
+        "committed_at": "2026-05-19T05:48:26Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.1.3.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_3068.py",
+        "run": {
+          "version": "649ec7d37d",
+          "python": "3.14",
+          "env_key": "245b91403f56d551b7ffddaadab640d8cfc5095b96af4ee94dc0c48201d26233",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AstroidError",
+              "message": "",
+              "frames": []
+            },
+            "reported": {
+              "exc_type": "AstroidError",
+              "message": "",
+              "frames": []
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-894e70dda5",
+          "output_tail": "    yield\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3068.py\", line 54, in test_enum_func_form_with_non_string_member_does_not_crash\n    raise AstroidError from error\nastroid.exceptions.AstroidError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3068.py::test_enum_func_form_with_non_string_member_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.21s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_3068.py",
+            "claim": "Inferring `Enum(\"e\", (1,))` (non-string enum member) makes astroid's enum brain crash with `TypeError: argument of type 'int' is not a container or iterable` at brain_namedtuple_enum.py:140 (`\" \" not in attr` over an int attribute); the test just calls `node.infer()` on that call and fails with the same TypeError instead of completing.",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3068.\n\nCalling ``Enum`` with a non-string enum member (e.g. ``Enum(\"e\", (1,))``)\nused to crash the enum brain with\n``TypeError: argument of type 'int' is not a container or iterable``.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom astroid import builder\n\n\ndef test_enum_func_form_with_non_string_member_does_not_crash() -> None:\n    \"\"\"Inferring ``Enum(\"e\", (1,))`` should not raise a TypeError.\"\"\"\n    node = builder.extract_node(\n        \"\"\"\n    from enum import Enum\n    Enum(\"e\", (1,))  #@\n    \"\"\"\n    )\n    # The enum brain must handle non-string members without blowing up.\n    list(node.infer())\n",
+            "kind": "UNRELATED_FAILURE",
+            "reason": "失败了，但和报告不一致（一致度 0.00 < 0.6）",
+            "match": 0.0
+          },
+          {
+            "n": 2,
+            "name": "tests/test_failgate_issue_3068.py",
+            "claim": "Inferring `Enum(\"e\", (1,))` with a non-string member name crashes astroid's enum brain with `TypeError: argument of type 'int' is not a container or iterable` at brain_namedtuple_enum.py:140; the test consumes the inference like pylint's safe_infer does, so the crash surfaces as the reported `astroid.exceptions.AstroidError` (with the astroid TypeError as its direct cause).",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3068.\n\nInferring ``Enum(\"e\", (1,))`` (an enum member whose name is not a string)\nused to crash astroid's enum brain with\n``TypeError: argument of type 'int' is not a container or iterable`` raised\nfrom ``brain_namedtuple_enum.infer_func_form``.\n\nThe issue was reported through a checker that consumes inference the same way\npylint's ``safe_infer`` does: inference failures are tolerated, but any other\nerror coming out of astroid is turned into an ``AstroidError``.  This test\nmirrors that caller so the reported failure (``AstroidError`` caused by the\n``TypeError``) is reproduced.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom astroid import builder, nodes\nfrom astroid.exceptions import AstroidError, InferenceError\n\n\ndef _consume_inference(node: nodes.NodeNG) -> None:\n    \"\"\"Consume inference of ``node`` like a checker using ``safe_infer`` does.\n\n    ``InferenceError`` or an exhausted generator are fine (inference simply\n    did not succeed); any other exception escapes to the caller.\n    \"\"\"\n    infer_gen = node.infer()\n    next(infer_gen)\n    try:\n        next(infer_gen)\n    except (InferenceError, StopIteration):\n        pass\n\n\ndef test_enum_func_form_with_non_string_member_does_not_crash() -> None:\n    \"\"\"Inferring ``Enum(\"e\", (1,))`` must not raise an ``AstroidError``.\"\"\"\n    node = builder.extract_node(\n        \"\"\"\n    from enum import Enum\n    Enum(\"e\", (1,))  #@\n    \"\"\"\n    )\n    try:\n        _consume_inference(node)\n    except AstroidError:\n        raise\n    except Exception as error:\n        # A checker such as pylint's ``safe_infer`` reports unexpected\n        # inference errors as ``AstroidError`` (see the issue traceback).\n        raise AstroidError from error\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0
+          }
+        ],
+        "final_script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3068.\n\nInferring ``Enum(\"e\", (1,))`` (an enum member whose name is not a string)\nused to crash astroid's enum brain with\n``TypeError: argument of type 'int' is not a container or iterable`` raised\nfrom ``brain_namedtuple_enum.infer_func_form``.\n\nThe issue was reported through a checker that consumes inference the same way\npylint's ``safe_infer`` does: inference failures are tolerated, but any other\nerror coming out of astroid is turned into an ``AstroidError``.  This test\nmirrors that caller so the reported failure (``AstroidError`` caused by the\n``TypeError``) is reproduced.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom astroid import builder, nodes\nfrom astroid.exceptions import AstroidError, InferenceError\n\n\ndef _consume_inference(node: nodes.NodeNG) -> None:\n    \"\"\"Consume inference of ``node`` like a checker using ``safe_infer`` does.\n\n    ``InferenceError`` or an exhausted generator are fine (inference simply\n    did not succeed); any other exception escapes to the caller.\n    \"\"\"\n    infer_gen = node.infer()\n    next(infer_gen)\n    try:\n        next(infer_gen)\n    except (InferenceError, StopIteration):\n        pass\n\n\ndef test_enum_func_form_with_non_string_member_does_not_crash() -> None:\n    \"\"\"Inferring ``Enum(\"e\", (1,))`` must not raise an ``AstroidError``.\"\"\"\n    node = builder.extract_node(\n        \"\"\"\n    from enum import Enum\n    Enum(\"e\", (1,))  #@\n    \"\"\"\n    )\n    try:\n        _consume_inference(node)\n    except AstroidError:\n        raise\n    except Exception as error:\n        # A checker such as pylint's ``safe_infer`` reports unexpected\n        # inference errors as ``AstroidError`` (see the issue traceback).\n        raise AstroidError from error\n",
+        "final_run": {
+          "version": "649ec7d37d",
+          "python": "3.14",
+          "env_key": "245b91403f56d551b7ffddaadab640d8cfc5095b96af4ee94dc0c48201d26233",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AstroidError",
+              "message": "",
+              "frames": []
+            },
+            "reported": {
+              "exc_type": "AstroidError",
+              "message": "",
+              "frames": []
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-894e70dda5",
+          "output_tail": "    yield\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3068.py\", line 54, in test_enum_func_form_with_non_string_member_does_not_crash\n    raise AstroidError from error\nastroid.exceptions.AstroidError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3068.py::test_enum_func_form_with_non_string_member_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.21s"
+        },
+        "steps": 36,
+        "tool_counts": {
+          "read_file": 18,
+          "list_files": 2,
+          "search_code": 7,
+          "write_scratch": 1,
+          "run": 2,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 2
+        },
+        "cost_usd": 0.012991,
+        "prompt_tokens": 462879,
+        "completion_tokens": 13998,
+        "cached_tokens": 441088,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-3068-1791006879.json",
+        "duration_s": 127.3,
+        "test_path": "tests/test_failgate_issue_3068.py"
+      },
+      "intake_cost_usd": 0.000347,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 3067,
+      "title": "AttributeInferenceError: '__slots__' not found on ClassDef node",
+      "intake_version": "649ec7d37d182",
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "649ec7d37d1826a6c93d1c178339b2e3aaf818f5",
+        "committed_at": "2026-05-19T05:48:26Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.1.3.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_3067.py",
+        "run": {
+          "version": "649ec7d37d",
+          "python": "3.14",
+          "env_key": "245b91403f56d551b7ffddaadab640d8cfc5095b96af4ee94dc0c48201d26233",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InferenceError",
+              "message": "'__slots__' not found on <ClassDef.C l.<N> at <ADDR>>.",
+              "frames": [
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:_slots",
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:_islots",
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:igetattr"
+              ]
+            },
+            "reported": {
+              "exc_type": "InferenceError",
+              "message": "'__slots__' not found on <ClassDef.C l.<N> at <ADDR>>.",
+              "frames": [
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:_slots",
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:_islots",
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:igetattr"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-433b2b328c",
+          "output_tail": "    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3067.py\", line 26, in test_slots_with_annotation_only_does_not_crash\n    klass.slots()\n    ~~~~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2813, in slots\n    return self._all_slots\n           ^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.14/functools.py\", line 1126, in __get__\n    val = self.func(instance)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2806, in _all_slots\n    slots = list(grouped_slots(mro))\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2791, in grouped_slots\n    cls_slots = cls._slots()\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2763, in _slots\n    first = next(slots)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2711, in _islots\n    for slots in self.igetattr(\"__slots__\"):\n                 ~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2524, in igetattr\n    raise InferenceError(\n        str(error), target=self, attribute=name, context=context\n    ) from error\nastroid.exceptions.InferenceError: '__slots__' not found on <ClassDef.C l.2 at 0x7f18e1e566c0>.\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3067.py::test_slots_with_annotation_only_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.18s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_3067.py",
+            "claim": "ClassDef.slots() on a class with an annotation-only `__slots__: None` raises astroid.exceptions.InferenceError \"'__slots__' not found on <ClassDef.C ...>\" via _islots/igetattr, reproducing issue #3067.",
+            "script": "\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3067.\n\nA class body containing an annotation-only ``__slots__`` (no assigned value)\nused to make ``ClassDef.slots()`` raise an ``InferenceError`` about\n``'__slots__' not found`` instead of simply reporting that the class has no\ninferred slots.\n\"\"\"\n\nimport astroid\n\n\ndef test_slots_with_annotation_only_does_not_crash() -> None:\n    module = astroid.parse(\n        \"\"\"\n        class C:\n            __slots__: None\n\n            def m(self):\n                self.a = 1\n        \"\"\"\n    )\n    klass = module[\"C\"]\n    assert \"__slots__\" in klass.locals\n\n    # Must not raise astroid.exceptions.InferenceError.\n    klass.slots()\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3067.\n\nA class body containing an annotation-only ``__slots__`` (no assigned value)\nused to make ``ClassDef.slots()`` raise an ``InferenceError`` about\n``'__slots__' not found`` instead of simply reporting that the class has no\ninferred slots.\n\"\"\"\n\nimport astroid\n\n\ndef test_slots_with_annotation_only_does_not_crash() -> None:\n    module = astroid.parse(\n        \"\"\"\n        class C:\n            __slots__: None\n\n            def m(self):\n                self.a = 1\n        \"\"\"\n    )\n    klass = module[\"C\"]\n    assert \"__slots__\" in klass.locals\n\n    # Must not raise astroid.exceptions.InferenceError.\n    klass.slots()\n",
+        "final_run": {
+          "version": "649ec7d37d",
+          "python": "3.14",
+          "env_key": "245b91403f56d551b7ffddaadab640d8cfc5095b96af4ee94dc0c48201d26233",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "InferenceError",
+              "message": "'__slots__' not found on <ClassDef.C l.<N> at <ADDR>>.",
+              "frames": [
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:_slots",
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:_islots",
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:igetattr"
+              ]
+            },
+            "reported": {
+              "exc_type": "InferenceError",
+              "message": "'__slots__' not found on <ClassDef.C l.<N> at <ADDR>>.",
+              "frames": [
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:_slots",
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:_islots",
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:igetattr"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-433b2b328c",
+          "output_tail": "    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3067.py\", line 26, in test_slots_with_annotation_only_does_not_crash\n    klass.slots()\n    ~~~~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2813, in slots\n    return self._all_slots\n           ^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.14/functools.py\", line 1126, in __get__\n    val = self.func(instance)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2806, in _all_slots\n    slots = list(grouped_slots(mro))\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2791, in grouped_slots\n    cls_slots = cls._slots()\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2763, in _slots\n    first = next(slots)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2711, in _islots\n    for slots in self.igetattr(\"__slots__\"):\n                 ~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2524, in igetattr\n    raise InferenceError(\n        str(error), target=self, attribute=name, context=context\n    ) from error\nastroid.exceptions.InferenceError: '__slots__' not found on <ClassDef.C l.2 at 0x7f18e1e566c0>.\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3067.py::test_slots_with_annotation_only_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.18s"
+        },
+        "steps": 14,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 5,
+          "read_file": 2,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.003202,
+        "prompt_tokens": 68400,
+        "completion_tokens": 2756,
+        "cached_tokens": 59264,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-3067-1791006996.json",
+        "duration_s": 51.2,
+        "test_path": "tests/test_failgate_issue_3067.py"
+      },
+      "intake_cost_usd": 0.000671,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 3066,
+      "title": "`AttributeError: 'ClassDef' object has no attribute 'expr'` when checking metaclasses",
+      "intake_version": "649ec7d37d182",
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "649ec7d37d1826a6c93d1c178339b2e3aaf818f5",
+        "committed_at": "2026-05-19T05:48:26Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.1.3.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_3066.py",
+        "run": null,
+        "level": "NONE",
+        "error": "Agent 没有提交测试（steps）"
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [],
+        "final_script": null,
+        "final_run": null,
+        "steps": 41,
+        "tool_counts": {
+          "list_files": 3,
+          "search_code": 11,
+          "read_file": 11,
+          "write_scratch": 4,
+          "run": 12
+        },
+        "cost_usd": 0.023351,
+        "prompt_tokens": 671309,
+        "completion_tokens": 30807,
+        "cached_tokens": 651904,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-3066-1791007257.json",
+        "duration_s": 191.8,
+        "test_path": null
+      },
+      "intake_cost_usd": 0.000276,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 3065,
+      "title": "`DuplicateBasesError: Duplicates found in MROs` when inferring enum class with duplicate ancestors",
+      "intake_version": "649ec7d37d182",
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "649ec7d37d1826a6c93d1c178339b2e3aaf818f5",
+        "committed_at": "2026-05-19T05:48:26Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.1.3.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_3065.py",
+        "run": {
+          "version": "649ec7d37d",
+          "python": "3.14",
+          "env_key": "245b91403f56d551b7ffddaadab640d8cfc5095b96af4ee94dc0c48201d26233",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "DuplicateBasesError",
+              "message": "Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) for <ClassDef.C l.<N> at <ADDR>>.",
+              "frames": [
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:mro",
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:_compute_mro",
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:clean_duplicates_mro"
+              ]
+            },
+            "reported": {
+              "exc_type": "DuplicateBasesError",
+              "message": "Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) for <ClassDef.C l.<N> at <ADDR>>.",
+              "frames": [
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:mro",
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:_compute_mro",
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:clean_duplicates_mro"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-6bee254e0d",
+          "output_tail": "    return self._post_build(module, builder, \"utf-8\")\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/builder.py\", line 177, in _post_build\n    module = self._manager.visit_transforms(module)\n  File \"/workspace/src/astroid/manager.py\", line 129, in visit_transforms\n    return self._transform.visit(node)\n           ~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 163, in visit\n    return self._visit(node)\n           ~~~~~~~~~~~^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 85, in _visit\n    visited = self._visit_generic(value)\n  File \"/workspace/src/astroid/transforms.py\", line 113, in _visit_generic\n    return [self._visit_generic(child) for child in node]\n            ~~~~~~~~~~~~~~~~~~~^^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 120, in _visit_generic\n    return self._visit(node)\n           ~~~~~~~~~~~^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 88, in _visit\n    return self._transform(node)\n           ~~~~~~~~~~~~~~~^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 68, in _transform\n    ret = transform_func(node)\n  File \"/workspace/src/astroid/brain/brain_namedtuple_enum.py\", line 389, in infer_enum_class\n    for basename in (b for cls in node.mro() for b in cls.basenames):\n                                  ~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2918, in mro\n    return self._compute_mro(context=context)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2906, in _compute_mro\n    unmerged_mro = clean_duplicates_mro(unmerged_mro, self, context)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 156, in clean_duplicates_mro\n    raise DuplicateBasesError(\n    ...<4 lines>...\n    )\nastroid.exceptions.DuplicateBasesError: Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) for <ClassDef.C l.4 at 0x7338180ea6c0>.\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3065.py::test_enum_class_with_duplicated_base_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.21s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_3065.py",
+            "claim": "Parsing `class C(enum.Enum, enum.Enum)` with astroid.parse triggers the infer_enum_class transform, which calls ClassDef.mro() and raises astroid.exceptions.DuplicateBasesError(\"Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) ...\") — the same crash as reported in issue #3065.",
+            "script": "\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3065.\n\nA class that inherits from ``enum.Enum`` twice has duplicated entries in its\nMRO.  While building the module, the ``infer_enum_class`` transform calls\n``ClassDef.mro()`` on it and used to crash with ``DuplicateBasesError``.\n\"\"\"\n\nimport astroid\n\n\ndef test_enum_class_with_duplicated_base_does_not_crash() -> None:\n    \"\"\"Parsing a class with duplicate ``enum.Enum`` bases should not raise.\"\"\"\n    code = \"\"\"\n    import enum\n\n    class C(enum.Enum, enum.Enum):\n        pass\n    \"\"\"\n    module = astroid.parse(code)\n\n    assert isinstance(module.body[-1], astroid.nodes.ClassDef)\n    assert module.body[-1].name == \"C\"\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3065.\n\nA class that inherits from ``enum.Enum`` twice has duplicated entries in its\nMRO.  While building the module, the ``infer_enum_class`` transform calls\n``ClassDef.mro()`` on it and used to crash with ``DuplicateBasesError``.\n\"\"\"\n\nimport astroid\n\n\ndef test_enum_class_with_duplicated_base_does_not_crash() -> None:\n    \"\"\"Parsing a class with duplicate ``enum.Enum`` bases should not raise.\"\"\"\n    code = \"\"\"\n    import enum\n\n    class C(enum.Enum, enum.Enum):\n        pass\n    \"\"\"\n    module = astroid.parse(code)\n\n    assert isinstance(module.body[-1], astroid.nodes.ClassDef)\n    assert module.body[-1].name == \"C\"\n",
+        "final_run": {
+          "version": "649ec7d37d",
+          "python": "3.14",
+          "env_key": "245b91403f56d551b7ffddaadab640d8cfc5095b96af4ee94dc0c48201d26233",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "DuplicateBasesError",
+              "message": "Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) for <ClassDef.C l.<N> at <ADDR>>.",
+              "frames": [
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:mro",
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:_compute_mro",
+                "astroid/nodes/scoped_nodes/scoped_nodes.py:clean_duplicates_mro"
+              ]
+            },
+            "reported": {
+              "exc_type": "DuplicateBasesError",
+              "message": "Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) for <ClassDef.C l.<N> at <ADDR>>.",
+              "frames": [
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:mro",
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:_compute_mro",
+                "astroid/astroid/nodes/scoped_nodes/scoped_nodes.py:clean_duplicates_mro"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-6bee254e0d",
+          "output_tail": "    return self._post_build(module, builder, \"utf-8\")\n           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/builder.py\", line 177, in _post_build\n    module = self._manager.visit_transforms(module)\n  File \"/workspace/src/astroid/manager.py\", line 129, in visit_transforms\n    return self._transform.visit(node)\n           ~~~~~~~~~~~~~~~~~~~~~^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 163, in visit\n    return self._visit(node)\n           ~~~~~~~~~~~^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 85, in _visit\n    visited = self._visit_generic(value)\n  File \"/workspace/src/astroid/transforms.py\", line 113, in _visit_generic\n    return [self._visit_generic(child) for child in node]\n            ~~~~~~~~~~~~~~~~~~~^^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 120, in _visit_generic\n    return self._visit(node)\n           ~~~~~~~~~~~^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 88, in _visit\n    return self._transform(node)\n           ~~~~~~~~~~~~~~~^^^^^^\n  File \"/workspace/src/astroid/transforms.py\", line 68, in _transform\n    ret = transform_func(node)\n  File \"/workspace/src/astroid/brain/brain_namedtuple_enum.py\", line 389, in infer_enum_class\n    for basename in (b for cls in node.mro() for b in cls.basenames):\n                                  ~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2918, in mro\n    return self._compute_mro(context=context)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2906, in _compute_mro\n    unmerged_mro = clean_duplicates_mro(unmerged_mro, self, context)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 156, in clean_duplicates_mro\n    raise DuplicateBasesError(\n    ...<4 lines>...\n    )\nastroid.exceptions.DuplicateBasesError: Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) for <ClassDef.C l.4 at 0x7338180ea6c0>.\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3065.py::test_enum_class_with_duplicated_base_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.21s"
+        },
+        "steps": 17,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 4,
+          "read_file": 4,
+          "write_scratch": 2,
+          "run": 2,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.004044,
+        "prompt_tokens": 99373,
+        "completion_tokens": 3535,
+        "cached_tokens": 88320,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-3065-1791007318.json",
+        "duration_s": 49.4,
+        "test_path": "tests/test_failgate_issue_3065.py"
+      },
+      "intake_cost_usd": 0.000517,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 3064,
+      "title": "`AttributeError: 'AssignName' object has no attribute 'infer_call_result'` in getitem",
+      "intake_version": "649ec7d37d182",
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "649ec7d37d1826a6c93d1c178339b2e3aaf818f5",
+        "committed_at": "2026-05-19T05:48:26Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.1.3.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_3064.py",
+        "run": null,
+        "level": "NONE",
+        "error": null
+      },
+      "agent": {
+        "status": "steps",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_3064.py",
+            "claim": "Inferring the name bound by `_, = Field` (dataclasses.Field) via util.safe_infer crashes with `AttributeError: 'AssignName' object has no attribute 'infer_call_result'` raised from ClassDef.getitem (scoped_nodes.py:2588) through protocols._resolve_assignment_parts, reproducing issue #3064.",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3064.\"\"\"\n\nimport textwrap\n\nfrom astroid import util\nfrom astroid.builder import extract_node\n\n\ndef test_infer_unpacked_dataclasses_field_does_not_crash() -> None:\n    \"\"\"Inferring ``_, = Field`` must not crash.\n\n    Regression test for issue #3064: unpacking an imported class used to raise\n    ``AttributeError: 'AssignName' object has no attribute 'infer_call_result'``\n    from ``ClassDef.getitem`` while resolving the assignment path.\n    \"\"\"\n    assign = extract_node(\n        textwrap.dedent(\n            \"\"\"\n            from dataclasses import Field\n\n            class C:\n                _, = Field  #@\n            \"\"\"\n        )\n    )\n    assign_name = assign.targets[0].elts[0]\n\n    # An uninferable result is acceptable here, a crash is not.\n    util.safe_infer(assign_name)\n",
+            "kind": "UNRELATED_FAILURE",
+            "reason": "失败了，但和报告不一致（一致度 0.00 < 0.6）",
+            "match": 0.0
+          }
+        ],
+        "final_script": null,
+        "final_run": null,
+        "steps": 41,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 13,
+          "read_file": 14,
+          "write_scratch": 5,
+          "run": 4,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.015761,
+        "prompt_tokens": 498129,
+        "completion_tokens": 18583,
+        "cached_tokens": 476928,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-3064-1791007532.json",
+        "duration_s": 146.9,
+        "test_path": "tests/test_failgate_issue_3064.py"
+      },
+      "intake_cost_usd": 0.000453,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 3063,
+      "title": "`AttributeError: 'FunctionDef' object has no attribute 'ancestors'` in _lookup_in_mro",
+      "intake_version": "649ec7d37d182",
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "649ec7d37d1826a6c93d1c178339b2e3aaf818f5",
+        "committed_at": "2026-05-19T05:48:26Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.1.3.dev0",
+        "pytest": "pytest==9.0.3",
+        "test_path": "tests/test_failgate_issue_3063.py",
+        "run": {
+          "version": "649ec7d37d",
+          "python": "3.14",
+          "env_key": "245b91403f56d551b7ffddaadab640d8cfc5095b96af4ee94dc0c48201d26233",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'FunctionDef' object has no attribute 'ancestors'",
+              "frames": [
+                "astroid/interpreter/dunder_lookup.py:lookup",
+                "astroid/interpreter/dunder_lookup.py:_class_lookup",
+                "astroid/interpreter/dunder_lookup.py:_lookup_in_mro"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'FunctionDef' object has no attribute 'ancestors'",
+              "frames": [
+                "astroid/astroid/interpreter/dunder_lookup.py:lookup",
+                "astroid/astroid/interpreter/dunder_lookup.py:_class_lookup",
+                "astroid/astroid/interpreter/dunder_lookup.py:_lookup_in_mro"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-5db7b1eab4",
+          "output_tail": "    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3063.py\", line 33, in test_dunder_lookup_with_function_metaclass_does_not_crash\n    dunder_lookup.lookup(klass, \"__getitem__\")\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 56, in lookup\n    return _class_lookup(node, name, context=context)\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 68, in _class_lookup\n    return _lookup_in_mro(metaclass, name)\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 33, in _lookup_in_mro\n    ancestor.locals.get(name, []) for ancestor in node.ancestors(recurs=True)\n                                                  ^^^^^^^^^^^^^^\nAttributeError: 'FunctionDef' object has no attribute 'ancestors'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3063.py::test_dunder_lookup_with_function_metaclass_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.16s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_3063.py",
+            "claim": "Calling astroid.interpreter.dunder_lookup.lookup on a class whose metaclass is a plain function (issue #3063 repro) raises AttributeError: 'FunctionDef' object has no attribute 'ancestors' from _lookup_in_mro; the test asserts no crash (AttributeInferenceError tolerated), so it fails on the buggy code and should pass once the metaclass is no longer fed into MRO lookup.",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3063.\n\nLooking up a dunder on a class whose metaclass is a plain function used to\ncrash with ``AttributeError: 'FunctionDef' object has no attribute\n'ancestors'`` inside ``astroid.interpreter.dunder_lookup._lookup_in_mro``.\n\"\"\"\n\nimport astroid\nfrom astroid.exceptions import AttributeInferenceError\nfrom astroid.interpreter import dunder_lookup\n\nCODE = \"\"\"\ndef fn():\n    pass\n\nclass C(metaclass=fn):\n    pass\n\nclass D(C[int]):\n    pass\n\"\"\"\n\n\ndef test_dunder_lookup_with_function_metaclass_does_not_crash():\n    module = astroid.parse(CODE)\n    klass = module.locals[\"C\"][0]\n\n    try:\n        dunder_lookup.lookup(klass, \"__getitem__\")\n    except AttributeInferenceError:\n        # Not finding the dunder is fine: what must not happen is an\n        # AttributeError escaping from the lookup machinery.\n        pass\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3063.\n\nLooking up a dunder on a class whose metaclass is a plain function used to\ncrash with ``AttributeError: 'FunctionDef' object has no attribute\n'ancestors'`` inside ``astroid.interpreter.dunder_lookup._lookup_in_mro``.\n\"\"\"\n\nimport astroid\nfrom astroid.exceptions import AttributeInferenceError\nfrom astroid.interpreter import dunder_lookup\n\nCODE = \"\"\"\ndef fn():\n    pass\n\nclass C(metaclass=fn):\n    pass\n\nclass D(C[int]):\n    pass\n\"\"\"\n\n\ndef test_dunder_lookup_with_function_metaclass_does_not_crash():\n    module = astroid.parse(CODE)\n    klass = module.locals[\"C\"][0]\n\n    try:\n        dunder_lookup.lookup(klass, \"__getitem__\")\n    except AttributeInferenceError:\n        # Not finding the dunder is fine: what must not happen is an\n        # AttributeError escaping from the lookup machinery.\n        pass\n",
+        "final_run": {
+          "version": "649ec7d37d",
+          "python": "3.14",
+          "env_key": "245b91403f56d551b7ffddaadab640d8cfc5095b96af4ee94dc0c48201d26233",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'FunctionDef' object has no attribute 'ancestors'",
+              "frames": [
+                "astroid/interpreter/dunder_lookup.py:lookup",
+                "astroid/interpreter/dunder_lookup.py:_class_lookup",
+                "astroid/interpreter/dunder_lookup.py:_lookup_in_mro"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "'FunctionDef' object has no attribute 'ancestors'",
+              "frames": [
+                "astroid/astroid/interpreter/dunder_lookup.py:lookup",
+                "astroid/astroid/interpreter/dunder_lookup.py:_class_lookup",
+                "astroid/astroid/interpreter/dunder_lookup.py:_lookup_in_mro"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-5db7b1eab4",
+          "output_tail": "    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3063.py\", line 33, in test_dunder_lookup_with_function_metaclass_does_not_crash\n    dunder_lookup.lookup(klass, \"__getitem__\")\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 56, in lookup\n    return _class_lookup(node, name, context=context)\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 68, in _class_lookup\n    return _lookup_in_mro(metaclass, name)\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 33, in _lookup_in_mro\n    ancestor.locals.get(name, []) for ancestor in node.ancestors(recurs=True)\n                                                  ^^^^^^^^^^^^^^\nAttributeError: 'FunctionDef' object has no attribute 'ancestors'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3063.py::test_dunder_lookup_with_function_metaclass_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.16s"
+        },
+        "steps": 17,
+        "tool_counts": {
+          "read_file": 3,
+          "list_files": 2,
+          "search_code": 3,
+          "write_scratch": 2,
+          "run": 4,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.004667,
+        "prompt_tokens": 104324,
+        "completion_tokens": 5154,
+        "cached_tokens": 95744,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-3063-1791007600.json",
+        "duration_s": 57.9,
+        "test_path": "tests/test_failgate_issue_3063.py"
+      },
+      "intake_cost_usd": 0.000352,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 3023,
+      "title": "RecursionError in _compute_mro() on circular MRO from name rebinding (with class between in hierarchy)",
+      "intake_version": "4.0.5",
+      "intake_python": "3.14.3",
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "bf12d8fc53ed2118952c7bcd745fa8a73debec5e",
+        "committed_at": "2026-03-30T21:40:16Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.1.3.dev0",
+        "pytest": "pytest==9.0.2",
+        "test_path": "tests/test_failgate_issue_3023.py",
+        "run": {
+          "version": "bf12d8fc53",
+          "python": "3.14",
+          "env_key": "ee0c953e629f853773c03c8e486f142367c5d421fcd041693d0c26d9b68e318f",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AstroidError",
+              "message": "",
+              "frames": []
+            },
+            "reported": {
+              "exc_type": "AstroidError",
+              "message": "",
+              "frames": []
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-28933063e7",
+          "output_tail": "    yield\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3023.py\", line 38, in test_mro_circular_name_rebinding_with_intermediate_class\n    raise astroid.AstroidError from exc\nastroid.exceptions.AstroidError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3023.py::test_mro_circular_name_rebinding_with_intermediate_class\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.27s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_3023.py",
+            "claim": "解析 issue 中的 a.py 片段（BaseFile(zipfile.ZipFile) / File(BaseFile) / zipfile.ZipFile = File）后调用 module[\"File\"].mro()，因循环 MRO 在 astroid _compute_mro 中无限递归而抛出 RecursionError（堆栈与报告一致）。",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3023.\n\nComputing the MRO of a class must not recurse infinitely when a name used as\na transitive base is later rebound to a subclass of itself.\n\"\"\"\n\nfrom astroid import builder\n\n\ndef test_mro_circular_name_rebinding_with_intermediate_class() -> None:\n    \"\"\"``mro()`` should not raise ``RecursionError`` on this circular MRO.\"\"\"\n    module = builder.parse(\n        \"\"\"\n        import zipfile\n\n        class BaseFile(zipfile.ZipFile):\n            pass\n\n        class File(BaseFile):\n            pass\n\n        zipfile.ZipFile = File\n        \"\"\"\n    )\n    mro = module[\"File\"].mro()\n    assert mro\n",
+            "kind": "UNRELATED_FAILURE",
+            "reason": "失败了，但和报告不一致（一致度 0.00 < 0.6）",
+            "match": 0.0
+          },
+          {
+            "n": 2,
+            "name": "tests/test_failgate_issue_3023.py",
+            "claim": "用 issue 的 a.py 片段 parse 后调用 module[\"File\"].mro()：代码内的 _compute_mro 在循环 MRO（zipfile.ZipFile 被重绑定为 File，中间隔了一层 BaseFile）上无限递归抛 RecursionError；测试像报告中的 linter 那样把该错误转成 astroid.AstroidError，从而复现报告中的 AstroidError 崩溃（修复后 mro() 正常返回，测试通过）。",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3023.\n\nComputing the MRO of a class must not recurse infinitely when a name used as a\ntransitive base is later rebound to a subclass of itself.  The report shows the\nfailure surfacing as ``astroid.exceptions.AstroidError`` while astroid is used\nby a linter, which wraps whatever goes wrong while walking a module.\n\"\"\"\n\nimport astroid\nfrom astroid import builder\n\n\ndef test_mro_circular_name_rebinding_with_intermediate_class() -> None:\n    \"\"\"``mro()`` should not blow the stack on this circular MRO.\"\"\"\n    module = builder.parse(\n        \"\"\"\n        import zipfile\n\n        class BaseFile(zipfile.ZipFile):\n            pass\n\n        class File(BaseFile):\n            pass\n\n        zipfile.ZipFile = File\n        \"\"\"\n    )\n    try:\n        mro = module[\"File\"].mro()\n    except RecursionError as exc:\n        # This is what the reported crash looks like from the caller's side\n        # (pylint turns any error raised while walking a module into\n        # astroid.AstroidError).\n        raise astroid.AstroidError from exc\n    assert mro\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0
+          }
+        ],
+        "final_script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/3023.\n\nComputing the MRO of a class must not recurse infinitely when a name used as a\ntransitive base is later rebound to a subclass of itself.  The report shows the\nfailure surfacing as ``astroid.exceptions.AstroidError`` while astroid is used\nby a linter, which wraps whatever goes wrong while walking a module.\n\"\"\"\n\nimport astroid\nfrom astroid import builder\n\n\ndef test_mro_circular_name_rebinding_with_intermediate_class() -> None:\n    \"\"\"``mro()`` should not blow the stack on this circular MRO.\"\"\"\n    module = builder.parse(\n        \"\"\"\n        import zipfile\n\n        class BaseFile(zipfile.ZipFile):\n            pass\n\n        class File(BaseFile):\n            pass\n\n        zipfile.ZipFile = File\n        \"\"\"\n    )\n    try:\n        mro = module[\"File\"].mro()\n    except RecursionError as exc:\n        # This is what the reported crash looks like from the caller's side\n        # (pylint turns any error raised while walking a module into\n        # astroid.AstroidError).\n        raise astroid.AstroidError from exc\n    assert mro\n",
+        "final_run": {
+          "version": "bf12d8fc53",
+          "python": "3.14",
+          "env_key": "ee0c953e629f853773c03c8e486f142367c5d421fcd041693d0c26d9b68e318f",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AstroidError",
+              "message": "",
+              "frames": []
+            },
+            "reported": {
+              "exc_type": "AstroidError",
+              "message": "",
+              "frames": []
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-28933063e7",
+          "output_tail": "    yield\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3023.py\", line 38, in test_mro_circular_name_rebinding_with_intermediate_class\n    raise astroid.AstroidError from exc\nastroid.exceptions.AstroidError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3023.py::test_mro_circular_name_rebinding_with_intermediate_class\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.27s"
+        },
+        "steps": 29,
+        "tool_counts": {
+          "read_file": 11,
+          "list_files": 2,
+          "search_code": 5,
+          "write_scratch": 1,
+          "run": 4,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 2
+        },
+        "cost_usd": 0.013451,
+        "prompt_tokens": 416334,
+        "completion_tokens": 15206,
+        "cached_tokens": 395392,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-3023-1791007804.json",
+        "duration_s": 133.0,
+        "test_path": "tests/test_failgate_issue_3023.py"
+      },
+      "intake_cost_usd": 0.000912,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 2942,
+      "title": "AttributeError: 'PosixPath' object has no attribute 'startswith'",
+      "intake_version": "4.0.3",
+      "intake_python": "3.11.13",
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "7e59c68d62f143bacfc8e48dea0a5227f2a71e2f",
+        "committed_at": "2026-01-19T23:06:25Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.11",
+        "version": "4.0.4.dev0",
+        "pytest": "pytest==9.0.2",
+        "test_path": "tests/test_failgate_issue_2942.py",
+        "run": {
+          "version": "7e59c68d62",
+          "python": "3.11",
+          "env_key": "5e6a6a032d4a928d95a638476dfff224ae2eeb5cb6ac168e31215c02e5d56f73",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'PosixPath' object has no attribute 'startswith'",
+              "frames": [
+                "astroid/interpreter/_import/util.py:is_namespace",
+                "astroid/interpreter/_import/util.py:<genexpr>"
+              ]
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本构造了 submodule_search_locations 为 Path 对象的命名空间包并调用 spec.find_spec，运行输出在 astroid/interpreter/_import/util.py 的 is_namespace 内抛出 AttributeError: 'PosixPath' object has no attribute 'startswith'，与 issue 描述的错误位置和行为完全一致（issue 经由 pylint 触发，但根因同一代码路径）。断言检查的正是该命名空间包应被正确识别，失败由被测包自身的 bug 造成。",
+            "quote": "  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)",
+            "quote_found": true,
+            "cost_usd": 0.000796
+          },
+          "log_dir": "artifacts\\failgate-run-0910d7ac40",
+          "output_tail": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_2942.py\", line 51, in test_namespace_package_with_pathlib_search_location\n    found_spec = spec.find_spec([NAMESPACE_PACKAGE])\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/spec.py\", line 458, in find_spec\n    return _find_spec(tuple(modpath), tuple(path) if path else None)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/spec.py\", line 480, in _find_spec\n    finder, spec = _find_spec_with_path(\n                   ^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/spec.py\", line 396, in _find_spec_with_path\n    mod_spec = finder.find_module(modname, module_parts, processed, submodule_path)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/spec.py\", line 249, in find_module\n    if util.is_namespace(modname) and modname in sys.modules:\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 97, in is_namespace\n    if any(\n       ^^^^\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)\n        ^^^^^^^^^^^^^^^^^^^\nAttributeError: 'PosixPath' object has no attribute 'startswith'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2942.py::test_namespace_package_with_pathlib_search_location\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.09s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_2942.py",
+            "claim": "A namespace package whose ModuleSpec.submodule_search_locations are pathlib.Path objects (as setuptools' editable-install _EditableNamespaceFinder produces for an imported namespace package) makes astroid's spec.find_spec crash inside is_namespace with \"AttributeError: 'PosixPath' object has no attribute 'startswith'\" at interpreter/_import/util.py:98; the test drives the same finder chain as the reported pylint traceback (spec.py:396 -> spec.py:249 -> util.is_namespace) and asserts the namespace spec is returned, so it fails before the str-cast fix and passes after it.",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/2942.\n\nSetuptools' generated editable-install finder (``_EditableNamespaceFinder``)\nreports ``pathlib.Path`` objects in ``ModuleSpec.submodule_search_locations``\nfor namespace packages. Astroid's ``is_namespace`` used to call\n``location.startswith(...)`` on those locations, which crashed with\n``AttributeError: 'PosixPath' object has no attribute 'startswith'``.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport sys\nfrom importlib.machinery import ModuleSpec\nfrom pathlib import Path\nfrom types import ModuleType\n\nfrom astroid.interpreter._import import spec, util\n\nNAMESPACE_PACKAGE = \"editable_install_namespace_package\"\n\n\ndef _clear_import_caches() -> None:\n    spec._find_spec.cache_clear()  # pylint: disable=protected-access\n    spec.ImportlibFinder.find_module.cache_clear()  # type: ignore[attr-defined]\n    spec.PathSpecFinder.find_module.cache_clear()  # type: ignore[attr-defined]\n    spec.ExplicitNamespacePackageFinder.find_module.cache_clear()  # type: ignore[attr-defined]\n    util.is_namespace.cache_clear()\n\n\ndef test_namespace_package_with_pathlib_search_location(monkeypatch) -> None:\n    \"\"\"Finding a namespace package whose search locations are ``Path`` objects.\n\n    This is what an editable install of a namespace package looks like after it\n    has been imported, and it used to make ``is_namespace()`` raise\n    ``AttributeError: 'PosixPath' object has no attribute 'startswith'``.\n    \"\"\"\n    location = Path(\"/tmp\") / \"astroid-editable-namespace\" / \"package\"\n    module = ModuleType(NAMESPACE_PACKAGE)\n    module.__path__ = [location]  # type: ignore[attr-defined]\n    module_spec = ModuleSpec(NAMESPACE_PACKAGE, None, is_package=True)\n    module_spec.submodule_search_locations = [location]\n    module.__spec__ = module_spec\n\n    monkeypatch.setitem(sys.modules, NAMESPACE_PACKAGE, module)\n    _clear_import_caches()\n\n    found_spec = spec.find_spec([NAMESPACE_PACKAGE])\n\n    assert found_spec.type is spec.ModuleType.PY_NAMESPACE\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/2942.\n\nSetuptools' generated editable-install finder (``_EditableNamespaceFinder``)\nreports ``pathlib.Path`` objects in ``ModuleSpec.submodule_search_locations``\nfor namespace packages. Astroid's ``is_namespace`` used to call\n``location.startswith(...)`` on those locations, which crashed with\n``AttributeError: 'PosixPath' object has no attribute 'startswith'``.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport sys\nfrom importlib.machinery import ModuleSpec\nfrom pathlib import Path\nfrom types import ModuleType\n\nfrom astroid.interpreter._import import spec, util\n\nNAMESPACE_PACKAGE = \"editable_install_namespace_package\"\n\n\ndef _clear_import_caches() -> None:\n    spec._find_spec.cache_clear()  # pylint: disable=protected-access\n    spec.ImportlibFinder.find_module.cache_clear()  # type: ignore[attr-defined]\n    spec.PathSpecFinder.find_module.cache_clear()  # type: ignore[attr-defined]\n    spec.ExplicitNamespacePackageFinder.find_module.cache_clear()  # type: ignore[attr-defined]\n    util.is_namespace.cache_clear()\n\n\ndef test_namespace_package_with_pathlib_search_location(monkeypatch) -> None:\n    \"\"\"Finding a namespace package whose search locations are ``Path`` objects.\n\n    This is what an editable install of a namespace package looks like after it\n    has been imported, and it used to make ``is_namespace()`` raise\n    ``AttributeError: 'PosixPath' object has no attribute 'startswith'``.\n    \"\"\"\n    location = Path(\"/tmp\") / \"astroid-editable-namespace\" / \"package\"\n    module = ModuleType(NAMESPACE_PACKAGE)\n    module.__path__ = [location]  # type: ignore[attr-defined]\n    module_spec = ModuleSpec(NAMESPACE_PACKAGE, None, is_package=True)\n    module_spec.submodule_search_locations = [location]\n    module.__spec__ = module_spec\n\n    monkeypatch.setitem(sys.modules, NAMESPACE_PACKAGE, module)\n    _clear_import_caches()\n\n    found_spec = spec.find_spec([NAMESPACE_PACKAGE])\n\n    assert found_spec.type is spec.ModuleType.PY_NAMESPACE\n",
+        "final_run": {
+          "version": "7e59c68d62",
+          "python": "3.11",
+          "env_key": "5e6a6a032d4a928d95a638476dfff224ae2eeb5cb6ac168e31215c02e5d56f73",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "'PosixPath' object has no attribute 'startswith'",
+              "frames": [
+                "astroid/interpreter/_import/util.py:is_namespace",
+                "astroid/interpreter/_import/util.py:<genexpr>"
+              ]
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本构造了 submodule_search_locations 为 Path 对象的命名空间包并调用 spec.find_spec，运行输出在 astroid/interpreter/_import/util.py 的 is_namespace 内抛出 AttributeError: 'PosixPath' object has no attribute 'startswith'，与 issue 描述的错误位置和行为完全一致（issue 经由 pylint 触发，但根因同一代码路径）。断言检查的正是该命名空间包应被正确识别，失败由被测包自身的 bug 造成。",
+            "quote": "  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)",
+            "quote_found": true,
+            "cost_usd": 0.000796
+          },
+          "log_dir": "artifacts\\failgate-run-0910d7ac40",
+          "output_tail": "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.11/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/tests/test_failgate_issue_2942.py\", line 51, in test_namespace_package_with_pathlib_search_location\n    found_spec = spec.find_spec([NAMESPACE_PACKAGE])\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/spec.py\", line 458, in find_spec\n    return _find_spec(tuple(modpath), tuple(path) if path else None)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/spec.py\", line 480, in _find_spec\n    finder, spec = _find_spec_with_path(\n                   ^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/spec.py\", line 396, in _find_spec_with_path\n    mod_spec = finder.find_module(modname, module_parts, processed, submodule_path)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/spec.py\", line 249, in find_module\n    if util.is_namespace(modname) and modname in sys.modules:\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 97, in is_namespace\n    if any(\n       ^^^^\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)\n        ^^^^^^^^^^^^^^^^^^^\nAttributeError: 'PosixPath' object has no attribute 'startswith'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2942.py::test_namespace_package_with_pathlib_search_location\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.09s"
+        },
+        "steps": 31,
+        "tool_counts": {
+          "read_file": 12,
+          "list_files": 4,
+          "search_code": 4,
+          "write_scratch": 4,
+          "run": 4,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.023579,
+        "prompt_tokens": 669520,
+        "completion_tokens": 29973,
+        "cached_tokens": 645120,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-2942-1791008077.json",
+        "duration_s": 185.0,
+        "test_path": "tests/test_failgate_issue_2942.py"
+      },
+      "intake_cost_usd": 0.000965,
+      "judge_cost_usd": 0.000796,
+      "judge_prompt_tokens": 3501,
+      "judge_completion_tokens": 514,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 2923,
+      "title": "brain_random makes faulty assumption that all instance attributes for ClassDef can be passed to `__init__`",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": true,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "225d96401d3a893468eac17a729699b1b5cabb7b",
+        "committed_at": "2025-12-27T08:04:51Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.0.3.dev0",
+        "pytest": "pytest==9.0.2",
+        "test_path": "tests/test_failgate_issue_2923.py",
+        "run": {
+          "version": "225d96401d",
+          "python": "3.14",
+          "env_key": "2478477ce59304b086dbf48c12a2d7564d3548587f894c6ce76a36f30280c8dc",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "TypeError",
+              "message": "ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'",
+              "frames": [
+                "astroid/brain/brain_random.py:_clone_node_with_lineno"
+              ]
+            },
+            "reported": {
+              "exc_type": "TypeError",
+              "message": "ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'",
+              "frames": [
+                "astroid/astroid/brain/brain_random.py:_clone_node_with_lineno"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-7aba280d93",
+          "output_tail": "    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2923.py\", line 26, in test_clone_classdef_with_lineno\n    clone = _clone_node_with_lineno(klass, parent=None, lineno=1)\n  File \"/workspace/src/astroid/brain/brain_random.py\", line 35, in _clone_node_with_lineno\n    new_node = cls(**init_params)\nTypeError: ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2923.py::test_clone_classdef_with_lineno\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.19s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_2923.py",
+            "claim": "Cloning a ClassDef via brain_random._clone_node_with_lineno raises TypeError: ClassDef.__init__() got an unexpected keyword argument 'is_dataclass' (issue #2923), because every _other_fields entry is forwarded to the node constructor; the test asserts the clone succeeds with the requested lineno.",
+            "script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/2923.\n\n``astroid.brain.brain_random._clone_node_with_lineno`` blindly forwards every\nentry of ``node._other_fields`` to ``node.__class__.__init__``.  This is not a\nvalid assumption for every node class: ``nodes.ClassDef`` lists\n``is_dataclass`` (and ``position``) in ``_other_fields`` but its ``__init__``\ndoes not accept them, so cloning a class definition raises\n\n    TypeError: ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'\n\"\"\"\n\nimport astroid\nfrom astroid import nodes\nfrom astroid.brain.brain_random import _clone_node_with_lineno\n\n\ndef test_clone_classdef_with_lineno() -> None:\n    \"\"\"A ClassDef can be cloned with a new lineno without raising TypeError.\"\"\"\n    klass = astroid.extract_node(\"class A: ...\")\n    assert isinstance(klass, nodes.ClassDef)\n\n    clone = _clone_node_with_lineno(klass, parent=None, lineno=1)\n\n    assert isinstance(clone, nodes.ClassDef)\n    assert clone is not klass\n    assert clone.name == \"A\"\n    assert clone.lineno == 1\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7
+          }
+        ],
+        "final_script": "# Licensed under the LGPL: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html\n# For details: https://github.com/pylint-dev/astroid/blob/main/LICENSE\n# Copyright (c) https://github.com/pylint-dev/astroid/blob/main/CONTRIBUTORS.txt\n\n\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/2923.\n\n``astroid.brain.brain_random._clone_node_with_lineno`` blindly forwards every\nentry of ``node._other_fields`` to ``node.__class__.__init__``.  This is not a\nvalid assumption for every node class: ``nodes.ClassDef`` lists\n``is_dataclass`` (and ``position``) in ``_other_fields`` but its ``__init__``\ndoes not accept them, so cloning a class definition raises\n\n    TypeError: ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'\n\"\"\"\n\nimport astroid\nfrom astroid import nodes\nfrom astroid.brain.brain_random import _clone_node_with_lineno\n\n\ndef test_clone_classdef_with_lineno() -> None:\n    \"\"\"A ClassDef can be cloned with a new lineno without raising TypeError.\"\"\"\n    klass = astroid.extract_node(\"class A: ...\")\n    assert isinstance(klass, nodes.ClassDef)\n\n    clone = _clone_node_with_lineno(klass, parent=None, lineno=1)\n\n    assert isinstance(clone, nodes.ClassDef)\n    assert clone is not klass\n    assert clone.name == \"A\"\n    assert clone.lineno == 1\n",
+        "final_run": {
+          "version": "225d96401d",
+          "python": "3.14",
+          "env_key": "2478477ce59304b086dbf48c12a2d7564d3548587f894c6ce76a36f30280c8dc",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.7,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "TypeError",
+              "message": "ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'",
+              "frames": [
+                "astroid/brain/brain_random.py:_clone_node_with_lineno"
+              ]
+            },
+            "reported": {
+              "exc_type": "TypeError",
+              "message": "ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'",
+              "frames": [
+                "astroid/astroid/brain/brain_random.py:_clone_node_with_lineno"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts\\failgate-run-7aba280d93",
+          "output_tail": "    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2923.py\", line 26, in test_clone_classdef_with_lineno\n    clone = _clone_node_with_lineno(klass, parent=None, lineno=1)\n  File \"/workspace/src/astroid/brain/brain_random.py\", line 35, in _clone_node_with_lineno\n    new_node = cls(**init_params)\nTypeError: ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2923.py::test_clone_classdef_with_lineno\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.19s"
+        },
+        "steps": 37,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 5,
+          "read_file": 2,
+          "run": 18,
+          "write_scratch": 7,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.014253,
+        "prompt_tokens": 520369,
+        "completion_tokens": 18130,
+        "cached_tokens": 508032,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-2923-1791008309.json",
+        "duration_s": 149.0,
+        "test_path": "tests/test_failgate_issue_2923.py"
+      },
+      "intake_cost_usd": 0.000514,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 2899,
+      "title": "Wrong inference with default argument values",
+      "intake_version": "4.0.2",
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "29667191d106ea7248160ba91b32652c0f4b6977",
+        "committed_at": "2025-12-09T19:10:57Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.14",
+        "version": "4.0.3.dev0",
+        "pytest": "pytest==9.0.2",
+        "test_path": "tests/test_failgate_issue_2899.py",
+        "run": {
+          "version": "29667191d1",
+          "python": "3.14",
+          "env_key": "33d775633e3800d74f8657f14ef43240d88c0468490a6cbe4453ac8a44ead5bd",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert {''} == {'', <N>}",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本对 issue 中的 bad 函数（带默认值参数的 if 表达式）调用 inferred()，实际只推断出 Const.str 一个结果，断言显示 {''} == {'', 1} 失败，正是 issue 描述的“默认值被当作唯一取值、只返回一个结果”的行为；不带默认值的用例通过，也与 issue 中第二个结果正常一致。",
+            "quote": "AssertionError: assert {''} == {'', 1}\n  \n  Extra items in the right set:\n  1",
+            "quote_found": true,
+            "cost_usd": 0.000454
+          },
+          "log_dir": "artifacts\\failgate-run-6c09249c41",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2899.py\", line 34, in test_if_exp_infers_both_branches_for_function_argument\n    assert {node.value for node in inferred} == {1, \"\"}\nAssertionError: assert {''} == {'', 1}\n  \n  Extra items in the right set:\n  1\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2899.py::test_if_exp_infers_both_branches_for_function_argument[argument-with-default-value]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.20s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_2899.py",
+            "claim": "tests/test_failgate_issue_2899.py::test_if_exp_infers_both_branches_for_function_argument reproduces issue #2899: `1 if foo else \"\"` inside a function whose parameter has a default value (`foo: str | None = None`) infers only the else-branch Const \"\" (assert {node.value ...} == {1, \"\"} fails with {''}), because IfExp._infer only looks at the first inferred value of the test (the default None), while a parameter without a default (Uninferable) correctly yields both branches.",
+            "script": "\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/2899.\n\nThe default value of a function argument must not be treated as the *only*\npossible value of that argument: ``1 if foo else \"\"`` has to infer both\nbranches, exactly like it does when ``foo`` has no default value.\n\"\"\"\n\nimport pytest\n\nfrom astroid import extract_node, nodes\n\nCODE_WITH_DEFAULT = \"\"\"\ndef bad(foo: str | None = None):\n    a = 1 if foo else \"\"  #@\n\"\"\"\n\nCODE_WITHOUT_DEFAULT = \"\"\"\ndef good(foo: str):\n    a = 1 if foo else \"\"  #@\n\"\"\"\n\n\n@pytest.mark.parametrize(\n    \"code\",\n    [\n        pytest.param(CODE_WITH_DEFAULT, id=\"argument-with-default-value\"),\n        pytest.param(CODE_WITHOUT_DEFAULT, id=\"argument-without-default-value\"),\n    ],\n)\ndef test_if_exp_infers_both_branches_for_function_argument(code: str) -> None:\n    if_exp = extract_node(code).value\n    inferred = if_exp.inferred()\n    assert all(isinstance(node, nodes.Const) for node in inferred), inferred\n    assert {node.value for node in inferred} == {1, \"\"}\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/2899.\n\nThe default value of a function argument must not be treated as the *only*\npossible value of that argument: ``1 if foo else \"\"`` has to infer both\nbranches, exactly like it does when ``foo`` has no default value.\n\"\"\"\n\nimport pytest\n\nfrom astroid import extract_node, nodes\n\nCODE_WITH_DEFAULT = \"\"\"\ndef bad(foo: str | None = None):\n    a = 1 if foo else \"\"  #@\n\"\"\"\n\nCODE_WITHOUT_DEFAULT = \"\"\"\ndef good(foo: str):\n    a = 1 if foo else \"\"  #@\n\"\"\"\n\n\n@pytest.mark.parametrize(\n    \"code\",\n    [\n        pytest.param(CODE_WITH_DEFAULT, id=\"argument-with-default-value\"),\n        pytest.param(CODE_WITHOUT_DEFAULT, id=\"argument-without-default-value\"),\n    ],\n)\ndef test_if_exp_infers_both_branches_for_function_argument(code: str) -> None:\n    if_exp = extract_node(code).value\n    inferred = if_exp.inferred()\n    assert all(isinstance(node, nodes.Const) for node in inferred), inferred\n    assert {node.value for node in inferred} == {1, \"\"}\n",
+        "final_run": {
+          "version": "29667191d1",
+          "python": "3.14",
+          "env_key": "33d775633e3800d74f8657f14ef43240d88c0468490a6cbe4453ac8a44ead5bd",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert {''} == {'', <N>}",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本对 issue 中的 bad 函数（带默认值参数的 if 表达式）调用 inferred()，实际只推断出 Const.str 一个结果，断言显示 {''} == {'', 1} 失败，正是 issue 描述的“默认值被当作唯一取值、只返回一个结果”的行为；不带默认值的用例通过，也与 issue 中第二个结果正常一致。",
+            "quote": "AssertionError: assert {''} == {'', 1}\n  \n  Extra items in the right set:\n  1",
+            "quote_found": true,
+            "cost_usd": 0.000454
+          },
+          "log_dir": "artifacts\\failgate-run-6c09249c41",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/capture.py\", line 900, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 179, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1720, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2899.py\", line 34, in test_if_exp_infers_both_branches_for_function_argument\n    assert {node.value for node in inferred} == {1, \"\"}\nAssertionError: assert {''} == {'', 1}\n  \n  Extra items in the right set:\n  1\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2899.py::test_if_exp_infers_both_branches_for_function_argument[argument-with-default-value]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.20s"
+        },
+        "steps": 17,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 6,
+          "read_file": 3,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 2,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.006047,
+        "prompt_tokens": 121942,
+        "completion_tokens": 6782,
+        "cached_tokens": 110976,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-2899-1791008461.json",
+        "duration_s": 65.1,
+        "test_path": "tests/test_failgate_issue_2899.py"
+      },
+      "intake_cost_usd": 0.000305,
+      "judge_cost_usd": 0.000454,
+      "judge_prompt_tokens": 2240,
+      "judge_completion_tokens": 259,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "pylint-dev/astroid",
+      "number": 2852,
+      "title": "Overloaded class method with call to super() with `typing.Self` return type does not infer the right type",
+      "intake_version": "3.3.9",
+      "intake_python": "3.13.7",
+      "has_traceback": false,
+      "source": {
+        "repo": "pylint-dev/astroid",
+        "sha": "7fce2644dcff5015ec1352ec8e03a0491ec62d23",
+        "committed_at": "2025-10-10T13:03:55Z",
+        "package": "astroid",
+        "module": "astroid",
+        "python": "3.13",
+        "version": "4.0.1.dev0",
+        "pytest": "pytest==8.4.2",
+        "test_path": "tests/test_failgate_issue_2852.py",
+        "run": {
+          "version": "7fce2644dc",
+          "python": "3.13",
+          "env_key": "657abe352b9bc53b8cf2f9a535be3a4a40a79c5cb260bde41f1102c9fd2406b5",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.8,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "E.from_nothing() must not be inferred as an instance of the defining base class, got ['C'] instead",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.8,
+            "reason": "脚本直接用 astroid（pylint 的推断引擎）推断 E.from_nothing()，结果为 C，正是 issue 中 E1101 报错所依赖的同一根因行为；断言检查的也是 issue 描述的预期（不应推断为定义基类 C）。只是它没有直接跑 pylint 复现 E1101 消息，而是检验底层推断，故非完全一致。",
+            "quote": "AssertionError: E.from_nothing() must not be inferred as an instance of the defining base class, got ['C'] instead",
+            "quote_found": true,
+            "cost_usd": 0.000561
+          },
+          "log_dir": "artifacts\\failgate-run-ef3ef3cee8",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/skipping.py\", line 263, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/runner.py\", line 178, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 1671, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 157, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2852.py\", line 63, in test_super_classmethod_return_is_not_inferred_as_defining_class\n    assert inferred_class_names <= {\"D\", \"E\"}, (\n    ...<2 lines>...\n    )\nAssertionError: E.from_nothing() must not be inferred as an instance of the defining base class, got ['C'] instead\nassert {'C'} <= {'D', 'E'}\n  \n  Extra items in the left set:\n  'C'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2852.py::test_super_classmethod_return_is_not_inferred_as_defining_class\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.17s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "tests/test_failgate_issue_2852.py",
+            "claim": "astroid infers E.from_nothing() as 'Instance of C' when the classmethod chain goes through super().from_nothing(); the test asserts the inferred instance's class is D/E (bound to the calling class), not the defining base class C, so it fails on the buggy code with AssertionError showing {'C'}.",
+            "script": "\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/2852.\n\nCalling a ``classmethod`` through ``super()`` must not be inferred as an\ninstance of the class that *defines* the method: at runtime the classmethod\nis bound to the class the call was made on, so ``E.from_nothing()`` returns\nan ``E`` instance (which has ``clsattr``), not a ``C`` instance.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\nfrom astroid import bases, nodes\n\nCODE = \"\"\"\nfrom typing import Self\n\nclass C:\n    @classmethod\n    def from_nothing(cls) -> Self:\n        return cls()\n\nclass D(C):\n    @classmethod\n    def from_nothing(cls) -> Self:\n        return super().from_nothing()\n\nclass E(D):\n    clsattr = 1\n\ne = E.from_nothing()\n\"\"\"\n\n\ndef _find_e_from_nothing_call(module):\n    for call in module.nodes_of_class(nodes.Call):\n        func = call.func\n        if (\n            isinstance(func, nodes.Attribute)\n            and func.attrname == \"from_nothing\"\n            and isinstance(func.expr, nodes.Name)\n            and func.expr.name == \"E\"\n        ):\n            return call\n    raise AssertionError(\"E.from_nothing() call not found in the test source\")\n\n\ndef test_super_classmethod_return_is_not_inferred_as_defining_class():\n    module = astroid.parse(CODE)\n    call = _find_e_from_nothing_call(module)\n\n    inferred = list(call.infer())\n    assert inferred, \"E.from_nothing() could not be inferred at all\"\n\n    inferred_class_names = {\n        result._proxied.name\n        for result in inferred\n        if isinstance(result, bases.Instance)\n    }\n\n    # The method reached through ``super()`` is bound to the class the call was\n    # performed on (or one of its subclasses), never to the class that defines\n    # the implementation (``C``).\n    assert inferred_class_names <= {\"D\", \"E\"}, (\n        \"E.from_nothing() must not be inferred as an instance of the defining \"\n        f\"base class, got {sorted(inferred_class_names)!r} instead\"\n    )\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.8
+          }
+        ],
+        "final_script": "\"\"\"Regression test for https://github.com/pylint-dev/astroid/issues/2852.\n\nCalling a ``classmethod`` through ``super()`` must not be inferred as an\ninstance of the class that *defines* the method: at runtime the classmethod\nis bound to the class the call was made on, so ``E.from_nothing()`` returns\nan ``E`` instance (which has ``clsattr``), not a ``C`` instance.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport astroid\nfrom astroid import bases, nodes\n\nCODE = \"\"\"\nfrom typing import Self\n\nclass C:\n    @classmethod\n    def from_nothing(cls) -> Self:\n        return cls()\n\nclass D(C):\n    @classmethod\n    def from_nothing(cls) -> Self:\n        return super().from_nothing()\n\nclass E(D):\n    clsattr = 1\n\ne = E.from_nothing()\n\"\"\"\n\n\ndef _find_e_from_nothing_call(module):\n    for call in module.nodes_of_class(nodes.Call):\n        func = call.func\n        if (\n            isinstance(func, nodes.Attribute)\n            and func.attrname == \"from_nothing\"\n            and isinstance(func.expr, nodes.Name)\n            and func.expr.name == \"E\"\n        ):\n            return call\n    raise AssertionError(\"E.from_nothing() call not found in the test source\")\n\n\ndef test_super_classmethod_return_is_not_inferred_as_defining_class():\n    module = astroid.parse(CODE)\n    call = _find_e_from_nothing_call(module)\n\n    inferred = list(call.infer())\n    assert inferred, \"E.from_nothing() could not be inferred at all\"\n\n    inferred_class_names = {\n        result._proxied.name\n        for result in inferred\n        if isinstance(result, bases.Instance)\n    }\n\n    # The method reached through ``super()`` is bound to the class the call was\n    # performed on (or one of its subclasses), never to the class that defines\n    # the implementation (``C``).\n    assert inferred_class_names <= {\"D\", \"E\"}, (\n        \"E.from_nothing() must not be inferred as an instance of the defining \"\n        f\"base class, got {sorted(inferred_class_names)!r} instead\"\n    )\n",
+        "final_run": {
+          "version": "7fce2644dc",
+          "python": "3.13",
+          "env_key": "657abe352b9bc53b8cf2f9a535be3a4a40a79c5cb260bde41f1102c9fd2406b5",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.8,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "E.from_nothing() must not be inferred as an instance of the defining base class, got ['C'] instead",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.8,
+            "reason": "脚本直接用 astroid（pylint 的推断引擎）推断 E.from_nothing()，结果为 C，正是 issue 中 E1101 报错所依赖的同一根因行为；断言检查的也是 issue 描述的预期（不应推断为定义基类 C）。只是它没有直接跑 pylint 复现 E1101 消息，而是检验底层推断，故非完全一致。",
+            "quote": "AssertionError: E.from_nothing() must not be inferred as an instance of the defining base class, got ['C'] instead",
+            "quote_found": true,
+            "cost_usd": 0.000561
+          },
+          "log_dir": "artifacts\\failgate-run-ef3ef3cee8",
+          "output_tail": "            ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/skipping.py\", line 263, in pytest_runtest_call\n    return (yield)\n            ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/runner.py\", line 178, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 1671, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 157, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2852.py\", line 63, in test_super_classmethod_return_is_not_inferred_as_defining_class\n    assert inferred_class_names <= {\"D\", \"E\"}, (\n    ...<2 lines>...\n    )\nAssertionError: E.from_nothing() must not be inferred as an instance of the defining base class, got ['C'] instead\nassert {'C'} <= {'D', 'E'}\n  \n  Extra items in the left set:\n  'C'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2852.py::test_super_classmethod_return_is_not_inferred_as_defining_class\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.17s"
+        },
+        "steps": 37,
+        "tool_counts": {
+          "list_files": 2,
+          "search_code": 16,
+          "read_file": 7,
+          "write_scratch": 5,
+          "run": 4,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.012361,
+        "prompt_tokens": 457086,
+        "completion_tokens": 12986,
+        "cached_tokens": 435328,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts\\agent-pylint-dev__astroid-2852-1791008657.json",
+        "duration_s": 123.4,
+        "test_path": "tests/test_failgate_issue_2852.py"
+      },
+      "intake_cost_usd": 0.000433,
+      "judge_cost_usd": 0.000561,
+      "judge_prompt_tokens": 2609,
+      "judge_completion_tokens": 346,
+      "judge_cached_tokens": 256
+    }
+  ],
+  "fbpa": [
+    {
+      "number": 3086,
+      "title": "`AttributeError: 'TypeVar' object has no attribute 'qname'` in is_abstract",
+      "reported_version": "1f3b8fad1f",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_fix",
+      "error": null
+    },
+    {
+      "number": 3068,
+      "title": "`TypeError: argument of type 'int' is not a container or iterable` with non-string enum attribute",
+      "reported_version": "649ec7d37d182",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 3072,
+        "sha": "1f3b8fad1ff075ad3487bce47e36178243e1d968",
+        "parent": "d254bb9c6dfa1fc56ede24a610d1cb52055cd054",
+        "committed_at": "2026-05-27T03:26:26Z",
+        "merge": false
+      },
+      "pretend_version": "4.1.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.953,
+          "tail": "    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3068.py\", line 54, in test_enum_func_form_with_non_string_member_does_not_crash\n    raise AstroidError from error\nastroid.exceptions.AstroidError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3068.py::test_enum_func_form_with_non_string_member_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.19s",
+          "log_dir": "artifacts\\failgate-run-41a67df153"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.125,
+          "tail": "    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3068.py\", line 54, in test_enum_func_form_with_non_string_member_does_not_crash\n    raise AstroidError from error\nastroid.exceptions.AstroidError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3068.py::test_enum_func_form_with_non_string_member_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.20s",
+          "log_dir": "artifacts\\failgate-run-fd06f82d75"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.188,
+          "tail": ".                                                                        [100%]\n1 passed in 0.20s",
+          "log_dir": "artifacts\\failgate-run-945a2a159d"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.985,
+          "tail": ".                                                                        [100%]\n1 passed in 0.19s",
+          "log_dir": "artifacts\\failgate-run-feaadb1342"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 3067,
+      "title": "AttributeInferenceError: '__slots__' not found on ClassDef node",
+      "reported_version": "649ec7d37d182",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 3074,
+        "sha": "5007097c106843b0c9f31f039137d9b50075adfb",
+        "parent": "400ccd7aa7467ea7cfc89caf3bf37be567f33f62",
+        "committed_at": "2026-05-22T14:46:15Z",
+        "merge": false
+      },
+      "pretend_version": "4.1.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.032,
+          "tail": "    cls_slots = cls._slots()\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2763, in _slots\n    first = next(slots)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2711, in _islots\n    for slots in self.igetattr(\"__slots__\"):\n                 ~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2524, in igetattr\n    raise InferenceError(\n        str(error), target=self, attribute=name, context=context\n    ) from error\nastroid.exceptions.InferenceError: '__slots__' not found on <ClassDef.C l.2 at 0x7aeef905a7b0>.\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3067.py::test_slots_with_annotation_only_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.21s",
+          "log_dir": "artifacts\\failgate-run-6d36dc9e59"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.922,
+          "tail": "    cls_slots = cls._slots()\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2763, in _slots\n    first = next(slots)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2711, in _islots\n    for slots in self.igetattr(\"__slots__\"):\n                 ~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2524, in igetattr\n    raise InferenceError(\n        str(error), target=self, attribute=name, context=context\n    ) from error\nastroid.exceptions.InferenceError: '__slots__' not found on <ClassDef.C l.2 at 0x78c6abc8e7b0>.\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3067.py::test_slots_with_annotation_only_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.16s",
+          "log_dir": "artifacts\\failgate-run-736fd15777"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.032,
+          "tail": ".                                                                        [100%]\n1 passed in 0.24s",
+          "log_dir": "artifacts\\failgate-run-632365d00c"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.922,
+          "tail": ".                                                                        [100%]\n1 passed in 0.16s",
+          "log_dir": "artifacts\\failgate-run-1cb1917c5f"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 3066,
+      "title": "`AttributeError: 'ClassDef' object has no attribute 'expr'` when checking metaclasses",
+      "reported_version": "649ec7d37d182",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 3065,
+      "title": "`DuplicateBasesError: Duplicates found in MROs` when inferring enum class with duplicate ancestors",
+      "reported_version": "649ec7d37d182",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 3071,
+        "sha": "d704469e65e992f078be8f479b4e91462ba21490",
+        "parent": "37a5681e5a9514445d8cf2b437aa74e4bd0ff8bb",
+        "committed_at": "2026-05-22T14:16:12Z",
+        "merge": false
+      },
+      "pretend_version": "4.1.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.0,
+          "tail": "                                  ~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2918, in mro\n    return self._compute_mro(context=context)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2906, in _compute_mro\n    unmerged_mro = clean_duplicates_mro(unmerged_mro, self, context)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 156, in clean_duplicates_mro\n    raise DuplicateBasesError(\n    ...<4 lines>...\n    )\nastroid.exceptions.DuplicateBasesError: Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) for <ClassDef.C l.4 at 0x71dbf8ae66c0>.\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3065.py::test_enum_class_with_duplicated_base_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.21s",
+          "log_dir": "artifacts\\failgate-run-e3097351a3"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.953,
+          "tail": "                                  ~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2918, in mro\n    return self._compute_mro(context=context)\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 2906, in _compute_mro\n    unmerged_mro = clean_duplicates_mro(unmerged_mro, self, context)\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 156, in clean_duplicates_mro\n    raise DuplicateBasesError(\n    ...<4 lines>...\n    )\nastroid.exceptions.DuplicateBasesError: Duplicates found in MROs (C), (Enum, object), (Enum, object), (Enum, Enum) for <ClassDef.C l.4 at 0x7747de40a6c0>.\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3065.py::test_enum_class_with_duplicated_base_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.19s",
+          "log_dir": "artifacts\\failgate-run-a73b03b131"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.985,
+          "tail": ".                                                                        [100%]\n1 passed in 0.23s",
+          "log_dir": "artifacts\\failgate-run-61790fe983"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.063,
+          "tail": ".                                                                        [100%]\n1 passed in 0.27s",
+          "log_dir": "artifacts\\failgate-run-e8e481e2c8"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 3064,
+      "title": "`AttributeError: 'AssignName' object has no attribute 'infer_call_result'` in getitem",
+      "reported_version": "649ec7d37d182",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": null,
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "no_script",
+      "error": null
+    },
+    {
+      "number": 3063,
+      "title": "`AttributeError: 'FunctionDef' object has no attribute 'ancestors'` in _lookup_in_mro",
+      "reported_version": "649ec7d37d182",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 3070,
+        "sha": "3258d5ff67d39b0a04383066f7a135aaf7edc422",
+        "parent": "5007097c106843b0c9f31f039137d9b50075adfb",
+        "committed_at": "2026-05-22T15:01:01Z",
+        "merge": false
+      },
+      "pretend_version": "4.1.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.906,
+          "tail": "  File \"/workspace/src/tests/test_failgate_issue_3063.py\", line 33, in test_dunder_lookup_with_function_metaclass_does_not_crash\n    dunder_lookup.lookup(klass, \"__getitem__\")\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 56, in lookup\n    return _class_lookup(node, name, context=context)\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 68, in _class_lookup\n    return _lookup_in_mro(metaclass, name)\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 33, in _lookup_in_mro\n    ancestor.locals.get(name, []) for ancestor in node.ancestors(recurs=True)\n                                                  ^^^^^^^^^^^^^^\nAttributeError: 'FunctionDef' object has no attribute 'ancestors'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3063.py::test_dunder_lookup_with_function_metaclass_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.17s",
+          "log_dir": "artifacts\\failgate-run-52432c41d1"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.953,
+          "tail": "  File \"/workspace/src/tests/test_failgate_issue_3063.py\", line 33, in test_dunder_lookup_with_function_metaclass_does_not_crash\n    dunder_lookup.lookup(klass, \"__getitem__\")\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 56, in lookup\n    return _class_lookup(node, name, context=context)\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 68, in _class_lookup\n    return _lookup_in_mro(metaclass, name)\n  File \"/workspace/src/astroid/interpreter/dunder_lookup.py\", line 33, in _lookup_in_mro\n    ancestor.locals.get(name, []) for ancestor in node.ancestors(recurs=True)\n                                                  ^^^^^^^^^^^^^^\nAttributeError: 'FunctionDef' object has no attribute 'ancestors'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3063.py::test_dunder_lookup_with_function_metaclass_does_not_crash\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.18s",
+          "log_dir": "artifacts\\failgate-run-2ae252f5ac"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.922,
+          "tail": ".                                                                        [100%]\n1 passed in 0.17s",
+          "log_dir": "artifacts\\failgate-run-a032f38fc3"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.922,
+          "tail": ".                                                                        [100%]\n1 passed in 0.16s",
+          "log_dir": "artifacts\\failgate-run-aa8155a13a"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 3023,
+      "title": "RecursionError in _compute_mro() on circular MRO from name rebinding (with class between in hierarchy)",
+      "reported_version": "4.0.5",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 3026,
+        "sha": "04b78da7074d2d8e8b8a1f2c09a34ef8a6fabcbb",
+        "parent": "0994342e964b22a10a9717d28595aba1fd2381ff",
+        "committed_at": "2026-04-07T21:27:02Z",
+        "merge": false
+      },
+      "pretend_version": "4.1.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.094,
+          "tail": "    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3023.py\", line 38, in test_mro_circular_name_rebinding_with_intermediate_class\n    raise astroid.AstroidError from exc\nastroid.exceptions.AstroidError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3023.py::test_mro_circular_name_rebinding_with_intermediate_class\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.29s",
+          "log_dir": "artifacts\\failgate-run-6265bd62d0"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.015,
+          "tail": "    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_3023.py\", line 38, in test_mro_circular_name_rebinding_with_intermediate_class\n    raise astroid.AstroidError from exc\nastroid.exceptions.AstroidError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_3023.py::test_mro_circular_name_rebinding_with_intermediate_class\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.25s",
+          "log_dir": "artifacts\\failgate-run-df358c9949"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.078,
+          "tail": ".                                                                        [100%]\n1 passed in 0.26s",
+          "log_dir": "artifacts\\failgate-run-5f019261b1"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.015,
+          "tail": ".                                                                        [100%]\n1 passed in 0.25s",
+          "log_dir": "artifacts\\failgate-run-5cf4085d0d"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 2942,
+      "title": "AttributeError: 'PosixPath' object has no attribute 'startswith'",
+      "reported_version": "4.0.3",
+      "python": "3.11",
+      "proxy": "—",
+      "fix": {
+        "pr": 2949,
+        "sha": "605474814d9a95ed2f66f0f2378b475dd0fc5172",
+        "parent": "d4a7e6391bd0ce2a34aa47179f07e40ef3ce4cca",
+        "committed_at": "2026-02-06T19:58:19Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.4.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.688,
+          "tail": "    if util.is_namespace(modname) and modname in sys.modules:\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 97, in is_namespace\n    if any(\n       ^^^^\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)\n        ^^^^^^^^^^^^^^^^^^^\nAttributeError: 'PosixPath' object has no attribute 'startswith'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2942.py::test_namespace_package_with_pathlib_search_location\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.09s",
+          "log_dir": "artifacts\\failgate-run-324a3f186c"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.687,
+          "tail": "    if util.is_namespace(modname) and modname in sys.modules:\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 97, in is_namespace\n    if any(\n       ^^^^\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)\n  File \"/workspace/src/astroid/interpreter/_import/util.py\", line 98, in <genexpr>\n    any(location.startswith(lib_dir) for lib_dir in STD_AND_EXT_LIB_DIRS)\n        ^^^^^^^^^^^^^^^^^^^\nAttributeError: 'PosixPath' object has no attribute 'startswith'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2942.py::test_namespace_package_with_pathlib_search_location\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.10s",
+          "log_dir": "artifacts\\failgate-run-64c502096a"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.718,
+          "tail": ".                                                                        [100%]\n1 passed in 0.09s",
+          "log_dir": "artifacts\\failgate-run-5f043d1d76"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.765,
+          "tail": ".                                                                        [100%]\n1 passed in 0.11s",
+          "log_dir": "artifacts\\failgate-run-98bf4b35f9"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 2923,
+      "title": "brain_random makes faulty assumption that all instance attributes for ClassDef can be passed to `__init__`",
+      "reported_version": null,
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 2937,
+        "sha": "25027e039869f9819eff04b8117acb3e0c754057",
+        "parent": "004bc52e1c2879cfed88e479ef0947b40aea4c4d",
+        "committed_at": "2026-01-15T12:26:37Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.953,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2923.py\", line 26, in test_clone_classdef_with_lineno\n    clone = _clone_node_with_lineno(klass, parent=None, lineno=1)\n  File \"/workspace/src/astroid/brain/brain_random.py\", line 35, in _clone_node_with_lineno\n    new_node = cls(**init_params)\nTypeError: ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2923.py::test_clone_classdef_with_lineno\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.17s",
+          "log_dir": "artifacts\\failgate-run-8294365576"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.922,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2923.py\", line 26, in test_clone_classdef_with_lineno\n    clone = _clone_node_with_lineno(klass, parent=None, lineno=1)\n  File \"/workspace/src/astroid/brain/brain_random.py\", line 35, in _clone_node_with_lineno\n    new_node = cls(**init_params)\nTypeError: ClassDef.__init__() got an unexpected keyword argument 'is_dataclass'\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2923.py::test_clone_classdef_with_lineno\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.16s",
+          "log_dir": "artifacts\\failgate-run-10c71b596d"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": false,
+          "duration_s": 0.859,
+          "tail": "                            ~~~~~~~~~~~~~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 1937, in implicit_locals\n    locals_ = ((\"__module__\", self.special_attributes.attr___module__),)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/objectmodel.py\", line 513, in attr___module__\n    return node_classes.Const(self._instance.root().qname())\n                              ~~~~~~~~~~~~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/node_ng.py\", line 319, in root\n    assert isinstance(self, nodes.Module)\n           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\nAssertionError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2923.py::test_clone_classdef_with_lineno\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.19s",
+          "log_dir": "artifacts\\failgate-run-2a08537151"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": false,
+          "duration_s": 0.938,
+          "tail": "                            ~~~~~~~~~~~~~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/scoped_nodes/scoped_nodes.py\", line 1937, in implicit_locals\n    locals_ = ((\"__module__\", self.special_attributes.attr___module__),)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/astroid/interpreter/objectmodel.py\", line 513, in attr___module__\n    return node_classes.Const(self._instance.root().qname())\n                              ~~~~~~~~~~~~~~~~~~~^^\n  File \"/workspace/src/astroid/nodes/node_ng.py\", line 319, in root\n    assert isinstance(self, nodes.Module)\n           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^\nAssertionError\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2923.py::test_clone_classdef_with_lineno\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.19s",
+          "log_dir": "artifacts\\failgate-run-74639d3889"
+        }
+      ],
+      "outcome": "fail_after",
+      "error": null
+    },
+    {
+      "number": 2899,
+      "title": "Wrong inference with default argument values",
+      "reported_version": "4.0.2",
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 2914,
+        "sha": "178a796d01b43240638921400bc71212c1b2b05e",
+        "parent": "225d96401d3a893468eac17a729699b1b5cabb7b",
+        "committed_at": "2026-01-03T20:06:35Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.3.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.922,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2899.py\", line 34, in test_if_exp_infers_both_branches_for_function_argument\n    assert {node.value for node in inferred} == {1, \"\"}\nAssertionError: assert {''} == {'', 1}\n  \n  Extra items in the right set:\n  1\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2899.py::test_if_exp_infers_both_branches_for_function_argument[argument-with-default-value]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.19s",
+          "log_dir": "artifacts\\failgate-run-d67a76bf13"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 0.953,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 166, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/tests/test_failgate_issue_2899.py\", line 34, in test_if_exp_infers_both_branches_for_function_argument\n    assert {node.value for node in inferred} == {1, \"\"}\nAssertionError: assert {''} == {'', 1}\n  \n  Extra items in the right set:\n  1\n  Use -v to get more diff\n=========================== short test summary info ============================\nFAILED src/tests/test_failgate_issue_2899.py::test_if_exp_infers_both_branches_for_function_argument[argument-with-default-value]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.18s",
+          "log_dir": "artifacts\\failgate-run-96c933b9dc"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.953,
+          "tail": "..                                                                       [100%]\n2 passed in 0.18s",
+          "log_dir": "artifacts\\failgate-run-ec054b2f78"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.938,
+          "tail": "..                                                                       [100%]\n2 passed in 0.16s",
+          "log_dir": "artifacts\\failgate-run-e7a90d8f9a"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 2852,
+      "title": "Overloaded class method with call to super() with `typing.Self` return type does not infer the right type",
+      "reported_version": "3.3.9",
+      "python": "3.13",
+      "proxy": "—",
+      "fix": {
+        "pr": 3057,
+        "sha": "14666601dcbec0c0e7e2f299a269fa8b40f277db",
+        "parent": "4c5dfcd1d7318f4c64a995be19b0d7b56913a712",
+        "committed_at": "2026-08-03T14:04:56Z",
+        "merge": false
+      },
+      "pretend_version": "4.0.1.dev0",
+      "before": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.156,
+          "tail": ".                                                                        [100%]\n1 passed in 0.19s",
+          "log_dir": "artifacts\\failgate-run-5c1f024d8a"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.844,
+          "tail": ".                                                                        [100%]\n1 passed in 0.15s",
+          "log_dir": "artifacts\\failgate-run-508e790505"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.812,
+          "tail": ".                                                                        [100%]\n1 passed in 0.16s",
+          "log_dir": "artifacts\\failgate-run-e4eee7ef71"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 0.859,
+          "tail": ".                                                                        [100%]\n1 passed in 0.16s",
+          "log_dir": "artifacts\\failgate-run-6516136b7a"
+        }
+      ],
+      "outcome": "not_fail_before",
+      "error": null
+    }
+  ]
+}

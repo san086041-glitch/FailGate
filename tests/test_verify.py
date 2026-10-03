@@ -383,6 +383,7 @@ def test_related_tests_that_never_collect_are_not_a_pass():
     assert v.verdict == ClaimVerdict.VERIFIED and c.layer3 is not None  # none 不影响结论
     assert (c.layer3.status, c.layer3.reason) == ("none", "not_run")
     assert c.layer3.not_run == ["tests/test_core.py"]
+    assert c.layer3.missing_modules == ["pretend"]  # 体检据此建议 test_deps（ADR 0043）
     assert "都没跑起来" in render_verification(v, "zh")
     assert "could not run" in render_verification(v, "en")
 

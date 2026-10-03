@@ -33,7 +33,7 @@ app = typer.Typer(help="FailGate：bug 的验收层。修复谁都能写，FailG
 PANELS = {
     "出题 · 答题 · 阅卷": ("repro", "hidden", "evidence", "fix", "verify"),
     "服务与集成": ("up", "serve", "worker", "console", "mcp", "github", "fixer", "repo"),
-    "评测与回放": ("replay", "try", "answer", "memory", "llm"),
+    "评测与回放": ("checkup", "replay", "try", "answer", "memory", "llm"),
     "运维": ("doctor", "db", "db-init", "cases", "effects", "sandbox", "trace", "index"),
 }
 
@@ -1380,6 +1380,152 @@ def evidence_show(
     raise typer.Exit(asyncio.run(run()))
 
 
+@app.command("checkup")
+def checkup(
+    repo: Annotated[str, typer.Argument(help="owner/name，例如 pylint-dev/astroid")],
+    package: Annotated[str, typer.Option(help="PyPI 包名")],
+    import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
+    since: Annotated[str, typer.Option(help="只看这一天之后创建的 issue")] = "2022-01-01",
+    limit: Annotated[int, typer.Option(help="留出集取多少题")] = 12,
+    offset: Annotated[int, typer.Option(help="跳过最新的多少题（开发集）")] = 12,
+    accept_rule: Annotated[bool, typer.Option(
+        "--accept-rule", help="确认体检起草的选题规则，继续往下跑")] = False,
+    survey_only: Annotated[bool, typer.Option(
+        "--survey-only", help="只做概况和规则（只调 API，$0）")] = False,
+    skip_verify: Annotated[bool, typer.Option(
+        "--skip-verify", help="不跑 ClaimVerify 正负例")] = False,
+    backfill_limit: Annotated[int, typer.Option(help="最多回填多少个 issue")] = 4000,
+    refresh: Annotated[bool, typer.Option("--refresh", help="忽略之前的进度，从头来")] = False,
+    report_only: Annotated[bool, typer.Option(
+        "--report-only", help="只按已有结果重新生成报告，什么都不跑")] = False,
+) -> None:
+    """仓库体检（ADR 0043）：把评测流程跑在任意公开 Python 仓库上，给出报告和配置建议。
+
+    概况 → 选题规则（没有就起草，确认后加 --accept-rule）→ 回填 → 留出集 L2 + 严格 FB/PA
+    （调 LLM，每题约 $0.02）→ ClaimVerify 正负例含 break_other（$0）→ 报告。
+    进度记在 eval/checkups/<repo>/checkup.json，中断后重跑会跳过已完成的步骤。
+    需要 GITHUB_TOKEN；出题和核验还要 Docker。
+    """
+    import httpx
+
+    from failgate.platforms.github_rest import GitHubRest
+    from failgate.replay import checkup as cu
+    from failgate.replay import l2 as l2replay
+    from failgate.replay import selection
+    from failgate.replay.dataset import EVAL_ROOT
+
+    settings = Settings()
+    if not settings.github_token:
+        raise typer.BadParameter("需要 GITHUB_TOKEN")
+    state_file = cu.state_path(repo)
+    state = None if refresh else cu.load_state(state_file)
+    if state is None:
+        state = cu.Checkup(repo=repo, package=package, since=since, offset=offset, limit=limit)
+
+    def step(msg: str) -> None:
+        typer.echo(f"\n== {msg}")
+
+    if report_only:
+        rule_file = selection.path_for(repo, EVAL_ROOT)
+        rule = selection.load(repo, EVAL_ROOT) if rule_file.exists() else None
+        l2_sum = None
+        if state.l2_run:
+            reports, cases, _ = l2replay.load(Path(state.l2_run))
+            l2_sum = l2replay.summarize(reports, cases)
+        rows = cu.load_rows(Path(state.verify_run) if state.verify_run else None)
+        state.report = _checkup_report(state, rule, l2_sum, rows)
+        cu.save_state(state, state_file)
+        typer.echo(f"报告：{state.report}")
+        return
+
+    # 1. 概况
+    if state.survey is None:
+        step("概况（只调 GitHub / PyPI API）")
+
+        async def do_survey() -> cu.Survey:
+            gh = GitHubRest(settings.github_token)
+            try:
+                async with httpx.AsyncClient(timeout=30) as http:
+                    return await cu.survey(gh, http, repo, package, since=since,
+                                           pypi_url=settings.pypi_url)
+            finally:
+                await gh.aclose()
+
+        state.survey = asyncio.run(do_survey())
+        cu.save_state(state, state_file)
+    s = state.survey
+    typer.echo(f"{repo}：⭐ {s.stars}，Python {s.python_share:.0%}，PyPI {s.pypi or '无'}；"
+               f"{since} 后已完成关闭 {s.closed}，可用题估计约 {s.est_usable}")
+
+    # 2. 选题规则
+    rule_file = selection.path_for(repo, EVAL_ROOT)
+    if not rule_file.exists():
+        rule = cu.draft_selection(s.labels)
+        rule_file.parent.mkdir(parents=True, exist_ok=True)
+        rule_file.write_text(rule.model_dump_json(indent=1), encoding="utf-8")
+        state.rule_drafted = True
+        state.rule_path = rule_file.as_posix()
+        cu.save_state(state, state_file)
+        step("选题规则：已按标签起草")
+        typer.echo(f"{rule_file}\n  bug：{rule.bug_labels}\n  复现另外要求：{rule.repro_labels}\n"
+                   f"  排除：{rule.exclude_labels}")
+        if not accept_rule:
+            typer.echo("\n先看一下这份规则是否符合这个仓库的标签用法（可以直接改文件），"
+                       "确认后加 --accept-rule 重跑。规则要在跑之前定好，否则就是挑样本。")
+            return
+    rule = selection.load(repo, EVAL_ROOT)
+    state.rule_path = rule_file.as_posix()
+    if not rule.bug_labels:
+        raise typer.BadParameter(f"{rule_file} 里没有 bug_labels：这个仓库的 bug 没打标签，"
+                                 "按标签选不出题")
+    if survey_only:
+        state.report = _checkup_report(state, rule, None, [])
+        cu.save_state(state, state_file)
+        typer.echo(f"\n报告：{state.report}")
+        return
+
+    # 3. 回填
+    if state.backfilled is None:
+        step("回填 issue（只调 GitHub）")
+        index_build(repo, limit=backfill_limit, db_url=REPLAY_DB)
+        state.backfilled = backfill_limit
+        cu.save_state(state, state_file)
+
+    # 4. 留出集 L2 + 严格 FB/PA
+    if state.l2_run is None:
+        step(f"留出集 L2 + 严格 FB/PA（跳过 {offset}、取 {limit}，会花钱）")
+        run_path = replay_l2(repo, package=package, import_name=import_name, limit=limit,
+                             offset=offset, since=since, numbers=None, runs=2, db_url=REPLAY_DB)
+        state.l2_run = run_path.as_posix()
+        cu.save_state(state, state_file)
+    reports, cases, _meta = l2replay.load(Path(state.l2_run))
+    l2_summary = l2replay.summarize(reports, cases)
+
+    # 5. ClaimVerify 正负例
+    if not skip_verify and l2_summary["fb_pa"]:
+        step("ClaimVerify 正负例（含 break_other，$0）")
+        resume = Path(state.verify_run) if state.verify_run else None
+        jsonl = replay_verify(repo, source=Path(state.l2_run), resume=resume)
+        state.verify_run = jsonl.as_posix()
+        cu.save_state(state, state_file)
+    rows = cu.load_rows(Path(state.verify_run) if state.verify_run else None)
+
+    state.report = _checkup_report(state, rule, l2_summary, rows)
+    cu.save_state(state, state_file)
+    typer.echo(f"\n报告：{state.report}")
+
+
+def _checkup_report(state: Any, rule: Any, l2: dict[str, Any] | None,
+                    rows: list[dict[str, Any]]) -> str:
+    from failgate.replay import checkup as cu
+
+    path = Path("eval/reports") / f"{state.repo.replace('/', '__')}__checkup__" \
+        f"{datetime.now():%Y%m%d-%H%M}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(cu.render(state, rule, l2, rows), encoding="utf-8")
+    return path.as_posix()
+
+
 @app.command("verify")
 def verify_pr(
     target: Annotated[str, typer.Argument(help="owner/name#PR 编号")],
@@ -2165,7 +2311,7 @@ def replay_l2(
     ] = None,
     runs: Annotated[int, typer.Option(help="严格 FB/PA 时每个版本跑几次")] = 2,
     db_url: Annotated[str, typer.Option("--db", help="回放语料库")] = REPLAY_DB,
-) -> None:
+) -> Path:
     """L2 回放：Agent 在 issue 时的代码上写仓库内的失败测试，再用严格 FB/PA 检验。会花钱。
 
     选样规则和 replay repro 相同；需要 GITHUB_TOKEN 和 Docker。
@@ -2250,6 +2396,7 @@ def replay_l2(
                    f"\n报告：{report_path}")
 
     asyncio.run(run())
+    return run_path
 
 
 async def _l2_fbpa(rt: Any, repo: str, cfg: Any, report: Any, trees: dict[str, Any],
@@ -2421,7 +2568,7 @@ def replay_verify(
     repo_config: Annotated[bool, typer.Option(
         "--repo-config/--no-repo-config",
         help="读 eval/datasets/<repo>/verify.json（第三层总要跑的测试）；关掉用来做对照")] = True,
-) -> None:
+) -> Path:
     """ClaimVerify 正负例评测：上游真实修复当正例，程序构造的 4 种作弊当负例（ADR 0019）。
 
     需要 Docker 和 GITHUB_TOKEN；不花 LLM 的钱。每个案例要建两个源码环境，几十秒到几分钟。
@@ -2516,6 +2663,7 @@ def replay_verify(
         typer.echo(f"\n准确率 {s['correct']}/{s['n']}；报告：{report_path}")
 
     asyncio.run(run_all())
+    return jsonl
 
 
 CALIB_INSTANCES = Path("eval/datasets/swebench_utboost/instances.json")

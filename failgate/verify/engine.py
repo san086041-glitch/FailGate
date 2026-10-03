@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -118,6 +119,9 @@ class Layer2(BaseModel):
         return [s for s in self.signals if s.level == "high"]
 
 
+_MISSING = re.compile(r"No module named '([\w.]+)'")
+
+
 class Layer3(BaseModel):
     status: Literal["pass", "fail", "inconclusive", "none"]
     reason: str  # pass / new_failures / none / not_run / base_infra / head_infra / setup
@@ -125,6 +129,8 @@ class Layer3(BaseModel):
     new_failures: list[str] = []
     # 合并基点和 PR 上都收集失败的测试文件（多半缺测试依赖）：没跑起来，不能算"没有新增失败"
     not_run: list[str] = []
+    # 收集失败时报错里缺的顶层模块（体检据此建议 test_deps，ADR 0043）
+    missing_modules: list[str] = []
 
 
 class ClaimResult(BaseModel):
@@ -366,6 +372,8 @@ class ClaimVerifier:
         head_failed = failed_nodes(head_run.stdout + "\n" + head_run.stderr)
         # 文件级的 ERROR = 收集失败（import 不了），两边都失败就是根本没跑起来（ADR 0041）
         not_run = [f for f in files if f in head_failed and (f in base_failed or f not in on_base)]
+        head_out = head_run.stdout + "\n" + head_run.stderr
+        missing = sorted({m.split(".")[0] for m in _MISSING.findall(head_out)}) if not_run else []
         new = head_failed - base_failed
         if new:
             # 重跑一次，排除偶发失败
@@ -373,7 +381,9 @@ class ClaimVerifier:
             new &= failed_nodes(again.stdout + "\n" + again.stderr)
         if new:
             return Layer3(status="fail", files=files, new_failures=sorted(new),
-                          reason="new_failures", not_run=not_run)
+                          reason="new_failures", not_run=not_run, missing_modules=missing)
         if not_run and len(not_run) == len(files):
-            return Layer3(status="none", files=files, reason="not_run", not_run=not_run)
-        return Layer3(status="pass", files=files, reason="pass", not_run=not_run)
+            return Layer3(status="none", files=files, reason="not_run", not_run=not_run,
+                          missing_modules=missing)
+        return Layer3(status="pass", files=files, reason="pass", not_run=not_run,
+                      missing_modules=missing)

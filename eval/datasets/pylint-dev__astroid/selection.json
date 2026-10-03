@@ -1,0 +1,18 @@
+{
+ "bug_labels": [
+  "Bug 🪳",
+  "Crash 💥",
+  "Regression"
+ ],
+ "repro_labels": [],
+ "exclude_labels": [
+  "Cannot reproduce 🤷",
+  "Downstream Bug 🪲",
+  "Duplicate 🐫",
+  "Invalid",
+  "Question",
+  "Upstream Bug 🪲",
+  "Won't fix/not planned"
+ ],
+ "note": "由 failgate checkup 按标签起草；2026-10-03 确认：astroid 的推断错误多数只打 Bug，复现不按类别筛（否则凑不够开发集 + 留出集 24 题）。"
+}
