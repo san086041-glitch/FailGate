@@ -1,15 +1,27 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27", "hatch-fancy-pypi-readme>=25.1"]
 build-backend = "hatchling.build"
 
 [project]
 name = "failgate"
-version = "0.0.1"
-description = "bug 的验收层：修复谁都能写，FailGate 负责证明它修对了"
-readme = "README.md"
+# 版本号只写在 failgate/__init__.py；PyPI 上的 README 由 fancy-pypi-readme 在构建时生成（见下）
+dynamic = ["version", "readme"]
+description = "The acceptance layer for bug fixes: seal a failing test, then verify any fix against it"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
+authors = [{ name = "san086041-glitch" }]
+keywords = ["testing", "pytest", "ai-agents", "code-review", "github-app", "mutation-testing"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: Testing",
+]
 dependencies = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
@@ -46,13 +58,55 @@ dev = [
   "pytest-asyncio>=0.23",
   "ruff>=0.5",
   "mypy>=1.10",
+  # tests/test_packaging.py 直接调 hatchling 的构建器（离线）检查 sdist / wheel 的成员
+  "hatchling>=1.27",
+  "hatch-fancy-pypi-readme>=25.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/san086041-glitch/FailGate"
+Repository = "https://github.com/san086041-glitch/FailGate"
+Issues = "https://github.com/san086041-glitch/FailGate/issues"
+Changelog = "https://github.com/san086041-glitch/FailGate/blob/main/CHANGELOG.md"
 
 [project.scripts]
 failgate = "failgate.cli:app"
 
+[tool.hatch.version]
+path = "failgate/__init__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["failgate"]
+exclude = ["**/__pycache__"]
+
+# sdist 默认带上所有被 git 跟踪的文件：从私有 dev 仓库构建会把 docs/adr、docs/design、eval/reports
+# 打进包里上传到 PyPI。白名单是第一道保险；第二道是只从公开镜像构建（release.yml），
+# 第三道是 release.yml 里检查成员列表（ADR 0047）
+[tool.hatch.build.targets.sdist]
+only-include = ["failgate", "README.md", "LICENSE", "CHANGELOG.md", "pyproject.toml"]
+exclude = ["**/__pycache__"]
+
+# PyPI 不认相对链接：构建时把 README 里的 docs/… 换成公开仓库的绝对地址（README 本身不改）
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# 图片：src="docs/…" → GitHub raw
+pattern = 'src="(?!https?://)([^"]+)"'
+replacement = 'src="https://raw.githubusercontent.com/san086041-glitch/FailGate/main/\1"'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# HTML 链接：href="LICENSE" / href="README.zh-CN.md" → GitHub 页面；锚点不动
+pattern = 'href="(?!https?://|#|mailto:)([^"]+)"'
+replacement = 'href="https://github.com/san086041-glitch/FailGate/blob/main/\1"'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# 链接：](docs/…) / ](README.zh-CN.md) → GitHub 页面；锚点和绝对地址不动
+pattern = '\]\((?!https?://|#|mailto:)([^)]+)\)'
+replacement = '](https://github.com/san086041-glitch/FailGate/blob/main/\1)'
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

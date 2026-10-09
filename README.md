@@ -99,6 +99,14 @@ failgate verify san086041-glitch/failgate-demo#16     # a real fix → accepted,
 
 Then type `failgate` for the home screen and interactive shell, or `failgate doctor` to check your setup.
 
+Just the CLI, without the demo data, is on PyPI:
+
+```bash
+pip install failgate
+failgate --version
+failgate doctor          # what is configured and what is missing
+```
+
 <p align="center">
   <img alt="failgate verify on a real fix: accepted, with exam strength from mutation testing" src="docs/media/cli-verify-verified.en.gif" width="860">
 </p>

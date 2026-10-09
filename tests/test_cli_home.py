@@ -107,6 +107,15 @@ def test_home_without_terminal_has_no_logo_and_creates_no_db(cli: CliRunner, tmp
     assert not (tmp_path / "failgate.db").exists()  # 首页只读，不会凭空建库
 
 
+def test_version_flag_prints_the_package_version_and_skips_the_home_page(cli: CliRunner, tmp_path):
+    from failgate import __version__
+
+    res = cli.invoke(app, ["--version"])
+    assert res.exit_code == 0, res.output
+    assert res.output.strip() == f"failgate {__version__}"
+    assert not (tmp_path / "failgate.db").exists()
+
+
 def test_home_reads_project_env_and_shows_stats(cli: CliRunner, monkeypatch, tmp_path):
     db_path = tmp_path / "proj" / "fg.db"
     write_env(tmp_path / "proj", FAILGATE_DB_URL=sqlite_url(db_path), LLM_API_KEY="sk-test")

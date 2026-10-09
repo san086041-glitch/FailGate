@@ -1,0 +1,159 @@
+# 发布到 PyPI（ADR 0047）。只在公开镜像 san086041-glitch/FailGate 上运行：私有 dev 仓库的提交哈希
+# 和镜像不同，trusted publishing 也只绑定镜像上的这个文件；在 dev 仓库打 tag 什么都不会发生。
+#
+#   v0.1.0rc1 这类预发布 tag → TestPyPI（彩排），版本号按 tag 改写，不建 GitHub Release
+#   v0.1.0                   → PyPI + GitHub Release（正文取 CHANGELOG.md 里这个版本的段落）
+#
+# tag 由 D:\AgentProject\tools\publish\publish_public.py --push --tag vX.Y.Z 打在镜像的提交上。
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.repository == 'san086041-glitch/FailGate'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      prerelease: ${{ steps.ver.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: 版本号和 tag 对上
+        id: ver
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          code=$(python -c "import re;print(re.search(r'__version__ = \"(.+?)\"', open('failgate/__init__.py').read()).group(1))")
+          if [[ "$tag" =~ (a|b|rc)[0-9]+$ ]]; then
+            # 彩排：基础版本必须一致，包的版本号改成 tag 的（不为彩排单独提交）
+            [[ "$tag" == "$code"* ]] || { echo "tag $tag 和代码里的 $code 对不上"; exit 1; }
+            sed -i "s/__version__ = \".*\"/__version__ = \"$tag\"/" failgate/__init__.py
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            [[ "$tag" == "$code" ]] || { echo "tag $tag 和代码里的 $code 对不上"; exit 1; }
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - name: sdist 里不能有私有文件（第三道保险，前两道是 pyproject 白名单和只从镜像构建）
+        run: |
+          python - <<'EOF'
+          import glob, re, sys, tarfile
+          names = tarfile.open(glob.glob("dist/*.tar.gz")[0]).getnames()
+          bad = [n for n in names if re.search(r"/(docs|eval|tests|fixtures|secrets|scripts|deploy|\.github)/|\.env$", n)]
+          print(len(names), "members")
+          if bad:
+              sys.exit(f"private files in sdist: {bad[:10]}")
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish-testpypi:
+    needs: build
+    if: needs.build.outputs.prerelease == 'true'
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  publish-pypi:
+    needs: build
+    if: needs.build.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: [build, publish-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: 发布说明 = CHANGELOG 里这个版本的段落
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          python - <<'EOF'
+          import os, re
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          m = re.search(rf"^## \[{re.escape(os.environ['VERSION'])}\][^\n]*\n(.*?)(?=^## \[|\Z)", text, re.S | re.M)
+          if not m:
+              raise SystemExit(f"CHANGELOG.md has no section for {os.environ['VERSION']}")
+          open("release-notes.md", "w", encoding="utf-8").write(m.group(1).strip() + "\n")
+          EOF
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          body_path: release-notes.md
+
+  smoke:
+    # 干净的机器上从索引装、跑起来：--version、--help、doctor（没配 key，退出码 1 是预期）
+    needs: [build, publish-testpypi, publish-pypi]
+    if: always() && needs.build.result == 'success' && (needs.publish-testpypi.result == 'success' || needs.publish-pypi.result == 'success')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      PRE: ${{ needs.build.outputs.prerelease }}
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: 安装（索引刚上传可能还没生效，最多等 5 分钟）
+        run: |
+          if [ "$PRE" = "true" ]; then
+            idx=(-i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple)
+          else
+            idx=()
+          fi
+          for i in $(seq 1 10); do
+            pip install "${idx[@]}" "failgate==$VERSION" && break
+            sleep 30
+          done
+          pip show failgate
+      - run: test "$(failgate --version)" = "failgate $VERSION"
+      - run: failgate --help
+      - run: |
+          set +e
+          failgate doctor
+          code=$?
+          echo "doctor exit code $code"
+          [ "$code" -le 1 ]

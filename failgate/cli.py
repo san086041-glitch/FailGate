@@ -38,6 +38,14 @@ PANELS = {
 }
 
 
+def _print_version(value: bool) -> None:
+    if value:
+        from failgate import __version__
+
+        typer.echo(f"failgate {__version__}")
+        raise typer.Exit()
+
+
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
@@ -50,6 +58,8 @@ def main(
         "--shell/--no-shell", help="显示首页后进入交互模式（只在终端里生效）")] = True,
     ui_lang: Annotated[str | None, typer.Option(
         "--lang", help="界面语言 zh / en（默认读 FAILGATE_LANG，再默认中文）")] = None,
+    version: Annotated[bool, typer.Option(
+        "--version", help="显示版本号后退出", is_eager=True, callback=_print_version)] = False,
 ) -> None:
     """找到 .env 并让之后所有 Settings() 都读它；不带子命令时显示首页，在终端里再进入交互模式。"""
     from failgate.settings import find_env_file, use_env_file

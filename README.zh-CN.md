@@ -99,6 +99,14 @@ failgate verify san086041-glitch/failgate-demo#16     # 真正的修复 → 通�
 
 之后直接输入 `failgate` 进入首页和交互模式，或者运行 `failgate doctor` 检查环境。
 
+只要命令行、不要演示数据的话，可以直接从 PyPI 装：
+
+```bash
+pip install failgate
+failgate --version
+failgate doctor          # 哪些配好了、还缺什么
+```
+
 <p align="center">
   <img alt="对真实修复运行 failgate verify：通过验收，并给出变异测试算出的考卷强度" src="docs/media/cli-verify-verified.zh.gif" width="860">
 </p>

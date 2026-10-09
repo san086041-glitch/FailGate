@@ -75,3 +75,22 @@ jobs:
       - run: docker compose build api
       - run: docker run --rm failgate:local failgate --help
       - run: docker run --rm failgate:local docker --version
+
+  package:
+    # 发布包能构建、元数据合规、sdist 里没有私有文件（ADR 0047；正式发布只在公开镜像上跑 release.yml）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - run: |
+          python - <<'PY'
+          import glob, re, sys, tarfile
+          names = tarfile.open(glob.glob("dist/*.tar.gz")[0]).getnames()
+          bad = [n for n in names if re.search(r"/(docs|eval|tests|fixtures|secrets|scripts|deploy|\.github)/|\.env$", n)]
+          sys.exit(f"private files in sdist: {bad[:10]}" if bad else 0)
+          PY
