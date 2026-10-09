@@ -1,0 +1,1384 @@
+{
+  "meta": {
+    "started": "2026-10-09T08:04:33",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "和 replay repro 相同的规则：2025-01-01 之后创建、以完成状态关闭，带 `bug` 之一，类别为 `core` 之一，排除 `langchain` / `langchain-classic` / `standard-tests` / `text-splitters` / `openai` / `anthropic` / `ollama` / `groq` / `mistralai` / `huggingface` / `fireworks` / `xai` / `perplexity` / `openrouter` / `deepseek` / `exa` / `nomic` / `chroma` / `qdrant` / `documentation` / `unable-to-reproduce`，修复须改到 `libs/core/langchain_core/` 下的源码，按编号从新到旧跳过 3 个、取 6 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.05,
+    "runs": 2,
+    "kind": "L2 测试",
+    "subdir": "libs/core",
+    "test_deps": [
+      "pytest-asyncio",
+      "syrupy",
+      "pytest-mock",
+      "blockbuster",
+      "freezegun",
+      "responses",
+      "pytest-socket",
+      "numpy",
+      "grandalf"
+    ],
+    "source_prefix": "libs/core/langchain_core/"
+  },
+  "summary": {
+    "n": 6,
+    "outcomes": {
+      "l2": 6
+    },
+    "l2": 6,
+    "l2_rate": 1.0,
+    "l2_ci": [
+      0.6096569663469354,
+      0.9999999999999999
+    ],
+    "with_traceback": 1,
+    "l2_with_traceback": 1,
+    "fbpa_eligible": 5,
+    "fb_pa": 4,
+    "fb_pa_ci": [
+      0.3755282641185388,
+      0.9637768390302125
+    ],
+    "fbpa_outcomes": {
+      "fail_after": 1,
+      "fb_pa": 4,
+      "fix_not_code": 1
+    },
+    "end_to_end_n": 6,
+    "total_cost_usd": 0.1096,
+    "mean_cost_usd": 0.0183,
+    "mean_steps": 20.8,
+    "mean_submits": 1.0,
+    "mean_duration_s": 68.5
+  },
+  "reports": [
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 40001,
+      "title": "core: AIMessage.content_blocks mutates message.content in the Anthropic, Bedrock and Google translators",
+      "intake_version": "1.6.1",
+      "intake_python": "3.13.12",
+      "has_traceback": false,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "5893459c4f2bfac6c8d3262cae1e3f2246d9287f",
+        "committed_at": "2026-08-28T02:28:11Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.13",
+        "version": "1.6.2.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_40001.py",
+        "run": {
+          "version": "5893459c4f",
+          "python": "3.13",
+          "env_key": "a8ee46da4bacefffedce654023ba6cf1fcd38177782f00dc40af419bb30150b8",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': <N>}]",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "运行输出直接展示被测包的实际行为：读取 AIMessage.content_blocks 后 message.content 从 [{'type': 'custom', 'payload': 'value', 'index': 3}] 变成 [{'type': 'custom', 'payload': 'value'}]，即 Anthropic translator 通过 pop 删除了原块中的 index，与 issue 描述的第一处缺陷完全一致；脚本断言检查的也正是 issue 的预期（读取派生视图不应修改原消息），失败并非脚本自身造成。仅因 pytest 在首个参数用例后即停止，未展示 Google/Bedrock 分支，故未给满分。",
+            "quote": "AssertionError: reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': 3}]",
+            "quote_found": true,
+            "cost_usd": 0.001785
+          },
+          "log_dir": "artifacts/failgate-run-497f2054cd",
+          "output_tail": "    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ~~~~~~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40001.py\", line 91, in test_reading_content_blocks_does_not_mutate_message\n    assert message.content == original, (\n    ...<2 lines>...\n    )\nAssertionError: reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': 3}]\nassert [{'type': 'cu...ad': 'value'}] == [{'type': 'cu..., 'index': 3}]\n  \n  At index 0 diff: {'type': 'custom', 'payload': 'value'} != {'type': 'custom', 'payload': 'value', 'index': 3}\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40001.py::test_reading_content_blocks_does_not_mutate_message[anthropic-content0-response_metadata0-index]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_40001.py",
+            "claim": "Reading AIMessage.content_blocks mutates message.content: for model_provider anthropic/bedrock the `index` key is popped from the message's own block (and google_genai/google_vertexai gets `annotations` written onto its own text block), so the test's assert message.content == original (and consecutive-read/diff and preserved-key checks) fails at the first parametrized case while no exception is raised.",
+            "script": "\"\"\"Regression test for issue #40001.\n\nReading `AIMessage.content_blocks` is a derived view: it must not modify\n`message.content`. The Anthropic translator (reused by Bedrock) used to `pop`\n`index` off the caller's own block, and the Google GenAI translator (re-exported\nby Vertex AI) used to attach `annotations` onto the caller's own text block, so\nconsecutive reads of an unchanged message disagreed and the mutated content\ncould be persisted.\n\"\"\"\n\nfrom copy import deepcopy\nfrom typing import Any\n\nimport pytest\n\nfrom langchain_core.messages import AIMessage\n\nGROUNDING_METADATA = {\n    \"grounding_chunks\": [{\"web\": {\"uri\": \"https://example.com\", \"title\": \"Example\"}}],\n    \"grounding_supports\": [\n        {\"segment\": {\"start_index\": 0, \"end_index\": 5}, \"grounding_chunk_indices\": [0]}\n    ],\n}\n\n# Anthropic-style unknown block carrying an `index` the translator lifts onto the\n# standardized non-standard block.\nANTHROPIC_LIKE_CONTENT = [{\"type\": \"custom\", \"payload\": \"value\", \"index\": 3}]\n# Google GenAI-style text block that grounding citations get attached to.\nGENAI_LIKE_CONTENT = [{\"type\": \"text\", \"text\": \"hello\"}]\n\n\ndef _normalize(blocks: list[Any]) -> list[Any]:\n    \"\"\"Blank out per-call generated citation ids so two reads can be compared.\"\"\"\n    normalized = deepcopy(blocks)\n    for block in normalized:\n        if not isinstance(block, dict):\n            continue\n        if block.get(\"type\") == \"citation\" and \"id\" in block:\n            block[\"id\"] = \"<citation-id>\"\n        for annotation in block.get(\"annotations\", []) or []:\n            if isinstance(annotation, dict) and \"id\" in annotation:\n                annotation[\"id\"] = \"<citation-id>\"\n    return normalized\n\n\n@pytest.mark.parametrize(\n    (\"provider\", \"content\", \"response_metadata\", \"preserved_key\"),\n    [\n        # Anthropic translator: `index` was popped off the message's own block.\n        (\"anthropic\", ANTHROPIC_LIKE_CONTENT, {}, \"index\"),\n        # Bedrock reuses the Anthropic translator (requires a Claude model name).\n        (\n            \"bedrock\",\n            ANTHROPIC_LIKE_CONTENT,\n            {\"model_name\": \"claude-3-5-sonnet\"},\n            \"index\",\n        ),\n        # Google GenAI translator: `annotations` was written onto the message's\n        # own text block.\n        (\n            \"google_genai\",\n            GENAI_LIKE_CONTENT,\n            {\"grounding_metadata\": GROUNDING_METADATA},\n            \"annotations\",\n        ),\n        # Vertex AI re-exports the Google GenAI translator.\n        (\n            \"google_vertexai\",\n            GENAI_LIKE_CONTENT,\n            {\"grounding_metadata\": GROUNDING_METADATA},\n            \"annotations\",\n        ),\n    ],\n)\ndef test_reading_content_blocks_does_not_mutate_message(\n    provider: str,\n    content: list,\n    response_metadata: dict,\n    preserved_key: str,\n) -> None:\n    message = AIMessage(\n        content=deepcopy(content),\n        response_metadata={**response_metadata, \"model_provider\": provider},\n    )\n    original = deepcopy(message.content)\n\n    first = message.content_blocks\n    second = message.content_blocks\n\n    # The derived view must not write back into the message.\n    assert message.content == original, (\n        f\"reading content_blocks mutated message.content for {provider}: \"\n        f\"{message.content!r} != {original!r}\"\n    )\n    # The returned blocks must still carry the field that used to be moved.\n    assert preserved_key in first[0], (provider, first[0])\n    assert preserved_key in second[0], (provider, second[0])\n    # Two consecutive reads of an unchanged message must agree.\n    assert _normalize(first) == _normalize(second), (provider, first, second)\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for issue #40001.\n\nReading `AIMessage.content_blocks` is a derived view: it must not modify\n`message.content`. The Anthropic translator (reused by Bedrock) used to `pop`\n`index` off the caller's own block, and the Google GenAI translator (re-exported\nby Vertex AI) used to attach `annotations` onto the caller's own text block, so\nconsecutive reads of an unchanged message disagreed and the mutated content\ncould be persisted.\n\"\"\"\n\nfrom copy import deepcopy\nfrom typing import Any\n\nimport pytest\n\nfrom langchain_core.messages import AIMessage\n\nGROUNDING_METADATA = {\n    \"grounding_chunks\": [{\"web\": {\"uri\": \"https://example.com\", \"title\": \"Example\"}}],\n    \"grounding_supports\": [\n        {\"segment\": {\"start_index\": 0, \"end_index\": 5}, \"grounding_chunk_indices\": [0]}\n    ],\n}\n\n# Anthropic-style unknown block carrying an `index` the translator lifts onto the\n# standardized non-standard block.\nANTHROPIC_LIKE_CONTENT = [{\"type\": \"custom\", \"payload\": \"value\", \"index\": 3}]\n# Google GenAI-style text block that grounding citations get attached to.\nGENAI_LIKE_CONTENT = [{\"type\": \"text\", \"text\": \"hello\"}]\n\n\ndef _normalize(blocks: list[Any]) -> list[Any]:\n    \"\"\"Blank out per-call generated citation ids so two reads can be compared.\"\"\"\n    normalized = deepcopy(blocks)\n    for block in normalized:\n        if not isinstance(block, dict):\n            continue\n        if block.get(\"type\") == \"citation\" and \"id\" in block:\n            block[\"id\"] = \"<citation-id>\"\n        for annotation in block.get(\"annotations\", []) or []:\n            if isinstance(annotation, dict) and \"id\" in annotation:\n                annotation[\"id\"] = \"<citation-id>\"\n    return normalized\n\n\n@pytest.mark.parametrize(\n    (\"provider\", \"content\", \"response_metadata\", \"preserved_key\"),\n    [\n        # Anthropic translator: `index` was popped off the message's own block.\n        (\"anthropic\", ANTHROPIC_LIKE_CONTENT, {}, \"index\"),\n        # Bedrock reuses the Anthropic translator (requires a Claude model name).\n        (\n            \"bedrock\",\n            ANTHROPIC_LIKE_CONTENT,\n            {\"model_name\": \"claude-3-5-sonnet\"},\n            \"index\",\n        ),\n        # Google GenAI translator: `annotations` was written onto the message's\n        # own text block.\n        (\n            \"google_genai\",\n            GENAI_LIKE_CONTENT,\n            {\"grounding_metadata\": GROUNDING_METADATA},\n            \"annotations\",\n        ),\n        # Vertex AI re-exports the Google GenAI translator.\n        (\n            \"google_vertexai\",\n            GENAI_LIKE_CONTENT,\n            {\"grounding_metadata\": GROUNDING_METADATA},\n            \"annotations\",\n        ),\n    ],\n)\ndef test_reading_content_blocks_does_not_mutate_message(\n    provider: str,\n    content: list,\n    response_metadata: dict,\n    preserved_key: str,\n) -> None:\n    message = AIMessage(\n        content=deepcopy(content),\n        response_metadata={**response_metadata, \"model_provider\": provider},\n    )\n    original = deepcopy(message.content)\n\n    first = message.content_blocks\n    second = message.content_blocks\n\n    # The derived view must not write back into the message.\n    assert message.content == original, (\n        f\"reading content_blocks mutated message.content for {provider}: \"\n        f\"{message.content!r} != {original!r}\"\n    )\n    # The returned blocks must still carry the field that used to be moved.\n    assert preserved_key in first[0], (provider, first[0])\n    assert preserved_key in second[0], (provider, second[0])\n    # Two consecutive reads of an unchanged message must agree.\n    assert _normalize(first) == _normalize(second), (provider, first, second)\n",
+        "final_run": {
+          "version": "5893459c4f",
+          "python": "3.13",
+          "env_key": "a8ee46da4bacefffedce654023ba6cf1fcd38177782f00dc40af419bb30150b8",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': <N>}]",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "运行输出直接展示被测包的实际行为：读取 AIMessage.content_blocks 后 message.content 从 [{'type': 'custom', 'payload': 'value', 'index': 3}] 变成 [{'type': 'custom', 'payload': 'value'}]，即 Anthropic translator 通过 pop 删除了原块中的 index，与 issue 描述的第一处缺陷完全一致；脚本断言检查的也正是 issue 的预期（读取派生视图不应修改原消息），失败并非脚本自身造成。仅因 pytest 在首个参数用例后即停止，未展示 Google/Bedrock 分支，故未给满分。",
+            "quote": "AssertionError: reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': 3}]",
+            "quote_found": true,
+            "cost_usd": 0.001785
+          },
+          "log_dir": "artifacts/failgate-run-497f2054cd",
+          "output_tail": "    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ~~~~~~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40001.py\", line 91, in test_reading_content_blocks_does_not_mutate_message\n    assert message.content == original, (\n    ...<2 lines>...\n    )\nAssertionError: reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': 3}]\nassert [{'type': 'cu...ad': 'value'}] == [{'type': 'cu..., 'index': 3}]\n  \n  At index 0 diff: {'type': 'custom', 'payload': 'value'} != {'type': 'custom', 'payload': 'value', 'index': 3}\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40001.py::test_reading_content_blocks_does_not_mutate_message[anthropic-content0-response_metadata0-index]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "steps": 22,
+        "tool_counts": {
+          "search_code": 3,
+          "list_files": 1,
+          "read_file": 7,
+          "write_scratch": 3,
+          "run": 3,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.017209,
+        "prompt_tokens": 285325,
+        "completion_tokens": 8646,
+        "cached_tokens": 267904,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-40001-1791533186.json",
+        "duration_s": 67.7,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_40001.py"
+      },
+      "intake_cost_usd": 0.001634,
+      "judge_cost_usd": 0.001785,
+      "judge_prompt_tokens": 4612,
+      "judge_completion_tokens": 397,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 39821,
+      "title": "AIMessage.content_blocks mutates Bedrock Converse message content",
+      "intake_version": null,
+      "intake_python": null,
+      "has_traceback": false,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "09a917e1a3fcd67edddbfd9fc557066414bbb66b",
+        "committed_at": "2026-08-20T20:06:14Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.14",
+        "version": "1.6.1.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39821.py",
+        "run": {
+          "version": "09a917e1a3",
+          "python": "3.14",
+          "env_key": "7005ef9e39fd31223c74a5a92167bd88a7a7a9b289f88b84cce1ecb6712bc77b",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert [{'type': 'text', 'text': 'hello'}] == 'hello'",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "测试断言 content_blocks 读取后 message.content 应保持不变，实际输出显示字符串内容在读取后被替换为 [{'type': 'text', 'text': 'hello'}]，这正是 issue 描述的第一个变异行为，失败源自被测包而非脚本自身。仅未覆盖到未知 index 块那一半（因 -x 提前停止），故略低于满分。",
+            "quote": "AssertionError: assert [{'type': 'text', 'text': 'hello'}] == 'hello'",
+            "quote_found": true,
+            "cost_usd": 0.001252
+          },
+          "log_dir": "artifacts/failgate-run-058ed30440",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ~~~~~~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39821.py\", line 37, in test_content_blocks_does_not_mutate_bedrock_converse_content\n    assert message.content == original_content\nAssertionError: assert [{'type': 'text', 'text': 'hello'}] == 'hello'\n +  where [{'type': 'text', 'text': 'hello'}] = AIMessage(content=[{'type': 'text', 'text': 'hello'}], additional_kwargs={}, response_metadata={'model_provider': 'bedrock_converse'}, tool_calls=[], invalid_tool_calls=[]).content\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39821.py::test_content_blocks_does_not_mutate_bedrock_converse_content[string-content-AIMessage]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.04s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_39821.py",
+            "claim": "Reading AIMessage/AIMessageChunk.content_blocks for a bedrock_converse message mutates message.content: string content is replaced by a text-block list, and an unrecognized block's \"index\" is popped from the original dict so consecutive reads differ. The test asserts message.content is unchanged after two reads and that both reads are equal; it fails on all 4 parametrizations (current code) and would pass once the translator stops mutating the source message.",
+            "script": "\"\"\"Regression test for issue #39821.\n\nReading `content_blocks` on a Bedrock Converse message must derive a standardized\nrepresentation without mutating `message.content`, so that repeated reads return the\nsame value and the original Bedrock block data is preserved.\n\"\"\"\n\nfrom copy import deepcopy\nfrom typing import Any\n\nimport pytest\n\nfrom langchain_core.messages import AIMessage, AIMessageChunk\n\nBEDROCK_CONVERSE_CONTENTS: list[Any] = [\n    \"hello\",\n    [{\"type\": \"custom\", \"payload\": \"value\", \"index\": 3}],\n]\n\n\n@pytest.mark.parametrize(\"message_cls\", [AIMessage, AIMessageChunk])\n@pytest.mark.parametrize(\n    \"content\", BEDROCK_CONVERSE_CONTENTS, ids=[\"string-content\", \"unknown-indexed-block\"]\n)\ndef test_content_blocks_does_not_mutate_bedrock_converse_content(\n    message_cls: Any, content: Any\n) -> None:\n    message = message_cls(\n        content=deepcopy(content),\n        response_metadata={\"model_provider\": \"bedrock_converse\"},\n    )\n    original_content = deepcopy(message.content)\n\n    first_read = message.content_blocks\n    second_read = message.content_blocks\n\n    assert message.content == original_content\n    assert first_read == second_read\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for issue #39821.\n\nReading `content_blocks` on a Bedrock Converse message must derive a standardized\nrepresentation without mutating `message.content`, so that repeated reads return the\nsame value and the original Bedrock block data is preserved.\n\"\"\"\n\nfrom copy import deepcopy\nfrom typing import Any\n\nimport pytest\n\nfrom langchain_core.messages import AIMessage, AIMessageChunk\n\nBEDROCK_CONVERSE_CONTENTS: list[Any] = [\n    \"hello\",\n    [{\"type\": \"custom\", \"payload\": \"value\", \"index\": 3}],\n]\n\n\n@pytest.mark.parametrize(\"message_cls\", [AIMessage, AIMessageChunk])\n@pytest.mark.parametrize(\n    \"content\", BEDROCK_CONVERSE_CONTENTS, ids=[\"string-content\", \"unknown-indexed-block\"]\n)\ndef test_content_blocks_does_not_mutate_bedrock_converse_content(\n    message_cls: Any, content: Any\n) -> None:\n    message = message_cls(\n        content=deepcopy(content),\n        response_metadata={\"model_provider\": \"bedrock_converse\"},\n    )\n    original_content = deepcopy(message.content)\n\n    first_read = message.content_blocks\n    second_read = message.content_blocks\n\n    assert message.content == original_content\n    assert first_read == second_read\n",
+        "final_run": {
+          "version": "09a917e1a3",
+          "python": "3.14",
+          "env_key": "7005ef9e39fd31223c74a5a92167bd88a7a7a9b289f88b84cce1ecb6712bc77b",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert [{'type': 'text', 'text': 'hello'}] == 'hello'",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "测试断言 content_blocks 读取后 message.content 应保持不变，实际输出显示字符串内容在读取后被替换为 [{'type': 'text', 'text': 'hello'}]，这正是 issue 描述的第一个变异行为，失败源自被测包而非脚本自身。仅未覆盖到未知 index 块那一半（因 -x 提前停止），故略低于满分。",
+            "quote": "AssertionError: assert [{'type': 'text', 'text': 'hello'}] == 'hello'",
+            "quote_found": true,
+            "cost_usd": 0.001252
+          },
+          "log_dir": "artifacts/failgate-run-058ed30440",
+          "output_tail": "  File \"/opt/venv/lib/python3.14/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n    ~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ~~~~~~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39821.py\", line 37, in test_content_blocks_does_not_mutate_bedrock_converse_content\n    assert message.content == original_content\nAssertionError: assert [{'type': 'text', 'text': 'hello'}] == 'hello'\n +  where [{'type': 'text', 'text': 'hello'}] = AIMessage(content=[{'type': 'text', 'text': 'hello'}], additional_kwargs={}, response_metadata={'model_provider': 'bedrock_converse'}, tool_calls=[], invalid_tool_calls=[]).content\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39821.py::test_content_blocks_does_not_mutate_bedrock_converse_content[string-content-AIMessage]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.04s"
+        },
+        "steps": 21,
+        "tool_counts": {
+          "search_code": 3,
+          "list_files": 2,
+          "read_file": 6,
+          "write_scratch": 2,
+          "run": 5,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.012327,
+        "prompt_tokens": 227934,
+        "completion_tokens": 4970,
+        "cached_tokens": 210944,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-39821-1791533338.json",
+        "duration_s": 54.0,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39821.py"
+      },
+      "intake_cost_usd": 0.000722,
+      "judge_cost_usd": 0.001252,
+      "judge_prompt_tokens": 3284,
+      "judge_completion_tokens": 285,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 39752,
+      "title": "`RunnablePick` cannot be deserialized: declared serializable and dumps fine, but missing from the load mapping",
+      "intake_version": "master@2019bf5eb",
+      "intake_python": "3.12.11",
+      "has_traceback": false,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "2019bf5ebe50324c548f67c2666a804343f9b772",
+        "committed_at": "2026-08-18T22:43:53Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.12",
+        "version": "1.5.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39752.py",
+        "run": {
+          "version": "2019bf5ebe",
+          "python": "3.12",
+          "env_key": "30cd9179f08629482aa50b51cc1b40902e0db4b99953168fb819aba044bd4a21",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ValueError",
+              "message": "Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed. The default (allowed_objects='core') only permits core langchain-core classes. To allow trusted partner integrati",
+              "frames": [
+                "langchain_core/load/load.py:load",
+                "langchain_core/load/load.py:_load",
+                "langchain_core/load/load.py:__call__"
+              ]
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本先确认 RunnablePick.is_lc_serializable() 为 True，随后 load(dumpd(pick)) 抛出 ValueError：RunnablePick 不在允许反序列化的映射中，这正是 issue 描述的实际行为（dump 成功但 load 失败，缺少 mapping 条目），断言的也是 issue 期望的往返成功行为。",
+            "quote": "ValueError: Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed. The default (allowed_objects='core') only permits core langchain-core classes.",
+            "quote_found": true,
+            "cost_usd": 0.001277
+          },
+          "log_dir": "artifacts/failgate-run-338a2ce508",
+          "output_tail": "           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py\", line 20, in test_runnable_pick_serialization_round_trip\n    loaded_pick = load(dumpd(pick))\n                  ^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/_api/beta_decorator.py\", line 106, in warning_emitting_wrapper\n    return wrapped(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/load/load.py\", line 828, in load\n    return _load(obj)\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/load/load.py\", line 823, in _load\n    return reviver(loaded_obj)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/load/load.py\", line 518, in __call__\n    raise ValueError(msg)\nValueError: Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed. The default (allowed_objects='core') only permits core langchain-core classes. To allow trusted partner integrations, use allowed_objects='all'. Alternatively, pass an explicit list of allowed classes via allowed_objects=[...]. See langchain_core.load.mapping for the full allowlist.\n=============================== warnings summary ===============================\nlibs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n  /workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py:20: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit list of allowed classes (or 'messages' for untrusted input that contains only chat messages) to suppress this warning.\n    loaded_pick = load(dumpd(pick))\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 1 warning in 0.10s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_39752.py",
+            "claim": "Round-trip test: dumpd(RunnablePick) succeeds but load() raises ValueError \"Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed\" because langchain_core/load/mapping.py lacks a RunnablePick entry; the same happens for a chain built with RunnablePassthrough().pick([\"a\"]). Verified it passes once the two mapping entries are added.",
+            "script": "\"\"\"Regression test for issue #39752: `RunnablePick` cannot be deserialized.\"\"\"\n\nfrom langchain_core.load import dumpd, load\nfrom langchain_core.runnables import RunnablePassthrough, RunnablePick\n\n\ndef test_runnable_pick_serialization_round_trip() -> None:\n    \"\"\"`RunnablePick` declares itself serializable, so it must also be loadable.\n\n    `RunnablePick` (like its siblings `RunnablePassthrough` / `RunnableAssign` in\n    `langchain_core.runnables.passthrough`) reports `is_lc_serializable() is True`\n    and dumps successfully, but it had no entry in\n    `langchain_core.load.mapping`, so `load` refused to reconstruct it with\n    `ValueError: Deserialization of ('langchain', 'schema', 'runnable',\n    'RunnablePick') is not allowed`.\n    \"\"\"\n    pick = RunnablePick(keys=\"a\")\n    assert pick.is_lc_serializable() is True\n\n    loaded_pick = load(dumpd(pick))\n    assert loaded_pick.keys == \"a\"\n    assert loaded_pick.invoke({\"a\": 1, \"b\": 2}) == 1\n\n    # A chain built with the public `Runnable.pick()` helper must round-trip too.\n    chain = RunnablePassthrough().pick([\"a\"])\n    loaded_chain = load(dumpd(chain))\n    assert loaded_chain.invoke({\"a\": 1, \"b\": 2}) == {\"a\": 1}\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95
+          }
+        ],
+        "final_script": "\"\"\"Regression test for issue #39752: `RunnablePick` cannot be deserialized.\"\"\"\n\nfrom langchain_core.load import dumpd, load\nfrom langchain_core.runnables import RunnablePassthrough, RunnablePick\n\n\ndef test_runnable_pick_serialization_round_trip() -> None:\n    \"\"\"`RunnablePick` declares itself serializable, so it must also be loadable.\n\n    `RunnablePick` (like its siblings `RunnablePassthrough` / `RunnableAssign` in\n    `langchain_core.runnables.passthrough`) reports `is_lc_serializable() is True`\n    and dumps successfully, but it had no entry in\n    `langchain_core.load.mapping`, so `load` refused to reconstruct it with\n    `ValueError: Deserialization of ('langchain', 'schema', 'runnable',\n    'RunnablePick') is not allowed`.\n    \"\"\"\n    pick = RunnablePick(keys=\"a\")\n    assert pick.is_lc_serializable() is True\n\n    loaded_pick = load(dumpd(pick))\n    assert loaded_pick.keys == \"a\"\n    assert loaded_pick.invoke({\"a\": 1, \"b\": 2}) == 1\n\n    # A chain built with the public `Runnable.pick()` helper must round-trip too.\n    chain = RunnablePassthrough().pick([\"a\"])\n    loaded_chain = load(dumpd(chain))\n    assert loaded_chain.invoke({\"a\": 1, \"b\": 2}) == {\"a\": 1}\n",
+        "final_run": {
+          "version": "2019bf5ebe",
+          "python": "3.12",
+          "env_key": "30cd9179f08629482aa50b51cc1b40902e0db4b99953168fb819aba044bd4a21",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.95,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "ValueError",
+              "message": "Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed. The default (allowed_objects='core') only permits core langchain-core classes. To allow trusted partner integrati",
+              "frames": [
+                "langchain_core/load/load.py:load",
+                "langchain_core/load/load.py:_load",
+                "langchain_core/load/load.py:__call__"
+              ]
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.95,
+            "reason": "脚本先确认 RunnablePick.is_lc_serializable() 为 True，随后 load(dumpd(pick)) 抛出 ValueError：RunnablePick 不在允许反序列化的映射中，这正是 issue 描述的实际行为（dump 成功但 load 失败，缺少 mapping 条目），断言的也是 issue 期望的往返成功行为。",
+            "quote": "ValueError: Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed. The default (allowed_objects='core') only permits core langchain-core classes.",
+            "quote_found": true,
+            "cost_usd": 0.001277
+          },
+          "log_dir": "artifacts/failgate-run-338a2ce508",
+          "output_tail": "           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py\", line 20, in test_runnable_pick_serialization_round_trip\n    loaded_pick = load(dumpd(pick))\n                  ^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/_api/beta_decorator.py\", line 106, in warning_emitting_wrapper\n    return wrapped(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/load/load.py\", line 828, in load\n    return _load(obj)\n           ^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/load/load.py\", line 823, in _load\n    return reviver(loaded_obj)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/load/load.py\", line 518, in __call__\n    raise ValueError(msg)\nValueError: Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed. The default (allowed_objects='core') only permits core langchain-core classes. To allow trusted partner integrations, use allowed_objects='all'. Alternatively, pass an explicit list of allowed classes via allowed_objects=[...]. See langchain_core.load.mapping for the full allowlist.\n=============================== warnings summary ===============================\nlibs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n  /workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py:20: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit list of allowed classes (or 'messages' for untrusted input that contains only chat messages) to suppress this warning.\n    loaded_pick = load(dumpd(pick))\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 1 warning in 0.10s"
+        },
+        "steps": 24,
+        "tool_counts": {
+          "search_code": 5,
+          "read_file": 7,
+          "write_scratch": 4,
+          "run": 3,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.015374,
+        "prompt_tokens": 270454,
+        "completion_tokens": 7197,
+        "cached_tokens": 253056,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-39752-1791533501.json",
+        "duration_s": 64.0,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39752.py"
+      },
+      "intake_cost_usd": 0.001082,
+      "judge_cost_usd": 0.001277,
+      "judge_prompt_tokens": 3714,
+      "judge_completion_tokens": 198,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 39749,
+      "title": "`convert_to_openai_function` raises `AttributeError` for callables unless `langchain_core.tools` was imported",
+      "intake_version": "master@2019bf5eb",
+      "intake_python": "3.12.11",
+      "has_traceback": true,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "2019bf5ebe50324c548f67c2666a804343f9b772",
+        "committed_at": "2026-08-18T22:43:53Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.12",
+        "version": "1.5.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39749.py",
+        "run": {
+          "version": "2019bf5ebe",
+          "python": "3.12",
+          "env_key": "30cd9179f08629482aa50b51cc1b40902e0db4b99953168fb819aba044bd4a21",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "module 'langchain_core' has no attribute 'tools'",
+              "frames": [
+                "langchain_core/utils/function_calling.py:convert_to_openai_function"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "module 'langchain_core' has no attribute 'tools'",
+              "frames": [
+                "langchain_core/utils/function_calling.py:convert_to_openai_function"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts/failgate-run-748465475c",
+          "output_tail": "    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39749.py\", line 46, in test_convert_to_openai_function_callable_without_tools_import\n    params = convert_to_openai_function(my_func)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/utils/function_calling.py\", line 450, in convert_to_openai_function\n    elif isinstance(function, langchain_core.tools.base.BaseTool):\n                              ^^^^^^^^^^^^^^^^^^^^\nAttributeError: module 'langchain_core' has no attribute 'tools'\n============================= slowest 5 durations ==============================\n0.02s setup    libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_39749.py",
+            "claim": "Test simulates the fresh-process state (no langchain_core.tools import) and calls convert_to_openai_function(my_func); the buggy code raises AttributeError \"module 'langchain_core' has no attribute 'tools'\" at function_calling.py:450, exactly as reported; after the fix (local BaseTool import) it returns the schema with name 'my_func'.",
+            "script": "\"\"\"Regression test for issue #39749.\n\n``convert_to_openai_function`` reaches the ``BaseTool`` class through its parent\npackage (``langchain_core.tools.base.BaseTool``) while only doing ``import\nlangchain_core`` at module scope.  Importing a package does not bind its\nsubmodules, so in a process that has not imported ``langchain_core.tools`` the\n``isinstance`` check raises ``AttributeError`` for any input that reaches it\n(a plain callable in particular), even though converting callables is the\ndocumented use of the helper.\n\"\"\"\n\nimport sys\n\nimport langchain_core\nfrom langchain_core.utils.function_calling import convert_to_openai_function\n\n\ndef _make_process_look_like_tools_was_never_imported() -> None:\n    \"\"\"Undo the ``langchain_core.tools`` import in the current process.\n\n    ``langchain_core.tools`` becomes an attribute of ``langchain_core`` only as a\n    side effect of importing the submodule.  Dropping it (and its submodules from\n    ``sys.modules``) puts the current process in the same state as a fresh\n    interpreter that imported only ``langchain_core.utils.function_calling``.\n    \"\"\"\n    for name in list(sys.modules):\n        if name == \"langchain_core.tools\" or name.startswith(\"langchain_core.tools.\"):\n            del sys.modules[name]\n    if \"tools\" in vars(langchain_core):\n        delattr(langchain_core, \"tools\")\n\n\ndef test_convert_to_openai_function_callable_without_tools_import() -> None:\n    \"\"\"Converting a callable must not depend on ``langchain_core.tools`` imports.\"\"\"\n    _make_process_look_like_tools_was_never_imported()\n\n    def my_func(x: int, y: str) -> str:\n        \"\"\"Do something.\n\n        Args:\n            x: A number.\n            y: A string.\n        \"\"\"\n        return y * x\n\n    params = convert_to_openai_function(my_func)\n\n    assert params[\"name\"] == \"my_func\"\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0
+          }
+        ],
+        "final_script": "\"\"\"Regression test for issue #39749.\n\n``convert_to_openai_function`` reaches the ``BaseTool`` class through its parent\npackage (``langchain_core.tools.base.BaseTool``) while only doing ``import\nlangchain_core`` at module scope.  Importing a package does not bind its\nsubmodules, so in a process that has not imported ``langchain_core.tools`` the\n``isinstance`` check raises ``AttributeError`` for any input that reaches it\n(a plain callable in particular), even though converting callables is the\ndocumented use of the helper.\n\"\"\"\n\nimport sys\n\nimport langchain_core\nfrom langchain_core.utils.function_calling import convert_to_openai_function\n\n\ndef _make_process_look_like_tools_was_never_imported() -> None:\n    \"\"\"Undo the ``langchain_core.tools`` import in the current process.\n\n    ``langchain_core.tools`` becomes an attribute of ``langchain_core`` only as a\n    side effect of importing the submodule.  Dropping it (and its submodules from\n    ``sys.modules``) puts the current process in the same state as a fresh\n    interpreter that imported only ``langchain_core.utils.function_calling``.\n    \"\"\"\n    for name in list(sys.modules):\n        if name == \"langchain_core.tools\" or name.startswith(\"langchain_core.tools.\"):\n            del sys.modules[name]\n    if \"tools\" in vars(langchain_core):\n        delattr(langchain_core, \"tools\")\n\n\ndef test_convert_to_openai_function_callable_without_tools_import() -> None:\n    \"\"\"Converting a callable must not depend on ``langchain_core.tools`` imports.\"\"\"\n    _make_process_look_like_tools_was_never_imported()\n\n    def my_func(x: int, y: str) -> str:\n        \"\"\"Do something.\n\n        Args:\n            x: A number.\n            y: A string.\n        \"\"\"\n        return y * x\n\n    params = convert_to_openai_function(my_func)\n\n    assert params[\"name\"] == \"my_func\"\n",
+        "final_run": {
+          "version": "2019bf5ebe",
+          "python": "3.12",
+          "env_key": "30cd9179f08629482aa50b51cc1b40902e0db4b99953168fb819aba044bd4a21",
+          "cache_hit": true,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 1.0,
+            "match_method": "signature",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AttributeError",
+              "message": "module 'langchain_core' has no attribute 'tools'",
+              "frames": [
+                "langchain_core/utils/function_calling.py:convert_to_openai_function"
+              ]
+            },
+            "reported": {
+              "exc_type": "AttributeError",
+              "message": "module 'langchain_core' has no attribute 'tools'",
+              "frames": [
+                "langchain_core/utils/function_calling.py:convert_to_openai_function"
+              ]
+            },
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": null,
+          "log_dir": "artifacts/failgate-run-748465475c",
+          "output_tail": "    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39749.py\", line 46, in test_convert_to_openai_function_callable_without_tools_import\n    params = convert_to_openai_function(my_func)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/utils/function_calling.py\", line 450, in convert_to_openai_function\n    elif isinstance(function, langchain_core.tools.base.BaseTool):\n                              ^^^^^^^^^^^^^^^^^^^^\nAttributeError: module 'langchain_core' has no attribute 'tools'\n============================= slowest 5 durations ==============================\n0.02s setup    libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s"
+        },
+        "steps": 27,
+        "tool_counts": {
+          "read_file": 6,
+          "search_code": 5,
+          "list_files": 2,
+          "write_scratch": 2,
+          "run": 6,
+          "write_test": 3,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.024705,
+        "prompt_tokens": 338849,
+        "completion_tokens": 15185,
+        "cached_tokens": 323712,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-39749-1791533673.json",
+        "duration_s": 102.1,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39749.py"
+      },
+      "intake_cost_usd": 0.00094,
+      "judge_cost_usd": 0.0,
+      "judge_prompt_tokens": 0,
+      "judge_completion_tokens": 0,
+      "judge_cached_tokens": 0
+    },
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 39720,
+      "title": "test(core): remove stale xfail from test_sync_in_sync_lambdas",
+      "intake_version": "1.5.3",
+      "intake_python": "3.12.12",
+      "has_traceback": false,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "1662cea3be631116c4e8e5cab2d5227128351b2a",
+        "committed_at": "2026-08-18T14:13:50Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.12",
+        "version": "1.5.7.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39720.py",
+        "run": {
+          "version": "1662cea3be",
+          "python": "3.12",
+          "env_key": "effaf87c99820f5218faf5ffff56103dbe4f6fb0e5cd93d2ebb3889f9851e67a",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.75,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "tests<PATH> is still marked 'xfail' even though it passes (reported as XPASS). The missing _transform_stream_with_config functionality has been implemented, so the stale marker must be removed.",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.75,
+            "reason": "脚本失败于对被测仓库真实测试函数检查 xfail 标记的断言，运行输出直接显示出 test_sync_in_sync_lambdas 仍带有 'xfail' 标记，这正是 issue 描述的陈旧 xfail 根因，且断言检查的是 issue 期望的'无 xfail 标记'行为；但脚本只验证了标记仍存在，并未实际运行该测试以展示 XPASS 这一现象，属于部分对应。",
+            "quote": "assert 'xfail' not in ['xfail']\n +  where ['xfail'] = _xfail_markers(<function test_sync_in_sync_lambdas at 0x7f777b253b00>)",
+            "quote_found": true,
+            "cost_usd": 0.001976
+          },
+          "log_dir": "artifacts/failgate-run-736c53d0eb",
+          "output_tail": "    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39720.py\", line 37, in test_sync_in_sync_lambdas_is_not_marked_xfail\n    assert \"xfail\" not in _xfail_markers(test_sync_in_sync_lambdas), (\nAssertionError: tests/unit_tests/runnables/test_runnable_events_v1.py::test_sync_in_sync_lambdas is still marked 'xfail' even though it passes (reported as XPASS). The missing _transform_stream_with_config functionality has been implemented, so the stale marker must be removed.\nassert 'xfail' not in ['xfail']\n +  where ['xfail'] = _xfail_markers(<function test_sync_in_sync_lambdas at 0x7f777b253b00>)\n============================= slowest 5 durations ==============================\n0.18s call     libs/core/tests/unit_tests/test_failgate_issue_39720.py::test_sync_in_sync_lambdas_is_not_marked_xfail\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39720.py::test_sync_in_sync_lambdas_is_not_marked_xfail\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.20s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_39720.py",
+            "claim": "测试断言 test_runnable_events_v1.py::test_sync_in_sync_lambdas 不再带 xfail 标记（它现在会通过，被报成 XPASS），并另外以子进程运行该测试确认它是普通 passed 而非 xpassed。当前代码里该函数带 @pytest.mark.xfail，标记仍在，测试失败并给出 \"still marked 'xfail'\" 的断言信息；维护者删掉这个陈旧标记后测试通过。",
+            "script": "\"\"\"Regression test for GH-39720: stale ``xfail`` on test_sync_in_sync_lambdas.\n\n``tests/unit_tests/runnables/test_runnable_events_v1.py::test_sync_in_sync_lambdas``\nis marked with ``@pytest.mark.xfail`` because of \"missing functionality in\n``_transform_stream_with_config``\".  That functionality has since been\nimplemented, so the test now passes and pytest reports it as ``XPASS``.  A\npassing test must run as a normal passing test, i.e. without the stale marker.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nCORE_DIR = Path(__file__).resolve().parents[2]\nEVENTS_V1_TESTS = \"tests/unit_tests/runnables/test_runnable_events_v1.py\"\nTARGET_TEST = \"test_sync_in_sync_lambdas\"\n\n\ndef _xfail_markers(func: object) -> list[str]:\n    \"\"\"Return the names of the pytest markers applied to ``func``.\"\"\"\n    marks = getattr(func, \"pytestmark\", [])\n    if not isinstance(marks, list):\n        marks = [marks]\n    return [mark.name for mark in marks]\n\n\ndef test_sync_in_sync_lambdas_is_not_marked_xfail() -> None:\n    \"\"\"The v1 test passes; it must not carry a stale xfail marker (XPASS).\"\"\"\n    if str(CORE_DIR) not in sys.path:\n        sys.path.insert(0, str(CORE_DIR))\n    from tests.unit_tests.runnables.test_runnable_events_v1 import (\n        test_sync_in_sync_lambdas,\n    )\n\n    assert \"xfail\" not in _xfail_markers(test_sync_in_sync_lambdas), (\n        f\"{EVENTS_V1_TESTS}::{TARGET_TEST} is still marked 'xfail' even though it \"\n        \"passes (reported as XPASS). The missing _transform_stream_with_config \"\n        \"functionality has been implemented, so the stale marker must be removed.\"\n    )\n\n    # And confirm it is reported as a plain pass, not as an XPASS.\n    result = subprocess.run(  # noqa: S603\n        [\n            sys.executable,\n            \"-m\",\n            \"pytest\",\n            f\"{EVENTS_V1_TESTS}::{TARGET_TEST}\",\n            \"-q\",\n            \"-rA\",\n            \"-p\",\n            \"no:cacheprovider\",\n        ],\n        cwd=CORE_DIR,\n        capture_output=True,\n        text=True,\n        timeout=100,\n        check=False,\n    )\n    output = result.stdout + result.stderr\n    assert result.returncode == 0, output\n    assert \"xpass\" not in output.lower(), output\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.75
+          }
+        ],
+        "final_script": "\"\"\"Regression test for GH-39720: stale ``xfail`` on test_sync_in_sync_lambdas.\n\n``tests/unit_tests/runnables/test_runnable_events_v1.py::test_sync_in_sync_lambdas``\nis marked with ``@pytest.mark.xfail`` because of \"missing functionality in\n``_transform_stream_with_config``\".  That functionality has since been\nimplemented, so the test now passes and pytest reports it as ``XPASS``.  A\npassing test must run as a normal passing test, i.e. without the stale marker.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nCORE_DIR = Path(__file__).resolve().parents[2]\nEVENTS_V1_TESTS = \"tests/unit_tests/runnables/test_runnable_events_v1.py\"\nTARGET_TEST = \"test_sync_in_sync_lambdas\"\n\n\ndef _xfail_markers(func: object) -> list[str]:\n    \"\"\"Return the names of the pytest markers applied to ``func``.\"\"\"\n    marks = getattr(func, \"pytestmark\", [])\n    if not isinstance(marks, list):\n        marks = [marks]\n    return [mark.name for mark in marks]\n\n\ndef test_sync_in_sync_lambdas_is_not_marked_xfail() -> None:\n    \"\"\"The v1 test passes; it must not carry a stale xfail marker (XPASS).\"\"\"\n    if str(CORE_DIR) not in sys.path:\n        sys.path.insert(0, str(CORE_DIR))\n    from tests.unit_tests.runnables.test_runnable_events_v1 import (\n        test_sync_in_sync_lambdas,\n    )\n\n    assert \"xfail\" not in _xfail_markers(test_sync_in_sync_lambdas), (\n        f\"{EVENTS_V1_TESTS}::{TARGET_TEST} is still marked 'xfail' even though it \"\n        \"passes (reported as XPASS). The missing _transform_stream_with_config \"\n        \"functionality has been implemented, so the stale marker must be removed.\"\n    )\n\n    # And confirm it is reported as a plain pass, not as an XPASS.\n    result = subprocess.run(  # noqa: S603\n        [\n            sys.executable,\n            \"-m\",\n            \"pytest\",\n            f\"{EVENTS_V1_TESTS}::{TARGET_TEST}\",\n            \"-q\",\n            \"-rA\",\n            \"-p\",\n            \"no:cacheprovider\",\n        ],\n        cwd=CORE_DIR,\n        capture_output=True,\n        text=True,\n        timeout=100,\n        check=False,\n    )\n    output = result.stdout + result.stderr\n    assert result.returncode == 0, output\n    assert \"xpass\" not in output.lower(), output\n",
+        "final_run": {
+          "version": "1662cea3be",
+          "python": "3.12",
+          "env_key": "effaf87c99820f5218faf5ffff56103dbe4f6fb0e5cd93d2ebb3889f9851e67a",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.75,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "tests<PATH> is still marked 'xfail' even though it passes (reported as XPASS). The missing _transform_stream_with_config functionality has been implemented, so the stale marker must be removed.",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.75,
+            "reason": "脚本失败于对被测仓库真实测试函数检查 xfail 标记的断言，运行输出直接显示出 test_sync_in_sync_lambdas 仍带有 'xfail' 标记，这正是 issue 描述的陈旧 xfail 根因，且断言检查的是 issue 期望的'无 xfail 标记'行为；但脚本只验证了标记仍存在，并未实际运行该测试以展示 XPASS 这一现象，属于部分对应。",
+            "quote": "assert 'xfail' not in ['xfail']\n +  where ['xfail'] = _xfail_markers(<function test_sync_in_sync_lambdas at 0x7f777b253b00>)",
+            "quote_found": true,
+            "cost_usd": 0.001976
+          },
+          "log_dir": "artifacts/failgate-run-736c53d0eb",
+          "output_tail": "    item.runtest()\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39720.py\", line 37, in test_sync_in_sync_lambdas_is_not_marked_xfail\n    assert \"xfail\" not in _xfail_markers(test_sync_in_sync_lambdas), (\nAssertionError: tests/unit_tests/runnables/test_runnable_events_v1.py::test_sync_in_sync_lambdas is still marked 'xfail' even though it passes (reported as XPASS). The missing _transform_stream_with_config functionality has been implemented, so the stale marker must be removed.\nassert 'xfail' not in ['xfail']\n +  where ['xfail'] = _xfail_markers(<function test_sync_in_sync_lambdas at 0x7f777b253b00>)\n============================= slowest 5 durations ==============================\n0.18s call     libs/core/tests/unit_tests/test_failgate_issue_39720.py::test_sync_in_sync_lambdas_is_not_marked_xfail\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39720.py::test_sync_in_sync_lambdas_is_not_marked_xfail\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.20s"
+        },
+        "steps": 19,
+        "tool_counts": {
+          "search_code": 3,
+          "list_files": 3,
+          "read_file": 3,
+          "run": 4,
+          "write_scratch": 3,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.017956,
+        "prompt_tokens": 198440,
+        "completion_tokens": 11421,
+        "cached_tokens": 188032,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-39720-1791533833.json",
+        "duration_s": 88.6,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39720.py"
+      },
+      "intake_cost_usd": 0.001685,
+      "judge_cost_usd": 0.001976,
+      "judge_prompt_tokens": 3845,
+      "judge_completion_tokens": 748,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 39678,
+      "title": "Mustache templates silently render an empty string for any non-`dict` `Mapping` (`ChainMap`, `UserDict`, `os.environ`), contradicting the declared `Mapping[str, Any]` API",
+      "intake_version": "1.5.5",
+      "intake_python": "3.10.21",
+      "has_traceback": false,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "9a5810712658bdb9ad91925d3242032822f54a5e",
+        "committed_at": "2026-08-14T19:00:38Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.10",
+        "version": "1.5.6.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39678.py",
+        "run": {
+          "version": "9a58107126",
+          "python": "3.10",
+          "env_key": "9a6ef82b88483082713e648ee5f17b32c0c1b72a315f7cec88e90ce604ec9390",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert 'Hello ' == 'Hello Alice'",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本断言非 dict 的 Mapping（ChainMap 等）应像 dict 一样解析出 'Hello Alice'，而被测包实际返回 'Hello '，正是 issue 描述的“非 dict Mapping 被静默渲染为空字符串”的行为，断言检查的就是 issue 的预期行为。仅因 -x 在第一个参数化用例后停止，未展示 UserDict/MappingProxyType/os.environ，故略低于满分。",
+            "quote": "assert prompt.format(user=scope_factory()) == \"Hello Alice\"\nAssertionError: assert 'Hello ' == 'Hello Alice'",
+            "quote_found": true,
+            "cost_usd": 0.001533
+          },
+          "log_dir": "artifacts/failgate-run-f258276ca5",
+          "output_tail": "    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39678.py\", line 37, in test_mustache_resolves_non_dict_mapping\n    assert prompt.format(user=scope_factory()) == \"Hello Alice\"\nAssertionError: assert 'Hello ' == 'Hello Alice'\n  \n  - Hello Alice\n  + Hello \n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39678.py::test_mustache_resolves_non_dict_mapping[ChainMap]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.09s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_39678.py",
+            "claim": "Mustache rendering silently blanks non-dict Mapping scopes (ChainMap/UserDict/MappingProxyType/os.environ); the test asserts they resolve like plain dicts, failing on this code with 'Hello ' instead of 'Hello Alice' (and 'Home=' instead of the env value).",
+            "script": "\"\"\"Regression test for issue #39678.\n\nMustache rendering must resolve any `Mapping` scope, not just `dict` subclasses.\n`langchain_core.utils.mustache` declares `Mapping[str, Any]` scopes (and even uses\n`MappingProxyType({})` as its own default `data`), but `_get_key` dispatched on the\nconcrete `dict` type. Any other `Mapping` (ChainMap, UserDict, os.environ,\nMappingProxyType) raised an internal `TypeError` that was swallowed by the scope-chain\nfallback `except`, silently rendering an empty string.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nfrom collections import ChainMap, UserDict\nfrom types import MappingProxyType\nfrom typing import Any, Callable, Mapping\n\nimport pytest\n\nfrom langchain_core.prompts import PromptTemplate\n\n\n@pytest.mark.parametrize(\n    \"scope_factory\",\n    [\n        lambda: ChainMap({\"name\": \"Alice\"}),\n        lambda: UserDict({\"name\": \"Alice\"}),\n        lambda: MappingProxyType({\"name\": \"Alice\"}),\n    ],\n    ids=[\"ChainMap\", \"UserDict\", \"MappingProxyType\"],\n)\ndef test_mustache_resolves_non_dict_mapping(\n    scope_factory: Callable[[], Mapping[str, Any]],\n) -> None:\n    \"\"\"Non-`dict` mappings must resolve like a plain `dict` instead of `''`.\"\"\"\n    prompt = PromptTemplate.from_template(\"Hello {{user.name}}\", template_format=\"mustache\")\n    assert prompt.format(user=scope_factory()) == \"Hello Alice\"\n\n\ndef test_mustache_resolves_os_environ(monkeypatch: pytest.MonkeyPatch) -> None:\n    \"\"\"`os.environ` is a `Mapping` but not a `dict`, so it must still resolve.\"\"\"\n    monkeypatch.setenv(\"FAILGATE_TEST_HOME\", \"/home/alice\")\n    prompt = PromptTemplate.from_template(\n        \"Home={{env.FAILGATE_TEST_HOME}}\", template_format=\"mustache\"\n    )\n    assert prompt.format(env=os.environ) == \"Home=/home/alice\"\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for issue #39678.\n\nMustache rendering must resolve any `Mapping` scope, not just `dict` subclasses.\n`langchain_core.utils.mustache` declares `Mapping[str, Any]` scopes (and even uses\n`MappingProxyType({})` as its own default `data`), but `_get_key` dispatched on the\nconcrete `dict` type. Any other `Mapping` (ChainMap, UserDict, os.environ,\nMappingProxyType) raised an internal `TypeError` that was swallowed by the scope-chain\nfallback `except`, silently rendering an empty string.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nfrom collections import ChainMap, UserDict\nfrom types import MappingProxyType\nfrom typing import Any, Callable, Mapping\n\nimport pytest\n\nfrom langchain_core.prompts import PromptTemplate\n\n\n@pytest.mark.parametrize(\n    \"scope_factory\",\n    [\n        lambda: ChainMap({\"name\": \"Alice\"}),\n        lambda: UserDict({\"name\": \"Alice\"}),\n        lambda: MappingProxyType({\"name\": \"Alice\"}),\n    ],\n    ids=[\"ChainMap\", \"UserDict\", \"MappingProxyType\"],\n)\ndef test_mustache_resolves_non_dict_mapping(\n    scope_factory: Callable[[], Mapping[str, Any]],\n) -> None:\n    \"\"\"Non-`dict` mappings must resolve like a plain `dict` instead of `''`.\"\"\"\n    prompt = PromptTemplate.from_template(\"Hello {{user.name}}\", template_format=\"mustache\")\n    assert prompt.format(user=scope_factory()) == \"Hello Alice\"\n\n\ndef test_mustache_resolves_os_environ(monkeypatch: pytest.MonkeyPatch) -> None:\n    \"\"\"`os.environ` is a `Mapping` but not a `dict`, so it must still resolve.\"\"\"\n    monkeypatch.setenv(\"FAILGATE_TEST_HOME\", \"/home/alice\")\n    prompt = PromptTemplate.from_template(\n        \"Home={{env.FAILGATE_TEST_HOME}}\", template_format=\"mustache\"\n    )\n    assert prompt.format(env=os.environ) == \"Home=/home/alice\"\n",
+        "final_run": {
+          "version": "9a58107126",
+          "python": "3.10",
+          "env_key": "9a6ef82b88483082713e648ee5f17b32c0c1b72a315f7cec88e90ce604ec9390",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "assert 'Hello ' == 'Hello Alice'",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本断言非 dict 的 Mapping（ChainMap 等）应像 dict 一样解析出 'Hello Alice'，而被测包实际返回 'Hello '，正是 issue 描述的“非 dict Mapping 被静默渲染为空字符串”的行为，断言检查的就是 issue 的预期行为。仅因 -x 在第一个参数化用例后停止，未展示 UserDict/MappingProxyType/os.environ，故略低于满分。",
+            "quote": "assert prompt.format(user=scope_factory()) == \"Hello Alice\"\nAssertionError: assert 'Hello ' == 'Hello Alice'",
+            "quote_found": true,
+            "cost_usd": 0.001533
+          },
+          "log_dir": "artifacts/failgate-run-f258276ca5",
+          "output_tail": "    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/skipping.py\", line 268, in pytest_runtest_call\n    return (yield)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/runner.py\", line 184, in pytest_runtest_call\n    item.runtest()\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 1707, in runtest\n    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n  File \"/opt/venv/lib/python3.10/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39678.py\", line 37, in test_mustache_resolves_non_dict_mapping\n    assert prompt.format(user=scope_factory()) == \"Hello Alice\"\nAssertionError: assert 'Hello ' == 'Hello Alice'\n  \n  - Hello Alice\n  + Hello \n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39678.py::test_mustache_resolves_non_dict_mapping[ChainMap]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.09s"
+        },
+        "steps": 12,
+        "tool_counts": {
+          "list_files": 3,
+          "read_file": 3,
+          "search_code": 1,
+          "write_scratch": 1,
+          "run": 1,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.006509,
+        "prompt_tokens": 74991,
+        "completion_tokens": 2701,
+        "cached_tokens": 65408,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-39678-1791533908.json",
+        "duration_s": 34.7,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_39678.py"
+      },
+      "intake_cost_usd": 0.001663,
+      "judge_cost_usd": 0.001533,
+      "judge_prompt_tokens": 4016,
+      "judge_completion_tokens": 336,
+      "judge_cached_tokens": 256
+    }
+  ],
+  "fbpa": [
+    {
+      "number": 40001,
+      "title": "core: AIMessage.content_blocks mutates message.content in the Anthropic, Bedrock and Google translators",
+      "reported_version": "1.6.1",
+      "python": "3.13",
+      "proxy": "—",
+      "fix": {
+        "pr": 40023,
+        "sha": "e92c8a08bf382121cc1e95f7e75ddc8cb9c01ab0",
+        "parent": "36f0d10348b0e5c4917602d80cc1b5f0ced1da8a",
+        "committed_at": "2026-08-30T02:44:25Z",
+        "merge": false
+      },
+      "pretend_version": "1.6.2.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.34,
+          "tail": "    assert message.content == original, (\n    ...<2 lines>...\n    )\nAssertionError: reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': 3}]\nassert [{'type': 'cu...ad': 'value'}] == [{'type': 'cu..., 'index': 3}]\n  \n  At index 0 diff: {'type': 'custom', 'payload': 'value'} != {'type': 'custom', 'payload': 'value', 'index': 3}\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40001.py::test_reading_content_blocks_does_not_mutate_message[anthropic-content0-response_metadata0-index]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts/failgate-run-cc95f7f050"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.158,
+          "tail": "    assert message.content == original, (\n    ...<2 lines>...\n    )\nAssertionError: reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': 3}]\nassert [{'type': 'cu...ad': 'value'}] == [{'type': 'cu..., 'index': 3}]\n  \n  At index 0 diff: {'type': 'custom', 'payload': 'value'} != {'type': 'custom', 'payload': 'value', 'index': 3}\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40001.py::test_reading_content_blocks_does_not_mutate_message[anthropic-content0-response_metadata0-index]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.04s",
+          "log_dir": "artifacts/failgate-run-6dbd4824db"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.131,
+          "tail": "    assert message.content == original, (\n    ...<2 lines>...\n    )\nAssertionError: reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': 3}]\nassert [{'type': 'cu...ad': 'value'}] == [{'type': 'cu..., 'index': 3}]\n  \n  At index 0 diff: {'type': 'custom', 'payload': 'value'} != {'type': 'custom', 'payload': 'value', 'index': 3}\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40001.py::test_reading_content_blocks_does_not_mutate_message[anthropic-content0-response_metadata0-index]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.04s",
+          "log_dir": "artifacts/failgate-run-1e676713ef"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.161,
+          "tail": "    assert message.content == original, (\n    ...<2 lines>...\n    )\nAssertionError: reading content_blocks mutated message.content for anthropic: [{'type': 'custom', 'payload': 'value'}] != [{'type': 'custom', 'payload': 'value', 'index': 3}]\nassert [{'type': 'cu...ad': 'value'}] == [{'type': 'cu..., 'index': 3}]\n  \n  At index 0 diff: {'type': 'custom', 'payload': 'value'} != {'type': 'custom', 'payload': 'value', 'index': 3}\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40001.py::test_reading_content_blocks_does_not_mutate_message[anthropic-content0-response_metadata0-index]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.04s",
+          "log_dir": "artifacts/failgate-run-38b3c7fdf7"
+        }
+      ],
+      "outcome": "fail_after",
+      "error": null
+    },
+    {
+      "number": 39821,
+      "title": "AIMessage.content_blocks mutates Bedrock Converse message content",
+      "reported_version": null,
+      "python": "3.14",
+      "proxy": "—",
+      "fix": {
+        "pr": 40022,
+        "sha": "36f0d10348b0e5c4917602d80cc1b5f0ced1da8a",
+        "parent": "1e1e238703698682ecff3ac3c9a586132ffa767f",
+        "committed_at": "2026-08-30T02:16:32Z",
+        "merge": false
+      },
+      "pretend_version": "1.6.1.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.387,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39821.py\", line 37, in test_content_blocks_does_not_mutate_bedrock_converse_content\n    assert message.content == original_content\nAssertionError: assert [{'type': 'text', 'text': 'hello'}] == 'hello'\n +  where [{'type': 'text', 'text': 'hello'}] = AIMessage(content=[{'type': 'text', 'text': 'hello'}], additional_kwargs={}, response_metadata={'model_provider': 'bedrock_converse'}, tool_calls=[], invalid_tool_calls=[]).content\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39821.py::test_content_blocks_does_not_mutate_bedrock_converse_content[string-content-AIMessage]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.04s",
+          "log_dir": "artifacts/failgate-run-7b9ebfced8"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.448,
+          "tail": "  File \"/opt/venv/lib/python3.14/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.14/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39821.py\", line 37, in test_content_blocks_does_not_mutate_bedrock_converse_content\n    assert message.content == original_content\nAssertionError: assert [{'type': 'text', 'text': 'hello'}] == 'hello'\n +  where [{'type': 'text', 'text': 'hello'}] = AIMessage(content=[{'type': 'text', 'text': 'hello'}], additional_kwargs={}, response_metadata={'model_provider': 'bedrock_converse'}, tool_calls=[], invalid_tool_calls=[]).content\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39821.py::test_content_blocks_does_not_mutate_bedrock_converse_content[string-content-AIMessage]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.04s",
+          "log_dir": "artifacts/failgate-run-31d5a68c85"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.277,
+          "tail": "....                                                                     [100%]\n============================= slowest 5 durations ==============================\n0.01s setup    libs/core/tests/unit_tests/test_failgate_issue_39821.py::test_content_blocks_does_not_mutate_bedrock_converse_content[string-content-AIMessage]\n0.01s call     libs/core/tests/unit_tests/test_failgate_issue_39821.py::test_content_blocks_does_not_mutate_bedrock_converse_content[string-content-AIMessage]\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n4 passed in 0.07s",
+          "log_dir": "artifacts/failgate-run-e37663d1c7"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.227,
+          "tail": "....                                                                     [100%]\n============================= slowest 5 durations ==============================\n\n(5 durations < 0.005s hidden.  Use -vv to show these durations.)\n4 passed in 0.04s",
+          "log_dir": "artifacts/failgate-run-089c8dd29e"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 39752,
+      "title": "`RunnablePick` cannot be deserialized: declared serializable and dumps fine, but missing from the load mapping",
+      "reported_version": "master@2019bf5eb",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 39753,
+        "sha": "ded2a1fb3c06a9562d9079e42099020ecaca4060",
+        "parent": "04ae7447d72e61841905a41b309856c5191452fb",
+        "committed_at": "2026-08-19T14:45:58Z",
+        "merge": false
+      },
+      "pretend_version": "1.5.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.152,
+          "tail": "    raise ValueError(msg)\nValueError: Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed. The default (allowed_objects='core') only permits core langchain-core classes. To allow trusted partner integrations, use allowed_objects='all'. Alternatively, pass an explicit list of allowed classes via allowed_objects=[...]. See langchain_core.load.mapping for the full allowlist.\n=============================== warnings summary ===============================\nlibs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n  /workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py:20: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit list of allowed classes (or 'messages' for untrusted input that contains only chat messages) to suppress this warning.\n    loaded_pick = load(dumpd(pick))\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 1 warning in 0.09s",
+          "log_dir": "artifacts/failgate-run-3008df1ac2"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.177,
+          "tail": "    raise ValueError(msg)\nValueError: Deserialization of ('langchain', 'schema', 'runnable', 'RunnablePick') is not allowed. The default (allowed_objects='core') only permits core langchain-core classes. To allow trusted partner integrations, use allowed_objects='all'. Alternatively, pass an explicit list of allowed classes via allowed_objects=[...]. See langchain_core.load.mapping for the full allowlist.\n=============================== warnings summary ===============================\nlibs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n  /workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py:20: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit list of allowed classes (or 'messages' for untrusted input that contains only chat messages) to suppress this warning.\n    loaded_pick = load(dumpd(pick))\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 1 warning in 0.09s",
+          "log_dir": "artifacts/failgate-run-15105f94a8"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.192,
+          "tail": "=============================== warnings summary ===============================\nlibs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n  /workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py:20: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit list of allowed classes (or 'messages' for untrusted input that contains only chat messages) to suppress this warning.\n    loaded_pick = load(dumpd(pick))\n\nlibs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n  /workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py:26: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit list of allowed classes (or 'messages' for untrusted input that contains only chat messages) to suppress this warning.\n    loaded_chain = load(dumpd(chain))\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n============================= slowest 5 durations ==============================\n0.01s call     libs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n1 passed, 2 warnings in 0.11s",
+          "log_dir": "artifacts/failgate-run-ffa681930a"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.122,
+          "tail": "=============================== warnings summary ===============================\nlibs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n  /workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py:20: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit list of allowed classes (or 'messages' for untrusted input that contains only chat messages) to suppress this warning.\n    loaded_pick = load(dumpd(pick))\n\nlibs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n  /workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39752.py:26: LangChainPendingDeprecationWarning: The default value of `allowed_objects` will change in a future version. Pass an explicit list of allowed classes (or 'messages' for untrusted input that contains only chat messages) to suppress this warning.\n    loaded_chain = load(dumpd(chain))\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n============================= slowest 5 durations ==============================\n0.01s call     libs/core/tests/unit_tests/test_failgate_issue_39752.py::test_runnable_pick_serialization_round_trip\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n1 passed, 2 warnings in 0.10s",
+          "log_dir": "artifacts/failgate-run-8a52f4d669"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 39749,
+      "title": "`convert_to_openai_function` raises `AttributeError` for callables unless `langchain_core.tools` was imported",
+      "reported_version": "master@2019bf5eb",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 39750,
+        "sha": "04ae7447d72e61841905a41b309856c5191452fb",
+        "parent": "37f266278d780cd7ebdfbf1891ba92066192d687",
+        "committed_at": "2026-08-19T14:39:18Z",
+        "merge": false
+      },
+      "pretend_version": "1.5.7.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.056,
+          "tail": "  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39749.py\", line 46, in test_convert_to_openai_function_callable_without_tools_import\n    params = convert_to_openai_function(my_func)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/utils/function_calling.py\", line 450, in convert_to_openai_function\n    elif isinstance(function, langchain_core.tools.base.BaseTool):\n                              ^^^^^^^^^^^^^^^^^^^^\nAttributeError: module 'langchain_core' has no attribute 'tools'\n============================= slowest 5 durations ==============================\n0.02s setup    libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.06s",
+          "log_dir": "artifacts/failgate-run-e1e1785f84"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.14,
+          "tail": "  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39749.py\", line 46, in test_convert_to_openai_function_callable_without_tools_import\n    params = convert_to_openai_function(my_func)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/langchain_core/utils/function_calling.py\", line 450, in convert_to_openai_function\n    elif isinstance(function, langchain_core.tools.base.BaseTool):\n                              ^^^^^^^^^^^^^^^^^^^^\nAttributeError: module 'langchain_core' has no attribute 'tools'\n============================= slowest 5 durations ==============================\n0.03s setup    libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.07s",
+          "log_dir": "artifacts/failgate-run-1641370323"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.156,
+          "tail": ".                                                                        [100%]\n============================= slowest 5 durations ==============================\n0.04s call     libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n1 passed in 0.10s",
+          "log_dir": "artifacts/failgate-run-092e067126"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.149,
+          "tail": ".                                                                        [100%]\n============================= slowest 5 durations ==============================\n0.03s call     libs/core/tests/unit_tests/test_failgate_issue_39749.py::test_convert_to_openai_function_callable_without_tools_import\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n1 passed in 0.10s",
+          "log_dir": "artifacts/failgate-run-64b48b7250"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    },
+    {
+      "number": 39720,
+      "title": "test(core): remove stale xfail from test_sync_in_sync_lambdas",
+      "reported_version": "1.5.3",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 39723,
+        "sha": "94509faaed18d2a32faa232bde828ef2e5e1d6c3",
+        "parent": "1662cea3be631116c4e8e5cab2d5227128351b2a",
+        "committed_at": "2026-08-18T16:57:41Z",
+        "merge": false
+      },
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "fix_not_code",
+      "error": null
+    },
+    {
+      "number": 39678,
+      "title": "Mustache templates silently render an empty string for any non-`dict` `Mapping` (`ChainMap`, `UserDict`, `os.environ`), contradicting the declared `Mapping[str, Any]` API",
+      "reported_version": "1.5.5",
+      "python": "3.10",
+      "proxy": "—",
+      "fix": {
+        "pr": 39680,
+        "sha": "9c21d84bcbaf541d6aa9bcc28131bad3f4288c2d",
+        "parent": "4f355f38dec58c0f247ed4992c445293ac5d1073",
+        "committed_at": "2026-08-18T00:29:33Z",
+        "merge": false
+      },
+      "pretend_version": "1.5.6.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.451,
+          "tail": "  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39678.py\", line 37, in test_mustache_resolves_non_dict_mapping\n    assert prompt.format(user=scope_factory()) == \"Hello Alice\"\nAssertionError: assert 'Hello ' == 'Hello Alice'\n  \n  - Hello Alice\n  + Hello \n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39678.py::test_mustache_resolves_non_dict_mapping[ChainMap]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.09s",
+          "log_dir": "artifacts/failgate-run-98abd75901"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.317,
+          "tail": "  File \"/opt/venv/lib/python3.10/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_39678.py\", line 37, in test_mustache_resolves_non_dict_mapping\n    assert prompt.format(user=scope_factory()) == \"Hello Alice\"\nAssertionError: assert 'Hello ' == 'Hello Alice'\n  \n  - Hello Alice\n  + Hello \n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_39678.py::test_mustache_resolves_non_dict_mapping[ChainMap]\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.09s",
+          "log_dir": "artifacts/failgate-run-273fd50494"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.426,
+          "tail": "....                                                                     [100%]\n============================= slowest 5 durations ==============================\n\n(5 durations < 0.005s hidden.  Use -vv to show these durations.)\n4 passed in 0.09s",
+          "log_dir": "artifacts/failgate-run-93b7c4edc7"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.439,
+          "tail": "....                                                                     [100%]\n============================= slowest 5 durations ==============================\n\n(5 durations < 0.005s hidden.  Use -vv to show these durations.)\n4 passed in 0.09s",
+          "log_dir": "artifacts/failgate-run-634c4f6989"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    }
+  ]
+}

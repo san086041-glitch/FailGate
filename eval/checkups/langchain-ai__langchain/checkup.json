@@ -2,8 +2,8 @@
  "repo": "langchain-ai/langchain",
  "package": "langchain-core",
  "since": "2025-01-01",
- "offset": 12,
- "limit": 12,
+ "offset": 3,
+ "limit": 6,
  "survey": {
   "repo": "langchain-ai/langchain",
   "stars": 147414,
@@ -106,8 +106,20 @@
  },
  "rule_path": "eval/datasets/langchain-ai__langchain/selection.json",
  "rule_drafted": true,
- "backfilled": null,
- "l2_run": null,
- "verify_run": null,
- "report": null
+ "backfilled": 6000,
+ "l2_run": "eval/runs/langchain-ai__langchain__l2__20261009-0804.json",
+ "verify_run": "eval/runs/langchain-ai__langchain__verify__20261009-0819.jsonl",
+ "report": "eval/reports/langchain-ai__langchain__checkup__20261009-1741.md",
+ "subdir": "libs/core",
+ "test_deps": [
+  "pytest-asyncio",
+  "syrupy",
+  "pytest-mock",
+  "blockbuster",
+  "freezegun",
+  "responses",
+  "pytest-socket",
+  "numpy",
+  "grandalf"
+ ]
 }

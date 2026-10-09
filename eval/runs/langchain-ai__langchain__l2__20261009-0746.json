@@ -1,0 +1,697 @@
+{
+  "meta": {
+    "started": "2026-10-09T07:46:43",
+    "model": "deepseek-flash",
+    "prompt": "1",
+    "selection": "和 replay repro 相同的规则：2025-01-01 之后创建、以完成状态关闭，带 `bug` 之一，类别为 `core` 之一，排除 `langchain` / `langchain-classic` / `standard-tests` / `text-splitters` / `openai` / `anthropic` / `ollama` / `groq` / `mistralai` / `huggingface` / `fireworks` / `xai` / `perplexity` / `openrouter` / `deepseek` / `exa` / `nomic` / `chroma` / `qdrant` / `documentation` / `unable-to-reproduce`，修复须改到 `libs/core/langchain_core/` 下的源码，按编号从新到旧跳过 0 个、取 3 个",
+    "max_steps": 40,
+    "max_attempts": 4,
+    "budget_usd": 0.05,
+    "runs": 2,
+    "kind": "L2 测试",
+    "subdir": "libs/core",
+    "test_deps": [
+      "pytest-asyncio",
+      "syrupy",
+      "pytest-mock",
+      "blockbuster",
+      "freezegun",
+      "responses",
+      "pytest-socket",
+      "numpy",
+      "grandalf"
+    ],
+    "source_prefix": "libs/core/langchain_core/"
+  },
+  "summary": {
+    "n": 3,
+    "outcomes": {
+      "l2": 3
+    },
+    "l2": 3,
+    "l2_rate": 1.0,
+    "l2_ci": [
+      0.43849391955098227,
+      1.0
+    ],
+    "with_traceback": 0,
+    "l2_with_traceback": 0,
+    "fbpa_eligible": 2,
+    "fb_pa": 1,
+    "fb_pa_ci": [
+      0.09452865480086614,
+      0.9054713451991339
+    ],
+    "fbpa_outcomes": {
+      "fail_after": 1,
+      "fix_not_code": 1,
+      "fb_pa": 1
+    },
+    "end_to_end_n": 3,
+    "total_cost_usd": 0.0787,
+    "mean_cost_usd": 0.0262,
+    "mean_steps": 22.7,
+    "mean_submits": 1.0,
+    "mean_duration_s": 103.4
+  },
+  "reports": [
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 40807,
+      "title": "core: docstring examples use nonexistent imports, retired Claude models and invalid `openai:` model strings",
+      "intake_version": "1.6.4",
+      "intake_python": "3.12.10",
+      "has_traceback": false,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "7622d3dce760ac4be6d9aef4c653277e06064aea",
+        "committed_at": "2026-09-23T22:48:41Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.12",
+        "version": "1.6.5.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_40807.py",
+        "run": {
+          "version": "7622d3dce7",
+          "python": "3.12",
+          "env_key": "ece3177b8bed71c4debd8774d999d0a8f8976132764177045ac5a27989806d70",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.75,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "Docstring examples import 'langchain_core.chat_models', which does not exist, so copying them raises ModuleNotFoundError: No module named 'langchain_core.chat_models'. Offending lines: ['langchain_cor",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.75,
+            "reason": "The failure shows the real langchain-core docstrings still contain `from langchain_core.chat_models ...` imports, which is one of the concrete problems the issue reports (imports from a module that doesn't exist). However, the check is a static grep of docstrings rather than actually running the examples, and because pytest stops on the first failure the other two aspects of the issue (`openai:` prefix passed to ChatOpenAI, retired Anthropic IDs) are never exercised, so it only partially demonstrates the reported behavior.",
+            "quote": "'langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic'",
+            "quote_found": true,
+            "cost_usd": 0.002263
+          },
+          "log_dir": "artifacts/failgate-run-5927bd5f7d",
+          "output_tail": "    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40807.py\", line 83, in test_docstring_examples_do_not_import_nonexistent_chat_models_module\n    assert offenders == [], (\nAssertionError: Docstring examples import 'langchain_core.chat_models', which does not exist, so copying them raises ModuleNotFoundError: No module named 'langchain_core.chat_models'. Offending lines: ['langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic', 'langchain_core.runnables.retry.RunnableRetry: from langchain_core.chat_models import ChatOpenAI', 'langchain_core.runnables.fallbacks.RunnableWithFallbacks: from langchain_core.chat_models.openai import ChatOpenAI', 'langchain_core.runnables.fallbacks.RunnableWithFallbacks: from langchain_core.chat_models.anthropic import ChatAnthropic']\nassert ['langchain_c...hatAnthropic'] == []\n  \n  Left contains 4 more items, first extra item: 'langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic'\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n0.18s call     libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.20s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_40807.py",
+            "claim": "Scans the docstrings named in issue #40807 (FewShotChatMessagePromptTemplate, RunnableRetry, RunnableWithFallbacks + __getattr__, StrOutputParser, trim_messages, RunnableWithMessageHistory, InMemoryRateLimiter, RunnableSerializable.configurable_alternatives) and asserts they contain no import of the nonexistent langchain_core.chat_models module, no openai:-prefixed model passed to ChatOpenAI, and no retired Anthropic model IDs; all three assertions fail on the current code (4 nonexistent-module imports, 3 openai: prefixes, 6 retired model IDs) and are satisfied by the docstring-only fix.",
+            "script": "\"\"\"Regression tests for langchain-core docstring examples (issue #40807).\n\nSeveral ``Example:`` blocks in ``langchain_core`` docstrings could not be copied\nand run as-is:\n\n* they imported :mod:`langchain_core.chat_models`, a module that does not exist,\n  so the examples raised ``ModuleNotFoundError: No module named\n  'langchain_core.chat_models'``;\n* they passed ``\"openai:<model>\"`` strings to ``ChatOpenAI``, but only\n  ``init_chat_model`` understands that prefix -- ``ChatOpenAI`` forwards it to\n  the API unchanged (``model._get_request_payload(\"hello\")[\"model\"] ==\n  \"openai:gpt-5.5\"``);\n* they referenced retired Anthropic model IDs (``claude-2``,\n  ``claude-3-haiku-20240307``, ...).\n\nThese checks are deliberately negative: they pin the properties the issue asks\nfor (runnable imports, prefix-free ``ChatOpenAI`` models, non-retired Anthropic\nIDs) without hard-coding the exact replacement strings chosen by the fix.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport importlib\nimport inspect\nimport re\nfrom collections.abc import Iterator\n\n#: Objects whose docstrings carry the ``Example:`` blocks reported in #40807.\nDOCSTRING_TARGETS: tuple[tuple[str, str], ...] = (\n    (\"langchain_core.prompts.few_shot\", \"FewShotChatMessagePromptTemplate\"),\n    (\"langchain_core.runnables.retry\", \"RunnableRetry\"),\n    (\"langchain_core.runnables.fallbacks\", \"RunnableWithFallbacks\"),\n    (\"langchain_core.runnables.fallbacks\", \"RunnableWithFallbacks.__getattr__\"),\n    (\"langchain_core.output_parsers.string\", \"StrOutputParser\"),\n    (\"langchain_core.messages.utils\", \"trim_messages\"),\n    (\"langchain_core.runnables.history\", \"RunnableWithMessageHistory\"),\n    (\"langchain_core.rate_limiters\", \"InMemoryRateLimiter\"),\n    (\n        \"langchain_core.runnables.base\",\n        \"RunnableSerializable.configurable_alternatives\",\n    ),\n)\n\n#: ``langchain_core.chat_models`` (and its ``.openai`` / ``.anthropic``\n#: submodules) do not exist, so importing from it cannot work.\n_NONEXISTENT_CHAT_MODELS_MODULE = re.compile(r\"\\blangchain_core\\.chat_models\\b\")\n\n#: ``ChatOpenAI`` has no notion of the ``provider:model`` prefix; it sends the\n#: string to the API as-is. Only ``init_chat_model`` accepts it.\n_OPENAI_PREFIX_IN_CHAT_OPENAI_CALL = re.compile(\n    r\"\"\"ChatOpenAI\\s*\\([^)]*?[\"']openai:\"\"\", re.DOTALL\n)\n\n#: Anthropic model IDs listed as retired/legacy in the issue.\n_RETIRED_ANTHROPIC_MODEL_IDS = (\n    \"claude-2\",\n    \"claude-3-haiku-20240307\",\n    \"claude-sonnet-4-5-20250929\",\n    \"claude-sonnet-4-6\",\n)\n\n\ndef _iter_target_docstrings() -> Iterator[tuple[str, str]]:\n    \"\"\"Yield ``(dotted_name, docstring)`` for each target that has a docstring.\"\"\"\n    for module_name, qualname in DOCSTRING_TARGETS:\n        obj: object = importlib.import_module(module_name)\n        for attribute in qualname.split(\".\"):\n            obj = getattr(obj, attribute)\n        docstring = inspect.getdoc(obj)\n        if docstring is None:\n            continue\n        yield f\"{module_name}.{qualname}\", docstring\n\n\ndef test_docstring_examples_do_not_import_nonexistent_chat_models_module() -> None:\n    \"\"\"Docstring examples must not import the nonexistent chat_models module.\"\"\"\n    offenders = [\n        f\"{target}: {line.strip()}\"\n        for target, docstring in _iter_target_docstrings()\n        for line in docstring.splitlines()\n        if _NONEXISTENT_CHAT_MODELS_MODULE.search(line)\n    ]\n    assert offenders == [], (\n        \"Docstring examples import 'langchain_core.chat_models', which does not \"\n        \"exist, so copying them raises \"\n        \"ModuleNotFoundError: No module named 'langchain_core.chat_models'. \"\n        f\"Offending lines: {offenders}\"\n    )\n\n\ndef test_docstring_examples_do_not_pass_openai_prefix_to_chat_openai() -> None:\n    \"\"\"Docstring examples must not hand an ``openai:`` model to ``ChatOpenAI``.\"\"\"\n    offenders = [\n        f\"{target}: {match.group(0).strip()!r}\"\n        for target, docstring in _iter_target_docstrings()\n        for match in _OPENAI_PREFIX_IN_CHAT_OPENAI_CALL.finditer(docstring)\n    ]\n    assert offenders == [], (\n        \"Only 'init_chat_model' understands the 'provider:model' prefix; \"\n        \"'ChatOpenAI' sends it to the API unchanged, so the docstring examples \"\n        \"must use a plain model name. \"\n        f\"Offending calls: {offenders}\"\n    )\n\n\ndef test_docstring_examples_do_not_reference_retired_anthropic_models() -> None:\n    \"\"\"Docstring examples must not reference retired Anthropic model IDs.\"\"\"\n    offenders = [\n        f\"{target}: {model_id}\"\n        for target, docstring in _iter_target_docstrings()\n        for model_id in _RETIRED_ANTHROPIC_MODEL_IDS\n        if model_id in docstring\n    ]\n    assert offenders == [], (\n        \"Docstring examples reference retired or legacy Anthropic model IDs, so \"\n        f\"they fail against the current API. Offending references: {offenders}\"\n    )\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.75
+          }
+        ],
+        "final_script": "\"\"\"Regression tests for langchain-core docstring examples (issue #40807).\n\nSeveral ``Example:`` blocks in ``langchain_core`` docstrings could not be copied\nand run as-is:\n\n* they imported :mod:`langchain_core.chat_models`, a module that does not exist,\n  so the examples raised ``ModuleNotFoundError: No module named\n  'langchain_core.chat_models'``;\n* they passed ``\"openai:<model>\"`` strings to ``ChatOpenAI``, but only\n  ``init_chat_model`` understands that prefix -- ``ChatOpenAI`` forwards it to\n  the API unchanged (``model._get_request_payload(\"hello\")[\"model\"] ==\n  \"openai:gpt-5.5\"``);\n* they referenced retired Anthropic model IDs (``claude-2``,\n  ``claude-3-haiku-20240307``, ...).\n\nThese checks are deliberately negative: they pin the properties the issue asks\nfor (runnable imports, prefix-free ``ChatOpenAI`` models, non-retired Anthropic\nIDs) without hard-coding the exact replacement strings chosen by the fix.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport importlib\nimport inspect\nimport re\nfrom collections.abc import Iterator\n\n#: Objects whose docstrings carry the ``Example:`` blocks reported in #40807.\nDOCSTRING_TARGETS: tuple[tuple[str, str], ...] = (\n    (\"langchain_core.prompts.few_shot\", \"FewShotChatMessagePromptTemplate\"),\n    (\"langchain_core.runnables.retry\", \"RunnableRetry\"),\n    (\"langchain_core.runnables.fallbacks\", \"RunnableWithFallbacks\"),\n    (\"langchain_core.runnables.fallbacks\", \"RunnableWithFallbacks.__getattr__\"),\n    (\"langchain_core.output_parsers.string\", \"StrOutputParser\"),\n    (\"langchain_core.messages.utils\", \"trim_messages\"),\n    (\"langchain_core.runnables.history\", \"RunnableWithMessageHistory\"),\n    (\"langchain_core.rate_limiters\", \"InMemoryRateLimiter\"),\n    (\n        \"langchain_core.runnables.base\",\n        \"RunnableSerializable.configurable_alternatives\",\n    ),\n)\n\n#: ``langchain_core.chat_models`` (and its ``.openai`` / ``.anthropic``\n#: submodules) do not exist, so importing from it cannot work.\n_NONEXISTENT_CHAT_MODELS_MODULE = re.compile(r\"\\blangchain_core\\.chat_models\\b\")\n\n#: ``ChatOpenAI`` has no notion of the ``provider:model`` prefix; it sends the\n#: string to the API as-is. Only ``init_chat_model`` accepts it.\n_OPENAI_PREFIX_IN_CHAT_OPENAI_CALL = re.compile(\n    r\"\"\"ChatOpenAI\\s*\\([^)]*?[\"']openai:\"\"\", re.DOTALL\n)\n\n#: Anthropic model IDs listed as retired/legacy in the issue.\n_RETIRED_ANTHROPIC_MODEL_IDS = (\n    \"claude-2\",\n    \"claude-3-haiku-20240307\",\n    \"claude-sonnet-4-5-20250929\",\n    \"claude-sonnet-4-6\",\n)\n\n\ndef _iter_target_docstrings() -> Iterator[tuple[str, str]]:\n    \"\"\"Yield ``(dotted_name, docstring)`` for each target that has a docstring.\"\"\"\n    for module_name, qualname in DOCSTRING_TARGETS:\n        obj: object = importlib.import_module(module_name)\n        for attribute in qualname.split(\".\"):\n            obj = getattr(obj, attribute)\n        docstring = inspect.getdoc(obj)\n        if docstring is None:\n            continue\n        yield f\"{module_name}.{qualname}\", docstring\n\n\ndef test_docstring_examples_do_not_import_nonexistent_chat_models_module() -> None:\n    \"\"\"Docstring examples must not import the nonexistent chat_models module.\"\"\"\n    offenders = [\n        f\"{target}: {line.strip()}\"\n        for target, docstring in _iter_target_docstrings()\n        for line in docstring.splitlines()\n        if _NONEXISTENT_CHAT_MODELS_MODULE.search(line)\n    ]\n    assert offenders == [], (\n        \"Docstring examples import 'langchain_core.chat_models', which does not \"\n        \"exist, so copying them raises \"\n        \"ModuleNotFoundError: No module named 'langchain_core.chat_models'. \"\n        f\"Offending lines: {offenders}\"\n    )\n\n\ndef test_docstring_examples_do_not_pass_openai_prefix_to_chat_openai() -> None:\n    \"\"\"Docstring examples must not hand an ``openai:`` model to ``ChatOpenAI``.\"\"\"\n    offenders = [\n        f\"{target}: {match.group(0).strip()!r}\"\n        for target, docstring in _iter_target_docstrings()\n        for match in _OPENAI_PREFIX_IN_CHAT_OPENAI_CALL.finditer(docstring)\n    ]\n    assert offenders == [], (\n        \"Only 'init_chat_model' understands the 'provider:model' prefix; \"\n        \"'ChatOpenAI' sends it to the API unchanged, so the docstring examples \"\n        \"must use a plain model name. \"\n        f\"Offending calls: {offenders}\"\n    )\n\n\ndef test_docstring_examples_do_not_reference_retired_anthropic_models() -> None:\n    \"\"\"Docstring examples must not reference retired Anthropic model IDs.\"\"\"\n    offenders = [\n        f\"{target}: {model_id}\"\n        for target, docstring in _iter_target_docstrings()\n        for model_id in _RETIRED_ANTHROPIC_MODEL_IDS\n        if model_id in docstring\n    ]\n    assert offenders == [], (\n        \"Docstring examples reference retired or legacy Anthropic model IDs, so \"\n        f\"they fail against the current API. Offending references: {offenders}\"\n    )\n",
+        "final_run": {
+          "version": "7622d3dce7",
+          "python": "3.12",
+          "env_key": "ece3177b8bed71c4debd8774d999d0a8f8976132764177045ac5a27989806d70",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.75,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "Docstring examples import 'langchain_core.chat_models', which does not exist, so copying them raises ModuleNotFoundError: No module named 'langchain_core.chat_models'. Offending lines: ['langchain_cor",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.75,
+            "reason": "The failure shows the real langchain-core docstrings still contain `from langchain_core.chat_models ...` imports, which is one of the concrete problems the issue reports (imports from a module that doesn't exist). However, the check is a static grep of docstrings rather than actually running the examples, and because pytest stops on the first failure the other two aspects of the issue (`openai:` prefix passed to ChatOpenAI, retired Anthropic IDs) are never exercised, so it only partially demonstrates the reported behavior.",
+            "quote": "'langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic'",
+            "quote_found": true,
+            "cost_usd": 0.002263
+          },
+          "log_dir": "artifacts/failgate-run-5927bd5f7d",
+          "output_tail": "    self.ihook.pytest_pyfunc_call(pyfuncitem=self)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_hooks.py\", line 512, in __call__\n    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.12/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40807.py\", line 83, in test_docstring_examples_do_not_import_nonexistent_chat_models_module\n    assert offenders == [], (\nAssertionError: Docstring examples import 'langchain_core.chat_models', which does not exist, so copying them raises ModuleNotFoundError: No module named 'langchain_core.chat_models'. Offending lines: ['langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic', 'langchain_core.runnables.retry.RunnableRetry: from langchain_core.chat_models import ChatOpenAI', 'langchain_core.runnables.fallbacks.RunnableWithFallbacks: from langchain_core.chat_models.openai import ChatOpenAI', 'langchain_core.runnables.fallbacks.RunnableWithFallbacks: from langchain_core.chat_models.anthropic import ChatAnthropic']\nassert ['langchain_c...hatAnthropic'] == []\n  \n  Left contains 4 more items, first extra item: 'langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic'\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n0.18s call     libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.20s"
+        },
+        "steps": 27,
+        "tool_counts": {
+          "list_files": 1,
+          "search_code": 4,
+          "read_file": 10,
+          "run": 5,
+          "write_scratch": 2,
+          "write_test": 2,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.027027,
+        "prompt_tokens": 389040,
+        "completion_tokens": 16081,
+        "cached_tokens": 370688,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-40807-1791532160.json",
+        "duration_s": 104.7,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_40807.py"
+      },
+      "intake_cost_usd": 0.001236,
+      "judge_cost_usd": 0.002263,
+      "judge_prompt_tokens": 4870,
+      "judge_completion_tokens": 731,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 40225,
+      "title": "core: `test_text_accessor` never calls `.text()`, leaving the deprecated shim without coverage",
+      "intake_version": "1.6.1",
+      "intake_python": "3.13.13",
+      "has_traceback": false,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "8215039dea978372bd3fd95b88663a11b0159043",
+        "committed_at": "2026-09-04T19:54:48Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.13",
+        "version": "1.6.2.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_40225.py",
+        "run": {
+          "version": "8215039dea",
+          "python": "3.13",
+          "env_key": "701dd571e1c69c2f0fdf95ae1f553a97c8a41b3a018573dd7c6136c0cbb3d83d",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "replacing TextAccessor.__call__ with a function that returns the wrong value and emits no deprecation warning must fail the repo's `.text()` coverage; instead every test still passed, because `test_te",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本先用未修改的 shim 运行仓库自身的 test_messages.py（通过），再用 issue 中的坏 shim（返回 'TOTALLY BROKEN' 且无警告）运行，结果仍是「55 passed」，即被测包的测试确实没有覆盖 .text()，与 issue 描述的覆盖缺口一致；脚本失败原因是断言 mutated.returncode != 0 未成立，而非脚本自身错误。",
+            "quote": "AssertionError: replacing TextAccessor.__call__ with a function that returns the wrong value and emits no deprecation warning must fail the repo's `.text()` coverage; instead every test still passed",
+            "quote_found": true,
+            "cost_usd": 0.002322
+          },
+          "log_dir": "artifacts/failgate-run-4d948b23a9",
+          "output_tail": "           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ~~~~~~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40225.py\", line 81, in test_messages_tests_detect_broken_text_call_shim\n    assert mutated.returncode != 0, (\n    ...<5 lines>...\n    )\nAssertionError: replacing TextAccessor.__call__ with a function that returns the wrong value and emits no deprecation warning must fail the repo's `.text()` coverage; instead every test still passed, because `test_text_accessor` never calls `message.text()`:\n  .......................................................                  [100%]\n  ============================= slowest 5 durations ==============================\n  \n  (5 durations < 0.005s hidden.  Use -vv to show these durations.)\n  55 passed in 0.28s\n  \n  \nassert 0 != 0\n +  where 0 = CompletedProcess(args=['/opt/venv/bin/python', '-m', 'pytest', 'tests/unit_tests/test_messages.py', '-q', '--tb=line',...================\\n\\n(5 durations < 0.005s hidden.  Use -vv to show these durations.)\\n55 passed in 0.28s\\n', stderr='').returncode\n============================= slowest 5 durations ==============================\n3.35s call     libs/core/tests/unit_tests/test_failgate_issue_40225.py::test_messages_tests_detect_broken_text_call_shim\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40225.py::test_messages_tests_detect_broken_text_call_shim\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 3.37s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_40225.py",
+            "claim": "Reproduces #40225: the delivered test replaces TextAccessor.__call__ with the issue's broken shim (wrong value, no LangChainDeprecationWarning) and runs the repo's own tests/unit_tests/test_messages.py in a subprocess; on this tree the mutated run still passes all 55 tests (test_text_accessor never calls .text()), so the assertion that the broken shim must be detected fails. Once test_text_accessor actually exercises message.text(), the mutated run fails and the test passes.",
+            "script": "\"\"\"Regression test for langchain-ai/langchain#40225.\n\n`test_text_accessor` in `test_messages.py` is documented as \"Test that\n`message.text` property and `.text()` method return the same value\", but it never\ncalls `.text()`.  For every message shape it asserts the same literal twice and\nthen compares `str(message.text)` with itself, which is vacuously true.  As a\nresult `TextAccessor.__call__` -- a public backward-compatibility shim that emits\na `LangChainDeprecationWarning` -- has no regression coverage: replacing it with\na function that returns the wrong value and emits no warning leaves the whole\n`test_messages.py` module green.\n\nThis test reproduces that gap: it replaces `TextAccessor.__call__` with the\nbroken shim from the issue and runs the repository's own message tests in a\nsubprocess.  On the buggy tree every assertion of `test_text_accessor` still\npasses, so the assertion below fails; once `.text()` is actually exercised the\nmutated run fails, i.e. the shim is covered.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nimport subprocess\nimport sys\nimport textwrap\n\nCORE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))\nMESSAGES_TESTS = os.path.join(\"tests\", \"unit_tests\", \"test_messages.py\")\n\n# Wrong value *and* no deprecation warning, exactly as in the issue reproduction.\nBROKEN_SHIM_PLUGIN = textwrap.dedent(\n    \"\"\"\n    from langchain_core.messages import base\n\n    base.TextAccessor.__call__ = lambda self: \"TOTALLY BROKEN\"\n    \"\"\"\n)\n\n\ndef _run_messages_tests(tmp_path, *, break_text_call):\n    \"\"\"Run the repo's own `test_messages.py` in a fresh interpreter.\n\n    Args:\n        tmp_path: Where to place the mutation plugin.\n        break_text_call: Whether to replace `TextAccessor.__call__`.\n\n    Returns:\n        The completed subprocess.\n    \"\"\"\n    args = [\n        sys.executable,\n        \"-m\",\n        \"pytest\",\n        MESSAGES_TESTS,\n        \"-q\",\n        \"--tb=line\",\n        \"-p\",\n        \"no:cacheprovider\",\n    ]\n    env = os.environ.copy()\n    if break_text_call:\n        plugin = tmp_path / \"broken_text_call_shim.py\"\n        plugin.write_text(BROKEN_SHIM_PLUGIN)\n        env[\"PYTHONPATH\"] = os.pathsep.join(\n            [str(tmp_path), env.get(\"PYTHONPATH\", \"\")]\n        )\n        args += [\"-p\", \"broken_text_call_shim\"]\n    return subprocess.run(  # noqa: S603\n        args, cwd=CORE_DIR, env=env, capture_output=True, text=True, check=False\n    )\n\n\ndef test_messages_tests_detect_broken_text_call_shim(tmp_path) -> None:\n    \"\"\"The repo's message tests must notice a broken `TextAccessor.__call__`.\"\"\"\n    unmutated = _run_messages_tests(tmp_path, break_text_call=False)\n    assert unmutated.returncode == 0, (\n        \"the repo's own message tests do not pass as shipped:\\n\"\n        f\"{unmutated.stdout}\\n{unmutated.stderr}\"\n    )\n\n    mutated = _run_messages_tests(tmp_path, break_text_call=True)\n    assert mutated.returncode != 0, (\n        \"replacing TextAccessor.__call__ with a function that returns the wrong \"\n        \"value and emits no deprecation warning must fail the repo's `.text()` \"\n        \"coverage; instead every test still passed, because `test_text_accessor` \"\n        \"never calls `message.text()`:\\n\"\n        f\"{mutated.stdout}\\n{mutated.stderr}\"\n    )\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9
+          }
+        ],
+        "final_script": "\"\"\"Regression test for langchain-ai/langchain#40225.\n\n`test_text_accessor` in `test_messages.py` is documented as \"Test that\n`message.text` property and `.text()` method return the same value\", but it never\ncalls `.text()`.  For every message shape it asserts the same literal twice and\nthen compares `str(message.text)` with itself, which is vacuously true.  As a\nresult `TextAccessor.__call__` -- a public backward-compatibility shim that emits\na `LangChainDeprecationWarning` -- has no regression coverage: replacing it with\na function that returns the wrong value and emits no warning leaves the whole\n`test_messages.py` module green.\n\nThis test reproduces that gap: it replaces `TextAccessor.__call__` with the\nbroken shim from the issue and runs the repository's own message tests in a\nsubprocess.  On the buggy tree every assertion of `test_text_accessor` still\npasses, so the assertion below fails; once `.text()` is actually exercised the\nmutated run fails, i.e. the shim is covered.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nimport subprocess\nimport sys\nimport textwrap\n\nCORE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))\nMESSAGES_TESTS = os.path.join(\"tests\", \"unit_tests\", \"test_messages.py\")\n\n# Wrong value *and* no deprecation warning, exactly as in the issue reproduction.\nBROKEN_SHIM_PLUGIN = textwrap.dedent(\n    \"\"\"\n    from langchain_core.messages import base\n\n    base.TextAccessor.__call__ = lambda self: \"TOTALLY BROKEN\"\n    \"\"\"\n)\n\n\ndef _run_messages_tests(tmp_path, *, break_text_call):\n    \"\"\"Run the repo's own `test_messages.py` in a fresh interpreter.\n\n    Args:\n        tmp_path: Where to place the mutation plugin.\n        break_text_call: Whether to replace `TextAccessor.__call__`.\n\n    Returns:\n        The completed subprocess.\n    \"\"\"\n    args = [\n        sys.executable,\n        \"-m\",\n        \"pytest\",\n        MESSAGES_TESTS,\n        \"-q\",\n        \"--tb=line\",\n        \"-p\",\n        \"no:cacheprovider\",\n    ]\n    env = os.environ.copy()\n    if break_text_call:\n        plugin = tmp_path / \"broken_text_call_shim.py\"\n        plugin.write_text(BROKEN_SHIM_PLUGIN)\n        env[\"PYTHONPATH\"] = os.pathsep.join(\n            [str(tmp_path), env.get(\"PYTHONPATH\", \"\")]\n        )\n        args += [\"-p\", \"broken_text_call_shim\"]\n    return subprocess.run(  # noqa: S603\n        args, cwd=CORE_DIR, env=env, capture_output=True, text=True, check=False\n    )\n\n\ndef test_messages_tests_detect_broken_text_call_shim(tmp_path) -> None:\n    \"\"\"The repo's message tests must notice a broken `TextAccessor.__call__`.\"\"\"\n    unmutated = _run_messages_tests(tmp_path, break_text_call=False)\n    assert unmutated.returncode == 0, (\n        \"the repo's own message tests do not pass as shipped:\\n\"\n        f\"{unmutated.stdout}\\n{unmutated.stderr}\"\n    )\n\n    mutated = _run_messages_tests(tmp_path, break_text_call=True)\n    assert mutated.returncode != 0, (\n        \"replacing TextAccessor.__call__ with a function that returns the wrong \"\n        \"value and emits no deprecation warning must fail the repo's `.text()` \"\n        \"coverage; instead every test still passed, because `test_text_accessor` \"\n        \"never calls `message.text()`:\\n\"\n        f\"{mutated.stdout}\\n{mutated.stderr}\"\n    )\n",
+        "final_run": {
+          "version": "8215039dea",
+          "python": "3.13",
+          "env_key": "701dd571e1c69c2f0fdf95ae1f553a97c8a41b3a018573dd7c6136c0cbb3d83d",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.9,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "replacing TextAccessor.__call__ with a function that returns the wrong value and emits no deprecation warning must fail the repo's `.text()` coverage; instead every test still passed, because `test_te",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.9,
+            "reason": "脚本先用未修改的 shim 运行仓库自身的 test_messages.py（通过），再用 issue 中的坏 shim（返回 'TOTALLY BROKEN' 且无警告）运行，结果仍是「55 passed」，即被测包的测试确实没有覆盖 .text()，与 issue 描述的覆盖缺口一致；脚本失败原因是断言 mutated.returncode != 0 未成立，而非脚本自身错误。",
+            "quote": "AssertionError: replacing TextAccessor.__call__ with a function that returns the wrong value and emits no deprecation warning must fail the repo's `.text()` coverage; instead every test still passed",
+            "quote_found": true,
+            "cost_usd": 0.002322
+          },
+          "log_dir": "artifacts/failgate-run-4d948b23a9",
+          "output_tail": "           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ~~~~~~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40225.py\", line 81, in test_messages_tests_detect_broken_text_call_shim\n    assert mutated.returncode != 0, (\n    ...<5 lines>...\n    )\nAssertionError: replacing TextAccessor.__call__ with a function that returns the wrong value and emits no deprecation warning must fail the repo's `.text()` coverage; instead every test still passed, because `test_text_accessor` never calls `message.text()`:\n  .......................................................                  [100%]\n  ============================= slowest 5 durations ==============================\n  \n  (5 durations < 0.005s hidden.  Use -vv to show these durations.)\n  55 passed in 0.28s\n  \n  \nassert 0 != 0\n +  where 0 = CompletedProcess(args=['/opt/venv/bin/python', '-m', 'pytest', 'tests/unit_tests/test_messages.py', '-q', '--tb=line',...================\\n\\n(5 durations < 0.005s hidden.  Use -vv to show these durations.)\\n55 passed in 0.28s\\n', stderr='').returncode\n============================= slowest 5 durations ==============================\n3.35s call     libs/core/tests/unit_tests/test_failgate_issue_40225.py::test_messages_tests_detect_broken_text_call_shim\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40225.py::test_messages_tests_detect_broken_text_call_shim\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 3.37s"
+        },
+        "steps": 22,
+        "tool_counts": {
+          "run": 6,
+          "search_code": 4,
+          "read_file": 5,
+          "write_scratch": 4,
+          "write_test": 1,
+          "run_test": 1,
+          "submit": 1
+        },
+        "cost_usd": 0.025661,
+        "prompt_tokens": 296839,
+        "completion_tokens": 16919,
+        "cached_tokens": 284672,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-40225-1791532427.json",
+        "duration_s": 134.6,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_40225.py"
+      },
+      "intake_cost_usd": 0.001999,
+      "judge_cost_usd": 0.002322,
+      "judge_prompt_tokens": 4496,
+      "judge_completion_tokens": 874,
+      "judge_cached_tokens": 256
+    },
+    {
+      "repo": "langchain-ai/langchain",
+      "number": 40202,
+      "title": "core: stale docstrings in `_write` and `set_text` — parameters that do not exist and an exception never raised",
+      "intake_version": "1.6.1",
+      "intake_python": "3.13.13",
+      "has_traceback": false,
+      "source": {
+        "repo": "langchain-ai/langchain",
+        "sha": "aac7904ff4baea90a24c6615842f0a6c48dd6c93",
+        "committed_at": "2026-09-04T15:19:24Z",
+        "package": "langchain-core",
+        "module": "langchain_core",
+        "subdir": "libs/core",
+        "test_deps": [
+          "pytest-asyncio",
+          "syrupy",
+          "pytest-mock",
+          "blockbuster",
+          "freezegun",
+          "responses",
+          "pytest-socket",
+          "numpy",
+          "grandalf"
+        ],
+        "python": "3.13",
+        "version": "1.6.2.dev0",
+        "pytest": "pytest==9.1.1",
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_40202.py",
+        "run": {
+          "version": "aac7904ff4",
+          "python": "3.13",
+          "env_key": "d73493ee9be9ba321af5a6ef283e3bbc7d1cbf184db8ba41c2045353d6c06e99",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "FileCallbackHandler._write docstring documents non-existent parameters: ['file'] (actual parameters: ['color', 'end', 'text'])",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "脚本直接检查被测包的真实行为：FileCallbackHandler._write 的签名只有 text/color/end，而 docstring 的 Args 里出现了并不存在的 'file'，这正是 issue 描述的两处过期 docstring 中的第一处。断言失败由被测包的实际 docstring 与签名不一致导致，非脚本自身报错。仅因 pytest 在首个失败处停止，set_text 的第二处缺陷（values 参数、Returns、ValueError）未被同一轮运行展示，故未给满分。",
+            "quote": "AssertionError: FileCallbackHandler._write docstring documents non-existent parameters: ['file'] (actual parameters: ['color', 'end', 'text'])",
+            "quote_found": true,
+            "cost_usd": 0.001655
+          },
+          "log_dir": "artifacts/failgate-run-c3bfb71528",
+          "output_tail": "           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ~~~~~~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40202.py\", line 93, in test_write_docstring_documents_only_real_parameters\n    _assert_docstring_claims_are_real(FileCallbackHandler._write)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40202.py\", line 79, in _assert_docstring_claims_are_real\n    assert documented <= parameters, (\n    ...<2 lines>...\n    )\nAssertionError: FileCallbackHandler._write docstring documents non-existent parameters: ['file'] (actual parameters: ['color', 'end', 'text'])\nassert {'color', 'en...file', 'text'} <= {'color', 'end', 'text'}\n  \n  Extra items in the left set:\n  'file'\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40202.py::test_write_docstring_documents_only_real_parameters\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "level": "L2",
+        "error": null
+      },
+      "agent": {
+        "status": "reproduced",
+        "attempts": [
+          {
+            "n": 1,
+            "name": "libs/core/tests/unit_tests/test_failgate_issue_40202.py",
+            "claim": "Two tests check that FileCallbackHandler._write and ChatGeneration.set_text docstrings document only real parameters and only exceptions actually raised: both fail because _write documents a nonexistent `file` param and set_text documents a nonexistent `values` param plus a stale \"values of the object\" Returns (and a never-raised ValueError).",
+            "script": "\"\"\"Regression tests for gh-40202: stale docstrings in ``_write`` and ``set_text``.\n\n``FileCallbackHandler._write`` documents a ``file`` parameter it does not accept, and\n``ChatGeneration.set_text`` documents a ``values`` parameter (plus a matching\n``Returns`` and a ``ValueError`` it never raises) even though it takes no arguments\nbesides ``self`` and contains no ``raise`` statement at all.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport ast\nimport inspect\nimport re\nimport textwrap\nfrom typing import Any, Callable\n\nfrom langchain_core.callbacks.file import FileCallbackHandler\nfrom langchain_core.outputs.chat_generation import ChatGeneration\n\n\ndef _docstring(func: Callable[..., Any]) -> str:\n    return inspect.getdoc(func) or \"\"\n\n\ndef _section(docstring: str, section: str) -> list[str]:\n    \"\"\"Return the body lines of a Google-style ``section`` of a docstring.\"\"\"\n    lines: list[str] = []\n    current: str | None = None\n    for line in docstring.splitlines():\n        if line and not line[0].isspace() and line.rstrip().endswith(\":\"):\n            current = line.strip()[:-1]\n            continue\n        if current == section:\n            lines.append(line)\n    return lines\n\n\ndef _documented_args(docstring: str) -> set[str]:\n    \"\"\"Names listed in the ``Args:`` section, e.g. ``{\"text\", \"color\", \"end\"}``.\"\"\"\n    return {\n        match.group(1)\n        for line in _section(docstring, \"Args\")\n        if (match := re.match(r\"\\s+(\\*{0,2}\\w+)\\s*:\", line))\n    }\n\n\ndef _documented_raises(docstring: str) -> set[str]:\n    \"\"\"Exception names listed in the ``Raises:`` section.\n\n    Handles entries like ``RuntimeError: If ...`` as well as bare ``ValueError`` lines.\n    \"\"\"\n    names: set[str] = set()\n    for line in _section(docstring, \"Raises\"):\n        match = re.match(r\"\\s+([A-Za-z_][\\w.]*)\\s*:\", line)\n        if match:\n            names.add(match.group(1).rsplit(\".\", 1)[-1])\n    return names\n\n\ndef _raised_exception_names(func: Callable[..., Any]) -> set[str]:\n    \"\"\"Exception names actually raised in the body of ``func``.\"\"\"\n    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))\n    names: set[str] = set()\n    for node in ast.walk(tree):\n        if isinstance(node, ast.Raise) and node.exc is not None:\n            exc = node.exc.func if isinstance(node.exc, ast.Call) else node.exc\n            if isinstance(exc, ast.Name):\n                names.add(exc.id)\n            elif isinstance(exc, ast.Attribute):\n                names.add(exc.attr)\n    return names\n\n\ndef _assert_docstring_claims_are_real(func: Callable[..., Any]) -> None:\n    docstring = _docstring(func)\n    parameters = set(inspect.signature(func).parameters) - {\"self\"}\n\n    documented = _documented_args(docstring)\n    assert documented <= parameters, (\n        f\"{func.__qualname__} docstring documents non-existent parameters: \"\n        f\"{sorted(documented - parameters)} (actual parameters: {sorted(parameters)})\"\n    )\n\n    declared = _documented_raises(docstring)\n    raised = _raised_exception_names(func)\n    assert declared <= raised, (\n        f\"{func.__qualname__} docstring declares exceptions it never raises: \"\n        f\"{sorted(declared - raised)}\"\n    )\n\n\ndef test_write_docstring_documents_only_real_parameters() -> None:\n    _assert_docstring_claims_are_real(FileCallbackHandler._write)\n\n\ndef test_set_text_docstring_matches_signature() -> None:\n    _assert_docstring_claims_are_real(ChatGeneration.set_text)\n\n    returns = \"\\n\".join(_section(_docstring(ChatGeneration.set_text), \"Returns\"))\n    assert \"values of the object\" not in returns.lower(), (\n        \"set_text returns `self`, so its docstring must not describe returning the \"\n        f\"values of the object it was validated with: {returns!r}\"\n    )\n",
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85
+          }
+        ],
+        "final_script": "\"\"\"Regression tests for gh-40202: stale docstrings in ``_write`` and ``set_text``.\n\n``FileCallbackHandler._write`` documents a ``file`` parameter it does not accept, and\n``ChatGeneration.set_text`` documents a ``values`` parameter (plus a matching\n``Returns`` and a ``ValueError`` it never raises) even though it takes no arguments\nbesides ``self`` and contains no ``raise`` statement at all.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport ast\nimport inspect\nimport re\nimport textwrap\nfrom typing import Any, Callable\n\nfrom langchain_core.callbacks.file import FileCallbackHandler\nfrom langchain_core.outputs.chat_generation import ChatGeneration\n\n\ndef _docstring(func: Callable[..., Any]) -> str:\n    return inspect.getdoc(func) or \"\"\n\n\ndef _section(docstring: str, section: str) -> list[str]:\n    \"\"\"Return the body lines of a Google-style ``section`` of a docstring.\"\"\"\n    lines: list[str] = []\n    current: str | None = None\n    for line in docstring.splitlines():\n        if line and not line[0].isspace() and line.rstrip().endswith(\":\"):\n            current = line.strip()[:-1]\n            continue\n        if current == section:\n            lines.append(line)\n    return lines\n\n\ndef _documented_args(docstring: str) -> set[str]:\n    \"\"\"Names listed in the ``Args:`` section, e.g. ``{\"text\", \"color\", \"end\"}``.\"\"\"\n    return {\n        match.group(1)\n        for line in _section(docstring, \"Args\")\n        if (match := re.match(r\"\\s+(\\*{0,2}\\w+)\\s*:\", line))\n    }\n\n\ndef _documented_raises(docstring: str) -> set[str]:\n    \"\"\"Exception names listed in the ``Raises:`` section.\n\n    Handles entries like ``RuntimeError: If ...`` as well as bare ``ValueError`` lines.\n    \"\"\"\n    names: set[str] = set()\n    for line in _section(docstring, \"Raises\"):\n        match = re.match(r\"\\s+([A-Za-z_][\\w.]*)\\s*:\", line)\n        if match:\n            names.add(match.group(1).rsplit(\".\", 1)[-1])\n    return names\n\n\ndef _raised_exception_names(func: Callable[..., Any]) -> set[str]:\n    \"\"\"Exception names actually raised in the body of ``func``.\"\"\"\n    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))\n    names: set[str] = set()\n    for node in ast.walk(tree):\n        if isinstance(node, ast.Raise) and node.exc is not None:\n            exc = node.exc.func if isinstance(node.exc, ast.Call) else node.exc\n            if isinstance(exc, ast.Name):\n                names.add(exc.id)\n            elif isinstance(exc, ast.Attribute):\n                names.add(exc.attr)\n    return names\n\n\ndef _assert_docstring_claims_are_real(func: Callable[..., Any]) -> None:\n    docstring = _docstring(func)\n    parameters = set(inspect.signature(func).parameters) - {\"self\"}\n\n    documented = _documented_args(docstring)\n    assert documented <= parameters, (\n        f\"{func.__qualname__} docstring documents non-existent parameters: \"\n        f\"{sorted(documented - parameters)} (actual parameters: {sorted(parameters)})\"\n    )\n\n    declared = _documented_raises(docstring)\n    raised = _raised_exception_names(func)\n    assert declared <= raised, (\n        f\"{func.__qualname__} docstring declares exceptions it never raises: \"\n        f\"{sorted(declared - raised)}\"\n    )\n\n\ndef test_write_docstring_documents_only_real_parameters() -> None:\n    _assert_docstring_claims_are_real(FileCallbackHandler._write)\n\n\ndef test_set_text_docstring_matches_signature() -> None:\n    _assert_docstring_claims_are_real(ChatGeneration.set_text)\n\n    returns = \"\\n\".join(_section(_docstring(ChatGeneration.set_text), \"Returns\"))\n    assert \"values of the object\" not in returns.lower(), (\n        \"set_text returns `self`, so its docstring must not describe returning the \"\n        f\"values of the object it was validated with: {returns!r}\"\n    )\n",
+        "final_run": {
+          "version": "aac7904ff4",
+          "python": "3.13",
+          "env_key": "d73493ee9be9ba321af5a6ef283e3bbc7d1cbf184db8ba41c2045353d6c06e99",
+          "cache_hit": false,
+          "verdict": {
+            "kind": "REPRODUCED",
+            "reason": "4 次运行都出现与报告一致的失败",
+            "match": 0.85,
+            "match_method": "llm",
+            "fail_rate": 1.0,
+            "runs": 4,
+            "observed": {
+              "exc_type": "AssertionError",
+              "message": "FileCallbackHandler._write docstring documents non-existent parameters: ['file'] (actual parameters: ['color', 'end', 'text'])",
+              "frames": []
+            },
+            "reported": null,
+            "records": [
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              },
+              {
+                "exit_code": 1,
+                "same_failure": true
+              }
+            ]
+          },
+          "semantic": {
+            "match": 0.85,
+            "reason": "脚本直接检查被测包的真实行为：FileCallbackHandler._write 的签名只有 text/color/end，而 docstring 的 Args 里出现了并不存在的 'file'，这正是 issue 描述的两处过期 docstring 中的第一处。断言失败由被测包的实际 docstring 与签名不一致导致，非脚本自身报错。仅因 pytest 在首个失败处停止，set_text 的第二处缺陷（values 参数、Returns、ValueError）未被同一轮运行展示，故未给满分。",
+            "quote": "AssertionError: FileCallbackHandler._write docstring documents non-existent parameters: ['file'] (actual parameters: ['color', 'end', 'text'])",
+            "quote_found": true,
+            "cost_usd": 0.001655
+          },
+          "log_dir": "artifacts/failgate-run-c3bfb71528",
+          "output_tail": "           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_manager.py\", line 120, in _hookexec\n    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 167, in _multicall\n    raise exception\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 139, in _multicall\n    teardown.throw(exception)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 53, in run_old_style_hookwrapper\n    return result.get_result()\n           ~~~~~~~~~~~~~~~~~^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_result.py\", line 103, in get_result\n    raise exc.with_traceback(tb)\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 38, in run_old_style_hookwrapper\n    res = yield\n          ^^^^^\n  File \"/opt/venv/lib/python3.13/site-packages/pluggy/_callers.py\", line 121, in _multicall\n    res = hook_impl.function(*args)\n  File \"/opt/venv/lib/python3.13/site-packages/_pytest/python.py\", line 167, in pytest_pyfunc_call\n    result = testfunction(**testargs)\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40202.py\", line 93, in test_write_docstring_documents_only_real_parameters\n    _assert_docstring_claims_are_real(FileCallbackHandler._write)\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40202.py\", line 79, in _assert_docstring_claims_are_real\n    assert documented <= parameters, (\n    ...<2 lines>...\n    )\nAssertionError: FileCallbackHandler._write docstring documents non-existent parameters: ['file'] (actual parameters: ['color', 'end', 'text'])\nassert {'color', 'en...file', 'text'} <= {'color', 'end', 'text'}\n  \n  Extra items in the left set:\n  'file'\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40202.py::test_write_docstring_documents_only_real_parameters\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s"
+        },
+        "steps": 19,
+        "tool_counts": {
+          "read_file": 4,
+          "list_files": 2,
+          "search_code": 2,
+          "write_scratch": 2,
+          "run": 3,
+          "write_test": 3,
+          "run_test": 2,
+          "submit": 1
+        },
+        "cost_usd": 0.014615,
+        "prompt_tokens": 166428,
+        "completion_tokens": 8831,
+        "cached_tokens": 156160,
+        "give_up_reason": null,
+        "suspect": null,
+        "error": null,
+        "transcript_path": "artifacts/agent-langchain-ai__langchain-40202-1791532536.json",
+        "duration_s": 70.8,
+        "test_path": "libs/core/tests/unit_tests/test_failgate_issue_40202.py"
+      },
+      "intake_cost_usd": 0.0019,
+      "judge_cost_usd": 0.001655,
+      "judge_prompt_tokens": 4440,
+      "judge_completion_tokens": 332,
+      "judge_cached_tokens": 256
+    }
+  ],
+  "fbpa": [
+    {
+      "number": 40807,
+      "title": "core: docstring examples use nonexistent imports, retired Claude models and invalid `openai:` model strings",
+      "reported_version": "1.6.4",
+      "python": "3.12",
+      "proxy": "—",
+      "fix": {
+        "pr": 40815,
+        "sha": "40fe8d6e02a3c6f0f77260f84f0c248861ba618c",
+        "parent": "021dce467195a8c767ec3e1a807eda546c17994c",
+        "committed_at": "2026-09-25T18:18:56Z",
+        "merge": false
+      },
+      "pretend_version": "1.6.5.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.906,
+          "tail": "  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40807.py\", line 83, in test_docstring_examples_do_not_import_nonexistent_chat_models_module\n    assert offenders == [], (\nAssertionError: Docstring examples import 'langchain_core.chat_models', which does not exist, so copying them raises ModuleNotFoundError: No module named 'langchain_core.chat_models'. Offending lines: ['langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic', 'langchain_core.runnables.retry.RunnableRetry: from langchain_core.chat_models import ChatOpenAI', 'langchain_core.runnables.fallbacks.RunnableWithFallbacks: from langchain_core.chat_models.openai import ChatOpenAI', 'langchain_core.runnables.fallbacks.RunnableWithFallbacks: from langchain_core.chat_models.anthropic import ChatAnthropic']\nassert ['langchain_c...hatAnthropic'] == []\n  \n  Left contains 4 more items, first extra item: 'langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic'\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n0.19s call     libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.21s",
+          "log_dir": "artifacts/failgate-run-a7f34929d8"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 2.006,
+          "tail": "  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40807.py\", line 83, in test_docstring_examples_do_not_import_nonexistent_chat_models_module\n    assert offenders == [], (\nAssertionError: Docstring examples import 'langchain_core.chat_models', which does not exist, so copying them raises ModuleNotFoundError: No module named 'langchain_core.chat_models'. Offending lines: ['langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic', 'langchain_core.runnables.retry.RunnableRetry: from langchain_core.chat_models import ChatOpenAI', 'langchain_core.runnables.fallbacks.RunnableWithFallbacks: from langchain_core.chat_models.openai import ChatOpenAI', 'langchain_core.runnables.fallbacks.RunnableWithFallbacks: from langchain_core.chat_models.anthropic import ChatAnthropic']\nassert ['langchain_c...hatAnthropic'] == []\n  \n  Left contains 4 more items, first extra item: 'langchain_core.prompts.few_shot.FewShotChatMessagePromptTemplate: from langchain_core.chat_models import ChatAnthropic'\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n0.19s call     libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n\n(2 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.21s",
+          "log_dir": "artifacts/failgate-run-d2d201dbd9"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.678,
+          "tail": "  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40807.py\", line 114, in test_docstring_examples_do_not_reference_retired_anthropic_models\n    assert offenders == [], (\nAssertionError: Docstring examples reference retired or legacy Anthropic model IDs, so they fail against the current API. Offending references: ['langchain_core.runnables.base.RunnableSerializable.configurable_alternatives: claude-sonnet-4-5-20250929']\nassert ['langchain_c...4-5-20250929'] == []\n  \n  Left contains one more item: 'langchain_core.runnables.base.RunnableSerializable.configurable_alternatives: claude-sonnet-4-5-20250929'\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n0.16s call     libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n\n(4 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_reference_retired_anthropic_models\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 2 passed in 0.18s",
+          "log_dir": "artifacts/failgate-run-e0af167524"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.854,
+          "tail": "  File \"/workspace/src/libs/core/tests/unit_tests/test_failgate_issue_40807.py\", line 114, in test_docstring_examples_do_not_reference_retired_anthropic_models\n    assert offenders == [], (\nAssertionError: Docstring examples reference retired or legacy Anthropic model IDs, so they fail against the current API. Offending references: ['langchain_core.runnables.base.RunnableSerializable.configurable_alternatives: claude-sonnet-4-5-20250929']\nassert ['langchain_c...4-5-20250929'] == []\n  \n  Left contains one more item: 'langchain_core.runnables.base.RunnableSerializable.configurable_alternatives: claude-sonnet-4-5-20250929'\n  Use -v to get more diff\n============================= slowest 5 durations ==============================\n0.17s call     libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_import_nonexistent_chat_models_module\n\n(4 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40807.py::test_docstring_examples_do_not_reference_retired_anthropic_models\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed, 2 passed in 0.20s",
+          "log_dir": "artifacts/failgate-run-115c4fb26f"
+        }
+      ],
+      "outcome": "fail_after",
+      "error": null
+    },
+    {
+      "number": 40225,
+      "title": "core: `test_text_accessor` never calls `.text()`, leaving the deprecated shim without coverage",
+      "reported_version": "1.6.1",
+      "python": "3.13",
+      "proxy": "—",
+      "fix": {
+        "pr": 40243,
+        "sha": "16a58955e40fc693ca09654f043745e3ed4aa913",
+        "parent": "eef3eaeac8ff2646c43b37ac2a755a5e7978e8b4",
+        "committed_at": "2026-09-06T13:32:58Z",
+        "merge": false
+      },
+      "pretend_version": null,
+      "before": [],
+      "after": [],
+      "outcome": "fix_not_code",
+      "error": null
+    },
+    {
+      "number": 40202,
+      "title": "core: stale docstrings in `_write` and `set_text` — parameters that do not exist and an exception never raised",
+      "reported_version": "1.6.1",
+      "python": "3.13",
+      "proxy": "—",
+      "fix": {
+        "pr": 40211,
+        "sha": "eef3eaeac8ff2646c43b37ac2a755a5e7978e8b4",
+        "parent": "b34f5669de2a19fd260c1c0a78f80977289400f9",
+        "committed_at": "2026-09-06T02:44:11Z",
+        "merge": false
+      },
+      "pretend_version": "1.6.2.dev0",
+      "before": [
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.592,
+          "tail": "    assert documented <= parameters, (\n    ...<2 lines>...\n    )\nAssertionError: FileCallbackHandler._write docstring documents non-existent parameters: ['file'] (actual parameters: ['color', 'end', 'text'])\nassert {'color', 'en...file', 'text'} <= {'color', 'end', 'text'}\n  \n  Extra items in the left set:\n  'file'\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40202.py::test_write_docstring_documents_only_real_parameters\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts/failgate-run-05c79013bd"
+        },
+        {
+          "exit_code": 1,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": true,
+          "duration_s": 1.579,
+          "tail": "    assert documented <= parameters, (\n    ...<2 lines>...\n    )\nAssertionError: FileCallbackHandler._write docstring documents non-existent parameters: ['file'] (actual parameters: ['color', 'end', 'text'])\nassert {'color', 'en...file', 'text'} <= {'color', 'end', 'text'}\n  \n  Extra items in the left set:\n  'file'\n============================= slowest 5 durations ==============================\n\n(3 durations < 0.005s hidden.  Use -vv to show these durations.)\n=========================== short test summary info ============================\nFAILED src/libs/core/tests/unit_tests/test_failgate_issue_40202.py::test_write_docstring_documents_only_real_parameters\n!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\n1 failed in 0.05s",
+          "log_dir": "artifacts/failgate-run-4e471369b2"
+        }
+      ],
+      "after": [
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.463,
+          "tail": "..                                                                       [100%]\n============================= slowest 5 durations ==============================\n\n(5 durations < 0.005s hidden.  Use -vv to show these durations.)\n2 passed in 0.04s",
+          "log_dir": "artifacts/failgate-run-213f46433c"
+        },
+        {
+          "exit_code": 0,
+          "timed_out": false,
+          "oom_killed": false,
+          "same_failure": null,
+          "duration_s": 1.537,
+          "tail": "..                                                                       [100%]\n============================= slowest 5 durations ==============================\n\n(5 durations < 0.005s hidden.  Use -vv to show these durations.)\n2 passed in 0.04s",
+          "log_dir": "artifacts/failgate-run-0c9a63149c"
+        }
+      ],
+      "outcome": "fb_pa",
+      "error": null
+    }
+  ]
+}

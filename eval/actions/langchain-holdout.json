@@ -1,0 +1,12 @@
+{
+ "repo": "langchain-ai/langchain",
+ "package": "langchain-core",
+ "subdir": "libs/core",
+ "stage": "checkup",
+ "limit": 6,
+ "offset": 3,
+ "since": "2025-01-01",
+ "budget_per_issue": 0.05,
+ "backfill_limit": 6000,
+ "note": "留出集（第二期方案 4.4）：跳过开发集 3 题、取 6 题，只跑一次、不调参；含 ClaimVerify 正负例和报告"
+}

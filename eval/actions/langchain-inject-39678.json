@@ -1,0 +1,14 @@
+{
+ "repo": "langchain-ai/langchain",
+ "package": "langchain-core",
+ "subdir": "libs/core",
+ "stage": "inject",
+ "sha": "9c21d84bcbaf541d6aa9bcc28131bad3f4288c2d",
+ "path": "libs/core/langchain_core/utils/mustache.py",
+ "function": "_get_partial",
+ "tests": ["libs/core/tests/unit_tests/prompts", "libs/core/tests/unit_tests/utils"],
+ "python": "3.10",
+ "pytest": "pytest==9.1.1",
+ "version": "1.5.6.dev0",
+ "note": "留出集 break_other 唯一漏判（#39678）的复查，$0：同一处注入下，prompts/ 和 utils/ 下的已有测试能不能发现。第三层当时只挑了 4 个文件"
+}

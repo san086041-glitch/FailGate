@@ -1524,6 +1524,8 @@ def checkup(
 
     # 4. 留出集 L2 + 严格 FB/PA
     if state.l2_run is None:
+        # 报告按 state 写选样范围：以真正跑 L2 时的参数为准（概况那一步可能用的是默认值）
+        state.offset, state.limit, state.since = offset, limit, since
         step(f"留出集 L2 + 严格 FB/PA（跳过 {offset}、取 {limit}，会花钱）")
         run_path = replay_l2(repo, package=package, import_name=import_name, limit=limit,
                              offset=offset, since=since, numbers=None, runs=2, db_url=REPLAY_DB,

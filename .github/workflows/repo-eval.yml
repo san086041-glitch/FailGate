@@ -1,0 +1,45 @@
+# 回放评测放在 GitHub Actions 上跑（第二期 W2，ADR 0045）：每个环境几十 MB 的 pip 下载走 GitHub 的
+# 机器，不走本机网络。推送 eval-run/<名字> 分支触发，参数在 eval/actions/<名字>.json。
+# 跑完把 eval/runs、eval/reports、eval/checkups 打包成 artifact，本地下载后提交到 PR。
+name: repo-eval
+
+on:
+  push:
+    branches: ["eval-run/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      # 自带的令牌只读公开仓库：回填 issue、查修复提交、下载源码包都够用
+      GITHUB_TOKEN: ${{ github.token }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      SANDBOX_ENV_CACHE_GB: "8"
+      PYTHONIOENCODING: utf-8
+    steps:
+      - name: 腾出磁盘空间
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      - name: 评测
+        run: python scripts/eval_actions.py "${GITHUB_REF_NAME#eval-run/}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-out
+          retention-days: 14
+          path: |
+            eval/runs/
+            eval/reports/
+            eval/checkups/
+            artifacts/
+          if-no-files-found: warn

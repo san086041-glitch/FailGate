@@ -1,0 +1,8 @@
+{
+ "repo": "langchain-ai/langchain",
+ "package": "langchain-core",
+ "subdir": "libs/core",
+ "stage": "smoke",
+ "smoke_refs": ["HEAD", "before:2026-08-14", "before:2026-01-01"],
+ "note": "$0：不调 LLM。HEAD、留出集最早那题（2026-08-14）之前和 2026-01-01 之前的提交上建环境、跑预检、跑一遍 libs/core 单元测试"
+}

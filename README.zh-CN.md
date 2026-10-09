@@ -77,6 +77,7 @@ FailGate 是 bug 的**验收层**：在修复出现之前出好考卷并封存�
 | 生成的考卷在上游修复前失败、修复后通过（严格 FB/PA），4 个真实仓库 | **32 / 36** | black 9/11 · pylint 10/10 · packaging 6/6 · astroid 7/9 |
 | 上游真实修复 + 4 种作弊 PR（只改测试、考卷里加 skip、conftest 跳过、无关提交）的结论全部判对 | **125 / 125** | black 45 · pylint 50 · packaging 30 |
 | 在考卷管不到的地方注入回归，被第 ③ 层抓到 | **18 / 21** | pylint 加了"总要跑的测试"后从 4/8 升到 8/8 |
+| LangChain monorepo（`libs/core`）留出集，在 GitHub Actions 上跑 | 出题 **6 / 6** · 严格 FB/PA **4 / 5** · 核验 **22 / 23** | 真实修复 4/4 · 作弊 16/16 · 注入回归 2/3（漏的那个：仓库已有测试都执行不到被注入的函数） |
 | 修复 Agent 过了考卷、其实没修对的补丁 | 走完完整核验后 **7 → 3** | 给 Agent 看考卷**没有**提高修对率（两组都是 13/24），价值在验收门本身 |
 | GitHub 上的完整闭环：`/failgate fix` → 修复 Agent 开 PR → 通过核验 | **5 / 5 个 issue** | PR [#16](https://github.com/san086041-glitch/failgate-demo/pull/16)、[#17](https://github.com/san086041-glitch/failgate-demo/pull/17)、[#18](https://github.com/san086041-glitch/failgate-demo/pull/18)、[#20](https://github.com/san086041-glitch/failgate-demo/pull/20)（自动重修一轮）、[#22](#-完整流程从-issue-进来到修复合并) |
 | Claude Code 通过 MCP 使用 FailGate：写测试 → 修 → 核验 | **2 分 16 秒** | Claude Code（Sonnet 5.5）处理[演示 issue #1](https://github.com/san086041-glitch/failgate-demo/issues/1)，9 次工具调用 |
