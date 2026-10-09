@@ -139,13 +139,16 @@ jobs:
           python-version: "3.11"
       - name: 安装（索引刚上传可能还没生效，最多等 5 分钟）
         run: |
-          if [ "$PRE" = "true" ]; then
-            idx=(-i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple)
-          else
-            idx=()
-          fi
           for i in $(seq 1 10); do
-            pip install "${idx[@]}" "failgate==$VERSION" && break
+            if [ "$PRE" = "true" ]; then
+              # 彩排：只从 TestPyPI 取 failgate 自己的 wheel，依赖一律从 PyPI 装。两个索引混用时
+              # pip 会挑 TestPyPI 上同名的垃圾包（v0.1.0rc1 就是被那里的坏 fastapi 卡住的）
+              rm -rf dl
+              pip download --no-deps -i https://test.pypi.org/simple/ "failgate==$VERSION" -d dl \
+                && pip install dl/failgate-*.whl && break
+            else
+              pip install "failgate==$VERSION" && break
+            fi
             sleep 30
           done
           pip show failgate
