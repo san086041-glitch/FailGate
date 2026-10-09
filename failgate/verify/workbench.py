@@ -18,7 +18,6 @@ from typing import Any
 import httpx
 
 from failgate.platforms.github_rest import GitHubRest
-from failgate.repro.config import PackageConfig
 from failgate.repro.envcache import EnvBuildError
 from failgate.repro.l2 import (
     RUN_PREFIXES,
@@ -85,15 +84,16 @@ class SandboxWorkbench:
 
         return cls(fetch, tester, test_deps)
 
-    async def _pinned_test_deps(self, tree: SourceTree, python: str) -> list[str]:
+    async def _pinned_test_deps(self, tree: SourceTree, python: str, exam: Exam) -> list[str]:
+        # 封存时已经装过的（收据里的 test_deps）由 tester.prepare 自己装，不重复
         return [pick_release(d, await self.tester.pypi.releases(d), python, tree.committed_at)
-                for d in self.test_deps]
+                for d in self.test_deps if d not in exam.test_deps]
 
     async def prepare(self, repo: str, sha: str, exam: Exam) -> Prepared:
         try:
             tree = await self.fetch_tree(repo, sha)
-            cfg = PackageConfig(name=exam.package, import_name=exam.module)
-            extra = await self._pinned_test_deps(tree, exam.python or "3.12")
+            cfg = exam.package_config()
+            extra = await self._pinned_test_deps(tree, exam.python or "3.12", exam)
             src = await self.tester.prepare(cfg, tree, number=exam.issue, python=exam.python,
                                             version=exam.version, pytest=exam.pytest,
                                             extra=extra)
@@ -132,7 +132,7 @@ class SandboxWorkbench:
     async def prepare_strength(self, repo: str, sha: str, exam: Exam) -> SourcePrepared:
         """head 的源码环境 + coverage：和核验用的环境分开缓存，核验本身不受影响。"""
         tree = await self.fetch_tree(repo, sha)
-        cfg = PackageConfig(name=exam.package, import_name=exam.module)
+        cfg = exam.package_config()
         python = exam.python
         releases = await self.tester.pypi.releases("coverage")
         # coverage 是我们的工具，不是项目的依赖：不按提交日期锁，取支持这个 Python 的最新版

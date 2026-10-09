@@ -66,6 +66,7 @@ async def latest_exam(s: AsyncSession, repo: str, issue: int) -> Exam | None:
     if row is None:
         return None
     ev, import_name = row
+    # 子目录只认收据（封存时的环境）：之前封存的考卷不跟着仓库配置变
     exam = exam_from_receipt(ev.receipt, ev.test_code, import_name)
     exam.hidden = await latest_hidden(s, ev.id)
     return exam
@@ -79,7 +80,8 @@ def exam_from_receipt(receipt: dict[str, Any], code: str, import_name: str | Non
         evidence_id=r["evidence_id"], issue=r["issue"], test_path=r["test_path"], code=code,
         test_sha256=r["test_sha256"], receipt_sha256=r["receipt_sha256"], package=r["package"],
         module=import_name or r["package"].replace("-", "_").lower(), python=r.get("python"),
-        pytest=r.get("pytest"), version=r.get("version"),
+        pytest=r.get("pytest"), version=r.get("version"), subdir=r.get("subdir"),
+        test_deps=list(r.get("test_deps") or []),
         signature=TraceSignature.model_validate(sig) if sig else None, receipt=r,
     )
 

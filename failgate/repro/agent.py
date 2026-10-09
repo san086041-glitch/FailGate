@@ -672,7 +672,8 @@ async def reproduce_with_tests(
     """source 模式：在某个提交上准备环境（含预检）→ Agent 写仓库内的失败测试 → L2。"""
     tester = cast(TestReproducer, agent.reproducer)
     out = SourceRepro(repo=tree.repo, sha=tree.sha, committed_at=tree.committed_at,
-                      package=cfg.name, module=cfg.module)
+                      package=cfg.name, module=cfg.module, subdir=cfg.subdir,
+                      test_deps=list(cfg.test_deps))
     try:
         prepared = await tester.prepare(cfg, tree, number=task.number, python=python,
                                         version=version)

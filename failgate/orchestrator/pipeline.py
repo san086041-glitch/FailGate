@@ -229,6 +229,7 @@ class Pipeline:
                 "repro_package": repo.repro_package,
                 "repro_import_name": repo.repro_import_name,
                 "repro_source": repo.repro_source,
+                "repro_subdir": repo.repro_subdir,
             },
             budget_left_usd=max(self.case_budget_usd - case.spent_usd, 0.0),
             actor=last.actor if last is not None else None,

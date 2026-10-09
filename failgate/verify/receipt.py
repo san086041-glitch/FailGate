@@ -28,7 +28,7 @@ from failgate.index.trace import TraceSignature
 from failgate.repro.judge import RunRecord, Verdict
 
 SCHEMA: Literal["failgate.receipt/v1"] = "failgate.receipt/v1"
-OPTIONAL_KEYS = ("supersedes", "sealed_by")
+OPTIONAL_KEYS = ("supersedes", "sealed_by", "subdir", "test_deps")
 RESEALED = "RESEALED"
 
 
@@ -60,6 +60,10 @@ class EvidenceReceipt(BaseModel):
     source_sha: str | None = None
     python: str | None = None
     pytest: str | None = None
+    # monorepo（ADR 0045）：包所在的子目录、和项目一起装的测试依赖（包名，按提交日期锁版本）。
+    # 为空时不写出，之前的收据哈希不变
+    subdir: str | None = None
+    test_deps: list[str] | None = None
     command: list[str]  # 沙箱里实际执行的命令
     signature: TraceSignature | None = None  # 观察到的失败签名
     runs: list[RunRecord]
@@ -163,6 +167,8 @@ def build_receipt(
     pytest: str | None = None,
     now: datetime | None = None,
     evidence_id: str | None = None,
+    subdir: str | None = None,
+    test_deps: list[str] | None = None,
 ) -> EvidenceReceipt:
     created = (now or datetime.now(UTC)).astimezone(UTC).replace(microsecond=0)
     return EvidenceReceipt(
@@ -170,6 +176,7 @@ def build_receipt(
         repo=repo, issue=issue, level=level, mode=mode, acceptance=level == "L2",
         test_path=test_path, test_sha256=code_sha256(code), package=package, version=version,
         source_repo=source_repo, source_sha=source_sha, python=python, pytest=pytest,
+        subdir=subdir or None, test_deps=list(test_deps) if test_deps else None,
         command=command, signature=verdict.observed, runs=verdict.records,
         verdict=verdict.kind.value, score=verdict.match, score_method=verdict.match_method,
         failgate_version=__version__,

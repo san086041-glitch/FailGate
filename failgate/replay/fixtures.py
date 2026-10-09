@@ -54,6 +54,8 @@ class Fixture:
     expect: list[str]
     tree: SourceTree  # 有 bug 的代码
     fixed_tree: SourceTree  # 打上 fix/ 之后的代码
+    subdir: str | None = None  # monorepo 布局：包所在的子目录（ADR 0045）
+    test_deps: tuple[str, ...] = ()
 
     @property
     def repo(self) -> str:
@@ -61,7 +63,8 @@ class Fixture:
 
     @property
     def cfg(self) -> PackageConfig:
-        return PackageConfig(name=self.package)
+        return PackageConfig(name=self.package, subdir=self.subdir,
+                             test_deps=list(self.test_deps))
 
 
 def _tree(name: str, variant: str, tarball: bytes) -> SourceTree:
@@ -83,6 +86,7 @@ def load_fixture(path: Path) -> Fixture:
         kind=meta.get("kind", ""), expect=list(meta.get("expect", ["REPRODUCED"])),
         tree=_tree(path.name, BUGGY, pack_dir(path / "repo")),
         fixed_tree=_tree(path.name, FIXED, fixed),
+        subdir=meta.get("subdir"), test_deps=tuple(meta.get("test_deps", ())),
     )
 
 

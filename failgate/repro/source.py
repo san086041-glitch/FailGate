@@ -70,7 +70,41 @@ with tarfile.open(src, "r:gz") as tar:
 os.remove(src)
 sys.exit(subprocess.call([sys.executable, "-m", "pip", "install", "--no-cache-dir", dest, *extra]))
 '''
-INSTALL_PREFIXES: tuple[tuple[str, ...], ...] = (("python", "-c", INSTALLER),)
+# monorepo（ADR 0045）：整包照样解到 dest，只是 pip install 的目标换成 dest/<subdir>。
+# 单独一段脚本而不是给 INSTALLER 加参数：INSTALLER 的内容进环境缓存 key，一改就让所有
+# 已缓存的 source 环境失效；subdir 为空时继续用原脚本，行为和 key 都逐字节不变。
+INSTALLER_SUBDIR = r'''
+import os, re, subprocess, sys, tarfile
+src, dest, subdir, extra = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
+if not re.fullmatch(r"[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*", subdir) or ".." in subdir.split("/"):
+    sys.exit(f"subdir 不合法：{subdir!r}")
+if not hasattr(tarfile, "data_filter"):
+    sys.exit("这个 Python 的 tarfile 没有 data 过滤器，拒绝解压不可信的源码包")
+with tarfile.open(src, "r:gz") as tar:
+    members = tar.getmembers()
+    tops = {m.name.split("/", 1)[0] for m in members}
+    if len(tops) != 1:
+        sys.exit(f"源码包应只有一个顶层目录，实际是 {sorted(tops)[:5]}")
+    top = tops.pop()
+    keep = []
+    for m in members:
+        if m.name == top:
+            continue
+        m.name = m.name[len(top) + 1:]
+        keep.append(m)
+    os.makedirs(dest, exist_ok=True)
+    tar.extractall(dest, members=keep, filter="data")
+os.remove(src)
+target = os.path.join(dest, subdir)
+if not os.path.isfile(os.path.join(target, "pyproject.toml")) and \
+        not os.path.isfile(os.path.join(target, "setup.py")):
+    sys.exit(f"subdir {subdir!r} 下没有 pyproject.toml 或 setup.py")
+pip = [sys.executable, "-m", "pip", "install", "--no-cache-dir"]
+sys.exit(subprocess.call([*pip, target, *extra]))
+'''
+INSTALL_PREFIXES: tuple[tuple[str, ...], ...] = (
+    ("python", "-c", INSTALLER), ("python", "-c", INSTALLER_SUBDIR),
+)
 
 
 class SourceError(RuntimeError):
@@ -90,9 +124,12 @@ class SourceTree:
     def top_dir(self) -> str:
         return _top_dir(self.tarball)
 
-    def pyproject(self) -> dict[str, object] | None:
-        """只读 tar 里的 pyproject.toml 这一个成员到内存，不往磁盘写任何东西。"""
-        name = f"{self.top_dir}/pyproject.toml"
+    def pyproject(self, subdir: str | None = None) -> dict[str, object] | None:
+        """只读 tar 里的 pyproject.toml 这一个成员到内存，不往磁盘写任何东西。
+
+        subdir：monorepo 里包所在的子目录，读它自己的那份（ADR 0045）。"""
+        base = f"{self.top_dir}/{subdir}" if subdir else self.top_dir
+        name = f"{base}/pyproject.toml"
         with tarfile.open(fileobj=io.BytesIO(self.tarball), mode="r:gz") as tar:
             try:
                 member = tar.getmember(name)
@@ -128,13 +165,24 @@ class SourceTree:
                     break
         return out
 
-    def test_dir(self) -> str:
-        """仓库的测试目录（相对仓库根）：tests / test / testing 里第一个存在的，默认 tests。"""
+    def test_dir(self, subdir: str | None = None) -> str:
+        """仓库的测试目录（相对仓库根）：tests / test / testing 里第一个存在的，默认 tests。
+
+        subdir 非空时在子目录里找，返回值带上子目录前缀；测试目录下有 unit_tests 时用它
+        （LangChain 的布局：tests/unit_tests 和需要外部服务的 tests/integration_tests 分开，
+        conftest 也分开放，考卷要放进单元测试那一边）。"""
         top = self.top_dir
+        base = f"{top}/{subdir}/" if subdir else f"{top}/"
+        depth = base.count("/")
         with tarfile.open(fileobj=io.BytesIO(self.tarball), mode="r:gz") as tar:
-            dirs = {m.name.split("/")[1] for m in tar.getmembers()
-                    if m.name.count("/") >= 2 and m.name.startswith(f"{top}/")}
-        return next((d for d in TEST_DIRS if d in dirs), TEST_DIRS[0])
+            names = [m.name for m in tar.getmembers()
+                     if m.name.startswith(base) and m.name.count("/") > depth]
+        dirs = {n.split("/")[depth] for n in names}
+        found = next((d for d in TEST_DIRS if d in dirs), TEST_DIRS[0])
+        if not subdir:
+            return found
+        units = any(n.startswith(f"{base}{found}/unit_tests/") for n in names)
+        return f"{subdir}/{found}" + ("/unit_tests" if units else "")
 
     def overlay(self, changes: Mapping[str, str | None], *, label: str) -> SourceTree:
         """在这个源码包上改文件，得到一个新的源码包（离线评测构造负例用）。
@@ -169,8 +217,8 @@ class SourceTree:
         return SourceTree(repo=self.repo, sha=label, committed_at=self.committed_at,
                           tarball=out.getvalue())
 
-    def requires_python(self) -> SpecifierSet | None:
-        project = (self.pyproject() or {}).get("project")
+    def requires_python(self, subdir: str | None = None) -> SpecifierSet | None:
+        project = (self.pyproject(subdir) or {}).get("project")
         raw = project.get("requires-python") if isinstance(project, dict) else None
         if not isinstance(raw, str):
             return None
@@ -212,12 +260,13 @@ def pack_dir(path: Path, *, top: str = "src") -> bytes:
 
 
 def pick_python_for_commit(
-    tree: SourceTree, *, reported: str | None = None, preferred: str | None = None
+    tree: SourceTree, *, reported: str | None = None, preferred: str | None = None,
+    subdir: str | None = None,
 ) -> str:
     """和 package 模式同一套规则：用户报告的 → 配置的 → 提交当时已有的最新 Python。"""
     pseudo = Release(
         version=Version("0"), uploaded=tree.committed_at,
-        requires_python=tree.requires_python(), yanked=False,
+        requires_python=tree.requires_python(subdir), yanked=False,
     )
     return pick_python(pseudo, reported, preferred)
 
@@ -285,18 +334,25 @@ async def source_env(
     python: str,
     version: str,
     extra_requirements: Sequence[str] = (),
+    subdir: str | None = None,
 ) -> Env:
     """准备（或命中缓存）某个提交的源码环境。失败时抛 EnvBuildError / SandboxError。
 
     extra_requirements：和项目一起装的依赖（L2 的 pytest==X），会进入安装命令和缓存 key。
+    subdir：monorepo 里要装的子目录（ADR 0045）。它写在安装命令里，所以自然进入缓存 key；
+    为空时安装命令和以前逐字节一致，已缓存的环境照常命中。
     """
     check_tarball(tree.tarball)
+    if subdir:
+        install = ["python", "-c", INSTALLER_SUBDIR, f"/workspace/{TARBALL_NAME}", SRC_DIR,
+                   subdir]
+    else:
+        install = ["python", "-c", INSTALLER, f"/workspace/{TARBALL_NAME}", SRC_DIR]
     with tempfile.TemporaryDirectory() as tmp:
         await asyncio.to_thread(Path(tmp, TARBALL_NAME).write_bytes, tree.tarball)
         return await cache.get(
             python=python,
-            install_argv=["python", "-c", INSTALLER, f"/workspace/{TARBALL_NAME}", SRC_DIR,
-                          *extra_requirements],
+            install_argv=[*install, *extra_requirements],
             mode="source",
             # 摘要：fixture 目录没有真正的提交 SHA，内容一变就必须得到新环境
             key_extra={"repo": tree.repo, "sha": tree.sha, "version": version,

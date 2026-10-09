@@ -28,7 +28,7 @@ LOCAL_ISSUE = 0  # 本地出题没有 issue 编号；收据里记 0
 class Engine(Protocol):
     async def reproduce(self, repo_path: str, title: str, body: str, package: str,
                         import_name: str | None, python: str | None,
-                        progress: Progress) -> dict[str, Any]: ...
+                        progress: Progress, subdir: str | None = None) -> dict[str, Any]: ...
 
     async def acceptance(self, repo_path: str, ev: LocalEvidence,
                          progress: Progress) -> dict[str, Any]: ...
@@ -76,7 +76,7 @@ class FailGateEngine:
 
     async def reproduce(self, repo_path: str, title: str, body: str, package: str,
                         import_name: str | None, python: str | None,
-                        progress: Progress) -> dict[str, Any]:
+                        progress: Progress, subdir: str | None = None) -> dict[str, Any]:
         from failgate.repro.issue import new_l2_report, reproduce_tree_l2
         from failgate.skills.base import IssueSnapshot, SkillContext
         from failgate.skills.intake import IntakeOutput, IntakeSkill
@@ -98,7 +98,7 @@ class FailGateEngine:
         intake = intake_res.output
         assert isinstance(intake, IntakeOutput)
         progress("Intake 完成，开始写失败测试（几分钟）")
-        cfg = PackageConfig(name=package, import_name=import_name)
+        cfg = PackageConfig(name=package, import_name=import_name, subdir=subdir)
         report = new_l2_report(label, LOCAL_ISSUE, title, body, intake, cfg, label)
         report.intake_cost_usd = intake_res.cost_usd
         report = await reproduce_tree_l2(

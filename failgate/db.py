@@ -68,6 +68,8 @@ class Repo(Base):
     repro_import_name: Mapped[str | None] = mapped_column(String(255), default=None)
     # 源码仓库（owner/name）：报告的是未发布版本时走 source 模式（L2）。为空 = 只用 package 模式
     repro_source: Mapped[str | None] = mapped_column(String(255), default=None)
+    # monorepo 里包所在的子目录（如 libs/core，ADR 0045）；为空 = 包在仓库根
+    repro_subdir: Mapped[str | None] = mapped_column(String(255), default=None)
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 

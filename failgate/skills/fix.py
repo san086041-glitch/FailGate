@@ -245,7 +245,6 @@ class SandboxFixRunner:
                    initial: dict[str, str] | None = None) -> FixResult:
         from failgate.fix.agent import FixTask
         from failgate.fix.run import fix_tree
-        from failgate.repro.config import PackageConfig
         from failgate.repro.package import IssueContext
 
         _, _, tester = self._parts()
@@ -255,7 +254,7 @@ class SandboxFixRunner:
                        must_pass=must_pass or [])
         return await fix_tree(
             self.llm, s.llm_model_large, tester,
-            PackageConfig(name=exam.package, import_name=exam.module), tree, task,
+            exam.package_config(), tree, task,
             python=exam.python, version=exam.version, pytest=exam.pytest,
             max_rounds=s.fix_agent_rounds, budget_usd=budget_usd,
             artifacts_dir=Path(s.sandbox_artifacts_dir), initial_edits=initial,

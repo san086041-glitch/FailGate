@@ -1,0 +1,33 @@
+{
+ "bug_labels": [
+  "bug"
+ ],
+ "repro_labels": [
+  "core"
+ ],
+ "exclude_labels": [
+  "langchain",
+  "langchain-classic",
+  "standard-tests",
+  "text-splitters",
+  "openai",
+  "anthropic",
+  "ollama",
+  "groq",
+  "mistralai",
+  "huggingface",
+  "fireworks",
+  "xai",
+  "perplexity",
+  "openrouter",
+  "deepseek",
+  "exa",
+  "nomic",
+  "chroma",
+  "qdrant",
+  "documentation",
+  "unable-to-reproduce"
+ ],
+ "source_prefix": "libs/core/langchain_core/",
+ "note": "只要 langchain-core 的纯逻辑 bug（ADR 0045）。2026-10-09 定稿前核对了最近 40 个已完成关闭的 bug：子包靠标签区分，`core` 对应 libs/core（被合并 PR 关闭的 11 个 core 题全部只改 libs/core，其中 8 个改到 langchain_core 源码、3 个只改测试），其余是 partner 包（openai / anthropic / deepseek…）、libs/langchain_v1（`langchain`）、langchain-classic、standard-tests 和 README，所以复现另外要求带 `core`，并排除其他子包和集成的标签；`external` 几乎每个都有，不用。集成类 issue 需要外部模型服务，沙箱运行阶段断网，复现不了。修复必须改到 libs/core/langchain_core/ 下才计入严格 FB/PA（source_prefix）。已知噪声：core 里有只改 docstring 的 bug（#40807、#40202），按标签排除不掉，会在出题阶段失败或计入 fix_not_code 之外的结果。2025-01-01 后带 bug + core 的已完成关闭 91 个，排除后 63 个。"
+}

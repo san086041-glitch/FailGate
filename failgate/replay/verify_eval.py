@@ -79,6 +79,7 @@ def load_cases(run: dict[str, Any]) -> list[EvalCase]:
             package=src["package"], module=src["module"], python=f.get("python") or src["python"],
             pytest=src["pytest"], version=f.get("pretend_version") or src.get("version"),
             signature=TraceSignature.model_validate(observed) if observed else None,
+            subdir=src.get("subdir"), test_deps=list(src.get("test_deps") or []),
         )
         cases.append(EvalCase(number=f["number"], title=f["title"], exam=exam,
                               parent=f["fix"]["parent"], fix=f["fix"]["sha"],
@@ -144,12 +145,20 @@ def _pull_files(raw: Sequence[dict[str, Any]]) -> list[PullFile]:
             for f in raw]
 
 
+def exam_test_dir(exam: Exam) -> str:
+    """考卷所在的顶层测试目录：`tests`；monorepo 是子目录里的那个，`libs/core/tests`。"""
+    if exam.subdir and exam.test_path.startswith(f"{exam.subdir}/"):
+        rest = exam.test_path[len(exam.subdir) + 1:]
+        return f"{exam.subdir}/{rest.split('/', 1)[0]}"
+    return exam.test_path.split("/", 1)[0]
+
+
 def build_variant(
     kind: str, case: EvalCase, parent: SourceTree, fix: SourceTree, fix_files: list[PullFile]
 ) -> tuple[SourceTree, list[PullFile]]:
     """返回 (head 源码包, PR 改动文件)。"""
     exam = case.exam
-    test_dir = exam.test_path.split("/", 1)[0]
+    test_dir = exam_test_dir(exam)
     if kind == POSITIVE:
         return fix, fix_files
     if kind == "revert_code":
@@ -264,12 +273,12 @@ async def exam_coverage(bench: Any, repo: str, sha: str, exam: Exam, paths: list
         parse_coverage,
     )
 
-    roots = {import_root(p) for p in paths}
+    roots = {import_root(p, exam.module) for p in paths}
     pythonpath = ":".join(f"{WORKSPACE_SRC}/{r}".rstrip("/") for r in sorted(roots))
     prepared = await bench.prepare_strength(repo, sha, exam)
     handle = await bench.open_strength(prepared, exam)
     try:
-        watch = sorted({w for p in paths for w in (p, installed_path(p))})
+        watch = sorted({w for p in paths for w in (p, installed_path(p, exam.module))})
         run = await bench.run_coverage(handle, exam, pythonpath, watch)
     finally:
         await bench.close_strength(handle)
@@ -278,7 +287,7 @@ async def exam_coverage(bench: Any, repo: str, sha: str, exam: Exam, paths: list
         return None
     out: dict[str, set[int]] = {}
     for p in paths:
-        ran = executed_in_copy(cov, p)
+        ran = executed_in_copy(cov, p, exam.module)
         out[p] = ran if ran is not None else set()
     return out
 

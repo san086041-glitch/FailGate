@@ -645,8 +645,12 @@ def _run_paths(run_id: str) -> tuple[Path, Path]:
     return Path("eval/runs") / f"{run_id}.json", Path("eval/reports") / f"{run_id}.md"
 
 
-def _code_changed(gh: Any, repo: str, trees: dict[str, Any]) -> Any:
+def _code_changed(gh: Any, repo: str, trees: dict[str, Any], *, subdir: str | None = None,
+                  source_prefix: str = "") -> Any:
     """严格 FB/PA 用：关闭 issue 的提交有没有改源码（ADR 0040 补充）。
+
+    monorepo（ADR 0045）：source_prefix 非空时只认落在这个前缀下的改动（修的是别的包，
+    在被测包的环境里"修复后通过"不可能成立，同样不计入）；测试目录在 subdir 里找。
 
     trees 是按提交缓存的源码包（和 run_at 共用，父提交不重复下载）。
     """
@@ -659,7 +663,8 @@ def _code_changed(gh: Any, repo: str, trees: dict[str, Any]) -> Any:
         if fix.parent not in trees:
             trees[fix.parent] = await fetch_github_tree(gh, repo, fix.parent)
         files = ve._pull_files(await gh.compare_files(repo, fix.parent, fix.sha))
-        return bool(fxs.source_changes(files, trees[fix.parent].test_dir()))
+        changed = fxs.source_changes(files, trees[fix.parent].test_dir(subdir))
+        return any(p.startswith(source_prefix) for p in changed)
 
     return check
 
@@ -1153,6 +1158,8 @@ def repo_repro(
         typer.Option(help="源码仓库 owner/name：报告未发布版本时走 source 模式（L2）；传 - 关闭"),
     ] = None,
     clear: Annotated[bool, typer.Option(help="关闭这个仓库的复现")] = False,
+    subdir: Annotated[str | None, typer.Option(
+        help="monorepo 里包所在的子目录，如 libs/core（ADR 0045）；传 - 清除")] = None,
 ) -> None:
     """查看或设置仓库的复现配置（package 模式用哪个 PyPI 包、source 模式用哪个源码仓库）。
     还需要 REPRO_ENABLED=true。"""
@@ -1168,8 +1175,15 @@ def repo_repro(
             raise typer.BadParameter(str(e)) from e
     if source not in (None, "-") and not re.fullmatch(r"[\w.-]+/[\w.-]+", source or ""):
         raise typer.BadParameter(f"源码仓库要写成 owner/name：{source!r}")
+    if subdir not in (None, "-"):
+        try:
+            subdir = PackageConfig(name=package or "x", subdir=subdir).subdir
+        except ValueError as e:
+            raise typer.BadParameter(str(e)) from e
+    current_subdir: str | None = None
 
     async def run() -> tuple[str | None, str | None, str | None]:
+        nonlocal current_subdir
         nonlocal unpublished
         if package:
             pypi = PyPIClient(settings.pypi_url)
@@ -1197,11 +1211,15 @@ def repo_repro(
                 s.add(r)
             if clear:
                 r.repro_package, r.repro_import_name, r.repro_source = None, None, None
+                r.repro_subdir = None
             elif package:
                 r.repro_package, r.repro_import_name = package, import_name
             if not clear and source is not None:
                 r.repro_source = None if source == "-" else source
+            if not clear and subdir is not None:
+                r.repro_subdir = None if subdir == "-" else subdir
             current = r.repro_package, r.repro_import_name, r.repro_source
+            current_subdir = r.repro_subdir
         await db.dispose()
         return current
 
@@ -1215,6 +1233,9 @@ def repo_repro(
         typer.echo(f"{repo}：package 模式，包 {pkg}（import 名 {imp or '由包名推出'}）")
         if src:
             typer.echo(f"  报告未发布版本时走 source 模式（L2），源码仓库 {src}")
+    if pkg is not None and current_subdir:
+        typer.echo(f"  monorepo 子目录：{current_subdir}（source 模式装这个目录、"
+                   "测试放在它的测试目录）")
     if not settings.repro_enabled:
         typer.echo("注意：总开关 REPRO_ENABLED 没有打开，流水线不会进入复现阶段")
 
@@ -1398,6 +1419,10 @@ def checkup(
     refresh: Annotated[bool, typer.Option("--refresh", help="忽略之前的进度，从头来")] = False,
     report_only: Annotated[bool, typer.Option(
         "--report-only", help="只按已有结果重新生成报告，什么都不跑")] = False,
+    subdir: Annotated[str | None, typer.Option(
+        help="monorepo 里包所在的子目录，如 libs/core（ADR 0045）")] = None,
+    test_deps: Annotated[str, typer.Option(
+        help="和项目一起装的测试依赖，逗号分隔（conftest 要的插件；按提交日期锁版本）")] = "",
 ) -> None:
     """仓库体检（ADR 0043）：把评测流程跑在任意公开 Python 仓库上，给出报告和配置建议。
 
@@ -1421,6 +1446,12 @@ def checkup(
     state = None if refresh else cu.load_state(state_file)
     if state is None:
         state = cu.Checkup(repo=repo, package=package, since=since, offset=offset, limit=limit)
+    deps = [x.strip() for x in test_deps.split(",") if x.strip()]
+    # 子目录和测试依赖以第一次给的为准（续跑时不用再写一遍；改了要 --refresh）
+    if state.subdir is None and subdir:
+        state.subdir = subdir
+    if not state.test_deps and deps:
+        state.test_deps = deps
 
     def step(msg: str) -> None:
         typer.echo(f"\n== {msg}")
@@ -1495,7 +1526,8 @@ def checkup(
     if state.l2_run is None:
         step(f"留出集 L2 + 严格 FB/PA（跳过 {offset}、取 {limit}，会花钱）")
         run_path = replay_l2(repo, package=package, import_name=import_name, limit=limit,
-                             offset=offset, since=since, numbers=None, runs=2, db_url=REPLAY_DB)
+                             offset=offset, since=since, numbers=None, runs=2, db_url=REPLAY_DB,
+                             subdir=state.subdir, test_deps=",".join(state.test_deps))
         state.l2_run = run_path.as_posix()
         cu.save_state(state, state_file)
     reports, cases, _meta = l2replay.load(Path(state.l2_run))
@@ -2054,6 +2086,8 @@ def repro_source(
     traceback_file: Annotated[
         Path | None, typer.Option(help="issue 里报告的堆栈，用于判定")
     ] = None,
+    subdir: Annotated[str | None, typer.Option(
+        help="monorepo 里包所在的子目录，如 libs/core（ADR 0045）")] = None,
 ) -> None:
     """source 模式：从某个提交的源码构建环境 → 跑脚本 → 判定（不调用 LLM）。"""
     from failgate.platforms.github_rest import GitHubRest
@@ -2071,20 +2105,20 @@ def repro_source(
     settings = Settings()
     sandbox = build_sandbox(settings)
     cache = _env_cache(settings, sandbox)
-    cfg = PackageConfig(name=package, import_name=import_name)
+    cfg = PackageConfig(name=package, import_name=import_name, subdir=subdir)
     tb = traceback_file.read_text(encoding="utf-8") if traceback_file else None
 
     async def run() -> None:
         gh, pypi = GitHubRest(settings.github_token), PyPIClient(settings.pypi_url)
         try:
             tree = await fetch_github_tree(gh, repo, ref)
-            py = pick_python_for_commit(tree, reported=python)
+            py = pick_python_for_commit(tree, reported=python, subdir=cfg.subdir)
             version = pretend_version(await pypi.releases(package), tree.committed_at)
             day = f"{tree.committed_at:%Y-%m-%d}" if tree.committed_at else "日期未知"
             size = len(tree.tarball) / 1e6
             typer.echo(f"{repo}@{tree.sha[:10]}（{day}） · Python {py} · "
                        f"伪版本号 {version} · 源码包 {size:.1f} MB")
-            env = await source_env(cache, tree, python=py, version=version)
+            env = await source_env(cache, tree, python=py, version=version, subdir=cfg.subdir)
             vr = await PackageReproducer(
                 sandbox, cache, pypi, run_timeout_s=settings.sandbox_run_timeout_seconds
             ).evaluate(cfg, env, f"{tree.sha[:10]}", script.read_text(encoding="utf-8"),
@@ -2277,12 +2311,17 @@ def repro_l2(
     import_name: Annotated[str | None, typer.Option(help="import 名，默认由包名推出")] = None,
     db_url: Annotated[str | None, typer.Option("--db", help="数据库连接串，默认用配置")] = None,
     max_steps: Annotated[int | None, typer.Option(help="工具调用步数上限")] = None,
+    subdir: Annotated[str | None, typer.Option(
+        help="monorepo 里包所在的子目录，如 libs/core（ADR 0045）")] = None,
+    test_deps: Annotated[str, typer.Option(
+        help="和项目一起装的测试依赖，逗号分隔（conftest 要的插件；按提交日期锁版本）")] = "",
 ) -> None:
     """L2：在 issue 创建时的代码上，Agent 写一个仓库内的失败测试（source 模式）。会花钱。"""
     from failgate.repro.config import PackageConfig
 
     settings = Settings()
-    cfg = PackageConfig(name=package, import_name=import_name)
+    cfg = PackageConfig(name=package, import_name=import_name, subdir=subdir,
+                        test_deps=[x.strip() for x in test_deps.split(",") if x.strip()])
 
     async def run() -> None:
         docs = await _load_issue_docs(db_url or settings.failgate_db_url, repo, [number])
@@ -2311,6 +2350,10 @@ def replay_l2(
     ] = None,
     runs: Annotated[int, typer.Option(help="严格 FB/PA 时每个版本跑几次")] = 2,
     db_url: Annotated[str, typer.Option("--db", help="回放语料库")] = REPLAY_DB,
+    subdir: Annotated[str | None, typer.Option(
+        help="monorepo 里包所在的子目录，如 libs/core（ADR 0045）")] = None,
+    test_deps: Annotated[str, typer.Option(
+        help="和项目一起装的测试依赖，逗号分隔（conftest 要的插件；按提交日期锁版本）")] = "",
 ) -> Path:
     """L2 回放：Agent 在 issue 时的代码上写仓库内的失败测试，再用严格 FB/PA 检验。会花钱。
 
@@ -2326,8 +2369,10 @@ def replay_l2(
     settings = Settings()
     if not settings.github_token:
         raise typer.BadParameter("需要 GITHUB_TOKEN（查修复提交用 GraphQL）")
-    cfg = PackageConfig(name=package, import_name=import_name)
+    cfg = PackageConfig(name=package, import_name=import_name, subdir=subdir,
+                        test_deps=[x.strip() for x in test_deps.split(",") if x.strip()])
     rule = None if numbers else _selection(repo)
+    source_prefix = rule.source_prefix if rule else ""
     started = datetime.now()
     run_id = f"{repo.replace('/', '__')}__l2__{started:%Y%m%d-%H%M}"
     run_path, report_path = _run_paths(run_id)
@@ -2343,6 +2388,8 @@ def replay_l2(
         "max_steps": settings.repro_max_steps, "max_attempts": settings.repro_max_attempts,
         "budget_usd": settings.repro_budget_usd, "runs": runs, "kind": "L2 测试",
     }
+    if cfg.subdir or cfg.test_deps:
+        meta.update(subdir=cfg.subdir, test_deps=cfg.test_deps, source_prefix=source_prefix)
 
     async def run() -> None:
         if numbers:
@@ -2379,7 +2426,7 @@ def replay_l2(
                 a = report.agent
                 typer.echo(f"  → {report.source.level} · {a.status if a else report.source.error}"
                            f" · ${report.total_cost_usd:.4f}")
-                case = await _l2_fbpa(rt, repo, cfg, report, trees, runs)
+                case = await _l2_fbpa(rt, repo, cfg, report, trees, runs, source_prefix)
                 cases.append(case)
                 if case.outcome != "no_script":
                     typer.echo(f"  严格 FB/PA：{case.outcome}")
@@ -2400,7 +2447,7 @@ def replay_l2(
 
 
 async def _l2_fbpa(rt: Any, repo: str, cfg: Any, report: Any, trees: dict[str, Any],
-                   runs: int) -> Any:
+                   runs: int, source_prefix: str = "") -> Any:
     """一个 L2 报告的严格 FB/PA（replay l2 和 replay l2-fbpa 共用）。"""
     import httpx
 
@@ -2430,7 +2477,8 @@ async def _l2_fbpa(rt: Any, repo: str, cfg: Any, report: Any, trees: dict[str, A
         fbpa.candidate_from_l2(report),
         find_fix=lambda n: find_fix(rt.gh, repo, n),
         pretend=pretend, run_at=run_at,
-        code_changed=_code_changed(rt.gh, repo, trees),
+        code_changed=_code_changed(rt.gh, repo, trees, subdir=cfg.subdir,
+                                   source_prefix=source_prefix),
         setup_errors=(*SETUP_ERRORS, SourceError, L2Unsupported, GraphQLError, httpx.HTTPError),
     )
 
@@ -2463,7 +2511,12 @@ def replay_l2_fbpa(
     if not wanted:
         typer.echo("没有要重跑的（没有 setup_failed）")
         return
-    cfg = PackageConfig(name=package, import_name=import_name)
+    # 子目录和测试依赖沿用出题时的（记在每题的 source 里，ADR 0045）
+    src0 = reports[0].source if reports else None
+    cfg = PackageConfig(name=package, import_name=import_name,
+                        subdir=src0.subdir if src0 else None,
+                        test_deps=list(src0.test_deps) if src0 else [])
+    source_prefix = str(meta.get("source_prefix") or "")
     out_run = from_run.with_name(from_run.stem + "-refbpa.json")
     out_report = Path("eval/reports") / (from_run.stem + "-refbpa.md")
 
@@ -2476,7 +2529,8 @@ def replay_l2_fbpa(
             for i, c in enumerate(cases):
                 if c.number not in wanted:
                     continue
-                new = await _l2_fbpa(rt, repo, cfg, by_number[c.number], trees, runs)
+                new = await _l2_fbpa(rt, repo, cfg, by_number[c.number], trees, runs,
+                                     source_prefix)
                 redone.append(f"#{c.number}：{c.outcome} → {new.outcome}")
                 typer.echo(f"#{c.number}：{c.outcome} → {new.outcome}")
                 cases[i] = new
@@ -3166,7 +3220,6 @@ def fix_run(
     from failgate.replay import fix_eval as fe
     from failgate.replay import fixset as fxs
     from failgate.replay import verify_eval as ve
-    from failgate.repro.config import PackageConfig
     from failgate.repro.package import IssueContext
     from failgate.repro.source import fetch_github_tree
     from failgate.views import fix_panel
@@ -3195,7 +3248,7 @@ def fix_run(
         rt = _L2Runtime(settings)
         try:
             tree = await fetch_github_tree(rt.gh, repo, case.parent)
-            cfg = PackageConfig(name=case.exam.package, import_name=case.exam.module)
+            cfg = case.exam.package_config()
             task = FixTask(
                 repo=repo, number=number,
                 issue=IssueContext(title=docs[0].title, body=docs[0].body),
@@ -3284,7 +3337,6 @@ def replay_fix(
     from failgate.fix.run import fix_tree
     from failgate.replay import fix_eval as fe
     from failgate.replay import verify_eval as ve
-    from failgate.repro.config import PackageConfig
     from failgate.repro.package import IssueContext
     from failgate.repro.source import fetch_github_tree
     from failgate.verify.hidden import hidden_path
@@ -3363,7 +3415,7 @@ def replay_fix(
             golds = {r["number"]: fe.Gold(**r["gold"]) for r in rows if r.get("type") == "gold"}
             for case in cases:
                 parent = await retrying(lambda c=case: fetch_github_tree(rt.gh, repo, c.parent))
-                cfg = PackageConfig(name=case.exam.package, import_name=case.exam.module)
+                cfg = case.exam.package_config()
                 prepared = await rt.tester.prepare(
                     cfg, parent, number=case.number, python=case.exam.python,
                     version=case.exam.version, pytest=case.exam.pytest)
@@ -3684,7 +3736,6 @@ def replay_fix_feedback(
     from failgate.fix.run import fix_tree
     from failgate.replay import fix_eval as fe
     from failgate.replay import verify_eval as ve
-    from failgate.repro.config import PackageConfig
     from failgate.repro.package import IssueContext
     from failgate.repro.source import fetch_github_tree
     from failgate.verify.workbench import SandboxWorkbench
@@ -3718,7 +3769,7 @@ def replay_fix_feedback(
                     continue
                 case = cases[cv["number"]]
                 parent = await fetch_github_tree(rt.gh, repo, case.parent)
-                cfg = PackageConfig(name=case.exam.package, import_name=case.exam.module)
+                cfg = case.exam.package_config()
                 prepared = await rt.tester.prepare(
                     cfg, parent, number=case.number, python=case.exam.python,
                     version=case.exam.version, pytest=case.exam.pytest)

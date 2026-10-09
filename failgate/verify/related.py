@@ -21,11 +21,17 @@ MAX_FILES = 10
 SRC_LAYOUT = "src/"
 
 
-def module_of(path: str) -> str | None:
-    """仓库内的 .py 路径 → 模块名：`pkg/text.py` → `pkg.text`，src 布局去掉 `src/`。"""
+def module_of(path: str, package: str | None = None) -> str | None:
+    """仓库内的 .py 路径 → 模块名：`pkg/text.py` → `pkg.text`，src 布局去掉 `src/`。
+
+    给了包的 import 名时从它开始算（monorepo，ADR 0045）：
+    `libs/core/langchain_core/runnables/base.py` → `langchain_core.runnables.base`。"""
     if not path.endswith(".py"):
         return None
-    if path.startswith(SRC_LAYOUT):
+    top = package.split(".", 1)[0] if package else None
+    if top and (i := f"/{path}".find(f"/{top}/")) >= 0:
+        path = path[i:]
+    elif path.startswith(SRC_LAYOUT):
         path = path[len(SRC_LAYOUT):]
     parts = path[:-3].split("/")
     if parts[-1] == "__init__":
@@ -35,13 +41,13 @@ def module_of(path: str) -> str | None:
     return ".".join(parts)
 
 
-def changed_modules(files: list[PullFile]) -> list[str]:
+def changed_modules(files: list[PullFile], package: str | None = None) -> list[str]:
     mods: list[str] = []
     for f in files:
         for path in (f.filename, f.previous_filename):
             if not path or is_test_file(path) or "/tests/" in f"/{path}":
                 continue
-            m = module_of(path)
+            m = module_of(path, package)
             if m and m not in mods:
                 mods.append(m)
     return mods
@@ -76,10 +82,12 @@ def has_tests(source: str) -> bool:
 
 
 def select_related_tests(
-    files: list[PullFile], tests: dict[str, str], *, exclude: str, limit: int = MAX_FILES
+    files: list[PullFile], tests: dict[str, str], *, exclude: str, limit: int = MAX_FILES,
+    package: str | None = None,
 ) -> list[str]:
-    """tests：head 上的测试文件 {路径: 源码}。返回按相关程度排好的测试文件路径。"""
-    mods = changed_modules(files)
+    """tests：head 上的测试文件 {路径: 源码}。返回按相关程度排好的测试文件路径。
+    package：被测包的 import 名，monorepo 里用来把路径换成模块名。"""
+    mods = changed_modules(files, package)
     if not mods:
         return []
     stems = {m.rsplit(".", 1)[-1] for m in mods}

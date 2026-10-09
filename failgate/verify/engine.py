@@ -26,6 +26,7 @@ from pydantic import BaseModel
 
 from failgate import __version__, tracing
 from failgate.index.trace import TraceSignature
+from failgate.repro.config import PackageConfig
 from failgate.repro.judge import same_failure
 from failgate.repro.l2 import PYTEST_INVALID
 from failgate.repro.sandbox import ExecResult
@@ -58,12 +59,19 @@ class Exam(BaseModel):
     receipt_sha256: str
     package: str
     module: str  # 判定器按它过滤栈帧
+    subdir: str | None = None  # monorepo 里包所在的子目录（ADR 0045）；None = 仓库根
+    test_deps: list[str] = []  # 封存时和项目一起装的测试依赖（包名）
     python: str | None = None
     pytest: str | None = None
     version: str | None = None  # 伪版本号：base 和 head 用同一个，只让代码这一个变量变化
     signature: TraceSignature | None = None
     receipt: dict[str, Any] = {}  # 原始收据：重新封存时在它的基础上生成新收据
     hidden: HiddenExam | None = None  # 隐藏考卷（ADR 0021），没有就不跑
+
+    def package_config(self) -> PackageConfig:
+        """重放这份考卷要用的包配置（和封存时一致：子目录、测试依赖）。"""
+        return PackageConfig(name=self.package, import_name=self.module, subdir=self.subdir,
+                             test_deps=self.test_deps)
 
 
 class PullRequest(BaseModel):
@@ -352,8 +360,11 @@ class ClaimVerifier:
 
     async def _layer3(self, pr: PullRequest, base_env: Any, head_env: Any, exam: Exam) -> Layer3:
         tests = self.bench.read_files(head_env)
-        tests = {p: s for p, s in tests.items() if is_test_file(p)}
-        files = select_related_tests(pr.files, tests, exclude=exam.test_path)
+        # monorepo（ADR 0045）：只在被测包的子目录里挑，别的包的测试在这个环境里装不全
+        scope = f"{exam.subdir}/" if exam.subdir else ""
+        tests = {p: s for p, s in tests.items() if is_test_file(p) and p.startswith(scope)}
+        files = select_related_tests(pr.files, tests, exclude=exam.test_path,
+                                     package=exam.module if exam.subdir else None)
         files += [p for p in self.related_always
                   if p in tests and p not in files and p != exam.test_path]
         if not files:

@@ -188,9 +188,11 @@ def test_setup_error_is_not_public():
 
 def test_fixtures_load():
     items = fx_mod.load_all()
-    assert [f.name for f in items] == ["bug-flaky", "bug-keyerror", "bug-regression"]
+    assert [f.name for f in items] == ["bug-flaky", "bug-keyerror", "bug-regression",
+                                       "mono-keyerror"]
     for f in items:
-        assert f.tree.top_dir == "src" and f.tree.test_dir() == "tests"
+        tests = f"{f.subdir}/tests/unit_tests" if f.subdir else "tests"  # monorepo（ADR 0045）
+        assert f.tree.top_dir == "src" and f.tree.test_dir(f.subdir) == tests
         assert f.tree.tarball != f.fixed_tree.tarball  # fix/ 确实改了东西
         assert f.title and f.body and f.package and f.expect
     assert fx_mod.load_all(only=["bug-keyerror"])[0].number == 101

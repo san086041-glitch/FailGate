@@ -62,9 +62,9 @@ PYTEST_INVALID = {
 }
 
 
-def repo_test_file(tree: SourceTree, number: int | None) -> str:
-    """测试文件相对仓库根的路径。"""
-    return f"{tree.test_dir()}/test_failgate_issue_{number or 0}.py"
+def repo_test_file(tree: SourceTree, number: int | None, subdir: str | None = None) -> str:
+    """测试文件相对仓库根的路径（monorepo 时在子目录的测试目录里，ADR 0045）。"""
+    return f"{tree.test_dir(subdir)}/test_failgate_issue_{number or 0}.py"
 
 
 def pytest_argv(rel_path: str) -> list[str]:
@@ -117,6 +117,8 @@ class SourceRepro(BaseModel):
     committed_at: datetime | None = None
     package: str
     module: str
+    subdir: str | None = None  # monorepo 的子目录（ADR 0045）
+    test_deps: list[str] = []
     python: str | None = None
     version: str | None = None
     pytest: str | None = None
@@ -167,15 +169,19 @@ class TestReproducer:
         version / pytest：指定伪版本号和 pytest 版本（严格 FB/PA 在修复前后用同一套，
         只让代码这一个变量变化）；不指定时按提交日期推算。
         extra：额外装的依赖（考卷强度要 coverage）；会进入缓存 key，得到单独的环境。
+        cfg.subdir / cfg.test_deps：monorepo 的子目录和测试依赖（ADR 0045）；都为空时
+        安装命令和以前完全一样。
         """
-        py = pick_python_for_commit(tree, reported=python)
+        py = pick_python_for_commit(tree, reported=python, subdir=cfg.subdir)
         if version is None:
             version = pretend_version(await self._own_releases(cfg.name), tree.committed_at)
         pin = pytest or pick_pytest(await self.pypi.releases("pytest"), py, tree.committed_at)
+        deps = [pick_release(d, await self.pypi.releases(d), py, tree.committed_at)
+                for d in cfg.test_deps]
         env = await source_env(self.cache, tree, python=py, version=version,
-                               extra_requirements=[pin, *extra])
+                               extra_requirements=[pin, *deps, *extra], subdir=cfg.subdir)
         prepared = SourcePrepared(cfg=cfg, tree=tree, python=py, version=version, pytest=pin,
-                                  env=env, test_path=repo_test_file(tree, number))
+                                  env=env, test_path=repo_test_file(tree, number, cfg.subdir))
         probe = await self.run_once(prepared, PROBE_TEST)
         if probe.exit_code != 0:
             raise L2Unsupported(

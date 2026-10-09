@@ -1,0 +1,9 @@
+{
+  "package": "confkit",
+  "version": "0.3.0",
+  "python": "3.12",
+  "number": 101,
+  "subdir": "libs/confkit",
+  "kind": "monorepo 布局（ADR 0045）：包在 libs/confkit，根目录不可安装；有堆栈的崩溃（KeyError）",
+  "expect": ["REPRODUCED"]
+}

@@ -165,7 +165,7 @@ class FakeEngine:
 
     async def reproduce(self, repo_path: str, title: str, body: str, package: str,
                         import_name: str | None, python: str | None,
-                        progress: Any) -> dict[str, Any]:
+                        progress: Any, subdir: str | None = None) -> dict[str, Any]:
         self.calls.append(("reproduce", (repo_path, title, package)))
         progress("写测试中")
         return {"reproduced": True, "evidence_id": "e" * 32}

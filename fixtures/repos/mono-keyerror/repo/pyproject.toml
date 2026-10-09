@@ -1,0 +1,3 @@
+# Workspace root: not a package. Each library under libs/ has its own pyproject.
+[tool.ruff]
+line-length = 100

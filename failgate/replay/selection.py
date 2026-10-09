@@ -33,6 +33,9 @@ class Selection(BaseModel):
     bug_labels: list[str]  # 至少带一个才算 bug
     repro_labels: list[str] = Field(default_factory=list)  # repro / l2 额外要求；空 = 不要求
     exclude_labels: list[str] = Field(default_factory=list)
+    # monorepo（ADR 0045）：上游修复必须改到这个前缀下的源码才计入严格 FB/PA，
+    # 如 "libs/core/langchain_core/"；空 = 不限制
+    source_prefix: str = ""
     note: str = ""  # 为什么这样选（写进报告）
 
     def is_bug(self, labels: Iterable[str]) -> bool:
@@ -49,6 +52,8 @@ class Selection(BaseModel):
             parts.append("类别为 " + " / ".join(f"`{x}`" for x in self.repro_labels) + " 之一")
         if self.exclude_labels:
             parts.append("排除 " + " / ".join(f"`{x}`" for x in self.exclude_labels))
+        if self.source_prefix:
+            parts.append(f"修复须改到 `{self.source_prefix}` 下的源码")
         return "，".join(parts)
 
 

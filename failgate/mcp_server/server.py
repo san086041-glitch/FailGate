@@ -91,16 +91,18 @@ def build_server(engine: Engine, store: EvidenceStore,
     @server.tool()
     async def reproduce_issue(repo_path: str, title: str, body: str, package: str,
                               import_name: str | None = None,
-                              python: str | None = None) -> dict[str, Any]:
+                              python: str | None = None,
+                              subdir: str | None = None) -> dict[str, Any]:
         """Write a failing pytest test for a bug in a local git repo and seal it as the exam.
 
         repo_path: the repository (any directory inside it). title/body: the bug report;
         include the traceback and expected vs actual behaviour if you have them.
         package: the distribution name to install from the repo (e.g. "black").
+        subdir: for a monorepo, the directory holding that package (e.g. "libs/core").
         Calls an LLM (about $0.01-0.05) and takes a few minutes; returns a job_id.
         """
         job = jobs.start("reproduce", lambda p: engine.reproduce(
-            repo_path, title, body, package, import_name, python, p))
+            repo_path, title, body, package, import_name, python, p, subdir=subdir))
         return _job_reply(job)
 
     @server.tool()

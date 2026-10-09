@@ -158,6 +158,8 @@ class Checkup(BaseModel):
     l2_run: str | None = None
     verify_run: str | None = None
     report: str | None = None
+    subdir: str | None = None  # monorepo 的子目录（ADR 0045）
+    test_deps: list[str] = Field(default_factory=list)
 
 
 def state_path(repo: str, root: Path = EVAL_ROOT) -> Path:

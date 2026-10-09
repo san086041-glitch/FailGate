@@ -205,7 +205,7 @@ About 10 minutes end to end, **$0.013** in LLM calls. Here is the same run from 
 
 - **"Verified" ≠ correct.** A weak exam lets a wrong fix through — that's why strength and hidden exams exist, and why they are shown, not hidden.
 - **Small, honest samples.** 4 Python repos, 12 sampled issues each, one run each; human-style review was done by Claude with a "GitHub evidence required" rule.
-- **Python + pytest only, for now.** Packages that need system libraries may not install in the sandbox. More languages are on the [roadmap](#️-roadmap).
+- **Python + pytest only, for now.** Packages that need system libraries may not install in the sandbox. Monorepos work when the package under test lives in one subdirectory (`--subdir libs/core`, e.g. LangChain). More languages are on the [roadmap](#️-roadmap).
 - **Exam strength is a hint.** It reacts to stronger tests (10 up / 0 down on SWE-bench + UTBoost, p = 0.002) but can't by itself tell a weak exam from a good one (p = 0.41).
 
 ## 🗺️ Roadmap

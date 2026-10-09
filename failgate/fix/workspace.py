@@ -47,10 +47,16 @@ def unified(path: str, old: str | None, new: str) -> str:
 
 
 def workspace_pythonpath(prepared: SourcePrepared) -> str:
-    """让测试导入工作区里的源码副本（遮住 site-packages 里的安装版）；src 布局多一层 /src。"""
+    """让测试导入工作区里的源码副本（遮住 site-packages 里的安装版）；src 布局多一层 /src。
+
+    monorepo（ADR 0045）的导入根在子目录里：/workspace/src/libs/core，否则测试导入的是
+    site-packages 里没打补丁的那份，验收永远失败。"""
     module = prepared.cfg.module
-    src_layout = bool(prepared.tree.read_files(lambda p: p.startswith(f"src/{module}/"), limit=1))
-    return f"/workspace/{WORK_SRC}" + ("/src" if src_layout else "")
+    base = f"{prepared.cfg.subdir}/" if prepared.cfg.subdir else ""
+    src_layout = bool(prepared.tree.read_files(
+        lambda p: p.startswith(f"{base}src/{module}/"), limit=1))
+    return f"/workspace/{WORK_SRC}" + (f"/{prepared.cfg.subdir}" if base else "") \
+        + ("/src" if src_layout else "")
 
 
 def count_changed(old: str | None, new: str) -> int:

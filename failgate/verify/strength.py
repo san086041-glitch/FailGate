@@ -189,8 +189,16 @@ def is_source_file(path: str) -> bool:
     return not any(p in NON_SOURCE_DIRS for p in parts[:-1])
 
 
-def import_root(path: str) -> str:
-    """源文件所在的导入根目录（相对仓库根）：src 布局是 src，否则是仓库根。"""
+def import_root(path: str, module: str | None = None) -> str:
+    """源文件所在的导入根目录（相对仓库根）：src 布局是 src，否则是仓库根。
+
+    给了包的 import 名时按它定位（ADR 0045）：monorepo 里 `libs/core/langchain_core/x.py`
+    的导入根是 `libs/core`。路径里找不到这个包名时退回上面的规则。"""
+    if module:
+        top = module.split(".", 1)[0]
+        i = f"/{path}".find(f"/{top}/")
+        if i >= 0:
+            return path[:max(i - 1, 0)]
     return "src" if path.startswith("src/") else ""
 
 
@@ -330,19 +338,20 @@ def parse_coverage(run: ExecResult) -> dict[str, set[int]] | None:
     return None
 
 
-def installed_path(path: str) -> str:
+def installed_path(path: str, module: str | None = None) -> str:
     """源文件装进 site-packages 后的相对路径（去掉导入根目录）。"""
-    root = import_root(path)
+    root = import_root(path, module)
     return path[len(root) + 1:] if root else path
 
 
-def executed_in_copy(cov: Mapping[str, set[int]], path: str) -> set[int] | None:
+def executed_in_copy(cov: Mapping[str, set[int]], path: str, module: str | None = None
+                     ) -> set[int] | None:
     """考卷在工作区副本里执行到的行；副本没被执行、而 site-packages 里同名模块被执行了
     （PYTHONPATH 没生效）时返回 None。"""
     copy = f"{WORKSPACE_SRC}/{path}"
     if copy in cov:
         return cov[copy]
-    if any(f.endswith(f"/site-packages/{installed_path(path)}") for f in cov):
+    if any(f.endswith(f"/site-packages/{installed_path(path, module)}") for f in cov):
         return None
     return set()
 
@@ -450,7 +459,8 @@ class StrengthEvaluator:
         n_changed = sum(len(ls) for ls in changed.values())
         if not changed:
             return StrengthReport(status="n/a", reason="no_source_change")
-        roots = {import_root(p) for p in changed}
+        module = getattr(exam, "module", None)
+        roots = {import_root(p, module) for p in changed}
         pythonpath = ":".join(f"{WORKSPACE_SRC}/{r}".rstrip("/") for r in sorted(roots))
         try:
             prepared = await self.bench.prepare_strength(repo, head_sha, exam)
@@ -466,7 +476,8 @@ class StrengthEvaluator:
     async def _run(self, handle: Any, exam: Any, sources: Mapping[str, tuple[str | None, str]],
                    changed: dict[str, set[int]], n_changed: int, pythonpath: str
                    ) -> StrengthReport:
-        watch = sorted({w for p in changed for w in (p, installed_path(p))})
+        module = getattr(exam, "module", None)
+        watch = sorted({w for p in changed for w in (p, installed_path(p, module))})
         base = await self.bench.run_coverage(handle, exam, pythonpath, watch)
         cov = parse_coverage(base)
         if base.exit_code != 0 or cov is None:
@@ -475,7 +486,7 @@ class StrengthEvaluator:
         targets: dict[str, set[int]] = {}
         unexecuted: list[str] = []
         for path, lines in sorted(changed.items()):
-            ran = executed_in_copy(cov, path)
+            ran = executed_in_copy(cov, path, module)
             if ran is None:
                 return StrengthReport(status="n/a", reason="shadow", changed_lines=n_changed,
                                       detail=path)

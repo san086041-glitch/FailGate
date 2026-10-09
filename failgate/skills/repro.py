@@ -184,6 +184,7 @@ class ReproSkill:
         cfg = PackageConfig(
             name=ctx.repo_config["repro_package"],
             import_name=ctx.repo_config.get("repro_import_name"),
+            subdir=ctx.repo_config.get("repro_subdir"),
         )
         intake = IntakeOutput.model_validate(ctx.prior["intake"])
         budget = self.max_budget_usd
@@ -293,6 +294,7 @@ def seal(report: IssueReproReport | L2IssueReport) -> SealedTest | None:
             test_path=src.test_path, code=code, package=src.package,
             command=pytest_argv(src.test_path), verdict=run.verdict, version=src.version,
             source_repo=src.repo, source_sha=src.sha, python=src.python, pytest=src.pytest,
+            subdir=src.subdir, test_deps=src.test_deps,
         )
     else:
         r = report.repro

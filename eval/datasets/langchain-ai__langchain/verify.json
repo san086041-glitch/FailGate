@@ -1,0 +1,15 @@
+{
+ "related_always": [],
+ "test_deps": [
+  "pytest-asyncio",
+  "syrupy",
+  "pytest-mock",
+  "blockbuster",
+  "freezegun",
+  "responses",
+  "pytest-socket",
+  "numpy",
+  "grandalf"
+ ],
+ "note": "libs/core 的 test 依赖组（2026-10-09 的 pyproject）里单元测试真正要的：conftest 直接 import blockbuster、pytest_mock；pyproject 的 addopts 有 --snapshot-warn-unused（syrupy）和 --strict-config，asyncio_mode 不认识就报错（pytest-asyncio）；其余是个别测试用到的。不装 langchain-tests：它反向依赖 langchain-core，按日期锁版本后可能和源码安装的 core 冲突或把它覆盖（方案 §4.5 最大的坑），只有 6 个测试文件 import 它，这些文件两边都收集失败、在第三层记为没跑起来。pytest-xdist / benchmark / codspeed / watcher 不影响单元测试，不装。related_always 先空着，等体检的配置建议。同一份 test_deps 也用于出题（replay l2 / checkup --test-deps），否则预检过不了。"
+}

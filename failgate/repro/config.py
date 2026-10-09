@@ -23,6 +23,7 @@ class ReproMode(StrEnum):
 DEFAULT_INSTALL = "pip install --no-cache-dir {name}=={version}"
 # 模板里只允许出现这两个占位符；渲染后按 argv 执行，不经过 shell
 _PLACEHOLDER = re.compile(r"\{(\w+)\}")
+_SUBDIR = re.compile(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*")
 
 
 class PackageConfig(BaseModel):
@@ -30,6 +31,35 @@ class PackageConfig(BaseModel):
     # import 时用的名字：pyyaml → yaml、scikit-learn → sklearn。判定器按它过滤栈帧
     import_name: str | None = None
     install: str = DEFAULT_INSTALL
+    # monorepo 里包所在的子目录（如 LangChain 的 "libs/core"，ADR 0045）：source 模式装这个
+    # 目录、读它的 pyproject、测试放在它的测试目录下。None = 包就在仓库根，行为和以前一样
+    subdir: str | None = None
+    # L2 / 修复环境里和项目一起装的测试依赖（conftest 要 import 的插件），按提交日期锁版本
+    test_deps: list[str] = Field(default_factory=list)
+
+    @field_validator("subdir")
+    @classmethod
+    def _subdir_ok(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        v = v.strip()
+        if v.startswith("/"):
+            raise ValueError(f"subdir 要写成仓库内的相对路径（如 libs/core），不能以 / 开头：{v!r}")
+        v = v.rstrip("/")
+        if not v:
+            return None
+        if not _SUBDIR.fullmatch(v) or any(p in (".", "..") for p in v.split("/")):
+            raise ValueError(f"subdir 要写成仓库内的相对路径（如 libs/core）：{v!r}")
+        return v
+
+    @field_validator("test_deps")
+    @classmethod
+    def _deps_ok(cls, v: list[str]) -> list[str]:
+        # 只收包名：版本由程序按提交日期选，不让配置里混进 URL、路径或 pip 选项
+        bad = [d for d in v if not valid_package_name(d)]
+        if bad:
+            raise ValueError(f"test_deps 只能写包名：{bad}")
+        return v
 
     @field_validator("name")
     @classmethod
